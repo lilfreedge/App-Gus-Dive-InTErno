@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -37,8 +38,15 @@ export default function LoginPage() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <div className="auth-logo">🤿</div>
-        <h1 className="auth-title">Gus Dive</h1>
+        <div className="auth-logo">
+          <Image
+            src="/logo-gus-dive-center.png"
+            alt="Gus Dive Center"
+            width={220}
+            height={57}
+            priority
+          />
+        </div>
         <p className="auth-subtitle">Control interno de la tienda</p>
 
         <form onSubmit={handleSubmit}>

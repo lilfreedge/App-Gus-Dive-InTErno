@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -17,7 +18,14 @@ export default function TopbarClient({ nombre }) {
     <div className="topbar">
       <div className="topbar-inner">
         <div>
-          <div className="topbar-title">🤿 Gus Dive</div>
+          <Image
+            src="/logo-gus-icon.png"
+            alt="Gus Dive"
+            width={64}
+            height={22}
+            className="topbar-logo"
+            priority
+          />
           <div className="topbar-sub">Hola, {nombre}</div>
         </div>
         <button className="btn-link" onClick={salir}>

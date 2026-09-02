@@ -22,10 +22,11 @@ App interna para registrar salidas de piezas/artículos y llenados de tanques, c
 3. Espera 1-2 minutos a que el proyecto termine de crearse.
 4. En el menú izquierdo, ve a **SQL Editor** → **New query**.
 5. Abre el archivo `supabase/schema.sql` de este proyecto, copia **todo** su contenido, pégalo en el editor y dale **Run**. Esto crea las tablas de usuarios, salidas y tanques con sus permisos de seguridad.
-6. Ve a **Authentication** → **Providers** → **Email**, y **desactiva** la opción "Confirm email" (así los empleados pueden entrar apenas se registran, sin necesitar revisar un correo). Guarda los cambios.
-7. Ve a **Settings** → **API**. Ahí vas a ver dos datos que necesitas para el siguiente paso:
-   - `Project URL`
-   - `anon public` key (una clave larga)
+6. Ve a **Authentication** (ícono de candado en el menú izquierdo) → pestaña **Sign In / Providers** → haz clic en **Email** para expandirlo, y **desactiva** la opción "Confirm email" (así los empleados pueden entrar apenas se registran, sin necesitar revisar un correo). Baja y dale **Save**.
+   - Si no ves la pestaña, entra a tu proyecto y agrega `/auth/providers` al final de la URL.
+7. Ve a **Settings** (ícono de engranaje) → **API Keys**. Ahí vas a ver dos datos que necesitas para el siguiente paso:
+   - `Project URL` (arriba de la página, a veces bajo "Project Settings" o "Data API")
+   - La clave pública: puede aparecer como **`anon` `public`** o como **`publishable key`** (empieza con `sb_publishable_...`) — cualquiera de las dos sirve, usa la que te aparezca. **No copies la `service_role` / `secret` key**, esa es privada y nunca debe ir en la app.
 
 ---
 
@@ -68,6 +69,17 @@ No hace falta que tú "crees" cada usuario manualmente — cada quien se registr
 ## Actualizaciones futuras
 
 Si en algún momento quieres que yo le agregue algo más a la app (por ejemplo, exportar a Excel, editar/borrar registros, reportes por fecha, etc.), guarda este proyecto y pídemelo — trabajaré sobre este mismo código.
+
+### Cómo subir una actualización a tu app ya publicada
+
+Cada vez que te mande una nueva versión del código (como esta, con el logo agregado):
+
+1. Descomprime el zip nuevo.
+2. Ve a tu repositorio en GitHub (el mismo que ya creaste).
+3. Clic en **Add file** → **Upload files**.
+4. Arrastra de nuevo todo el contenido de la carpeta (igual que la primera vez).
+5. Abajo, en "Commit changes", dale **Commit changes** — GitHub reemplaza automáticamente los archivos que cambiaron.
+6. Vercel detecta el cambio en GitHub y despliega la nueva versión solo — no hace falta hacer nada en Vercel. En 1-2 minutos ya está en línea.
 
 ## Desarrollo local (opcional, solo si quieres probarlo en tu computadora antes)
 

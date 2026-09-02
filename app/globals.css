@@ -61,9 +61,16 @@ button {
   letter-spacing: 0.3px;
 }
 
+.topbar-logo {
+  height: 22px;
+  width: auto;
+  display: block;
+}
+
 .topbar-sub {
   font-size: 12px;
   opacity: 0.8;
+  margin-top: 4px;
 }
 
 .btn-link {
@@ -108,9 +115,14 @@ button {
 }
 
 .auth-logo {
-  text-align: center;
-  margin-bottom: 6px;
-  font-size: 22px;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.auth-logo img {
+  height: auto;
+  max-width: 220px;
 }
 
 .auth-title {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -45,9 +46,17 @@ export default function RegistroPage() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <div className="auth-logo">🤿</div>
+        <div className="auth-logo">
+          <Image
+            src="/logo-gus-dive-center.png"
+            alt="Gus Dive Center"
+            width={220}
+            height={57}
+            priority
+          />
+        </div>
         <h1 className="auth-title">Crear cuenta</h1>
-        <p className="auth-subtitle">Gus Dive · Uso interno del equipo</p>
+        <p className="auth-subtitle">Uso interno del equipo</p>
 
         {success ? (
           <>
