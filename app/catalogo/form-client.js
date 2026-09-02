@@ -8,6 +8,7 @@ export default function NuevoArticuloForm() {
   const router = useRouter();
   const supabase = createClient();
   const [nombre, setNombre] = useState("");
+  const [descripcion, setDescripcion] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +21,7 @@ export default function NuevoArticuloForm() {
     setLoading(true);
     const { error } = await supabase
       .from("articulos")
-      .insert({ nombre: nombre.trim() });
+      .insert({ nombre: nombre.trim(), descripcion: descripcion.trim() || null });
     setLoading(false);
 
     if (error) {
@@ -33,6 +34,7 @@ export default function NuevoArticuloForm() {
     }
 
     setNombre("");
+    setDescripcion("");
     router.refresh();
   }
 
@@ -44,8 +46,18 @@ export default function NuevoArticuloForm() {
         type="text"
         value={nombre}
         onChange={(e) => setNombre(e.target.value)}
-        placeholder="Ej. O-ring 2x110"
+        placeholder="Ej. R014 — Manguera de baja"
       />
+
+      <label htmlFor="descripcion">Descripción</label>
+      <input
+        id="descripcion"
+        type="text"
+        value={descripcion}
+        onChange={(e) => setDescripcion(e.target.value)}
+        placeholder="Opcional"
+      />
+
       {error && <div className="error-box">{error}</div>}
       <button className="btn btn-primary" type="submit" disabled={loading}>
         {loading ? "Agregando..." : "Agregar al catálogo"}

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createServiceClient } from "@/lib/supabase/service";
-import { obtenerDatosReporte, construirXLSX, construirResumenHTML } from "@/lib/reportes";
+import { obtenerDatosReporte, construirPDF, construirXLSX, construirResumenHTML } from "@/lib/reportes";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(request) {
   // Vercel Cron manda este header automáticamente cuando CRON_SECRET está configurado.
@@ -41,7 +42,12 @@ export async function GET(request) {
     hasta: hastaStr,
   });
 
-  const xlsxBuffer = construirXLSX(datos);
+  // PDF es el reporte principal (preferencia del dueño); se manda además
+  // el Excel como respaldo porque es barato de generar en el mismo paso.
+  const [pdfBuffer, xlsxBuffer] = await Promise.all([
+    construirPDF(datos, { desde: desdeStr, hasta: hastaStr }),
+    Promise.resolve(construirXLSX(datos, { desde: desdeStr, hasta: hastaStr })),
+  ]);
   const html = construirResumenHTML({ ...datos, desde: desdeStr, hasta: hastaStr });
 
   const resend = new Resend(process.env.RESEND_API_KEY);
@@ -52,6 +58,10 @@ export async function GET(request) {
     subject: `Reporte semanal Gus Dive (${desdeStr} a ${hastaStr})`,
     html,
     attachments: [
+      {
+        filename: `gus-dive-reporte_${desdeStr}_a_${hastaStr}.pdf`,
+        content: pdfBuffer.toString("base64"),
+      },
       {
         filename: `gus-dive-reporte_${desdeStr}_a_${hastaStr}.xlsx`,
         content: xlsxBuffer.toString("base64"),

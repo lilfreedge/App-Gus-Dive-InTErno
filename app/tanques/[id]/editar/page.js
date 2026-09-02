@@ -22,7 +22,7 @@ export default async function EditarLlenadoPage({ params }) {
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
         <Link href="/tanques" className="back-link">
-          ← Volver al historial
+          ← Volver a Tanques
         </Link>
         <h1 className="page-title">Editar llenado</h1>
         <p className="page-subtitle">El cambio queda anotado en el historial de cambios.</p>

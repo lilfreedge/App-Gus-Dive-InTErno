@@ -8,7 +8,17 @@ export default async function AppHeader() {
 
   if (!user) return null;
 
-  const nombre = (profile?.full_name || user.email).split(" ")[0];
+  const nombreCompleto = profile?.full_name || user.email;
+  const nombre = nombreCompleto.split(" ")[0];
 
-  return <TopbarClient nombre={nombre} isAdmin={!!profile?.is_admin} />;
+  return (
+    <TopbarClient
+      nombre={nombre}
+      nombreCompleto={nombreCompleto}
+      correo={user.email}
+      isAdmin={!!profile?.is_admin}
+      esTitular={!!profile?.es_titular}
+      permisos={profile?.permisos || {}}
+    />
+  );
 }

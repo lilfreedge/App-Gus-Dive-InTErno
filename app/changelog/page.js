@@ -1,0 +1,70 @@
+import Link from "next/link";
+import AppHeader from "@/components/AppHeader";
+
+// Contenido estático, no viene de la base de datos — solo Claude (vía
+// futuras actualizaciones) agrega entradas nuevas aquí a mano.
+//
+// TODO(humano): cuando tengas capturas reales de cada versión, súbelas a
+// public/changelog/ (por ejemplo public/changelog/v1.png,
+// public/changelog/v2-antes.png, public/changelog/v2-despues.png,
+// public/changelog/v3-antes.png, public/changelog/v3-despues.png) y
+// reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
+const ENTRADAS = [
+  {
+    fecha: "2 de septiembre, 2026",
+    titulo: "Roles avanzados, folios, reportes en PDF y más",
+    descripcion:
+      "Se agregó el rol de Titular con permisos por sección, número de folio en cada salida y llenado, catálogo visible para todos con búsqueda y descripciones, reportes en PDF y Excel con diseño de marca, historial dividido en anulados/ediciones con hora correcta de Santo Domingo, y la página \"Editar mi perfil\" para cambiar nombre y contraseña.",
+    shots: ["Antes", "Después"],
+  },
+  {
+    fecha: "2 de septiembre, 2026",
+    titulo: "Roles, catálogo, reportes y edición con historial",
+    descripcion:
+      "Se agregaron administradores, catálogo de artículos, edición/borrado con historial de cambios, y reportes exportables.",
+    shots: ["Antes", "Después"],
+  },
+  {
+    fecha: "27 de agosto, 2026",
+    titulo: "Lanzamiento inicial",
+    descripcion:
+      "Primera versión: registrar salidas y llenados de tanques, con historial y cuentas de usuario.",
+    shots: ["Cómo quedó"],
+  },
+];
+
+export default function ChangelogPage() {
+  return (
+    <div>
+      <AppHeader />
+      <div className="page" style={{ paddingTop: 24 }}>
+        <Link href="/dashboard" className="back-link">
+          ← Volver
+        </Link>
+        <h1 className="page-title">Changelog</h1>
+
+        {ENTRADAS.map((e, i) => (
+          <div className="changelog-entry" key={i}>
+            <div className="changelog-date">{e.fecha}</div>
+            <div className="changelog-title">{e.titulo}</div>
+            <div className="changelog-desc">{e.descripcion}</div>
+            <div className="shots">
+              {e.shots.map((lbl) => (
+                <PlaceholderShot key={lbl} label={lbl} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PlaceholderShot({ label }) {
+  return (
+    <div className="shot">
+      <div className="lbl">{label}</div>
+      <div className="box">Captura no disponible</div>
+    </div>
+  );
+}

@@ -141,6 +141,41 @@ Este paso es opcional — si no lo haces, todo lo demás funciona igual, solo no
 - **Historial de cambios** (solo admins): registro de cada edición o borrado, con quién lo hizo y qué decía el registro antes del cambio.
 - Los botones de editar/borrar aparecen junto a cada registro en Salidas y Tanques, solo para administradores.
 
+---
+
+## Actualización V3: Titular, permisos por sección, folios, reportes en PDF y más
+
+Esta versión agrega: el rol de **Titular** (una sola persona, acceso total siempre), permisos granulares por usuario (Reportes/Catálogo/Historial/Changelog, controlables desde **Administración**), número de folio secuencial en cada salida y llenado, catálogo visible para todos con buscador y descripción, reportes exportables en **PDF y Excel** con diseño de marca (banda navy con el logo GUS), historial dividido en "Movimientos anulados" y "Ediciones" con la hora corregida a Santo Domingo, la página **Editar mi perfil** (nombre + contraseña), y un **Changelog** con el resumen de cada versión. El menú de arriba ahora tiene un ícono de engranaje en vez del botón de salir directo — ahí adentro están "Editar mi perfil", "Changelog", "Administración" (solo Titular) y "Cerrar sesión".
+
+Después de subir este código, hay que hacer esto **una sola vez**:
+
+### 1. Correr la nueva migración en Supabase
+
+1. Entra a tu proyecto en Supabase → **SQL Editor** → **New query**.
+2. Abre el archivo `supabase/migration_03.sql` de este proyecto, copia todo el contenido, pégalo y dale **Run**.
+
+### 2. Convertirte en Titular
+
+Al final del mismo archivo `supabase/migration_03.sql` hay una instrucción SQL comentada para convertir tu cuenta (la que ya era administrador) en el Titular. Cópiala en una consulta nueva del **SQL Editor**, cambia el correo si hace falta, y dale **Run**:
+
+```sql
+update public.profiles set es_titular = true, is_admin = true
+where id = (select id from auth.users where email = 'TU-CORREO-AQUI');
+```
+
+Sal de la app y vuelve a entrar. Ahora verás en el menú de ajustes (ícono de engranaje) la opción **Administración**, exclusiva del Titular — desde ahí controlas el rol (Administrador/Usuario) y los permisos por sección de cada usuario.
+
+No hay ninguna otra variable de entorno nueva que configurar: todo lo demás (reportes en PDF, folios, catálogo, etc.) usa la misma infraestructura de Supabase/Resend que ya tenías configurada.
+
+### Qué encontrarás nuevo en el día a día
+
+- **Salidas**: cada registro muestra su folio (`#52`), el motivo como etiqueta, y el artículo se elige con un buscador que solo acepta artículos del catálogo.
+- **Tanques**: cada llenado indica tipo de gas (Aire/Nitrox) y su folio.
+- **Catálogo**: ahora lo puede ver cualquier usuario logueado (antes era solo para admins), con buscador y descripción; "Ver movimientos" sigue siendo solo para Administrador/Titular.
+- **Reportes**: filtros de usuario, código, motivo y tipo de gas; exporta en PDF (el mismo diseño que se manda por correo cada semana) o Excel.
+- **Historial**: separado en "Movimientos anulados" y "Ediciones", con tablas limpias en vez de texto con comas, y la hora siempre en horario de Santo Domingo.
+- **Editar mi perfil**: cualquier usuario puede cambiar su nombre (queda anotado en Historial) y su contraseña, desde el menú de ajustes.
+
 ## Desarrollo local (opcional, solo si quieres probarlo en tu computadora antes)
 
 ```bash

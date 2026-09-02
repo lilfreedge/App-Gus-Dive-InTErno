@@ -80,7 +80,7 @@ export default function LoginPage() {
         </form>
 
         <div className="auth-switch">
-          ¿Empleado nuevo? <Link href="/registro">Crear cuenta</Link>
+          ¿Usuario nuevo? <Link href="/registro">Crear cuenta</Link>
         </div>
       </div>
     </div>

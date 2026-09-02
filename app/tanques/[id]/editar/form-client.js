@@ -10,6 +10,7 @@ export default function EditarLlenadoForm({ registro }) {
   const supabase = createClient();
 
   const [cantidad, setCantidad] = useState(String(registro.cantidad));
+  const [tipoGas, setTipoGas] = useState(registro.tipo_gas || "Aire");
   const [nota, setNota] = useState(registro.nota || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,7 +19,7 @@ export default function EditarLlenadoForm({ registro }) {
     e.preventDefault();
     setError("");
 
-    if (!cantidad) return;
+    if (!cantidad || Number(cantidad) <= 0) return;
 
     setLoading(true);
 
@@ -33,6 +34,7 @@ export default function EditarLlenadoForm({ registro }) {
       .from("llenados_tanques")
       .update({
         cantidad: Number(cantidad),
+        tipo_gas: tipoGas,
         nota: nota.trim() || null,
       })
       .eq("id", registro.id);
@@ -50,7 +52,7 @@ export default function EditarLlenadoForm({ registro }) {
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      <label htmlFor="cantidad">Cantidad de tanques llenados</label>
+      <label htmlFor="cantidad">Cantidad de tanques</label>
       <input
         id="cantidad"
         type="number"
@@ -61,8 +63,35 @@ export default function EditarLlenadoForm({ registro }) {
         onChange={(e) => setCantidad(e.target.value)}
       />
 
-      <label htmlFor="nota">Nota adicional</label>
-      <textarea id="nota" value={nota} onChange={(e) => setNota(e.target.value)} />
+      <label>Tipo de gas</label>
+      <div className="radio-pills">
+        <label>
+          <input
+            type="radio"
+            name="gas"
+            checked={tipoGas === "Aire"}
+            onChange={() => setTipoGas("Aire")}
+          />
+          Aire
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="gas"
+            checked={tipoGas === "Nitrox"}
+            onChange={() => setTipoGas("Nitrox")}
+          />
+          Nitrox
+        </label>
+      </div>
+
+      <label htmlFor="nota">Nota</label>
+      <textarea
+        id="nota"
+        value={nota}
+        onChange={(e) => setNota(e.target.value)}
+        placeholder="Cualquier detalle extra (opcional)"
+      />
 
       {error && <div className="error-box">{error}</div>}
 

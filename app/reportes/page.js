@@ -1,26 +1,24 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/roles";
+import { requirePermiso } from "@/lib/roles";
+import { obtenerUsuariosConMovimientos } from "@/lib/reportes";
 import AppHeader from "@/components/AppHeader";
+import NavArrowsServer from "@/components/NavArrowsServer";
 import ReportesForm from "./form-client";
 
 export default async function ReportesPage() {
   const supabase = createClient();
-  await requireAdmin(supabase);
+  await requirePermiso(supabase, "reportes");
+
+  const usuarios = await obtenerUsuariosConMovimientos(supabase);
 
   return (
     <div>
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href="/dashboard" className="back-link">
-          ← Volver
-        </Link>
+        <NavArrowsServer />
         <h1 className="page-title">Reportes</h1>
-        <p className="page-subtitle">
-          Elige el rango de fechas y descarga el detalle en Excel o CSV.
-        </p>
 
-        <ReportesForm />
+        <ReportesForm usuarios={usuarios} />
       </div>
     </div>
   );

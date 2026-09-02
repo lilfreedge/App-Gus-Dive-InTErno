@@ -1,28 +1,34 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconLogout } from "./icons";
+import { seccionesVisibles } from "@/lib/nav";
+import { IconLogout, IconGear, IconEdit, IconHistory, IconUsers } from "./icons";
 
-const LINKS_BASE = [
-  { href: "/dashboard", label: "Inicio" },
-  { href: "/salidas", label: "Salidas" },
-  { href: "/tanques", label: "Tanques" },
-];
-
-const LINKS_ADMIN = [
-  { href: "/reportes", label: "Reportes" },
-  { href: "/admin/articulos", label: "Catálogo" },
-  { href: "/admin/usuarios", label: "Administradores" },
-  { href: "/admin/historial", label: "Historial de cambios" },
-];
-
-export default function TopbarClient({ nombre, isAdmin }) {
+export default function TopbarClient({
+  nombre,
+  nombreCompleto,
+  correo,
+  isAdmin,
+  esTitular,
+  permisos,
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function onClick(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
 
   async function salir() {
     await supabase.auth.signOut();
@@ -30,7 +36,9 @@ export default function TopbarClient({ nombre, isAdmin }) {
     router.refresh();
   }
 
-  const links = isAdmin ? [...LINKS_BASE, ...LINKS_ADMIN] : LINKS_BASE;
+  const links = seccionesVisibles({ esTitular, permisos });
+  const rolLabel = esTitular ? "Titular" : isAdmin ? "Administrador" : "Usuario";
+  const verChangelog = esTitular || permisos?.changelog;
 
   return (
     <div className="topbar">
@@ -46,9 +54,50 @@ export default function TopbarClient({ nombre, isAdmin }) {
           />
           <div className="topbar-sub">Hola, {nombre}</div>
         </div>
-        <button className="btn-link" onClick={salir} aria-label="Salir">
-          <IconLogout size={20} />
-        </button>
+
+        <div className="gear-wrap" ref={menuRef}>
+          <button
+            className="gear-btn"
+            onClick={() => setOpen((o) => !o)}
+            aria-label="Ajustes"
+          >
+            <IconGear size={18} />
+          </button>
+          {open && (
+            <div className="settings-menu">
+              <div className="settings-menu-who">
+                <b>{nombreCompleto}</b>
+                {correo} · {rolLabel}
+              </div>
+              <Link href="/perfil" className="settings-menu-link" onClick={() => setOpen(false)}>
+                <IconEdit size={15} /> Editar mi perfil
+              </Link>
+              {verChangelog && (
+                <Link
+                  href="/changelog"
+                  className="settings-menu-link"
+                  onClick={() => setOpen(false)}
+                >
+                  <IconHistory size={15} /> Changelog
+                </Link>
+              )}
+              {esTitular && (
+                <Link
+                  href="/admin/usuarios"
+                  className="settings-menu-link"
+                  onClick={() => setOpen(false)}
+                >
+                  <IconUsers size={15} /> Administración
+                  <span className="settings-menu-tag">TITULAR</span>
+                </Link>
+              )}
+              <hr />
+              <button className="settings-menu-link settings-menu-danger" onClick={salir}>
+                <IconLogout size={15} /> Cerrar sesión
+              </button>
+            </div>
+          )}
+        </div>
       </div>
       <nav className="topnav">
         {links.map((l) => (

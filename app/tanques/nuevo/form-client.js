@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function NuevoLlenadoForm({ userId }) {
+export default function NuevoLlenadoForm({ userId, nombreUsuario }) {
   const router = useRouter();
   const supabase = createClient();
 
   const [cantidad, setCantidad] = useState("1");
+  const [tipoGas, setTipoGas] = useState("Aire");
   const [nota, setNota] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,7 +18,7 @@ export default function NuevoLlenadoForm({ userId }) {
     e.preventDefault();
     setError("");
 
-    if (!cantidad) {
+    if (!cantidad || Number(cantidad) <= 0) {
       setError("Indica cuántos tanques llenaste.");
       return;
     }
@@ -27,7 +28,9 @@ export default function NuevoLlenadoForm({ userId }) {
     const { error } = await supabase.from("llenados_tanques").insert({
       user_id: userId,
       cantidad: Number(cantidad),
+      tipo_gas: tipoGas,
       nota: nota.trim() || null,
+      nombre_usuario_snapshot: nombreUsuario,
     });
 
     setLoading(false);
@@ -43,7 +46,9 @@ export default function NuevoLlenadoForm({ userId }) {
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      <label htmlFor="cantidad">Cantidad de tanques llenados</label>
+      <label htmlFor="cantidad">
+        Cantidad de tanques <span style={{ color: "var(--rojo)" }}>*</span>
+      </label>
       <input
         id="cantidad"
         type="number"
@@ -54,18 +59,42 @@ export default function NuevoLlenadoForm({ userId }) {
         onChange={(e) => setCantidad(e.target.value)}
       />
 
-      <label htmlFor="nota">Nota adicional</label>
+      <label>
+        Tipo de gas <span style={{ color: "var(--rojo)" }}>*</span>
+      </label>
+      <div className="radio-pills">
+        <label>
+          <input
+            type="radio"
+            name="gas"
+            checked={tipoGas === "Aire"}
+            onChange={() => setTipoGas("Aire")}
+          />
+          Aire
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="gas"
+            checked={tipoGas === "Nitrox"}
+            onChange={() => setTipoGas("Nitrox")}
+          />
+          Nitrox
+        </label>
+      </div>
+
+      <label htmlFor="nota">Nota</label>
       <textarea
         id="nota"
         value={nota}
         onChange={(e) => setNota(e.target.value)}
-        placeholder="Ej. tipo de gas, para qué fue (opcional)"
+        placeholder="Cualquier detalle extra (opcional)"
       />
 
       {error && <div className="error-box">{error}</div>}
 
       <button className="btn btn-primary" type="submit" disabled={loading}>
-        {loading ? "Guardando..." : "Guardar llenado"}
+        {loading ? "Guardando..." : "Registrar llenado"}
       </button>
     </form>
   );

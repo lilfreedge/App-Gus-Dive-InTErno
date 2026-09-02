@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AppHeader from "@/components/AppHeader";
+import NavArrowsServer from "@/components/NavArrowsServer";
 import NuevaSalidaForm from "./form-client";
 
 export default async function NuevaSalidaPage() {
@@ -9,18 +9,16 @@ export default async function NuevaSalidaPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: articulos }, { data: admins }] = await Promise.all([
+  const [{ data: articulos }, { data: perfil }] = await Promise.all([
     supabase.from("articulos").select("id, nombre").eq("activo", true).order("nombre"),
-    supabase.from("profiles").select("id, full_name").eq("is_admin", true).order("full_name"),
+    supabase.from("profiles").select("full_name").eq("id", user.id).single(),
   ]);
 
   return (
     <div>
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href="/dashboard" className="back-link">
-          ← Volver
-        </Link>
+        <NavArrowsServer />
         <h1 className="page-title">Registrar salida</h1>
         <p className="page-subtitle">
           Pieza, ring o artículo que se saca para uso interno de la tienda.
@@ -28,8 +26,8 @@ export default async function NuevaSalidaPage() {
 
         <NuevaSalidaForm
           userId={user.id}
+          nombreUsuario={perfil?.full_name || user.email}
           articulos={articulos || []}
-          admins={admins || []}
         />
       </div>
     </div>

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AppHeader from "@/components/AppHeader";
+import NavArrowsServer from "@/components/NavArrowsServer";
 import NuevoLlenadoForm from "./form-client";
 
 export default async function NuevoLlenadoPage() {
@@ -9,17 +9,21 @@ export default async function NuevoLlenadoPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { data: perfil } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .single();
+
   return (
     <div>
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href="/dashboard" className="back-link">
-          ← Volver
-        </Link>
+        <NavArrowsServer />
         <h1 className="page-title">Registrar llenado de tanque</h1>
         <p className="page-subtitle">Para llevar el conteo de llenados internos.</p>
 
-        <NuevoLlenadoForm userId={user.id} />
+        <NuevoLlenadoForm userId={user.id} nombreUsuario={perfil?.full_name || user.email} />
       </div>
     </div>
   );
