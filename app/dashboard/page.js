@@ -1,123 +1,166 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import TopbarClient from "./topbar-client";
+import AppHeader from "@/components/AppHeader";
+import { IconPackage, IconTank } from "@/components/icons";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }) {
   const supabase = createClient();
+  const periodo = searchParams?.periodo === "anio" ? "anio" : "semana";
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const desde = new Date();
+  desde.setDate(desde.getDate() - (periodo === "anio" ? 365 : 7));
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", user.id)
-    .single();
-
-  const nombre = profile?.full_name || user.email;
-  const primerNombre = nombre.split(" ")[0];
-
-  const inicioHoy = new Date();
-  inicioHoy.setHours(0, 0, 0, 0);
-
-  const [salidasHoy, tanquesHoy, ultimasSalidas, ultimosTanques] =
+  const [salidasRes, tanquesRes, ultimasSalidas, ultimosTanques] =
     await Promise.all([
       supabase
         .from("salidas")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", inicioHoy.toISOString()),
+        .select("articulo, cantidad")
+        .gte("created_at", desde.toISOString())
+        .limit(1000),
       supabase
         .from("llenados_tanques")
         .select("cantidad")
-        .gte("created_at", inicioHoy.toISOString()),
-      supabase
-        .from("salidas_con_nombre")
-        .select("*")
-        .limit(4),
-      supabase
-        .from("llenados_con_nombre")
-        .select("*")
-        .limit(4),
+        .gte("created_at", desde.toISOString())
+        .limit(1000),
+      supabase.from("salidas_con_nombre").select("*").limit(8),
+      supabase.from("llenados_con_nombre").select("*").limit(8),
     ]);
 
-  const totalTanquesHoy = (tanquesHoy.data || []).reduce(
+  const totalSalidas = (salidasRes.data || []).length;
+  const totalTanques = (tanquesRes.data || []).reduce(
     (acc, r) => acc + Number(r.cantidad),
     0
   );
 
+  const topArticulos = calcularTopArticulos(salidasRes.data || []);
+
+  const actividad = [
+    ...(ultimasSalidas.data || []).map((s) => ({
+      tipo: "salida",
+      id: s.id,
+      created_at: s.created_at,
+      full_name: s.full_name,
+      titulo: s.articulo,
+      cantidad: s.cantidad,
+      detalle: s.motivo,
+    })),
+    ...(ultimosTanques.data || []).map((t) => ({
+      tipo: "tanque",
+      id: t.id,
+      created_at: t.created_at,
+      full_name: t.full_name,
+      titulo: "Llenado de tanque",
+      cantidad: t.cantidad,
+      detalle: t.nota,
+    })),
+  ]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 8);
+
   return (
     <div>
-      <TopbarClient nombre={primerNombre} />
+      <AppHeader />
 
       <div className="page">
+        <div className="period-toggle">
+          <Link
+            href="/dashboard?periodo=semana"
+            className={"period-btn" + (periodo === "semana" ? " period-btn-active" : "")}
+          >
+            Esta semana
+          </Link>
+          <Link
+            href="/dashboard?periodo=anio"
+            className={"period-btn" + (periodo === "anio" ? " period-btn-active" : "")}
+          >
+            Este año
+          </Link>
+        </div>
+
         <div className="stat-row">
           <div className="stat-card">
-            <div className="stat-value">{salidasHoy.count ?? 0}</div>
-            <div className="stat-label">Salidas registradas hoy</div>
+            <div className="stat-value">{totalSalidas}</div>
+            <div className="stat-label">
+              Salidas {periodo === "anio" ? "este año" : "esta semana"}
+            </div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">{totalTanquesHoy}</div>
-            <div className="stat-label">Tanques llenados hoy</div>
+            <div className="stat-value">{totalTanques}</div>
+            <div className="stat-label">
+              Tanques llenados {periodo === "anio" ? "este año" : "esta semana"}
+            </div>
           </div>
         </div>
 
         <div className="grid-actions">
           <Link href="/salidas/nueva" className="action-card">
-            <span className="action-icon">📦</span>
+            <IconPackage size={26} />
             Registrar salida de pieza
           </Link>
           <Link href="/tanques/nuevo" className="action-card">
-            <span className="action-icon">🛢️</span>
+            <IconTank size={26} />
             Registrar llenado de tanque
           </Link>
         </div>
 
-        <div className="section-title">
-          Últimas salidas
-          <Link href="/salidas">Ver historial</Link>
-        </div>
-        <div className="card">
-          {ultimasSalidas.data && ultimasSalidas.data.length > 0 ? (
-            ultimasSalidas.data.map((s) => (
-              <div className="list-item" key={s.id}>
-                <div className="list-item-top">
-                  <span className="list-item-title">{s.articulo}</span>
-                  <span className="list-item-qty">x{s.cantidad}</span>
+        {topArticulos.length > 0 && (
+          <>
+            <div className="section-title">Artículos más sacados</div>
+            <div className="card">
+              {topArticulos.map((a) => (
+                <div className="list-item" key={a.nombre}>
+                  <div className="list-item-top">
+                    <span className="list-item-title">{a.nombre}</span>
+                    <span className="list-item-qty">{a.total}</span>
+                  </div>
                 </div>
-                <div className="list-item-meta">
-                  {s.full_name} · {formatFecha(s.created_at)} · {s.motivo}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="empty">Aún no hay salidas registradas.</div>
-          )}
-        </div>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className="section-title">
-          Últimos llenados de tanques
-          <Link href="/tanques">Ver historial</Link>
+          Actividad reciente
+          <Link href="/salidas">Ver todo</Link>
         </div>
         <div className="card">
-          {ultimosTanques.data && ultimosTanques.data.length > 0 ? (
-            ultimosTanques.data.map((t) => (
-              <div className="list-item" key={t.id}>
+          {actividad.length > 0 ? (
+            actividad.map((a) => (
+              <div className="list-item" key={a.tipo + a.id}>
                 <div className="list-item-top">
-                  <span className="list-item-title">{t.full_name}</span>
-                  <span className="list-item-qty">{t.cantidad} tanque(s)</span>
+                  <span className="list-item-title">
+                    {a.tipo === "salida" ? <IconPackage size={14} /> : <IconTank size={14} />}{" "}
+                    {a.titulo}
+                  </span>
+                  <span className="list-item-qty">
+                    {a.tipo === "salida" ? `x${a.cantidad}` : `${a.cantidad} tanque(s)`}
+                  </span>
                 </div>
-                <div className="list-item-meta">{formatFecha(t.created_at)}</div>
-                {t.nota && <div className="list-item-note">{t.nota}</div>}
+                <div className="list-item-meta">
+                  {a.full_name} · {formatFecha(a.created_at)}
+                </div>
+                {a.detalle && <div className="list-item-note">{a.detalle}</div>}
               </div>
             ))
           ) : (
-            <div className="empty">Aún no hay llenados registrados.</div>
+            <div className="empty">Aún no hay actividad registrada.</div>
           )}
         </div>
       </div>
     </div>
   );
+}
+
+function calcularTopArticulos(salidas) {
+  const totales = new Map();
+  for (const s of salidas) {
+    const actual = totales.get(s.articulo) || 0;
+    totales.set(s.articulo, actual + Number(s.cantidad));
+  }
+  return Array.from(totales.entries())
+    .map(([nombre, total]) => ({ nombre, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5);
 }
 
 function formatFecha(iso) {

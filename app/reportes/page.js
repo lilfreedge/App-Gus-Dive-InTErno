@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
-import NuevoLlenadoForm from "./form-client";
+import ReportesForm from "./form-client";
 
-export default async function NuevoLlenadoPage() {
+export default async function ReportesPage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  await requireAdmin(supabase);
 
   return (
     <div>
@@ -16,10 +15,12 @@ export default async function NuevoLlenadoPage() {
         <Link href="/dashboard" className="back-link">
           ← Volver
         </Link>
-        <h1 className="page-title">Registrar llenado de tanque</h1>
-        <p className="page-subtitle">Para llevar el conteo de llenados internos.</p>
+        <h1 className="page-title">Reportes</h1>
+        <p className="page-subtitle">
+          Elige el rango de fechas y descarga el detalle en Excel o CSV.
+        </p>
 
-        <NuevoLlenadoForm userId={user.id} />
+        <ReportesForm />
       </div>
     </div>
   );

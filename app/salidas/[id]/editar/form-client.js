@@ -3,16 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { registrarCambio } from "@/lib/audit-client";
 
-export default function NuevaSalidaForm({ userId, articulos, admins }) {
+export default function EditarSalidaForm({ registro, articulos, admins }) {
   const router = useRouter();
   const supabase = createClient();
 
-  const [articuloId, setArticuloId] = useState("");
-  const [cantidad, setCantidad] = useState("1");
-  const [motivo, setMotivo] = useState("");
-  const [autorizadoPorId, setAutorizadoPorId] = useState("");
-  const [nota, setNota] = useState("");
+  const [articuloId, setArticuloId] = useState(registro.articulo_id || "");
+  const [cantidad, setCantidad] = useState(String(registro.cantidad));
+  const [motivo, setMotivo] = useState(registro.motivo || "");
+  const [autorizadoPorId, setAutorizadoPorId] = useState(registro.autorizado_por_id || "");
+  const [nota, setNota] = useState(registro.nota || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -30,16 +31,25 @@ export default function NuevaSalidaForm({ userId, articulos, admins }) {
 
     setLoading(true);
 
-    const { error } = await supabase.from("salidas").insert({
-      user_id: userId,
-      articulo_id: articuloId,
-      articulo: articulo?.nombre || "",
-      cantidad: Number(cantidad),
-      motivo: motivo.trim(),
-      autorizado_por_id: autorizadoPorId || null,
-      autorizado_por: admin?.full_name || null,
-      nota: nota.trim() || null,
+    await registrarCambio(supabase, {
+      tabla: "salidas",
+      registroId: registro.id,
+      accion: "editar",
+      datosAnteriores: registro,
     });
+
+    const { error } = await supabase
+      .from("salidas")
+      .update({
+        articulo_id: articuloId,
+        articulo: articulo?.nombre || registro.articulo,
+        cantidad: Number(cantidad),
+        motivo: motivo.trim(),
+        autorizado_por_id: autorizadoPorId || null,
+        autorizado_por: admin?.full_name || null,
+        nota: nota.trim() || null,
+      })
+      .eq("id", registro.id);
 
     setLoading(false);
 
@@ -50,17 +60,6 @@ export default function NuevaSalidaForm({ userId, articulos, admins }) {
 
     router.push("/salidas");
     router.refresh();
-  }
-
-  if (articulos.length === 0) {
-    return (
-      <div className="card">
-        <div className="empty">
-          Todavía no hay artículos en el catálogo. Pídele a un administrador que
-          agregue artículos en "Catálogo" antes de registrar salidas.
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -98,7 +97,6 @@ export default function NuevaSalidaForm({ userId, articulos, admins }) {
         required
         value={motivo}
         onChange={(e) => setMotivo(e.target.value)}
-        placeholder="Ej. reparación de equipo de tienda"
       />
 
       <label htmlFor="autorizadoPor">Autorizado por</label>
@@ -116,17 +114,12 @@ export default function NuevaSalidaForm({ userId, articulos, admins }) {
       </select>
 
       <label htmlFor="nota">Nota adicional</label>
-      <textarea
-        id="nota"
-        value={nota}
-        onChange={(e) => setNota(e.target.value)}
-        placeholder="Cualquier detalle extra (opcional)"
-      />
+      <textarea id="nota" value={nota} onChange={(e) => setNota(e.target.value)} />
 
       {error && <div className="error-box">{error}</div>}
 
       <button className="btn btn-primary" type="submit" disabled={loading}>
-        {loading ? "Guardando..." : "Guardar salida"}
+        {loading ? "Guardando..." : "Guardar cambios"}
       </button>
     </form>
   );
