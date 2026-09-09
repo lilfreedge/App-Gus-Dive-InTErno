@@ -1136,9 +1136,9 @@ label .req {
 }
 
 .loading-logo-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
+  width: 180px;
+  height: auto;
+  object-fit: contain;
   animation: loading-logo-pulse 1.4s ease-in-out infinite;
 }
 
