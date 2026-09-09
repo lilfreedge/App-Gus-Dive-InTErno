@@ -73,7 +73,7 @@ export default async function ManualPage() {
             <div className="section-title">Generar reportes</div>
             <div className="card">
               Reportes → elige el rango de fechas y si quieres Salidas,
-              Llenados o Ambos, y descarga en PDF o Excel. El mismo diseño
+              Llenados o Todos, y descarga en PDF o Excel. El mismo diseño
               de PDF es el que se manda automáticamente por correo cada
               semana.
             </div>

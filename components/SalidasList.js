@@ -19,7 +19,7 @@ export default function SalidasList({ salidas, puedeEditar }) {
               <span className="badge">{s.motivo}</span>
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span className="list-item-qty">x{s.cantidad}</span>
+              <span className="list-item-qty">{s.cantidad}</span>
               {puedeEditar && (
                 <RegistroActions
                   tabla="salidas"

@@ -11,6 +11,14 @@ import AppHeader from "@/components/AppHeader";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V4",
+    fecha: "9 de septiembre, 2026",
+    titulo: "Motivo de anulación, sección Manual, Mi Perfil y mejoras generales",
+    descripcion:
+      "Ahora hay que explicar el motivo al anular una salida o un llenado. Se agregó la sección \"Manual\" (visible según permiso otorgable a cada usuario) y la página \"Mi Perfil\" con \"Mi actividad\" y \"Apariencia\" (modo oscuro y tamaño de letra). También se mejoraron Inicio, Reportes, Catálogo e Historial, y se agregó la opción de recuperar la contraseña.",
+  },
+  {
+    version: "V3",
     fecha: "2 de septiembre, 2026",
     titulo: "Roles avanzados, folios, reportes en PDF y más",
     descripcion:
@@ -18,6 +26,7 @@ const ENTRADAS = [
     shots: ["Antes", "Después"],
   },
   {
+    version: "V2",
     fecha: "2 de septiembre, 2026",
     titulo: "Roles, catálogo, reportes y edición con historial",
     descripcion:
@@ -25,6 +34,7 @@ const ENTRADAS = [
     shots: ["Antes", "Después"],
   },
   {
+    version: "V1",
     fecha: "27 de agosto, 2026",
     titulo: "Lanzamiento inicial",
     descripcion:
@@ -45,14 +55,18 @@ export default function ChangelogPage() {
 
         {ENTRADAS.map((e, i) => (
           <div className="changelog-entry" key={i}>
-            <div className="changelog-date">{e.fecha}</div>
+            <div className="changelog-date">
+              <span className="changelog-version">{e.version}</span> · {e.fecha}
+            </div>
             <div className="changelog-title">{e.titulo}</div>
             <div className="changelog-desc">{e.descripcion}</div>
-            <div className="shots">
-              {e.shots.map((lbl) => (
-                <PlaceholderShot key={lbl} label={lbl} />
-              ))}
-            </div>
+            {e.shots && e.shots.length > 0 && (
+              <div className="shots">
+                {e.shots.map((lbl) => (
+                  <PlaceholderShot key={lbl} label={lbl} />
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -13,6 +13,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [logo, setLogo] = useState({
+    src: "/logo-gus-dive-center.png",
+    width: 220,
+    height: 57,
+  });
 
   // Si venimos de un enlace de confirmación/recuperación que no se pudo
   // validar (ver app/auth/confirm/route.js), mostramos aquí el motivo en
@@ -21,6 +26,30 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     const err = params.get("error");
     if (err) setError(err);
+  }, []);
+
+  // Qué logo mostrar (config del Titular en app_config). Lectura pública,
+  // funciona sin sesión. Si algo falla o no hay config, se queda con el
+  // logo grande por defecto, sin mostrar error al usuario.
+  useEffect(() => {
+    let cancelado = false;
+
+    supabase
+      .from("app_config")
+      .select("logo_login")
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelado || error || !data) return;
+        if (data.logo_login === "chico") {
+          setLogo({ src: "/logo-gus-icon.png", width: 64, height: 64 });
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleSubmit(e) {
@@ -49,10 +78,11 @@ export default function LoginPage() {
       <div className="auth-card">
         <div className="auth-logo">
           <Image
-            src="/logo-gus-dive-center.png"
+            key={logo.src}
+            src={logo.src}
             alt="Gus Dive Center"
-            width={220}
-            height={57}
+            width={logo.width}
+            height={logo.height}
             priority
           />
         </div>

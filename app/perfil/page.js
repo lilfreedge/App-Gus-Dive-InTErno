@@ -67,7 +67,7 @@ export default async function PerfilPage() {
                       {a.articulo}
                       <span className="badge">{a.motivo}</span>
                     </span>
-                    <span className="list-item-qty">x{a.cantidad}</span>
+                    <span className="list-item-qty">{a.cantidad}</span>
                   </div>
                   <div className="list-item-meta">Salida · {formatFecha(a.created_at)}</div>
                 </div>

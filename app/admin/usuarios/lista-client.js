@@ -4,7 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-const PERMISOS_DEFAULT = { reportes: false, catalogo: true, historial: false, changelog: false, manual: false };
+const PERMISOS_DEFAULT = {
+  reportes: false,
+  catalogo: true,
+  historial: false,
+  changelog: false,
+  manual: false,
+  movimientos: false,
+};
 
 export default function ListaUsuarios({ perfiles, miId }) {
   const router = useRouter();
@@ -38,6 +45,7 @@ export default function ListaUsuarios({ perfiles, miId }) {
             <th>Historial</th>
             <th>Changelog</th>
             <th>Manual</th>
+            <th>Movimientos</th>
           </tr>
         </thead>
         <tbody>
@@ -51,6 +59,7 @@ export default function ListaUsuarios({ perfiles, miId }) {
                   <td>
                     <span className="role-tag role-tag-titular">Titular</span>
                   </td>
+                  <td>—</td>
                   <td>—</td>
                   <td>—</td>
                   <td>—</td>
@@ -76,7 +85,7 @@ export default function ListaUsuarios({ perfiles, miId }) {
                     <option value="usuario">Usuario</option>
                   </select>
                 </td>
-                {["reportes", "catalogo", "historial", "changelog", "manual"].map((clave) => (
+                {["reportes", "catalogo", "historial", "changelog", "manual", "movimientos"].map((clave) => (
                   <td key={clave}>
                     <input
                       type="checkbox"

@@ -2,11 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermiso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
+import HistorialDeleteButton from "@/components/HistorialDeleteButton";
 import { formatFecha } from "@/lib/format";
 
 export default async function HistorialCambiosPage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "historial");
+  const { profile } = await requirePermiso(supabase, "historial");
+  const esTitular = !!profile?.es_titular;
 
   const { data: cambios } = await supabase
     .from("historial_con_nombre")
@@ -25,14 +27,14 @@ export default async function HistorialCambiosPage() {
 
         <div className="section-title">Movimientos anulados</div>
         {anulados.length > 0 ? (
-          anulados.map((c) => <TarjetaAnulado key={c.id} cambio={c} />)
+          anulados.map((c) => <TarjetaAnulado key={c.id} cambio={c} esTitular={esTitular} />)
         ) : (
           <div className="empty">No hay movimientos anulados.</div>
         )}
 
         <div className="section-title">Ediciones</div>
         {ediciones.length > 0 ? (
-          ediciones.map((c) => <TarjetaEdicion key={c.id} cambio={c} />)
+          ediciones.map((c) => <TarjetaEdicion key={c.id} cambio={c} esTitular={esTitular} />)
         ) : (
           <div className="empty">No hay ediciones registradas.</div>
         )}
@@ -44,15 +46,19 @@ export default async function HistorialCambiosPage() {
 function tituloRegistro(tabla) {
   if (tabla === "salidas") return "Salida";
   if (tabla === "llenados_tanques") return "Llenado";
+  if (tabla === "articulos") return "Código de catálogo";
   return "Cambio de nombre";
 }
 
-function TarjetaAnulado({ cambio }) {
+function TarjetaAnulado({ cambio, esTitular }) {
   const d = cambio.datos_anteriores || {};
   return (
     <div className="card anulado">
-      <div className="list-item-title">
-        {tituloRegistro(cambio.tabla)} {cambio.tabla === "llenados_tanques" ? "borrado" : "borrada"}
+      <div className="list-item-top">
+        <div className="list-item-title">
+          {tituloRegistro(cambio.tabla)} {cambio.tabla === "llenados_tanques" ? "borrado" : "borrada"}
+        </div>
+        {esTitular && <HistorialDeleteButton cambioId={cambio.id} />}
       </div>
       <table className="table-mini" style={{ marginTop: 8 }}>
         <tbody>
@@ -64,6 +70,12 @@ function TarjetaAnulado({ cambio }) {
             <td>Contenido</td>
             <td>{contenido(cambio.tabla, d)}</td>
           </tr>
+          {d.nota && (
+            <tr>
+              <td>Nota</td>
+              <td>{d.nota}</td>
+            </tr>
+          )}
           <tr>
             <td>Registrado originalmente por</td>
             <td>{d.nombre_usuario_snapshot || "—"}</td>
@@ -92,13 +104,16 @@ function TarjetaAnulado({ cambio }) {
   );
 }
 
-function TarjetaEdicion({ cambio }) {
+function TarjetaEdicion({ cambio, esTitular }) {
   const d = cambio.datos_anteriores || {};
 
   if (cambio.tabla === "profiles") {
     return (
       <div className="card edicion">
-        <div className="list-item-title">Cambio de nombre</div>
+        <div className="list-item-top">
+          <div className="list-item-title">Cambio de nombre</div>
+          {esTitular && <HistorialDeleteButton cambioId={cambio.id} />}
+        </div>
         <table className="table-mini" style={{ marginTop: 8 }}>
           <tbody>
             <tr>
@@ -123,10 +138,44 @@ function TarjetaEdicion({ cambio }) {
     );
   }
 
+  if (cambio.tabla === "articulos") {
+    return (
+      <div className="card edicion">
+        <div className="list-item-top">
+          <div className="list-item-title">Código de catálogo editado</div>
+          {esTitular && <HistorialDeleteButton cambioId={cambio.id} />}
+        </div>
+        <table className="table-mini" style={{ marginTop: 8 }}>
+          <tbody>
+            <tr>
+              <td>Código</td>
+              <td>{d.nombre || "—"}</td>
+            </tr>
+            <tr>
+              <td>Descripción antes de editar</td>
+              <td>{d.descripcion || "—"}</td>
+            </tr>
+            <tr>
+              <td>Editado por</td>
+              <td>{cambio.full_name}</td>
+            </tr>
+            <tr>
+              <td>Fecha de edición</td>
+              <td>{formatFecha(cambio.created_at)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <div className="card edicion">
-      <div className="list-item-title">
-        {tituloRegistro(cambio.tabla)} {cambio.tabla === "llenados_tanques" ? "editado" : "editada"}
+      <div className="list-item-top">
+        <div className="list-item-title">
+          {tituloRegistro(cambio.tabla)} {cambio.tabla === "llenados_tanques" ? "editado" : "editada"}
+        </div>
+        {esTitular && <HistorialDeleteButton cambioId={cambio.id} />}
       </div>
       <table className="table-mini" style={{ marginTop: 8 }}>
         <tbody>
@@ -165,7 +214,7 @@ function contenido(tabla, d) {
     return `${d.articulo} x${d.cantidad} · ${d.motivo}${d.autorizado_por ? ` · autorizó ${d.autorizado_por}` : ""}`;
   }
   if (tabla === "llenados_tanques") {
-    return `${d.cantidad} tanque(s) · ${d.tipo_gas || "Aire"}${d.nota ? ` · nota "${d.nota}"` : ""}`;
+    return `${d.cantidad} tanque(s) · ${d.tipo_gas || "Aire"}`;
   }
   return "";
 }

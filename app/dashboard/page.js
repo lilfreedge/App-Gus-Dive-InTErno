@@ -150,7 +150,7 @@ export default async function DashboardPage({ searchParams }) {
 
         <div className="section-title">
           Actividad reciente
-          <Link href="/salidas">Ver todo</Link>
+          <Link href="/movimientos">Ver todo</Link>
         </div>
         <div className="card">
           {actividad.length > 0 ? (
@@ -162,7 +162,7 @@ export default async function DashboardPage({ searchParams }) {
                     {a.titulo}
                   </span>
                   <span className="list-item-qty">
-                    {a.tipo === "salida" ? `x${a.cantidad}` : `${a.cantidad} tanque(s)`}
+                    {a.tipo === "salida" ? a.cantidad : `${a.cantidad} tanque(s)`}
                   </span>
                 </div>
                 <div className="list-item-meta">

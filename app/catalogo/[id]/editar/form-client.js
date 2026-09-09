@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { registrarCambio } from "@/lib/audit-client";
 
 export default function EditarCodigoForm({ articulo }) {
   const router = useRouter();
@@ -29,6 +30,14 @@ export default function EditarCodigoForm({ articulo }) {
     setDescripcionError(false);
 
     setLoading(true);
+
+    await registrarCambio(supabase, {
+      tabla: "articulos",
+      registroId: articulo.id,
+      accion: "editar",
+      datosAnteriores: articulo,
+    });
+
     const { error } = await supabase
       .from("articulos")
       .update({ nombre: nombreLimpio, descripcion: descripcionLimpia })

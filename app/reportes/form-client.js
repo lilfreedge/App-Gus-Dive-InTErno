@@ -57,7 +57,7 @@ export default function ReportesForm({ usuarios }) {
 
       <label htmlFor="tipo">Tipo de dato</label>
       <select id="tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-        <option value="ambos">Ambos</option>
+        <option value="ambos">Todos</option>
         <option value="salidas">Salidas</option>
         <option value="llenados">Llenados</option>
       </select>
