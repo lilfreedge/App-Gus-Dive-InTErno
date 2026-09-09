@@ -4,10 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
+import { IconEdit } from "@/components/icons";
 
-export default function PerfilForm({ userId, nombreActual }) {
+export default function PerfilForm({ userId, nombreActual, correo }) {
   const router = useRouter();
   const supabase = createClient();
+
+  // Los campos de nombre y contraseña empiezan ocultos: se muestran solo
+  // al presionar "Editar perfil".
+  const [editando, setEditando] = useState(false);
 
   const [nombre, setNombre] = useState(nombreActual);
   const [msgNombre, setMsgNombre] = useState("");
@@ -20,6 +25,10 @@ export default function PerfilForm({ userId, nombreActual }) {
   const [errorPass, setErrorPass] = useState("");
   const [okPass, setOkPass] = useState("");
   const [loadingPass, setLoadingPass] = useState(false);
+
+  function toggleEditando() {
+    setEditando((abierto) => !abierto);
+  }
 
   async function guardarNombre(e) {
     e.preventDefault();
@@ -112,79 +121,104 @@ export default function PerfilForm({ userId, nombreActual }) {
 
   return (
     <>
-      <form onSubmit={guardarNombre} className="card">
-        <div className="section-title" style={{ marginTop: 0 }}>
-          Mi información
+      <div className="section-title" style={{ marginTop: 26 }}>
+        Mi información
+      </div>
+      <div className="card">
+        <div className="list-item-top" style={{ alignItems: "center" }}>
+          <div>
+            <div className="list-item-title">{nombreActual}</div>
+            <div className="list-item-meta" style={{ marginTop: 2 }}>
+              {correo}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={toggleEditando}
+            style={{ marginTop: 0, width: "auto", padding: "8px 16px", flexShrink: 0 }}
+          >
+            <IconEdit size={14} /> {editando ? "Cancelar" : "Editar perfil"}
+          </button>
         </div>
-        <label htmlFor="nombre">Nombre</label>
-        <input id="nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
-        <p style={{ fontSize: 11.5, color: "var(--texto-suave)", marginTop: 4 }}>
-          Si cambias tu nombre, queda registrado en el Historial (quién, de qué nombre a
-          cuál, y cuándo) — y tus salidas/llenados pasados conservan el nombre tal como
-          era en su momento, no se actualizan solos.
-        </p>
+      </div>
 
-        {errorNombre && <div className="error-box">{errorNombre}</div>}
-        {msgNombre && <div className="success-box">{msgNombre}</div>}
+      {editando && (
+        <div style={{ marginTop: 16 }}>
+          <form onSubmit={guardarNombre} className="card">
+            <label htmlFor="nombre" style={{ marginTop: 0 }}>
+              Nombre
+            </label>
+            <input id="nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+            <p className="hint-text">
+              Si cambias tu nombre, queda registrado en el Historial (quién, de qué nombre a
+              cuál, y cuándo) — y tus salidas/llenados pasados conservan el nombre tal como
+              era en su momento, no se actualizan solos.
+            </p>
 
-        <button
-          className="btn btn-secondary"
-          type="submit"
-          disabled={loadingNombre}
-          style={{ marginTop: 10, width: "auto", padding: "10px 18px" }}
-        >
-          {loadingNombre ? "Guardando..." : "Guardar nombre"}
-        </button>
-      </form>
+            {errorNombre && <div className="error-box">{errorNombre}</div>}
+            {msgNombre && <div className="success-box">{msgNombre}</div>}
 
-      <form onSubmit={cambiarPassword} className="card">
-        <div className="section-title" style={{ marginTop: 0 }}>
-          Cambiar contraseña
+            <button
+              className="btn btn-secondary"
+              type="submit"
+              disabled={loadingNombre}
+              style={{ marginTop: 10, width: "auto", padding: "10px 18px" }}
+            >
+              {loadingNombre ? "Guardando..." : "Guardar nombre"}
+            </button>
+          </form>
+
+          <form onSubmit={cambiarPassword} className="card">
+            <div className="section-title" style={{ marginTop: 0 }}>
+              Cambiar contraseña
+            </div>
+
+            <label htmlFor="actual" style={{ marginTop: 0 }}>
+              Contraseña actual <span className="req">*</span>
+            </label>
+            <input
+              id="actual"
+              type="password"
+              value={actual}
+              onChange={(e) => setActual(e.target.value)}
+              placeholder="••••••••"
+              autoComplete="current-password"
+            />
+
+            <label htmlFor="nueva">
+              Contraseña nueva <span className="req">*</span>
+            </label>
+            <input
+              id="nueva"
+              type="password"
+              value={nueva}
+              onChange={(e) => setNueva(e.target.value)}
+              placeholder="Mínimo 8 caracteres"
+              autoComplete="new-password"
+            />
+
+            <label htmlFor="confirmar">
+              Confirmar contraseña nueva <span className="req">*</span>
+            </label>
+            <input
+              id="confirmar"
+              type="password"
+              value={confirmar}
+              onChange={(e) => setConfirmar(e.target.value)}
+              placeholder="Repite la contraseña nueva"
+              autoComplete="new-password"
+            />
+
+            {errorPass && <div className="error-box">{errorPass}</div>}
+            {okPass && <div className="success-box">{okPass}</div>}
+
+            <button className="btn btn-primary" type="submit" disabled={loadingPass}>
+              {loadingPass ? "Guardando..." : "Cambiar contraseña"}
+            </button>
+          </form>
         </div>
-
-        <label htmlFor="actual">
-          Contraseña actual <span style={{ color: "var(--rojo)" }}>*</span>
-        </label>
-        <input
-          id="actual"
-          type="password"
-          value={actual}
-          onChange={(e) => setActual(e.target.value)}
-          placeholder="••••••••"
-          autoComplete="current-password"
-        />
-
-        <label htmlFor="nueva">
-          Contraseña nueva <span style={{ color: "var(--rojo)" }}>*</span>
-        </label>
-        <input
-          id="nueva"
-          type="password"
-          value={nueva}
-          onChange={(e) => setNueva(e.target.value)}
-          placeholder="Mínimo 8 caracteres"
-          autoComplete="new-password"
-        />
-
-        <label htmlFor="confirmar">
-          Confirmar contraseña nueva <span style={{ color: "var(--rojo)" }}>*</span>
-        </label>
-        <input
-          id="confirmar"
-          type="password"
-          value={confirmar}
-          onChange={(e) => setConfirmar(e.target.value)}
-          placeholder="Repite la contraseña nueva"
-          autoComplete="new-password"
-        />
-
-        {errorPass && <div className="error-box">{errorPass}</div>}
-        {okPass && <div className="success-box">{okPass}</div>}
-
-        <button className="btn btn-primary" type="submit" disabled={loadingPass}>
-          {loadingPass ? "Guardando..." : "Cambiar contraseña"}
-        </button>
-      </form>
+      )}
     </>
   );
 }

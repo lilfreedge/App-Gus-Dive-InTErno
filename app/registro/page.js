@@ -24,6 +24,7 @@ export default function RegistroPage() {
       password,
       options: {
         data: { full_name: fullName.trim() },
+        emailRedirectTo: `${window.location.origin}/auth/confirm?type=signup&next=/dashboard`,
       },
     });
 
@@ -61,7 +62,7 @@ export default function RegistroPage() {
         {success ? (
           <>
             <div className="success-box">
-              Cuenta creada. Ya puedes iniciar sesión con tu correo y contraseña.
+              Cuenta creada. Confirma tu cuenta en el correo que te llegó y luego inicia sesión.
             </div>
             <Link href="/login">
               <button className="btn btn-primary" type="button">

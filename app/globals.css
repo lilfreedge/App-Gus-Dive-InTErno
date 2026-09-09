@@ -9,7 +9,110 @@
   --borde: #dfe6ea;
   --rojo: #d64545;
   --verde: #2c9e5b;
+
+  /* Tokens de superficie secundaria (fondos "suaves" de hover/chips/inputs) */
+  --superficie-suave: #eef3f6;
+  --superficie-suave-hover: #f0f3f6;
+  --tag-tu: #eaf2f7;
+
+  --error-fondo: #fdecec;
+  --error-borde: #f4c6c6;
+  --exito-fondo: #e9f8ef;
+  --exito-borde: #bfe8cf;
+
+  --acento-fondo: #fdece9;
+  --acento-texto: #e2472a;
+
+  --anulado-fondo: #fdf2f1;
+  --anulado-borde: #f3d4d0;
+  --edicion-fondo: #eef4f9;
+  --edicion-borde: #d3e2ee;
+
+  /* Tamaño de letra (Ajustes → Mi Perfil → Apariencia): escala todo vía zoom. */
+  --zoom-app: 1;
 }
+
+html[data-tamano-letra="muy-chica"] {
+  --zoom-app: 0.85;
+}
+html[data-tamano-letra="chica"] {
+  --zoom-app: 0.92;
+}
+html[data-tamano-letra="grande"] {
+  --zoom-app: 1.1;
+}
+html[data-tamano-letra="muy-grande"] {
+  --zoom-app: 1.2;
+}
+
+body {
+  zoom: var(--zoom-app);
+}
+
+/* ============================================================
+   Modo oscuro (Ajustes → Mi Perfil → Apariencia). Preferencia por
+   dispositivo, guardada en localStorage y aplicada con
+   html[data-theme="dark"]. La barra superior (.topbar/.topnav) se deja
+   igual en ambos temas -- ya es azul marino con texto blanco.
+   ============================================================ */
+html[data-theme="dark"] {
+  --fondo: #0b141c;
+  --tarjeta: #16232f;
+  --texto: #e7edf2;
+  --texto-suave: #8fa1b0;
+  --borde: #243546;
+  --azul-claro: #7fb3e0;
+
+  --superficie-suave: #1c2a38;
+  --superficie-suave-hover: #1a2734;
+  --tag-tu: #16232f;
+
+  --error-fondo: #2b1a17;
+  --error-borde: #4a2c26;
+  --exito-fondo: #12291c;
+  --exito-borde: #22492f;
+
+  --acento-fondo: #3a241d;
+  --acento-texto: #ff9478;
+
+  --anulado-fondo: #2b1a17;
+  --anulado-borde: #4a2c26;
+  --edicion-fondo: #152431;
+  --edicion-borde: #264259;
+}
+
+html[data-theme="dark"] input[type="text"],
+html[data-theme="dark"] input[type="number"],
+html[data-theme="dark"] input[type="date"],
+html[data-theme="dark"] input[type="email"],
+html[data-theme="dark"] input[type="password"],
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  background: #0e1922;
+  color: var(--texto);
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #5d7182;
+}
+
+html[data-theme="dark"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+html[data-theme="dark"] .auth-wrap {
+  background: linear-gradient(160deg, #0a3d62 0%, #123a52 55%, #0b3a3a 100%);
+}
+
+html[data-theme="dark"] .auth-card,
+html[data-theme="dark"] .login-shell {
+  background: var(--tarjeta);
+}
+
+/* Nota: esta app no tiene una vista previa de PDF/reporte dentro de la
+   interfaz (los reportes se generan del lado del servidor y se descargan
+   como archivo) -- por eso no hay una excepción de "se queda claro" aquí. */
 
 * {
   box-sizing: border-box;
@@ -190,7 +293,7 @@ textarea {
   border: 1px solid var(--borde);
   font-size: 15px;
   color: var(--texto);
-  background: #fff;
+  background: var(--tarjeta);
 }
 
 input:focus,
@@ -236,7 +339,7 @@ textarea {
 }
 
 .btn-secondary {
-  background: #eef3f6;
+  background: var(--superficie-suave);
   color: var(--azul);
 }
 
@@ -254,9 +357,9 @@ textarea {
 }
 
 .error-box {
-  background: #fdecec;
+  background: var(--error-fondo);
   color: var(--rojo);
-  border: 1px solid #f4c6c6;
+  border: 1px solid var(--error-borde);
   border-radius: 9px;
   padding: 10px 12px;
   font-size: 13.5px;
@@ -264,9 +367,9 @@ textarea {
 }
 
 .success-box {
-  background: #e9f8ef;
+  background: var(--exito-fondo);
   color: var(--verde);
-  border: 1px solid #bfe8cf;
+  border: 1px solid var(--exito-borde);
   border-radius: 9px;
   padding: 10px 12px;
   font-size: 13.5px;
@@ -333,7 +436,7 @@ textarea {
   text-align: center;
   padding: 9px;
   border-radius: 9px;
-  background: #eef3f6;
+  background: var(--superficie-suave);
   color: var(--azul-claro);
   font-weight: 600;
   font-size: 13.5px;
@@ -421,7 +524,7 @@ textarea {
   font-size: 10.5px;
   font-weight: 700;
   color: var(--azul-claro);
-  background: #eaf2f7;
+  background: var(--tag-tu);
   padding: 2px 7px;
   border-radius: 999px;
   vertical-align: middle;
@@ -429,7 +532,7 @@ textarea {
 
 .chip-btn {
   border: 1px solid var(--borde);
-  background: #fff;
+  background: var(--tarjeta);
   color: var(--texto-suave);
   font-size: 12px;
   font-weight: 600;
@@ -446,7 +549,7 @@ textarea {
 
 .icon-btn {
   border: 1px solid var(--borde);
-  background: #fff;
+  background: var(--tarjeta);
   color: var(--texto-suave);
   width: 32px;
   height: 32px;
@@ -524,7 +627,7 @@ textarea {
   position: absolute;
   top: 44px;
   right: 0;
-  background: #fff;
+  background: var(--tarjeta);
   border-radius: 10px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
   min-width: 220px;
@@ -564,7 +667,7 @@ textarea {
 }
 
 .settings-menu-link:hover {
-  background: #f0f3f6;
+  background: var(--superficie-suave-hover);
 }
 
 .settings-menu-danger {
@@ -578,8 +681,8 @@ textarea {
 .settings-menu-tag {
   margin-left: auto;
   font-size: 9px;
-  background: #fdece9;
-  color: #e2472a;
+  background: var(--acento-fondo);
+  color: var(--acento-texto);
   padding: 2px 6px;
   border-radius: 6px;
   font-weight: 700;
@@ -611,7 +714,7 @@ textarea {
 }
 
 .nav-arrow-btn:hover {
-  background: #eef3f6;
+  background: var(--superficie-suave);
 }
 
 .nav-arrow-spacer {
@@ -628,7 +731,7 @@ textarea {
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: #fff;
+  background: var(--tarjeta);
   border: 1px solid var(--borde);
   border-radius: 8px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
@@ -644,7 +747,7 @@ textarea {
 }
 
 .autocomplete-list div:hover {
-  background: #f0f3f6;
+  background: var(--superficie-suave-hover);
 }
 
 .radio-pills {
@@ -696,7 +799,7 @@ textarea {
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 12px;
-  background: #eef2f5;
+  background: var(--superficie-suave);
   color: var(--azul);
   margin-left: 4px;
   white-space: nowrap;
@@ -726,8 +829,8 @@ textarea {
 }
 
 .anulado {
-  background: #fdf2f1;
-  border-color: #f3d4d0;
+  background: var(--anulado-fondo);
+  border-color: var(--anulado-borde);
 }
 
 .anulado .list-item-title {
@@ -735,8 +838,8 @@ textarea {
 }
 
 .edicion {
-  background: #eef4f9;
-  border-color: #d3e2ee;
+  background: var(--edicion-fondo);
+  border-color: var(--edicion-borde);
 }
 
 .edicion .list-item-title {
@@ -758,7 +861,7 @@ textarea {
   border-radius: 12px;
   padding: 18px;
   margin-bottom: 14px;
-  background: #fff;
+  background: var(--tarjeta);
 }
 
 .changelog-date {
@@ -799,7 +902,7 @@ textarea {
 }
 
 .shot .box {
-  background: #eef1f4;
+  background: var(--superficie-suave);
   border: 1px dashed var(--borde);
   border-radius: 8px;
   height: 90px;
@@ -844,6 +947,169 @@ textarea {
 }
 
 .role-tag-titular {
-  background: #fdece9;
-  color: #e2472a;
+  background: var(--acento-fondo);
+  color: var(--acento-texto);
+}
+
+/* Modal de confirmación (p. ej. "Motivo de anulación") */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 30, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 16px;
+}
+
+.modal-panel {
+  background: var(--tarjeta);
+  border-radius: 12px;
+  padding: 20px 22px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.modal-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.modal-actions .btn {
+  width: auto;
+  margin-top: 0;
+}
+
+.btn.secondary {
+  background: var(--tarjeta);
+  color: var(--azul);
+  border: 1px solid var(--borde);
+}
+
+.btn.danger {
+  background: var(--rojo);
+  color: #fff;
+}
+
+label .req {
+  color: var(--rojo);
+}
+
+.field-error textarea {
+  border-color: var(--rojo);
+}
+
+.hint-text {
+  font-size: 11.5px;
+  color: var(--texto-suave);
+  margin-top: 4px;
+}
+
+/* Apariencia (Mi Perfil): toggle de modo oscuro */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.switch-row .switch-label,
+.switch-label {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.switch .slider {
+  position: absolute;
+  inset: 0;
+  background: #ccd3d9;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.switch .slider:before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.15s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.switch input:checked + .slider {
+  background: var(--azul);
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(18px);
+}
+
+/* Apariencia (Mi Perfil): stepper de tamaño de letra */
+.letra-stepper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.letra-stepper-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--borde);
+  background: var(--tarjeta);
+  color: var(--azul);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.letra-stepper-btn:hover {
+  background: var(--superficie-suave-hover);
+}
+
+.letra-stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  background: var(--tarjeta);
+}
+
+.letra-stepper-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--texto);
+  min-width: 88px;
+  text-align: center;
 }

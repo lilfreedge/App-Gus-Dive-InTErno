@@ -4,8 +4,12 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { IconEdit } from "@/components/icons";
 
-export default function ListaArticulos({ articulos, puedeAdministrar }) {
+// puedeAdministrar (Titular o Administrador): ve el lápiz de editar y
+// "Ver movimientos". esTitular: además ve "Inactivar" — ni siquiera un
+// Administrador común lo ve (regla nueva de V4).
+export default function ListaArticulos({ articulos, puedeAdministrar, esTitular }) {
   const router = useRouter();
   const supabase = createClient();
   const [loadingId, setLoadingId] = useState(null);
@@ -53,19 +57,37 @@ export default function ListaArticulos({ articulos, puedeAdministrar }) {
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 {puedeAdministrar && (
+                  <Link
+                    href={`/catalogo/${a.id}/editar`}
+                    className="icon-btn"
+                    aria-label="Editar"
+                    title="Editar"
+                  >
+                    <IconEdit size={15} />
+                  </Link>
+                )}
+                {puedeAdministrar && (
                   <Link href={`/catalogo/${a.id}/movimientos`}>
                     <button className="chip-btn" type="button">
                       Ver movimientos
                     </button>
                   </Link>
                 )}
-                {puedeAdministrar && (
+                {esTitular && (
                   <button
-                    className="chip-btn"
+                    type="button"
                     onClick={() => toggleActivo(a)}
                     disabled={loadingId === a.id}
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      border: "none",
+                      background: "none",
+                      color: "var(--rojo)",
+                      cursor: "pointer",
+                    }}
                   >
-                    {a.activo ? "Activo" : "Desactivado"}
+                    {a.activo ? "Inactivar" : "Reactivar"}
                   </button>
                 )}
               </div>

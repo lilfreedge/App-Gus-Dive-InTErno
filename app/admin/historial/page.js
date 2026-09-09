@@ -41,9 +41,9 @@ export default async function HistorialCambiosPage() {
   );
 }
 
-function tituloRegistro(tabla, datos) {
-  if (tabla === "salidas") return `Salida #${datos.folio ?? "?"}`;
-  if (tabla === "llenados_tanques") return `Llenado #${datos.folio ?? "?"}`;
+function tituloRegistro(tabla) {
+  if (tabla === "salidas") return "Salida";
+  if (tabla === "llenados_tanques") return "Llenado";
   return "Cambio de nombre";
 }
 
@@ -52,13 +52,25 @@ function TarjetaAnulado({ cambio }) {
   return (
     <div className="card anulado">
       <div className="list-item-title">
-        {tituloRegistro(cambio.tabla, d)} {cambio.tabla === "llenados_tanques" ? "borrado" : "borrada"}
+        {tituloRegistro(cambio.tabla)} {cambio.tabla === "llenados_tanques" ? "borrado" : "borrada"}
       </div>
       <table className="table-mini" style={{ marginTop: 8 }}>
         <tbody>
           <tr>
+            <td>No.</td>
+            <td>{d.folio ?? "?"}</td>
+          </tr>
+          <tr>
             <td>Contenido</td>
             <td>{contenido(cambio.tabla, d)}</td>
+          </tr>
+          <tr>
+            <td>Registrado originalmente por</td>
+            <td>{d.nombre_usuario_snapshot || "—"}</td>
+          </tr>
+          <tr>
+            <td>Fecha de registro original</td>
+            <td>{d.created_at ? formatFecha(d.created_at) : "—"}</td>
           </tr>
           <tr>
             <td>Borrado por</td>
@@ -68,6 +80,12 @@ function TarjetaAnulado({ cambio }) {
             <td>Fecha de borrado</td>
             <td>{formatFecha(cambio.created_at)}</td>
           </tr>
+          {cambio.motivo && (
+            <tr>
+              <td>Motivo</td>
+              <td>{cambio.motivo}</td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
@@ -108,20 +126,32 @@ function TarjetaEdicion({ cambio }) {
   return (
     <div className="card edicion">
       <div className="list-item-title">
-        {tituloRegistro(cambio.tabla, d)} {cambio.tabla === "llenados_tanques" ? "editado" : "editada"}
+        {tituloRegistro(cambio.tabla)} {cambio.tabla === "llenados_tanques" ? "editado" : "editada"}
       </div>
       <table className="table-mini" style={{ marginTop: 8 }}>
         <tbody>
           <tr>
+            <td>No.</td>
+            <td>{d.folio ?? "?"}</td>
+          </tr>
+          <tr>
             <td>Antes de editar</td>
             <td>{contenido(cambio.tabla, d)}</td>
+          </tr>
+          <tr>
+            <td>Registrado originalmente por</td>
+            <td>{d.nombre_usuario_snapshot || "—"}</td>
+          </tr>
+          <tr>
+            <td>Fecha de registro original</td>
+            <td>{d.created_at ? formatFecha(d.created_at) : "—"}</td>
           </tr>
           <tr>
             <td>Editado por</td>
             <td>{cambio.full_name}</td>
           </tr>
           <tr>
-            <td>Fecha</td>
+            <td>Fecha de edición</td>
             <td>{formatFecha(cambio.created_at)}</td>
           </tr>
         </tbody>

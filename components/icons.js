@@ -81,6 +81,17 @@ export function IconUsers(props) {
   );
 }
 
+export function IconBook(props) {
+  return (
+    <Base {...props}>
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+      <path d="M9 7h7" />
+      <path d="M9 11h7" />
+    </Base>
+  );
+}
+
 export function IconEdit(props) {
   return (
     <Base {...props}>
@@ -163,6 +174,14 @@ export function IconAlert(props) {
       <path d="M12 9v4" />
       <path d="M12 17h.01" />
       <path d="M10.3 3.9L2.6 18a1.5 1.5 0 0 0 1.3 2.3h16.2a1.5 1.5 0 0 0 1.3-2.3L13.7 3.9a1.5 1.5 0 0 0-2.6 0z" />
+    </Base>
+  );
+}
+
+export function IconMinus(props) {
+  return (
+    <Base {...props}>
+      <path d="M5 12h14" />
     </Base>
   );
 }

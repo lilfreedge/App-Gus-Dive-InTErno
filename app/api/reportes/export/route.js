@@ -40,7 +40,7 @@ export async function GET(request) {
   const nombreArchivo = `gus-dive-reporte_${desde}_a_${hasta}`;
 
   if (formato === "csv") {
-    const csv = construirCSV(datos);
+    const csv = construirCSV(datos, { tipo });
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
@@ -50,7 +50,7 @@ export async function GET(request) {
   }
 
   if (formato === "xlsx") {
-    const buffer = construirXLSX(datos, { desde, hasta });
+    const buffer = construirXLSX(datos, { desde, hasta, tipo });
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -59,7 +59,7 @@ export async function GET(request) {
     });
   }
 
-  const pdfBuffer = await construirPDF(datos, { desde, hasta });
+  const pdfBuffer = await construirPDF(datos, { desde, hasta, tipo });
   return new NextResponse(pdfBuffer, {
     headers: {
       "Content-Type": "application/pdf",

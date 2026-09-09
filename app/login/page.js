@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Si venimos de un enlace de confirmación/recuperación que no se pudo
+  // validar (ver app/auth/confirm/route.js), mostramos aquí el motivo en
+  // vez de dejarlo caer en una ruta que no existe.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get("error");
+    if (err) setError(err);
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -78,6 +87,10 @@ export default function LoginPage() {
             {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
+
+        <div className="auth-switch">
+          <Link href="/login/recuperar">¿Olvidé mi contraseña?</Link>
+        </div>
 
         <div className="auth-switch">
           ¿Usuario nuevo? <Link href="/registro">Crear cuenta</Link>

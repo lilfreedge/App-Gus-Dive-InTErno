@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AppHeader from "@/components/AppHeader";
-import NavArrowsServer from "@/components/NavArrowsServer";
 import NuevaSalidaForm from "./form-client";
 
 export default async function NuevaSalidaPage() {
@@ -18,7 +18,9 @@ export default async function NuevaSalidaPage() {
     <div>
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
-        <NavArrowsServer />
+        <Link href="/salidas" className="back-link">
+          ← Regresar
+        </Link>
         <h1 className="page-title">Registrar salida</h1>
         <p className="page-subtitle">
           Pieza, ring o artículo que se saca para uso interno de la tienda.

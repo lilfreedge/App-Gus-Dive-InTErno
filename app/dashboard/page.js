@@ -1,20 +1,35 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getProfileYUser } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import { IconPackage, IconTank } from "@/components/icons";
 
+const ETIQUETAS_PERIODO = {
+  semana: "esta semana",
+  mes: "este mes",
+  anio: "este año",
+};
+
 export default async function DashboardPage({ searchParams }) {
   const supabase = createClient();
-  const periodo = searchParams?.periodo === "anio" ? "anio" : "semana";
+  const { profile } = await getProfileYUser(supabase);
+  // "Ver movimientos" (destino de las tarjetas de "Artículos más sacados")
+  // es solo para Titular/Administrador — mismo gate que en Catálogo.
+  const puedeVerMovimientos = !!(profile?.is_admin || profile?.es_titular);
+
+  const periodoParam = searchParams?.periodo;
+  const periodo = periodoParam === "mes" || periodoParam === "anio" ? periodoParam : "semana";
 
   const desde = new Date();
-  desde.setDate(desde.getDate() - (periodo === "anio" ? 365 : 7));
+  if (periodo === "anio") desde.setDate(desde.getDate() - 365);
+  else if (periodo === "mes") desde.setDate(desde.getDate() - 30);
+  else desde.setDate(desde.getDate() - 7);
 
   const [salidasRes, tanquesRes, ultimasSalidas, ultimosTanques] =
     await Promise.all([
       supabase
         .from("salidas")
-        .select("articulo, cantidad")
+        .select("articulo, articulo_id, cantidad")
         .gte("created_at", desde.toISOString())
         .limit(1000),
       supabase
@@ -32,7 +47,7 @@ export default async function DashboardPage({ searchParams }) {
     0
   );
 
-  const topArticulos = calcularTopArticulos(salidasRes.data || []);
+  const topArticulos = calcularTopArticulos(salidasRes.data || []).slice(0, 3);
 
   const actividad = [
     ...(ultimasSalidas.data || []).map((s) => ({
@@ -63,32 +78,25 @@ export default async function DashboardPage({ searchParams }) {
 
       <div className="page">
         <div className="period-toggle">
-          <Link
-            href="/dashboard?periodo=semana"
-            className={"period-btn" + (periodo === "semana" ? " period-btn-active" : "")}
-          >
-            Esta semana
-          </Link>
-          <Link
-            href="/dashboard?periodo=anio"
-            className={"period-btn" + (periodo === "anio" ? " period-btn-active" : "")}
-          >
-            Este año
-          </Link>
+          {["semana", "mes", "anio"].map((p) => (
+            <Link
+              key={p}
+              href={`/dashboard?periodo=${p}`}
+              className={"period-btn" + (periodo === p ? " period-btn-active" : "")}
+            >
+              {p === "semana" ? "Semana" : p === "mes" ? "Mes" : "Año"}
+            </Link>
+          ))}
         </div>
 
         <div className="stat-row">
           <div className="stat-card">
             <div className="stat-value">{totalSalidas}</div>
-            <div className="stat-label">
-              Salidas {periodo === "anio" ? "este año" : "esta semana"}
-            </div>
+            <div className="stat-label">Salidas {ETIQUETAS_PERIODO[periodo]}</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">{totalTanques}</div>
-            <div className="stat-label">
-              Tanques llenados {periodo === "anio" ? "este año" : "esta semana"}
-            </div>
+            <div className="stat-label">Tanques llenados {ETIQUETAS_PERIODO[periodo]}</div>
           </div>
         </div>
 
@@ -107,14 +115,35 @@ export default async function DashboardPage({ searchParams }) {
           <>
             <div className="section-title">Artículos más sacados</div>
             <div className="card">
-              {topArticulos.map((a) => (
-                <div className="list-item" key={a.nombre}>
+              {topArticulos.map((a) => {
+                const contenido = (
                   <div className="list-item-top">
                     <span className="list-item-title">{a.nombre}</span>
                     <span className="list-item-qty">{a.total}</span>
                   </div>
-                </div>
-              ))}
+                );
+                // Solo Titular/Administrador pueden entrar a "Ver
+                // movimientos" — para el resto la tarjeta se ve atenuada
+                // y no es clickeable (no basta con confiar en el gate del
+                // servidor en /catalogo/[id]/movimientos).
+                if (puedeVerMovimientos && a.articuloId) {
+                  return (
+                    <Link
+                      href={`/catalogo/${a.articuloId}/movimientos`}
+                      className="list-item"
+                      key={a.nombre}
+                      style={{ display: "block" }}
+                    >
+                      {contenido}
+                    </Link>
+                  );
+                }
+                return (
+                  <div className="list-item" key={a.nombre} style={{ opacity: 0.55 }}>
+                    {contenido}
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
@@ -154,13 +183,12 @@ export default async function DashboardPage({ searchParams }) {
 function calcularTopArticulos(salidas) {
   const totales = new Map();
   for (const s of salidas) {
-    const actual = totales.get(s.articulo) || 0;
-    totales.set(s.articulo, actual + Number(s.cantidad));
+    const clave = s.articulo;
+    const actual = totales.get(clave) || { nombre: s.articulo, articuloId: s.articulo_id, total: 0 };
+    actual.total += Number(s.cantidad);
+    totales.set(clave, actual);
   }
-  return Array.from(totales.entries())
-    .map(([nombre, total]) => ({ nombre, total }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5);
+  return Array.from(totales.values()).sort((a, b) => b.total - a.total);
 }
 
 function formatFecha(iso) {

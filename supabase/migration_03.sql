@@ -91,14 +91,20 @@ update public.llenados_tanques l set nombre_usuario_snapshot = p.full_name
 -- Actualiza las vistas para incluir folio, tipo_gas y usar el snapshot
 -- como el nombre a mostrar (con fallback al nombre actual del perfil
 -- por si el snapshot viniera vacío en algún registro viejo).
-create or replace view public.salidas_con_nombre
+-- Se usa DROP + CREATE (en vez de CREATE OR REPLACE) porque Postgres no
+-- permite insertar columnas nuevas en medio de una vista existente,
+-- solo agregarlas al final — y aquí cambia el orden por las columnas
+-- nuevas agregadas arriba.
+drop view if exists public.salidas_con_nombre;
+create view public.salidas_con_nombre
   with (security_invoker = on) as
   select s.*, coalesce(s.nombre_usuario_snapshot, p.full_name) as full_name
   from public.salidas s
   join public.profiles p on p.id = s.user_id
   order by s.created_at desc;
 
-create or replace view public.llenados_con_nombre
+drop view if exists public.llenados_con_nombre;
+create view public.llenados_con_nombre
   with (security_invoker = on) as
   select l.*, coalesce(l.nombre_usuario_snapshot, p.full_name) as full_name
   from public.llenados_tanques l

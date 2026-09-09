@@ -22,7 +22,7 @@ export default async function TanquesPage() {
 
         <Link href="/tanques/nuevo">
           <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 20 }}>
-            + Registrar llenado
+            + Registrar llenados
           </button>
         </Link>
 
@@ -33,7 +33,7 @@ export default async function TanquesPage() {
                 <div className="list-item-top">
                   <span className="list-item-title">
                     <span className="folio-tag">#{t.folio}</span>
-                    Llenado de tanque
+                    Llenados de tanque
                     <span className="badge">{t.tipo_gas}</span>
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

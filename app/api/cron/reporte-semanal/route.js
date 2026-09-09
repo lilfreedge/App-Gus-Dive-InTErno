@@ -36,17 +36,28 @@ export async function GET(request) {
   const hastaStr = hasta.toISOString().slice(0, 10);
 
   const supabase = createServiceClient();
-  const datos = await obtenerDatosReporte(supabase, {
-    tipo: "ambos",
-    desde: desdeStr,
-    hasta: hastaStr,
-  });
+  let datos;
+  try {
+    datos = await obtenerDatosReporte(supabase, {
+      tipo: "ambos",
+      desde: desdeStr,
+      hasta: hastaStr,
+    });
+  } catch (err) {
+    // Antes, un error de Supabase aquí se tragaba silenciosamente
+    // (la consulta fallaba y el reporte salía vacío sin avisar).
+    // Ahora se reporta explícitamente en vez de mandar un correo vacío.
+    return NextResponse.json(
+      { error: err?.message || String(err) },
+      { status: 500 }
+    );
+  }
 
   // PDF es el reporte principal (preferencia del dueño); se manda además
   // el Excel como respaldo porque es barato de generar en el mismo paso.
   const [pdfBuffer, xlsxBuffer] = await Promise.all([
-    construirPDF(datos, { desde: desdeStr, hasta: hastaStr }),
-    Promise.resolve(construirXLSX(datos, { desde: desdeStr, hasta: hastaStr })),
+    construirPDF(datos, { desde: desdeStr, hasta: hastaStr, tipo: "ambos" }),
+    Promise.resolve(construirXLSX(datos, { desde: desdeStr, hasta: hastaStr, tipo: "ambos" })),
   ]);
   const html = construirResumenHTML({ ...datos, desde: desdeStr, hasta: hastaStr });
 

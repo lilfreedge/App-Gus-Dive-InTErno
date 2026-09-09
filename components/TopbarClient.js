@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { seccionesVisibles } from "@/lib/nav";
-import { IconLogout, IconGear, IconEdit, IconHistory, IconUsers } from "./icons";
+import { IconLogout, IconGear, IconEdit, IconHistory, IconUsers, IconBook } from "./icons";
 
 export default function TopbarClient({
   nombre,
@@ -39,6 +39,7 @@ export default function TopbarClient({
   const links = seccionesVisibles({ esTitular, permisos });
   const rolLabel = esTitular ? "Titular" : isAdmin ? "Administrador" : "Usuario";
   const verChangelog = esTitular || permisos?.changelog;
+  const verManual = esTitular || permisos?.manual;
 
   return (
     <div className="topbar">
@@ -70,7 +71,7 @@ export default function TopbarClient({
                 {correo} · {rolLabel}
               </div>
               <Link href="/perfil" className="settings-menu-link" onClick={() => setOpen(false)}>
-                <IconEdit size={15} /> Editar mi perfil
+                <IconEdit size={15} /> Mi Perfil
               </Link>
               {verChangelog && (
                 <Link
@@ -79,6 +80,15 @@ export default function TopbarClient({
                   onClick={() => setOpen(false)}
                 >
                   <IconHistory size={15} /> Changelog
+                </Link>
+              )}
+              {verManual && (
+                <Link
+                  href="/manual"
+                  className="settings-menu-link"
+                  onClick={() => setOpen(false)}
+                >
+                  <IconBook size={15} /> Manual
                 </Link>
               )}
               {esTitular && (
