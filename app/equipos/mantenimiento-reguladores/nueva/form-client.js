@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import SelectorBusqueda from "@/components/SelectorBusqueda";
+import { proximoMantenimiento } from "@/lib/fechas";
 
 export default function NuevoMantenimientoForm({ userId, nombreUsuario, reguladores }) {
   const router = useRouter();
@@ -46,6 +48,17 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
       return;
     }
 
+    // Mejor esfuerzo: actualiza el próximo mantenimiento del regulador
+    // (+8 meses). No bloquea la navegación si falla.
+    try {
+      await supabase
+        .from("reguladores_alquiler")
+        .update({ proximo_mantenimiento: proximoMantenimiento(new Date().toISOString()) })
+        .eq("id", reguladorId);
+    } catch (e) {
+      console.error("No se pudo actualizar proximo_mantenimiento del regulador:", e);
+    }
+
     router.push("/equipos/mantenimiento-reguladores");
     router.refresh();
   }
@@ -55,20 +68,13 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
       <label htmlFor="regulador">
         Regulador <span style={{ color: "var(--rojo)" }}>*</span>
       </label>
-      <select
-        id="regulador"
-        required
-        value={reguladorId}
-        onChange={(e) => setReguladorId(e.target.value)}
-      >
-        {reguladores.length === 0 && <option value="">No hay reguladores activos</option>}
-        {reguladores.map((r) => (
-          <option key={r.id} value={r.id}>
-            {r.codigo}
-            {r.descripcion ? ` — ${r.descripcion}` : ""}
-          </option>
-        ))}
-      </select>
+      <SelectorBusqueda
+        items={reguladores}
+        valor={reguladorId}
+        onChange={setReguladorId}
+        placeholder="Escribe para buscar regulador por código..."
+        vacio="No hay reguladores activos"
+      />
 
       <label htmlFor="detalle">
         Detalle del mantenimiento <span style={{ color: "var(--rojo)" }}>*</span>

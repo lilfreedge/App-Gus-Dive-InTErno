@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AppHeader from "@/components/AppHeader";
 import PreferenciasApariencia from "@/components/PreferenciasApariencia";
+import PersonalizarMenu from "@/components/PersonalizarMenu";
 import { formatFecha } from "@/lib/format";
 import PerfilForm from "./form-client";
 
@@ -13,7 +14,7 @@ export default async function PerfilPage() {
 
   const { data: perfil } = await supabase
     .from("profiles")
-    .select("id, full_name")
+    .select("id, full_name, menu_personalizado")
     .eq("id", user.id)
     .single();
 
@@ -96,6 +97,20 @@ export default async function PerfilPage() {
           Apariencia
         </div>
         <PreferenciasApariencia />
+
+        <div className="section-title" style={{ marginTop: 26 }}>
+          Personalizar mi menú
+        </div>
+        <PersonalizarMenu
+          menuInicial={
+            perfil?.menu_personalizado || {
+              llenados: true,
+              inspeccion_visual: false,
+              tanques_hub: false,
+              mantenimiento_reguladores: false,
+            }
+          }
+        />
       </div>
     </div>
   );

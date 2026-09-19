@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import SelectorBusqueda from "@/components/SelectorBusqueda";
+import { proximaInspeccion } from "@/lib/fechas";
 
 export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) {
   const router = useRouter();
@@ -43,6 +45,17 @@ export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) 
       return;
     }
 
+    // Mejor esfuerzo: actualiza la próxima inspección del tanque
+    // (+1 año). No bloquea la navegación si falla.
+    try {
+      await supabase
+        .from("tanques_alquiler")
+        .update({ proxima_inspeccion: proximaInspeccion(new Date().toISOString()) })
+        .eq("id", tanqueId);
+    } catch (e) {
+      console.error("No se pudo actualizar proxima_inspeccion del tanque:", e);
+    }
+
     router.push("/equipos/inspeccion-visual");
     router.refresh();
   }
@@ -52,15 +65,13 @@ export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) 
       <label htmlFor="tanque">
         Tanque <span style={{ color: "var(--rojo)" }}>*</span>
       </label>
-      <select id="tanque" required value={tanqueId} onChange={(e) => setTanqueId(e.target.value)}>
-        {tanques.length === 0 && <option value="">No hay tanques activos</option>}
-        {tanques.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.codigo}
-            {t.descripcion ? ` — ${t.descripcion}` : ""}
-          </option>
-        ))}
-      </select>
+      <SelectorBusqueda
+        items={tanques}
+        valor={tanqueId}
+        onChange={setTanqueId}
+        placeholder="Escribe para buscar tanque por código..."
+        vacio="No hay tanques activos"
+      />
 
       <label>
         Resultado <span style={{ color: "var(--rojo)" }}>*</span>

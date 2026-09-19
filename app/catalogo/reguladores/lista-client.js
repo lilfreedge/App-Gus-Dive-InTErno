@@ -4,11 +4,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconEdit } from "@/components/icons";
 
-// puedeAdministrar (permiso catalogo_regulador, o Titular): ve el lápiz de
-// editar. esTitular: además ve "Inactivar/Reactivar" (mismo patrón que
-// app/catalogo/lista-client.js para Códigos).
+// La edición ya no se hace desde la lista sino desde la ficha
+// (/catalogo/reguladores/[id]). esTitular: ve "Inactivar/Reactivar"
+// (mismo patrón que app/catalogo/lista-client.js para Códigos).
 export default function ListaReguladores({ reguladores, puedeAdministrar, esTitular }) {
   const router = useRouter();
   const supabase = createClient();
@@ -56,16 +55,12 @@ export default function ListaReguladores({ reguladores, puedeAdministrar, esTitu
                 {r.codigo}
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                {puedeAdministrar && (
-                  <Link
-                    href={`/catalogo/reguladores/${r.id}/editar`}
-                    className="icon-btn"
-                    aria-label="Editar"
-                    title="Editar"
-                  >
-                    <IconEdit size={15} />
-                  </Link>
-                )}
+                <Link
+                  href={`/catalogo/reguladores/${r.id}`}
+                  style={{ fontSize: 12.5, fontWeight: 600, color: "var(--azul-claro)" }}
+                >
+                  Ver ficha
+                </Link>
                 {esTitular && (
                   <button
                     type="button"

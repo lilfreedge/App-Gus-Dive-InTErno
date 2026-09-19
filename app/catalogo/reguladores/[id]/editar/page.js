@@ -23,7 +23,7 @@ export default async function EditarReguladorPage({ params }) {
     <div>
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href="/catalogo/reguladores" className="back-link">
+        <Link href={`/catalogo/reguladores/${params.id}`} className="back-link">
           ← Regresar
         </Link>
         <h1 className="page-title">Editar regulador</h1>

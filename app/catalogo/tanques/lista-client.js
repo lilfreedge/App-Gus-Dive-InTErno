@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { IconEdit } from "@/components/icons";
+import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 
 // puedeAdministrar (permiso catalogo_tanque, o Titular): ve el lápiz de
 // editar. esTitular: además ve "Inactivar/Reactivar" (mismo patrón que
@@ -86,6 +87,11 @@ export default function ListaTanques({ tanques, puedeAdministrar, esTitular }) {
               </div>
             </div>
             {t.descripcion && <div className="list-item-note">{t.descripcion}</div>}
+            <div className="list-item-meta">
+              {t.proxima_inspeccion
+                ? `Próxima inspección: ${formatFechaDDMMAAAADeDate(t.proxima_inspeccion)}`
+                : "Sin inspecciones registradas"}
+            </div>
           </div>
         ))
       )}

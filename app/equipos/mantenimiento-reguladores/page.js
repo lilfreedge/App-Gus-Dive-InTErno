@@ -6,16 +6,19 @@ import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
 import { formatFecha } from "@/lib/format";
 
-export default async function MantenimientoReguladoresPage() {
+export default async function MantenimientoReguladoresPage({ searchParams }) {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
   const puedeRegistrar = tieneAcceso(profile, "registrar_mantenimiento");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
 
-  const { data: mantenimientos } = await supabase
-    .from("mantenimientos_con_nombre")
-    .select("*")
-    .limit(200);
+  const reguladorId = searchParams?.regulador || null;
+
+  let query = supabase.from("mantenimientos_con_nombre").select("*").limit(200);
+  if (reguladorId) {
+    query = query.eq("regulador_id", reguladorId);
+  }
+  const { data: mantenimientos } = await query;
 
   return (
     <div>
@@ -26,6 +29,13 @@ export default async function MantenimientoReguladoresPage() {
         </Link>
         <Breadcrumb items={[{ label: "Equipos", href: "/equipos" }, { label: "Mantenimiento de reguladores" }]} />
         <h1 className="page-title">Mantenimiento de reguladores</h1>
+
+        {reguladorId && (
+          <div className="hint-text" style={{ marginTop: -8, marginBottom: 12 }}>
+            Mostrando solo mantenimientos de este regulador ·{" "}
+            <Link href="/equipos/mantenimiento-reguladores">Ver todos</Link>
+          </div>
+        )}
 
         {puedeRegistrar && (
           <Link href="/equipos/mantenimiento-reguladores/nueva">
