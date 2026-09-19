@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NuevoLlenadoForm from "./form-client";
 
@@ -8,6 +10,12 @@ export default async function NuevoLlenadoPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const { profile } = await getProfileYUser(supabase);
+
+  if (!user || !tieneAcceso(profile, "registrar_llenado")) {
+    redirect("/tanques");
+  }
 
   const { data: perfil } = await supabase
     .from("profiles")

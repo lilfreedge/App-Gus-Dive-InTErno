@@ -4,29 +4,34 @@ import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import CatalogoTabs from "@/components/CatalogoTabs";
-import ListaArticulos from "./lista-client";
+import Breadcrumb from "@/components/Breadcrumb";
+import ListaReguladores from "./lista-client";
 
-export default async function CatalogoPage() {
+// Catálogo de reguladores de alquiler (V5). Mismo patrón que
+// app/catalogo/page.js (Códigos): permiso catalogo_regulador agrega/edita,
+// solo Titular inactiva/reactiva.
+export default async function CatalogoReguladoresPage() {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
-  // Editar/agregar: permiso granular catalogo_codigo (el Titular siempre
-  // tiene acceso vía tieneAcceso). Inactivar: solo Titular (ver
-  // lista-client.js, más abajo se pasa esTitular aparte).
-  const puedeAdministrar = tieneAcceso(profile, "catalogo_codigo");
+  const puedeAdministrar = tieneAcceso(profile, "catalogo_regulador");
   const esTitular = !!profile?.es_titular;
 
-  const { data: articulos } = await supabase.from("articulos").select("*").order("nombre");
+  const { data: reguladores } = await supabase
+    .from("reguladores_alquiler")
+    .select("*")
+    .order("codigo");
 
   return (
     <div>
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
+        <Breadcrumb items={[{ label: "Catálogo", href: "/catalogo" }, { label: "Reguladores de alquiler" }]} />
         <h1 className="page-title">Catálogo</h1>
-        <CatalogoTabs activo="/catalogo" />
+        <CatalogoTabs activo="/catalogo/reguladores" />
 
         {puedeAdministrar && (
-          <Link href="/catalogo/nuevo">
+          <Link href="/catalogo/reguladores/nuevo">
             <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 20 }}>
               + Agregar
             </button>
@@ -34,8 +39,8 @@ export default async function CatalogoPage() {
         )}
 
         <div className="card">
-          <ListaArticulos
-            articulos={articulos || []}
+          <ListaReguladores
+            reguladores={reguladores || []}
             puedeAdministrar={puedeAdministrar}
             esTitular={esTitular}
           />

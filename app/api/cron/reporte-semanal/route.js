@@ -16,16 +16,52 @@ export async function GET(request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const destinatarios = (process.env.REPORT_EMAIL_TO || "")
-    .split(",")
-    .map((c) => c.trim())
-    .filter(Boolean);
+  const supabase = createServiceClient();
+
+  // Destinatarios y qué secciones incluir se leen ahora de app_config
+  // (configurables desde Administración > Reporte semanal por correo).
+  // Si la fila todavía no tiene destinatarios configurados (o la columna
+  // no existe todavía en este proyecto), se cae de vuelta a la variable
+  // de entorno REPORT_EMAIL_TO para no dejar de mandar el reporte antes
+  // de que alguien lo configure desde la UI.
+  const { data: config } = await supabase
+    .from("app_config")
+    .select("reporte_destinatarios, reporte_detalles")
+    .maybeSingle();
+
+  const destinatarios =
+    config?.reporte_destinatarios?.length > 0
+      ? config.reporte_destinatarios
+      : (process.env.REPORT_EMAIL_TO || "")
+          .split(",")
+          .map((c) => c.trim())
+          .filter(Boolean);
 
   if (destinatarios.length === 0) {
     return NextResponse.json(
-      { error: "Falta configurar REPORT_EMAIL_TO" },
+      { error: "Falta configurar los destinatarios (Administración > Reporte semanal, o REPORT_EMAIL_TO)" },
       { status: 500 }
     );
+  }
+
+  // Cada sección (salidas/llenados/inspecciones/mantenimientos) se manda
+  // o no de forma independiente, según app_config.reporte_detalles —
+  // cualquier combinación es válida (lib/reportes.js ya soporta un
+  // objeto `incluir` con secciones arbitrarias, no solo salidas+llenados).
+  // "facturacion" no es una sección de datos propia — no se usa aquí.
+  const detalles = config?.reporte_detalles || { salidas: true, llenados: true };
+  const incluir = {
+    salidas: detalles.salidas !== false,
+    llenados: detalles.llenados !== false,
+    inspecciones: !!detalles.inspecciones,
+    mantenimientos: !!detalles.mantenimientos,
+  };
+
+  if (!incluir.salidas && !incluir.llenados && !incluir.inspecciones && !incluir.mantenimientos) {
+    return NextResponse.json({
+      ok: true,
+      info: "No hay secciones marcadas para enviar en el reporte semanal.",
+    });
   }
 
   const hasta = new Date();
@@ -35,11 +71,10 @@ export async function GET(request) {
   const desdeStr = desde.toISOString().slice(0, 10);
   const hastaStr = hasta.toISOString().slice(0, 10);
 
-  const supabase = createServiceClient();
   let datos;
   try {
     datos = await obtenerDatosReporte(supabase, {
-      tipo: "ambos",
+      incluir,
       desde: desdeStr,
       hasta: hastaStr,
     });
@@ -56,8 +91,8 @@ export async function GET(request) {
   // PDF es el reporte principal (preferencia del dueño); se manda además
   // el Excel como respaldo porque es barato de generar en el mismo paso.
   const [pdfBuffer, xlsxBuffer] = await Promise.all([
-    construirPDF(datos, { desde: desdeStr, hasta: hastaStr, tipo: "ambos" }),
-    Promise.resolve(construirXLSX(datos, { desde: desdeStr, hasta: hastaStr, tipo: "ambos" })),
+    construirPDF(datos, { desde: desdeStr, hasta: hastaStr, incluir }),
+    Promise.resolve(construirXLSX(datos, { desde: desdeStr, hasta: hastaStr, incluir })),
   ]);
   const html = construirResumenHTML({ ...datos, desde: desdeStr, hasta: hastaStr });
 
@@ -87,5 +122,11 @@ export async function GET(request) {
     );
   }
 
-  return NextResponse.json({ ok: true, salidas: datos.salidas.length, tanques: datos.tanques.length });
+  return NextResponse.json({
+    ok: true,
+    salidas: datos.salidas.length,
+    tanques: datos.tanques.length,
+    inspecciones: datos.inspecciones.length,
+    mantenimientos: datos.mantenimientos.length,
+  });
 }

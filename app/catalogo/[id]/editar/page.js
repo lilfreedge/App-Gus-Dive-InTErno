@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/roles";
+import { requirePermiso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import EditarCodigoForm from "./form-client";
 
-// Editar un código del catálogo: solo Titular y Administrador (igual que
-// "Ver movimientos"), gateado también aquí en el servidor.
+// Editar un código del catálogo: gateado por el permiso granular
+// catalogo_codigo (el Titular siempre tiene acceso), también aquí en
+// el servidor.
 export default async function EditarCodigoPage({ params }) {
   const supabase = createClient();
-  await requireAdmin(supabase);
+  await requirePermiso(supabase, "catalogo_codigo");
 
   const { data: articulo } = await supabase
     .from("articulos")

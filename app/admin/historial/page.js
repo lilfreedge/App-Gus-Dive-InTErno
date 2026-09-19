@@ -3,12 +3,14 @@ import { requirePermiso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import HistorialDeleteButton from "@/components/HistorialDeleteButton";
+import HistorialRestoreButton from "@/components/HistorialRestoreButton";
 import { formatFecha } from "@/lib/format";
 
 export default async function HistorialCambiosPage() {
   const supabase = createClient();
   const { profile } = await requirePermiso(supabase, "historial");
   const esTitular = !!profile?.es_titular;
+  const esAdmin = esTitular || !!profile?.is_admin;
 
   const { data: cambios } = await supabase
     .from("historial_con_nombre")
@@ -27,7 +29,7 @@ export default async function HistorialCambiosPage() {
 
         <div className="section-title">Movimientos anulados</div>
         {anulados.length > 0 ? (
-          anulados.map((c) => <TarjetaAnulado key={c.id} cambio={c} esTitular={esTitular} />)
+          anulados.map((c) => <TarjetaAnulado key={c.id} cambio={c} esTitular={esTitular} esAdmin={esAdmin} />)
         ) : (
           <div className="empty">No hay movimientos anulados.</div>
         )}
@@ -50,15 +52,19 @@ function tituloRegistro(tabla) {
   return "Cambio de nombre";
 }
 
-function TarjetaAnulado({ cambio, esTitular }) {
+function TarjetaAnulado({ cambio, esTitular, esAdmin }) {
   const d = cambio.datos_anteriores || {};
+  const esRestaurable = cambio.tabla !== "profiles";
   return (
     <div className="card anulado">
       <div className="list-item-top">
         <div className="list-item-title">
           {tituloRegistro(cambio.tabla)} {cambio.tabla === "llenados_tanques" ? "borrado" : "borrada"}
         </div>
-        {esTitular && <HistorialDeleteButton cambioId={cambio.id} />}
+        <div className="row-actions">
+          {esAdmin && esRestaurable && <HistorialRestoreButton cambio={cambio} />}
+          {esTitular && <HistorialDeleteButton cambioId={cambio.id} />}
+        </div>
       </div>
       <table className="table-mini" style={{ marginTop: 8 }}>
         <tbody>

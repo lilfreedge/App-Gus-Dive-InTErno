@@ -4,29 +4,34 @@ import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import CatalogoTabs from "@/components/CatalogoTabs";
-import ListaArticulos from "./lista-client";
+import Breadcrumb from "@/components/Breadcrumb";
+import ListaTanques from "./lista-client";
 
-export default async function CatalogoPage() {
+// Catálogo de tanques de alquiler (V5) — el registro de tanques
+// rentables (código/descripción/activo). No confundir con la sección
+// "Tanques" en /tanques, que es la bitácora de llenados de tanque.
+export default async function CatalogoTanquesPage() {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
-  // Editar/agregar: permiso granular catalogo_codigo (el Titular siempre
-  // tiene acceso vía tieneAcceso). Inactivar: solo Titular (ver
-  // lista-client.js, más abajo se pasa esTitular aparte).
-  const puedeAdministrar = tieneAcceso(profile, "catalogo_codigo");
+  const puedeAdministrar = tieneAcceso(profile, "catalogo_tanque");
   const esTitular = !!profile?.es_titular;
 
-  const { data: articulos } = await supabase.from("articulos").select("*").order("nombre");
+  const { data: tanques } = await supabase
+    .from("tanques_alquiler")
+    .select("*")
+    .order("codigo");
 
   return (
     <div>
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
+        <Breadcrumb items={[{ label: "Catálogo", href: "/catalogo" }, { label: "Tanques de alquiler" }]} />
         <h1 className="page-title">Catálogo</h1>
-        <CatalogoTabs activo="/catalogo" />
+        <CatalogoTabs activo="/catalogo/tanques" />
 
         {puedeAdministrar && (
-          <Link href="/catalogo/nuevo">
+          <Link href="/catalogo/tanques/nuevo">
             <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 20 }}>
               + Agregar
             </button>
@@ -34,8 +39,8 @@ export default async function CatalogoPage() {
         )}
 
         <div className="card">
-          <ListaArticulos
-            articulos={articulos || []}
+          <ListaTanques
+            tanques={tanques || []}
             puedeAdministrar={puedeAdministrar}
             esTitular={esTitular}
           />

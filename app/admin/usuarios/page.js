@@ -6,6 +6,9 @@ import ListaUsuarios from "./lista-client";
 import RolesInfo from "./roles-info";
 import LogoLoginSelector from "./logo-login-client";
 import FormatearRegistros from "./formatear-registros-client";
+import RespaldoDatos from "./respaldo-client";
+import ReporteCorreoConfig from "./reporte-correo-client";
+import DominioPersonalizado from "./dominio-client";
 
 // Administración: solo el Titular puede entrar (ni siquiera los
 // administradores comunes). No está en el nav de arriba, solo en el
@@ -21,7 +24,7 @@ export default async function UsuariosPage() {
 
   const { data: config } = await supabase
     .from("app_config")
-    .select("logo_login")
+    .select("logo_login, dominio_personalizado, reporte_destinatarios, reporte_detalles")
     .maybeSingle();
 
   return (
@@ -47,6 +50,21 @@ export default async function UsuariosPage() {
           <Link href="/estado-sistema" className="action-card" style={{ width: "100%" }}>
             Estado del sistema
           </Link>
+        </div>
+
+        <div className="card" style={{ marginTop: 20 }}>
+          <DominioPersonalizado dominioActual={config?.dominio_personalizado} />
+        </div>
+
+        <div className="card" style={{ marginTop: 20 }}>
+          <ReporteCorreoConfig
+            destinatariosIniciales={config?.reporte_destinatarios || []}
+            detallesIniciales={config?.reporte_detalles || {}}
+          />
+        </div>
+
+        <div className="card" style={{ marginTop: 20 }}>
+          <RespaldoDatos />
         </div>
 
         <div className="card" style={{ marginTop: 20 }}>

@@ -15,14 +15,14 @@ function haceUnaSemanaISO() {
 export default function ReportesForm({ usuarios }) {
   const [desde, setDesde] = useState(haceUnaSemanaISO());
   const [hasta, setHasta] = useState(hoyISO());
-  const [tipo, setTipo] = useState("ambos");
+  const [tipo, setTipo] = useState("todos");
   const [usuarioId, setUsuarioId] = useState("");
   const [codigo, setCodigo] = useState("");
   const [motivo, setMotivo] = useState("Todos");
   const [tipoGas, setTipoGas] = useState("Todos");
 
-  const mostrarGas = tipo !== "salidas";
-  const mostrarCodigoMotivo = tipo !== "llenados";
+  const mostrarGas = tipo === "llenados" || tipo === "todos";
+  const mostrarCodigoMotivo = tipo === "salidas" || tipo === "todos";
 
   function armarParams(formato) {
     const params = new URLSearchParams({ desde, hasta, tipo, formato });
@@ -57,9 +57,11 @@ export default function ReportesForm({ usuarios }) {
 
       <label htmlFor="tipo">Tipo de dato</label>
       <select id="tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-        <option value="ambos">Todos</option>
+        <option value="todos">Todos</option>
         <option value="salidas">Salidas</option>
         <option value="llenados">Llenados</option>
+        <option value="inspecciones">Inspecciones visuales</option>
+        <option value="mantenimientos">Mantenimientos de reguladores</option>
       </select>
 
       <div className="section-title">Filtros opcionales</div>

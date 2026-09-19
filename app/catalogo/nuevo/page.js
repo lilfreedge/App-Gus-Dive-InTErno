@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/roles";
+import { requirePermiso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NuevoCodigoForm from "./form-client";
 
 // Pantalla dedicada para agregar un código al catálogo (V4: antes era un
-// formulario inline arriba de la lista). Igual que editar/inactivar, solo
-// Titular y Administrador pueden entrar aquí.
+// formulario inline arriba de la lista). Gateada por el permiso granular
+// catalogo_codigo (el Titular siempre tiene acceso).
 export default async function NuevoCodigoPage() {
   const supabase = createClient();
-  await requireAdmin(supabase);
+  await requirePermiso(supabase, "catalogo_codigo");
 
   return (
     <div>

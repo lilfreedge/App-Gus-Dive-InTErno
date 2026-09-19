@@ -2,19 +2,20 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
-import NavArrowsServer from "@/components/NavArrowsServer";
+import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
-import FacturacionToggle from "@/components/FacturacionToggle";
 import { formatFecha } from "@/lib/format";
 
-export default async function TanquesPage() {
+export default async function MantenimientoReguladoresPage() {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
+  const puedeRegistrar = tieneAcceso(profile, "registrar_mantenimiento");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
-  const puedeRegistrar = tieneAcceso(profile, "registrar_llenado");
-  const puedeFacturar = tieneAcceso(profile, "facturacion");
 
-  const { data: llenados } = await supabase.from("llenados_con_nombre").select("*").limit(200);
+  const { data: mantenimientos } = await supabase
+    .from("mantenimientos_con_nombre")
+    .select("*")
+    .limit(200);
 
   return (
     <div>
@@ -23,47 +24,45 @@ export default async function TanquesPage() {
         <Link href="/equipos" className="back-link">
           ← Volver
         </Link>
-        <NavArrowsServer />
-        <h1 className="page-title">Tanques</h1>
+        <Breadcrumb items={[{ label: "Equipos", href: "/equipos" }, { label: "Mantenimiento de reguladores" }]} />
+        <h1 className="page-title">Mantenimiento de reguladores</h1>
 
         {puedeRegistrar && (
-          <Link href="/tanques/nuevo">
+          <Link href="/equipos/mantenimiento-reguladores/nueva">
             <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 20 }}>
-              + Registrar llenados
+              + Registrar mantenimiento
             </button>
           </Link>
         )}
 
         <div className="card">
-          {llenados && llenados.length > 0 ? (
-            llenados.map((t) => (
-              <div className="list-item" key={t.id}>
+          {mantenimientos && mantenimientos.length > 0 ? (
+            mantenimientos.map((m) => (
+              <div className="list-item" key={m.id}>
                 <div className="list-item-top">
                   <span className="list-item-title">
-                    <span className="folio-tag">#{t.folio}</span>
-                    Llenados de tanque
-                    <span className="badge">{t.tipo_gas}</span>
+                    <span className="folio-tag">#{m.folio}</span>
+                    Mantenimiento de regulador
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span className="list-item-qty">{t.cantidad} tanque(s)</span>
-                    {puedeFacturar && <FacturacionToggle registro={t} />}
+                    <span className="list-item-qty">{m.regulador_codigo_snapshot}</span>
                     {puedeEditar && (
                       <RegistroActions
-                        tabla="llenados_tanques"
-                        registro={t}
-                        editHref={`/tanques/${t.id}/editar`}
+                        tabla="mantenimientos_reguladores"
+                        registro={m}
+                        editHref={`/equipos/mantenimiento-reguladores/${m.id}/editar`}
                       />
                     )}
                   </div>
                 </div>
                 <div className="list-item-meta">
-                  {t.full_name} · {formatFecha(t.created_at)}
+                  {m.full_name} · {formatFecha(m.created_at)}
                 </div>
-                {t.nota && <div className="list-item-note">{t.nota}</div>}
+                {m.detalle && <div className="list-item-note">{m.detalle}</div>}
               </div>
             ))
           ) : (
-            <div className="empty">Aún no hay llenados registrados.</div>
+            <div className="empty">Aún no hay mantenimientos registrados.</div>
           )}
         </div>
       </div>
