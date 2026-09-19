@@ -19,6 +19,7 @@ export default async function AppHeader() {
       isAdmin={!!profile?.is_admin}
       esTitular={!!profile?.es_titular}
       permisos={profile?.permisos || {}}
+      menuPersonalizado={profile?.menu_personalizado || {}}
     />
   );
 }

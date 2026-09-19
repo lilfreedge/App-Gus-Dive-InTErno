@@ -15,6 +15,7 @@ export default function TopbarClient({
   isAdmin,
   esTitular,
   permisos,
+  menuPersonalizado,
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -36,7 +37,7 @@ export default function TopbarClient({
     router.refresh();
   }
 
-  const links = seccionesVisibles({ esTitular, permisos });
+  const links = seccionesVisibles({ esTitular, permisos, menuPersonalizado });
   const rolLabel = esTitular ? "Titular" : isAdmin ? "Administrador" : "Usuario";
   const verChangelog = esTitular || permisos?.changelog;
   const verManual = esTitular || permisos?.manual;
