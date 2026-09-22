@@ -1,6 +1,7 @@
 :root {
   --azul: #0a3d62;
   --azul-claro: #1e6091;
+  --azul-brillante: #3d6d94;
   --cian: #0fb5ae;
   --fondo: #f4f7f9;
   --tarjeta: #ffffff;
@@ -221,6 +222,24 @@ button {
 .topnav-link-active {
   opacity: 1;
   background: rgba(255, 255, 255, 0.22);
+}
+
+.topnav-link-drag {
+  cursor: grab;
+}
+
+.topnav-link-over {
+  outline: 2px dashed rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+/* Accesos directos activados en Mi Perfil (lib/nav.js -> ATAJOS_MENU):
+   borde punteado para diferenciarlos de las secciones fijas del menú.
+   Usa outline (no border) para no alterar el tamaño del botón. */
+.topnav-link-atajo {
+  background: rgba(255, 255, 255, 0.03);
+  outline: 1px dashed rgba(255, 255, 255, 0.5);
+  outline-offset: -1px;
 }
 
 .card {
@@ -599,6 +618,29 @@ textarea {
   margin: 0 0 4px;
 }
 
+/* Miga de pan combinada con el título (ver components/Breadcrumb.js):
+   las secciones padre en negrita normal y la página actual resaltada. */
+.breadcrumb-crumb {
+  color: var(--azul);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.breadcrumb-crumb:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-sep {
+  color: var(--texto-suave);
+  font-weight: 400;
+  margin: 0 5px;
+}
+
+.breadcrumb-current {
+  color: var(--azul-brillante);
+}
+
 .page-subtitle {
   font-size: 13.5px;
   color: var(--texto-suave);
@@ -837,6 +879,24 @@ textarea {
   font-size: 12.5px;
   color: var(--texto-suave);
   margin-top: 4px;
+}
+
+.hub-link-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hub-link-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--azul);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .folio-tag {
@@ -1222,6 +1282,26 @@ label .req {
   color: var(--texto);
   min-width: 88px;
   text-align: center;
+}
+
+.letra-stepper-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.letra-stepper-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--borde);
+}
+
+.letra-stepper-dot-activo {
+  background: var(--azul);
+  width: 9px;
+  height: 9px;
 }
 
 /* Pantalla de carga (loading.js de cada ruta): ícono de Gus centrado
