@@ -33,7 +33,6 @@ export default function DominioPersonalizado({ dominioActual }) {
 
   return (
     <div>
-      <div className="section-title">Dominio personalizado</div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <input
           type="text"

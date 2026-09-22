@@ -1,20 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 
 // La edición ya no se hace desde la lista sino desde la ficha
-// (/catalogo/reguladores/[id]). esTitular: ve "Inactivar/Reactivar"
-// (mismo patrón que app/catalogo/lista-client.js para Códigos).
+// (/catalogo/reguladores/[id]) -- toda la tarjeta es un botón que lleva
+// ahí (antes era solo el texto "Ver ficha"). esTitular: ve
+// "Inactivar/Reactivar" como una acción aparte que no navega (mismo
+// patrón que app/catalogo/lista-client.js para Códigos).
 export default function ListaReguladores({ reguladores, puedeAdministrar, esTitular }) {
   const router = useRouter();
   const supabase = createClient();
   const [loadingId, setLoadingId] = useState(null);
   const [busqueda, setBusqueda] = useState("");
 
-  async function toggleActivo(regulador) {
+  async function toggleActivo(e, regulador) {
+    e.stopPropagation();
     setLoadingId(regulador.id);
     await supabase
       .from("reguladores_alquiler")
@@ -49,38 +52,44 @@ export default function ListaReguladores({ reguladores, puedeAdministrar, esTitu
         </div>
       ) : (
         filtrados.map((r) => (
-          <div className="list-item" key={r.id}>
+          <div
+            className="list-item"
+            key={r.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => router.push(`/catalogo/reguladores/${r.id}`)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") router.push(`/catalogo/reguladores/${r.id}`);
+            }}
+            style={{ cursor: "pointer" }}
+          >
             <div className="list-item-top">
               <span className="list-item-title" style={{ opacity: r.activo ? 1 : 0.5 }}>
                 {r.codigo}
               </span>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Link
-                  href={`/catalogo/reguladores/${r.id}`}
-                  style={{ fontSize: 12.5, fontWeight: 600, color: "var(--azul-claro)" }}
+              {esTitular && (
+                <button
+                  type="button"
+                  onClick={(e) => toggleActivo(e, r)}
+                  disabled={loadingId === r.id}
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    border: "none",
+                    background: "none",
+                    color: "var(--rojo)",
+                    cursor: "pointer",
+                  }}
                 >
-                  Ver ficha
-                </Link>
-                {esTitular && (
-                  <button
-                    type="button"
-                    onClick={() => toggleActivo(r)}
-                    disabled={loadingId === r.id}
-                    style={{
-                      fontSize: 11.5,
-                      fontWeight: 600,
-                      border: "none",
-                      background: "none",
-                      color: "var(--rojo)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {r.activo ? "Inactivar" : "Reactivar"}
-                  </button>
-                )}
-              </div>
+                  {r.activo ? "Inactivar" : "Reactivar"}
+                </button>
+              )}
             </div>
-            {r.descripcion && <div className="list-item-note">{r.descripcion}</div>}
+            <div className="list-item-meta">
+              {r.proximo_mantenimiento
+                ? `Próximo mantenimiento: ${formatFechaDDMMAAAADeDate(r.proximo_mantenimiento)}`
+                : "Sin mantenimientos registrados"}
+            </div>
           </div>
         ))
       )}

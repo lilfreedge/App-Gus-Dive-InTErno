@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import NuevoLlenadoForm from "./form-client";
 
 export default async function NuevoLlenadoPage() {
@@ -30,6 +31,13 @@ export default async function NuevoLlenadoPage() {
         <Link href="/tanques" className="back-link">
           ← Regresar
         </Link>
+        <Breadcrumb
+          items={[
+            { label: "Equipos", href: "/equipos" },
+            { label: "Llenados de tanque", href: "/tanques" },
+            { label: "Nuevo llenado" },
+          ]}
+        />
         <h1 className="page-title">Registrar llenados de tanque</h1>
         <p className="page-subtitle">Para llevar el conteo de llenados internos.</p>
 

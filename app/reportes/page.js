@@ -3,6 +3,7 @@ import { requirePermiso } from "@/lib/roles";
 import { obtenerUsuariosConMovimientos } from "@/lib/reportes";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
+import Breadcrumb from "@/components/Breadcrumb";
 import ReportesForm from "./form-client";
 
 export default async function ReportesPage() {
@@ -16,7 +17,7 @@ export default async function ReportesPage() {
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
-        <h1 className="page-title">Reportes</h1>
+        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Reportes" }]} />
 
         <ReportesForm usuarios={usuarios} />
       </div>

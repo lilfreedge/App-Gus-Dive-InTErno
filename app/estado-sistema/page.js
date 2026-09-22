@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireTitular } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import {
   credencialesManagementApi,
   getEspacioBaseDeDatos,
@@ -43,7 +44,7 @@ export default async function EstadoSistemaPage() {
         <Link href="/admin/usuarios" className="back-link">
           ← Volver
         </Link>
-        <h1 className="page-title">Estado del sistema</h1>
+        <Breadcrumb items={[{ label: "Administración", href: "/admin/usuarios" }, { label: "Estado del sistema" }]} />
 
         {!creds && (
           <div className="metric-notice">

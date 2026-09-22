@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import EditarLlenadoForm from "./form-client";
 
 export default async function EditarLlenadoPage({ params }) {
@@ -24,6 +25,13 @@ export default async function EditarLlenadoPage({ params }) {
         <Link href="/tanques" className="back-link">
           ← Volver a Tanques
         </Link>
+        <Breadcrumb
+          items={[
+            { label: "Equipos", href: "/equipos" },
+            { label: "Llenados de tanque", href: "/tanques" },
+            { label: "Editar llenado" },
+          ]}
+        />
         <h1 className="page-title">Editar llenado</h1>
         <p className="page-subtitle">El cambio queda anotado en el historial de cambios.</p>
 

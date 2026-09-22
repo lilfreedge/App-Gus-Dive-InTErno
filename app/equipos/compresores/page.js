@@ -1,7 +1,13 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { requirePermiso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 
 export default async function CompresoresPage() {
+  const supabase = createClient();
+  await requirePermiso(supabase, "compresores");
+
   return (
     <div>
       <AppHeader />
@@ -9,7 +15,7 @@ export default async function CompresoresPage() {
         <Link href="/equipos" className="back-link">
           ← Volver
         </Link>
-        <h1 className="page-title">Compresores</h1>
+        <Breadcrumb items={[{ label: "Equipos", href: "/equipos" }, { label: "Compresores" }]} />
 
         <div className="card">
           Todavía estamos armando esta parte de la app — el control de compresores

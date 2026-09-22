@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import EditarMantenimientoForm from "./form-client";
 
 export default async function EditarMantenimientoPage({ params }) {
@@ -30,6 +31,13 @@ export default async function EditarMantenimientoPage({ params }) {
         <Link href="/equipos/mantenimiento-reguladores" className="back-link">
           ← Volver a Mantenimiento de reguladores
         </Link>
+        <Breadcrumb
+          items={[
+            { label: "Equipos", href: "/equipos" },
+            { label: "Mantenimiento de reguladores", href: "/equipos/mantenimiento-reguladores" },
+            { label: "Editar mantenimiento" },
+          ]}
+        />
         <h1 className="page-title">Editar mantenimiento</h1>
         <p className="page-subtitle">El cambio queda anotado en el historial de cambios.</p>
 

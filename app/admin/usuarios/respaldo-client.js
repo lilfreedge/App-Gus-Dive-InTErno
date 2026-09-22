@@ -41,8 +41,7 @@ export default function RespaldoDatos() {
 
   return (
     <div>
-      <div className="section-title">Respaldo de datos</div>
-      <p className="hint-text" style={{ marginBottom: 12 }}>
+      <p className="hint-text" style={{ marginBottom: 12, marginTop: 0 }}>
         Descarga un archivo JSON con todas las salidas, llenados, equipos,
         catálogo e historial de cambios registrados hasta ahora.
       </p>

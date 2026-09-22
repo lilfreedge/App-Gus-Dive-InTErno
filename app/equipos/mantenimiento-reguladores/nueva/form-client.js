@@ -11,7 +11,11 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
   const supabase = createClient();
 
   const [reguladorId, setReguladorId] = useState(reguladores[0]?.id || "");
-  const [detalle, setDetalle] = useState("");
+  const [limpiezaUltrasonido, setLimpiezaUltrasonido] = useState(false);
+  const [presionIntermedia, setPresionIntermedia] = useState(false);
+  const [oRingsAplica, setORingsAplica] = useState(false);
+  const [oRings, setORings] = useState("");
+  const [nota, setNota] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,11 +28,6 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
       return;
     }
 
-    if (!detalle.trim()) {
-      setError("Describe el mantenimiento realizado.");
-      return;
-    }
-
     const regulador = reguladores.find((r) => r.id === reguladorId);
 
     setLoading(true);
@@ -38,7 +37,10 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
       nombre_usuario_snapshot: nombreUsuario,
       regulador_id: reguladorId,
       regulador_codigo_snapshot: regulador?.codigo || null,
-      detalle: detalle.trim(),
+      limpieza_ultrasonido: limpiezaUltrasonido,
+      presion_intermedia: presionIntermedia,
+      o_rings: oRingsAplica ? oRings.trim() || null : null,
+      detalle: nota.trim() || null,
     });
 
     setLoading(false);
@@ -76,15 +78,87 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
         vacio="No hay reguladores activos"
       />
 
-      <label htmlFor="detalle">
-        Detalle del mantenimiento <span style={{ color: "var(--rojo)" }}>*</span>
-      </label>
+      <label>Limpieza ultrasonido</label>
+      <div className="radio-pills">
+        <label>
+          <input
+            type="radio"
+            name="limpieza_ultrasonido"
+            checked={!limpiezaUltrasonido}
+            onChange={() => setLimpiezaUltrasonido(false)}
+          />
+          No
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="limpieza_ultrasonido"
+            checked={limpiezaUltrasonido}
+            onChange={() => setLimpiezaUltrasonido(true)}
+          />
+          Sí
+        </label>
+      </div>
+
+      <label>Presión intermedia</label>
+      <div className="radio-pills">
+        <label>
+          <input
+            type="radio"
+            name="presion_intermedia"
+            checked={!presionIntermedia}
+            onChange={() => setPresionIntermedia(false)}
+          />
+          No
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="presion_intermedia"
+            checked={presionIntermedia}
+            onChange={() => setPresionIntermedia(true)}
+          />
+          Sí
+        </label>
+      </div>
+
+      <label>O-rings</label>
+      <div className="radio-pills">
+        <label>
+          <input
+            type="radio"
+            name="o_rings_aplica"
+            checked={!oRingsAplica}
+            onChange={() => setORingsAplica(false)}
+          />
+          Ninguno
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="o_rings_aplica"
+            checked={oRingsAplica}
+            onChange={() => setORingsAplica(true)}
+          />
+          Especificar
+        </label>
+      </div>
+      {oRingsAplica && (
+        <input
+          type="text"
+          value={oRings}
+          onChange={(e) => setORings(e.target.value)}
+          placeholder="Ej: O-ring de primera etapa"
+          style={{ marginTop: 8 }}
+        />
+      )}
+
+      <label htmlFor="nota">Nota</label>
       <textarea
-        id="detalle"
-        required
-        value={detalle}
-        onChange={(e) => setDetalle(e.target.value)}
-        placeholder="Qué se le hizo al regulador"
+        id="nota"
+        value={nota}
+        onChange={(e) => setNota(e.target.value)}
+        placeholder="Cualquier detalle extra (opcional)"
       />
 
       {error && <div className="error-box">{error}</div>}

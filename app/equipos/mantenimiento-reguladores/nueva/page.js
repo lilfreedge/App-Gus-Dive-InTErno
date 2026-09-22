@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import NuevoMantenimientoForm from "./form-client";
 
 export default async function NuevoMantenimientoPage() {
@@ -30,6 +31,13 @@ export default async function NuevoMantenimientoPage() {
         <Link href="/equipos/mantenimiento-reguladores" className="back-link">
           ← Regresar
         </Link>
+        <Breadcrumb
+          items={[
+            { label: "Equipos", href: "/equipos" },
+            { label: "Mantenimiento de reguladores", href: "/equipos/mantenimiento-reguladores" },
+            { label: "Nuevo mantenimiento" },
+          ]}
+        />
         <h1 className="page-title">Registrar mantenimiento</h1>
         <p className="page-subtitle">Mantenimiento hecho a un regulador.</p>
 

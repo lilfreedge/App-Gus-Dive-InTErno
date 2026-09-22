@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import EditarSalidaForm from "./form-client";
 
 export default async function EditarSalidaPage({ params }) {
@@ -23,7 +24,7 @@ export default async function EditarSalidaPage({ params }) {
         <Link href="/salidas" className="back-link">
           ← Volver a Salidas
         </Link>
-        <h1 className="page-title">Editar salida</h1>
+        <Breadcrumb items={[{ label: "Salidas", href: "/salidas" }, { label: "Editar salida" }]} />
         <p className="page-subtitle">El cambio queda anotado en el historial de cambios.</p>
 
         <EditarSalidaForm registro={registro} articulos={articulos || []} />

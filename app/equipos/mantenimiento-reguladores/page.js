@@ -28,7 +28,6 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
           ← Volver
         </Link>
         <Breadcrumb items={[{ label: "Equipos", href: "/equipos" }, { label: "Mantenimiento de reguladores" }]} />
-        <h1 className="page-title">Mantenimiento de reguladores</h1>
 
         {reguladorId && (
           <div className="hint-text" style={{ marginTop: -8, marginBottom: 12 }}>
@@ -67,6 +66,13 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
                 </div>
                 <div className="list-item-meta">
                   {m.full_name} · {formatFecha(m.created_at)}
+                </div>
+                <div className="list-item-meta">
+                  {[
+                    `Limpieza ultrasonido: ${m.limpieza_ultrasonido ? "Sí" : "No"}`,
+                    `Presión intermedia: ${m.presion_intermedia ? "Sí" : "No"}`,
+                    `O-rings: ${m.o_rings || "Ninguno"}`,
+                  ].join(" · ")}
                 </div>
                 {m.detalle && <div className="list-item-note">{m.detalle}</div>}
               </div>

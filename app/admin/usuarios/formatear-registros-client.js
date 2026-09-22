@@ -39,8 +39,7 @@ export default function FormatearRegistros() {
 
   return (
     <div>
-      <div className="section-title">Zona de peligro</div>
-      <p style={{ fontSize: 13, color: "var(--texto-suave)", marginBottom: 12 }}>
+      <p style={{ fontSize: 13, color: "var(--texto-suave)", marginBottom: 12, marginTop: 0 }}>
         Borra permanentemente todas las salidas y llenados de tanque, y
         reinicia la numeración desde 1. No se puede deshacer.
       </p>

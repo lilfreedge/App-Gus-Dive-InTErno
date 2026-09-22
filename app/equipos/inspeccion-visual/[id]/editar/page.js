@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import EditarInspeccionForm from "./form-client";
 
 export default async function EditarInspeccionPage({ params }) {
@@ -30,6 +31,13 @@ export default async function EditarInspeccionPage({ params }) {
         <Link href="/equipos/inspeccion-visual" className="back-link">
           ← Volver a Inspección visual
         </Link>
+        <Breadcrumb
+          items={[
+            { label: "Equipos", href: "/equipos" },
+            { label: "Inspección visual", href: "/equipos/inspeccion-visual" },
+            { label: "Editar inspección" },
+          ]}
+        />
         <h1 className="page-title">Editar inspección</h1>
         <p className="page-subtitle">El cambio queda anotado en el historial de cambios.</p>
 

@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermiso, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import MovimientosList from "@/components/MovimientosList";
@@ -7,11 +8,14 @@ import MovimientosList from "@/components/MovimientosList";
 // "Movimientos" combina salidas, llenados de tanques, inspecciones
 // visuales y mantenimientos de reguladores en una sola lista (con filtro
 // por tipo), gateada por el permiso granular "movimientos" — mismo
-// patrón que Reportes/Catálogo/Historial.
+// patrón que Reportes/Catálogo/Historial (ahora agrupados en "Más").
 export default async function MovimientosPage() {
   const supabase = createClient();
   const { profile } = await requirePermiso(supabase, "movimientos");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
+  // Acceso directo a Reportes desde aquí, ya que los reportes se arman
+  // justamente a partir de estos mismos movimientos.
+  const puedeCrearReporte = tieneAcceso(profile, "reportes");
 
   const [
     { data: salidas },
@@ -45,6 +49,14 @@ export default async function MovimientosPage() {
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
         <h1 className="page-title">Movimientos</h1>
+
+        {puedeCrearReporte && (
+          <Link href="/reportes">
+            <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 20 }}>
+              Crear reporte
+            </button>
+          </Link>
+        )}
 
         <MovimientosList movimientos={movimientos} puedeEditar={puedeEditar} />
       </div>

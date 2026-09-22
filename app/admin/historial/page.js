@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermiso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
+import Breadcrumb from "@/components/Breadcrumb";
 import HistorialDeleteButton from "@/components/HistorialDeleteButton";
 import HistorialRestoreButton from "@/components/HistorialRestoreButton";
 import { formatFecha } from "@/lib/format";
@@ -25,7 +26,7 @@ export default async function HistorialCambiosPage() {
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
-        <h1 className="page-title">Historial</h1>
+        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Historial" }]} />
 
         <div className="section-title">Movimientos anulados</div>
         {anulados.length > 0 ? (
@@ -49,7 +50,18 @@ function tituloRegistro(tabla) {
   if (tabla === "salidas") return "Salida";
   if (tabla === "llenados_tanques") return "Llenado";
   if (tabla === "articulos") return "Código de catálogo";
+  if (tabla === "inspecciones_visuales") return "Inspección visual";
+  if (tabla === "mantenimientos_reguladores") return "Mantenimiento de regulador";
   return "Cambio de nombre";
+}
+
+// Algunas tablas tienen nombre masculino ("el llenado", "el mantenimiento")
+// y otras femenino ("la salida", "la inspección") — decide qué terminación
+// usar para "borrado/a" y "editado/a" en las tarjetas genéricas de abajo.
+function esMasculino(tabla) {
+  return ["llenados_tanques", "mantenimientos_reguladores", "tanques_alquiler", "reguladores_alquiler"].includes(
+    tabla
+  );
 }
 
 function TarjetaAnulado({ cambio, esTitular, esAdmin }) {
@@ -59,7 +71,7 @@ function TarjetaAnulado({ cambio, esTitular, esAdmin }) {
     <div className="card anulado">
       <div className="list-item-top">
         <div className="list-item-title">
-          {tituloRegistro(cambio.tabla)} {cambio.tabla === "llenados_tanques" ? "borrado" : "borrada"}
+          {tituloRegistro(cambio.tabla)} {esMasculino(cambio.tabla) ? "borrado" : "borrada"}
         </div>
         <div className="row-actions">
           {esAdmin && esRestaurable && <HistorialRestoreButton cambio={cambio} />}
@@ -175,11 +187,50 @@ function TarjetaEdicion({ cambio, esTitular }) {
     );
   }
 
+  if (cambio.tabla === "tanques_alquiler" || cambio.tabla === "reguladores_alquiler") {
+    return (
+      <div className="card edicion">
+        <div className="list-item-top">
+          <div className="list-item-title">
+            {cambio.tabla === "tanques_alquiler" ? "Tanque de catálogo editado" : "Regulador de catálogo editado"}
+          </div>
+          {esTitular && <HistorialDeleteButton cambioId={cambio.id} />}
+        </div>
+        <table className="table-mini" style={{ marginTop: 8 }}>
+          <tbody>
+            <tr>
+              <td>Código</td>
+              <td>{d.codigo || "—"}</td>
+            </tr>
+            <tr>
+              <td>Descripción antes de editar</td>
+              <td>{d.descripcion || "—"}</td>
+            </tr>
+            {d.serie && (
+              <tr>
+                <td>Serie antes de editar</td>
+                <td>{d.serie}</td>
+              </tr>
+            )}
+            <tr>
+              <td>Editado por</td>
+              <td>{cambio.full_name}</td>
+            </tr>
+            <tr>
+              <td>Fecha de edición</td>
+              <td>{formatFecha(cambio.created_at)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <div className="card edicion">
       <div className="list-item-top">
         <div className="list-item-title">
-          {tituloRegistro(cambio.tabla)} {cambio.tabla === "llenados_tanques" ? "editado" : "editada"}
+          {tituloRegistro(cambio.tabla)} {esMasculino(cambio.tabla) ? "editado" : "editada"}
         </div>
         {esTitular && <HistorialDeleteButton cambioId={cambio.id} />}
       </div>
@@ -221,6 +272,19 @@ function contenido(tabla, d) {
   }
   if (tabla === "llenados_tanques") {
     return `${d.cantidad} tanque(s) · ${d.tipo_gas || "Aire"}`;
+  }
+  if (tabla === "inspecciones_visuales") {
+    return `${d.tanque_codigo_snapshot || "?"} · ${d.resultado || "?"}${d.nota ? ` · ${d.nota}` : ""}`;
+  }
+  if (tabla === "mantenimientos_reguladores") {
+    const partes = [
+      d.regulador_codigo_snapshot || "?",
+      `Limpieza ultrasonido: ${d.limpieza_ultrasonido ? "Sí" : "No"}`,
+      `Presión intermedia: ${d.presion_intermedia ? "Sí" : "No"}`,
+      `O-rings: ${d.o_rings || "Ninguno"}`,
+    ];
+    if (d.detalle) partes.push(d.detalle);
+    return partes.join(" · ");
   }
   return "";
 }

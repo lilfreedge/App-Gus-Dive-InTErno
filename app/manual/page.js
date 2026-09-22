@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermiso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import ManualClient from "./manual-client";
 
 // Manual: guía rápida de las tareas de la app. Es un permiso otorgable más
@@ -68,6 +69,81 @@ export default async function ManualPage() {
     });
   }
 
+  if (esTitular || permisos.registrar_llenado) {
+    topics.push({
+      key: "registrar-llenado",
+      title: "Registrar un llenado de tanque",
+      searchText:
+        "registrar llenado de tanque cantidad tipo de gas aire nitrox nota",
+      body: (
+        <div className="card">
+          En Tanques → &quot;+ Registrar llenados&quot;, indica cuántos
+          tanques llenaste y el tipo de gas (Aire o Nitrox); la nota es
+          opcional. Queda guardado con tu nombre y la fecha para llevar el
+          conteo de llenados internos.
+        </div>
+      ),
+    });
+  }
+
+  if (esTitular || permisos.registrar_inspeccion) {
+    topics.push({
+      key: "registrar-inspeccion",
+      title: "Registrar una inspección visual",
+      searchText:
+        "registrar inspección visual tanque aprobado rechazado próxima inspección",
+      body: (
+        <div className="card">
+          En Inspección visual → &quot;Nueva inspección&quot;, elige el
+          tanque y marca si quedó Aprobado o Rechazado, con una nota
+          opcional. Puedes agregar varias filas para registrar de una vez
+          varias inspecciones del mismo día, y la fecha de la próxima
+          inspección del tanque (+1 año) se actualiza sola.
+        </div>
+      ),
+    });
+  }
+
+  if (esTitular || permisos.registrar_mantenimiento) {
+    topics.push({
+      key: "registrar-mantenimiento",
+      title: "Registrar un mantenimiento de regulador",
+      searchText:
+        "registrar mantenimiento regulador limpieza ultrasonido presión intermedia o-rings próximo mantenimiento",
+      body: (
+        <div className="card">
+          En Mantenimiento de reguladores → &quot;Nuevo
+          mantenimiento&quot;, elige el regulador y marca qué se hizo:
+          Limpieza ultrasonido (Sí/No), Presión intermedia (Sí/No) y
+          O-rings (Ninguno o Especificar cuáles). La nota es opcional
+          para cualquier detalle extra, y la fecha del próximo
+          mantenimiento (+8 meses) se actualiza sola.
+        </div>
+      ),
+    });
+  }
+
+  if (esTitular || permisos.facturacion) {
+    topics.push({
+      key: "facturacion",
+      title: "Marcar un llenado como facturado",
+      searchText:
+        "marcar llenado facturado factura número por facturar facturar varios",
+      body: (
+        <div className="card">
+          En Tanques, junto a cada llenado sin facturar hay una etiqueta
+          roja &quot;Facturar&quot; — tócala, escribe el número de
+          factura y guarda. &quot;Por facturar&quot; filtra la lista
+          para ver solo los pendientes, y &quot;Facturar varios&quot; te
+          deja seleccionar varios llenados y marcarlos todos con un
+          mismo número de factura. El número se puede corregir después
+          las veces que haga falta, tocando la etiqueta
+          &quot;Facturado&quot;.
+        </div>
+      ),
+    });
+  }
+
   if (verReportes) {
     topics.push({
       key: "reportes",
@@ -100,19 +176,56 @@ export default async function ManualPage() {
     });
   }
 
-  topics.push({
-    key: "catalogo",
-    title: "Agregar códigos al catálogo",
-    searchText: "agregar códigos catálogo descripción salida",
-    body: (
-      <div className="card">
-        Catálogo → &quot;+ Agregar&quot;. Escribe el código y una
-        descripción — solo se puede registrar una salida de un código que
-        ya esté en el catálogo, así que si un artículo nuevo no aparece al
-        buscarlo, hay que agregarlo aquí primero.
-      </div>
-    ),
-  });
+  if (esTitular || permisos.catalogo_codigo) {
+    topics.push({
+      key: "catalogo-codigo",
+      title: "Agregar códigos al catálogo",
+      searchText: "agregar códigos catálogo descripción salida",
+      body: (
+        <div className="card">
+          Catálogo → pestaña &quot;Códigos&quot; → &quot;+ Agregar&quot;.
+          Escribe el código y una descripción — solo se puede registrar
+          una salida de un código que ya esté en el catálogo, así que si
+          un artículo nuevo no aparece al buscarlo, hay que agregarlo
+          aquí primero.
+        </div>
+      ),
+    });
+  }
+
+  if (esTitular || permisos.catalogo_regulador) {
+    topics.push({
+      key: "catalogo-regulador",
+      title: "Agregar reguladores al catálogo",
+      searchText:
+        "agregar reguladores catálogo serie primera etapa segunda etapa octopus manómetro alquiler mantenimiento",
+      body: (
+        <div className="card">
+          Catálogo → pestaña &quot;Reguladores&quot; → &quot;+
+          Agregar&quot;. El código es obligatorio; serie, 1ra etapa, 2da
+          etapa, octopus y manómetro son opcionales. Un regulador debe
+          estar aquí antes de poder registrarle mantenimientos.
+        </div>
+      ),
+    });
+  }
+
+  if (esTitular || permisos.catalogo_tanque) {
+    topics.push({
+      key: "catalogo-tanque",
+      title: "Agregar tanques de alquiler al catálogo",
+      searchText:
+        "agregar tanques de alquiler catálogo descripción número de serie inspección visual",
+      body: (
+        <div className="card">
+          Catálogo → pestaña &quot;Tanques&quot; → &quot;+ Agregar&quot;.
+          El código es obligatorio; descripción y número de serie son
+          opcionales. Un tanque debe estar aquí antes de poder
+          registrarle inspecciones visuales.
+        </div>
+      ),
+    });
+  }
 
   if (verHistorial) {
     topics.push({
@@ -229,7 +342,7 @@ export default async function ManualPage() {
         <Link href="/dashboard" className="back-link">
           ← Volver
         </Link>
-        <h1 className="page-title">Manual</h1>
+        <Breadcrumb items={[{ label: "Manual" }]} />
 
         <p style={{ margin: "0 0 16px", color: "var(--texto-suave)", fontSize: 14 }}>
           {intro}

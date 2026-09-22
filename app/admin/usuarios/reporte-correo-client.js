@@ -32,6 +32,8 @@ export default function ReporteCorreoConfig({ destinatariosIniciales, detallesIn
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState(null);
   const [errorEmail, setErrorEmail] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [mensajeEnvio, setMensajeEnvio] = useState(null);
 
   async function guardar(destinatariosNuevos, detallesNuevos) {
     setLoading(true);
@@ -86,11 +88,38 @@ export default function ReporteCorreoConfig({ destinatariosIniciales, detallesIn
     guardar(destinatarios, detallesNuevos);
   }
 
+  async function enviarAhora() {
+    setEnviando(true);
+    setMensajeEnvio(null);
+
+    try {
+      const res = await fetch("/api/reportes/enviar-ahora", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || data.error) {
+        setMensajeEnvio({ tipo: "error", texto: data.error || "No se pudo enviar el reporte." });
+        return;
+      }
+
+      if (data.info) {
+        setMensajeEnvio({ tipo: "error", texto: data.info });
+        return;
+      }
+
+      setMensajeEnvio({
+        tipo: "ok",
+        texto: `Reporte enviado a ${data.destinatarios} destinatario(s).`,
+      });
+    } catch {
+      setMensajeEnvio({ tipo: "error", texto: "No se pudo enviar el reporte." });
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   return (
     <div>
-      <div className="section-title">Reporte semanal por correo</div>
-
-      <p className="hint-text" style={{ marginBottom: 8 }}>Destinatarios</p>
+      <p className="hint-text" style={{ marginBottom: 8, marginTop: 0 }}>Destinatarios</p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
         {destinatarios.length === 0 && (
           <span style={{ fontSize: 13, color: "var(--texto-suave)" }}>Sin destinatarios configurados.</span>
@@ -179,6 +208,31 @@ export default function ReporteCorreoConfig({ destinatariosIniciales, detallesIn
           }}
         >
           {mensaje.texto}
+        </div>
+      )}
+
+      <p className="hint-text" style={{ marginTop: 18, marginBottom: 8 }}>
+        Envíalo ahora mismo, sin esperar al lunes.
+      </p>
+      <button
+        type="button"
+        className="btn secondary"
+        style={{ width: "auto", marginTop: 0 }}
+        disabled={enviando}
+        onClick={enviarAhora}
+      >
+        {enviando ? "Enviando..." : "Reporte instantáneo"}
+      </button>
+
+      {mensajeEnvio && (
+        <div
+          style={{
+            marginTop: 10,
+            fontSize: 13,
+            color: mensajeEnvio.tipo === "error" ? "var(--rojo)" : "var(--azul)",
+          }}
+        >
+          {mensajeEnvio.texto}
         </div>
       )}
     </div>

@@ -18,6 +18,7 @@ const PERMISOS_DEFAULT = {
   catalogo_codigo: false,
   catalogo_regulador: false,
   catalogo_tanque: false,
+  compresores: false,
 };
 
 // Tres tablas apiladas (en vez de una sola tabla ancha con scroll
@@ -38,6 +39,7 @@ const GRUPOS = [
       { clave: "changelog", label: "Changelog" },
       { clave: "manual", label: "Manual" },
       { clave: "movimientos", label: "Movimientos" },
+      { clave: "compresores", label: "Compresores" },
     ],
   },
   {

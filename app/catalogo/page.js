@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
+import Breadcrumb from "@/components/Breadcrumb";
 import CatalogoTabs from "@/components/CatalogoTabs";
 import ListaArticulos from "./lista-client";
 
@@ -22,7 +23,7 @@ export default async function CatalogoPage() {
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
-        <h1 className="page-title">Catálogo</h1>
+        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Catálogo" }]} />
         <CatalogoTabs activo="/catalogo" />
 
         {puedeAdministrar && (

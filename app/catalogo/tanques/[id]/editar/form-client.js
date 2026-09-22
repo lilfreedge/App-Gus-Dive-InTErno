@@ -10,6 +10,7 @@ export default function EditarTanqueForm({ tanque }) {
   const supabase = createClient();
   const [codigo, setCodigo] = useState(tanque.codigo || "");
   const [descripcion, setDescripcion] = useState(tanque.descripcion || "");
+  const [serie, setSerie] = useState(tanque.serie || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -19,6 +20,7 @@ export default function EditarTanqueForm({ tanque }) {
 
     const codigoLimpio = codigo.trim();
     const descripcionLimpia = descripcion.trim();
+    const serieLimpia = serie.trim();
 
     if (!codigoLimpio) return;
 
@@ -33,7 +35,7 @@ export default function EditarTanqueForm({ tanque }) {
 
     const { error } = await supabase
       .from("tanques_alquiler")
-      .update({ codigo: codigoLimpio, descripcion: descripcionLimpia || null })
+      .update({ codigo: codigoLimpio, descripcion: descripcionLimpia || null, serie: serieLimpia || null })
       .eq("id", tanque.id);
     setLoading(false);
 
@@ -70,6 +72,15 @@ export default function EditarTanqueForm({ tanque }) {
         value={descripcion}
         onChange={(e) => setDescripcion(e.target.value)}
         placeholder="Ej: Tanque de aluminio 80 pies³"
+      />
+
+      <label htmlFor="serie">Número de serie</label>
+      <input
+        id="serie"
+        type="text"
+        value={serie}
+        onChange={(e) => setSerie(e.target.value)}
+        placeholder="Ej: AL80-2024-00123"
       />
 
       {error && <div className="error-box">{error}</div>}

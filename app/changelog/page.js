@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import ChangelogClient from "./changelog-client";
 
 export default function ChangelogPage() {
@@ -10,7 +11,7 @@ export default function ChangelogPage() {
         <Link href="/dashboard" className="back-link">
           ← Volver
         </Link>
-        <h1 className="page-title">Changelog</h1>
+        <Breadcrumb items={[{ label: "Changelog" }]} />
 
         <ChangelogClient />
       </div>

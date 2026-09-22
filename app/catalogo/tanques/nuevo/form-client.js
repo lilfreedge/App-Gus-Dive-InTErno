@@ -9,6 +9,7 @@ export default function NuevoTanqueForm() {
   const supabase = createClient();
   const [codigo, setCodigo] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [serie, setSerie] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [guardado, setGuardado] = useState(false);
@@ -19,13 +20,16 @@ export default function NuevoTanqueForm() {
 
     const codigoLimpio = codigo.trim();
     const descripcionLimpia = descripcion.trim();
+    const serieLimpia = serie.trim();
 
     if (!codigoLimpio) return;
 
     setLoading(true);
-    const { error } = await supabase
-      .from("tanques_alquiler")
-      .insert({ codigo: codigoLimpio, descripcion: descripcionLimpia || null });
+    const { error } = await supabase.from("tanques_alquiler").insert({
+      codigo: codigoLimpio,
+      descripcion: descripcionLimpia || null,
+      serie: serieLimpia || null,
+    });
     setLoading(false);
 
     if (error) {
@@ -39,6 +43,7 @@ export default function NuevoTanqueForm() {
 
     setCodigo("");
     setDescripcion("");
+    setSerie("");
     setGuardado(true);
     router.refresh();
   }
@@ -63,6 +68,15 @@ export default function NuevoTanqueForm() {
         value={descripcion}
         onChange={(e) => setDescripcion(e.target.value)}
         placeholder="Ej: Tanque de aluminio 80 pies³"
+      />
+
+      <label htmlFor="serie">Número de serie</label>
+      <input
+        id="serie"
+        type="text"
+        value={serie}
+        onChange={(e) => setSerie(e.target.value)}
+        placeholder="Ej: AL80-2024-00123"
       />
 
       {error && <div className="error-box">{error}</div>}

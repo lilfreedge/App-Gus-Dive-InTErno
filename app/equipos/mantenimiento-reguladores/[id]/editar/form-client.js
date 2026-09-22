@@ -10,7 +10,11 @@ export default function EditarMantenimientoForm({ registro, reguladores }) {
   const supabase = createClient();
 
   const [reguladorId, setReguladorId] = useState(registro.regulador_id || "");
-  const [detalle, setDetalle] = useState(registro.detalle || "");
+  const [limpiezaUltrasonido, setLimpiezaUltrasonido] = useState(!!registro.limpieza_ultrasonido);
+  const [presionIntermedia, setPresionIntermedia] = useState(!!registro.presion_intermedia);
+  const [oRingsAplica, setORingsAplica] = useState(!!registro.o_rings);
+  const [oRings, setORings] = useState(registro.o_rings || "");
+  const [nota, setNota] = useState(registro.detalle || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -20,11 +24,6 @@ export default function EditarMantenimientoForm({ registro, reguladores }) {
 
     if (!reguladorId) {
       setError("Selecciona un regulador.");
-      return;
-    }
-
-    if (!detalle.trim()) {
-      setError("Describe el mantenimiento realizado.");
       return;
     }
 
@@ -44,7 +43,10 @@ export default function EditarMantenimientoForm({ registro, reguladores }) {
       .update({
         regulador_id: reguladorId,
         regulador_codigo_snapshot: regulador?.codigo || registro.regulador_codigo_snapshot,
-        detalle: detalle.trim(),
+        limpieza_ultrasonido: limpiezaUltrasonido,
+        presion_intermedia: presionIntermedia,
+        o_rings: oRingsAplica ? oRings.trim() || null : null,
+        detalle: nota.trim() || null,
       })
       .eq("id", registro.id);
 
@@ -79,13 +81,87 @@ export default function EditarMantenimientoForm({ registro, reguladores }) {
         ))}
       </select>
 
-      <label htmlFor="detalle">Detalle del mantenimiento</label>
+      <label>Limpieza ultrasonido</label>
+      <div className="radio-pills">
+        <label>
+          <input
+            type="radio"
+            name="limpieza_ultrasonido"
+            checked={!limpiezaUltrasonido}
+            onChange={() => setLimpiezaUltrasonido(false)}
+          />
+          No
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="limpieza_ultrasonido"
+            checked={limpiezaUltrasonido}
+            onChange={() => setLimpiezaUltrasonido(true)}
+          />
+          Sí
+        </label>
+      </div>
+
+      <label>Presión intermedia</label>
+      <div className="radio-pills">
+        <label>
+          <input
+            type="radio"
+            name="presion_intermedia"
+            checked={!presionIntermedia}
+            onChange={() => setPresionIntermedia(false)}
+          />
+          No
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="presion_intermedia"
+            checked={presionIntermedia}
+            onChange={() => setPresionIntermedia(true)}
+          />
+          Sí
+        </label>
+      </div>
+
+      <label>O-rings</label>
+      <div className="radio-pills">
+        <label>
+          <input
+            type="radio"
+            name="o_rings_aplica"
+            checked={!oRingsAplica}
+            onChange={() => setORingsAplica(false)}
+          />
+          Ninguno
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="o_rings_aplica"
+            checked={oRingsAplica}
+            onChange={() => setORingsAplica(true)}
+          />
+          Especificar
+        </label>
+      </div>
+      {oRingsAplica && (
+        <input
+          type="text"
+          value={oRings}
+          onChange={(e) => setORings(e.target.value)}
+          placeholder="Ej: O-ring de primera etapa"
+          style={{ marginTop: 8 }}
+        />
+      )}
+
+      <label htmlFor="nota">Nota</label>
       <textarea
-        id="detalle"
-        required
-        value={detalle}
-        onChange={(e) => setDetalle(e.target.value)}
-        placeholder="Qué se le hizo al regulador"
+        id="nota"
+        value={nota}
+        onChange={(e) => setNota(e.target.value)}
+        placeholder="Cualquier detalle extra (opcional)"
       />
 
       {error && <div className="error-box">{error}</div>}

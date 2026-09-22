@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireTitular } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
+import SeccionColapsable from "@/components/SeccionColapsable";
 import ListaUsuarios from "./lista-client";
 import RolesInfo from "./roles-info";
 import LogoLoginSelector from "./logo-login-client";
@@ -34,42 +36,48 @@ export default async function UsuariosPage() {
         <Link href="/dashboard" className="back-link">
           ← Volver
         </Link>
-        <h1 className="page-title">Administración</h1>
+        <Breadcrumb items={[{ label: "Administración" }]} />
 
-        <div className="card">
+        <SeccionColapsable titulo="Usuarios y permisos" abiertoInicial>
           <ListaUsuarios perfiles={perfiles || []} miId={user.id} />
-        </div>
+        </SeccionColapsable>
 
-        <RolesInfo />
+        <SeccionColapsable titulo="Roles">
+          <RolesInfo />
+        </SeccionColapsable>
 
-        <div className="card" style={{ marginTop: 20 }}>
+        <SeccionColapsable titulo="Logo de inicio de sesión">
           <LogoLoginSelector logoActual={config?.logo_login || "grande"} />
-        </div>
+        </SeccionColapsable>
 
-        <div className="card" style={{ marginTop: 20 }}>
-          <Link href="/estado-sistema" className="action-card" style={{ width: "100%" }}>
+        <div style={{ marginTop: 14 }}>
+          <Link
+            href="/estado-sistema"
+            className="btn secondary"
+            style={{ width: "100%", display: "flex", justifyContent: "center", textDecoration: "none" }}
+          >
             Estado del sistema
           </Link>
         </div>
 
-        <div className="card" style={{ marginTop: 20 }}>
+        <SeccionColapsable titulo="Dominio personalizado">
           <DominioPersonalizado dominioActual={config?.dominio_personalizado} />
-        </div>
+        </SeccionColapsable>
 
-        <div className="card" style={{ marginTop: 20 }}>
+        <SeccionColapsable titulo="Reporte semanal por correo">
           <ReporteCorreoConfig
             destinatariosIniciales={config?.reporte_destinatarios || []}
             detallesIniciales={config?.reporte_detalles || {}}
           />
-        </div>
+        </SeccionColapsable>
 
-        <div className="card" style={{ marginTop: 20 }}>
+        <SeccionColapsable titulo="Respaldo de datos">
           <RespaldoDatos />
-        </div>
+        </SeccionColapsable>
 
-        <div className="card" style={{ marginTop: 20 }}>
+        <SeccionColapsable titulo="Zona de peligro" danger>
           <FormatearRegistros />
-        </div>
+        </SeccionColapsable>
       </div>
     </div>
   );

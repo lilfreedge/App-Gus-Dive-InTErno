@@ -25,7 +25,6 @@ export default async function InspeccionVisualPage() {
           ← Volver
         </Link>
         <Breadcrumb items={[{ label: "Equipos", href: "/equipos" }, { label: "Inspección visual" }]} />
-        <h1 className="page-title">Inspección visual</h1>
 
         {puedeRegistrar && (
           <Link href="/equipos/inspeccion-visual/nueva">

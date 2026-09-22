@@ -87,6 +87,7 @@ export default function ListaTanques({ tanques, puedeAdministrar, esTitular }) {
               </div>
             </div>
             {t.descripcion && <div className="list-item-note">{t.descripcion}</div>}
+            {t.serie && <div className="list-item-note">Serie: {t.serie}</div>}
             <div className="list-item-meta">
               {t.proxima_inspeccion
                 ? `Próxima inspección: ${formatFechaDDMMAAAADeDate(t.proxima_inspeccion)}`

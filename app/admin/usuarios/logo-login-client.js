@@ -40,7 +40,6 @@ export default function LogoLoginSelector({ logoActual }) {
 
   return (
     <div>
-      <div className="section-title">Logo de la pantalla de Login</div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         {OPCIONES.map((op) => (
           <button
