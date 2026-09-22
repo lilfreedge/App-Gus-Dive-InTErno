@@ -227,3 +227,34 @@ export function IconCompressor(props) {
     </Base>
   );
 }
+
+export function IconMail(props) {
+  return (
+    <Base {...props}>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 6.5l10 7 10-7" />
+    </Base>
+  );
+}
+
+export function IconReceipt(props) {
+  return (
+    <Base {...props}>
+      <path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z" />
+      <path d="M9 8h6" />
+      <path d="M9 12h6" />
+    </Base>
+  );
+}
+
+export function IconShuffle(props) {
+  return (
+    <Base {...props}>
+      <path d="M3 6h4l7 12h4" />
+      <path d="M14 6h4l1.5 2.5" />
+      <path d="M3 18h4l3.2-5.5" />
+      <path d="M17 3l3 3-3 3" />
+      <path d="M17 15l3 3-3 3" />
+    </Base>
+  );
+}

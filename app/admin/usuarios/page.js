@@ -9,7 +9,6 @@ import RolesInfo from "./roles-info";
 import LogoLoginSelector from "./logo-login-client";
 import FormatearRegistros from "./formatear-registros-client";
 import RespaldoDatos from "./respaldo-client";
-import ReporteCorreoConfig from "./reporte-correo-client";
 import DominioPersonalizado from "./dominio-client";
 
 // Administración: solo el Titular puede entrar (ni siquiera los
@@ -26,7 +25,7 @@ export default async function UsuariosPage() {
 
   const { data: config } = await supabase
     .from("app_config")
-    .select("logo_login, dominio_personalizado, reporte_destinatarios, reporte_detalles")
+    .select("logo_login, dominio_personalizado")
     .maybeSingle();
 
   return (
@@ -38,7 +37,7 @@ export default async function UsuariosPage() {
         </Link>
         <Breadcrumb items={[{ label: "Administración" }]} />
 
-        <SeccionColapsable titulo="Usuarios y permisos" abiertoInicial>
+        <SeccionColapsable titulo="Usuarios y permisos">
           <ListaUsuarios perfiles={perfiles || []} miId={user.id} />
         </SeccionColapsable>
 
@@ -62,13 +61,6 @@ export default async function UsuariosPage() {
 
         <SeccionColapsable titulo="Dominio personalizado">
           <DominioPersonalizado dominioActual={config?.dominio_personalizado} />
-        </SeccionColapsable>
-
-        <SeccionColapsable titulo="Reporte semanal por correo">
-          <ReporteCorreoConfig
-            destinatariosIniciales={config?.reporte_destinatarios || []}
-            detallesIniciales={config?.reporte_detalles || {}}
-          />
         </SeccionColapsable>
 
         <SeccionColapsable titulo="Respaldo de datos">

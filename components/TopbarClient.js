@@ -164,6 +164,7 @@ export default function TopbarClient({
           )}
         </div>
       </div>
+      <div className="topbar-appname">App Interno</div>
       <nav className="topnav">
         {links.map((l) => {
           const fijo = SECCIONES_FIJAS.includes(l.href);

@@ -11,6 +11,9 @@
   --rojo: #d64545;
   --verde: #2c9e5b;
 
+  /* Ver comentario junto a la redefinición en modo oscuro más abajo. */
+  --azul-texto: var(--azul);
+
   /* Tokens de superficie secundaria (fondos "suaves" de hover/chips/inputs) */
   --superficie-suave: #eef3f6;
   --superficie-suave-hover: #f0f3f6;
@@ -67,6 +70,15 @@ html[data-theme="dark"] {
   --superficie-suave: #1c2a38;
   --superficie-suave-hover: #1a2734;
   --tag-tu: #16232f;
+
+  /* --azul-texto: para texto/títulos/links sobre el fondo de la página
+     (.page-title, .section-title, .stat-value, breadcrumbs, etc.) --
+     distinto de --azul "a secas", que se sigue usando para RELLENOS
+     sólidos (botones, topbar, banda del PDF) donde el navy oscuro con
+     texto blanco encima sí tiene buen contraste en cualquier tema. Sin
+     esto, esos títulos quedaban en #0a3d62 (el --azul de siempre) sobre
+     un fondo casi negro -- prácticamente ilegible por falta de contraste. */
+  --azul-texto: #7fb3e0;
 
   --error-fondo: #2b1a17;
   --error-borde: #4a2c26;
@@ -177,6 +189,18 @@ button {
   margin-top: 4px;
 }
 
+/* Nombre de la app, fijo encima de las pestañas (Inicio/Salidas/...) en
+   el menú principal -- no es un link, es solo una etiqueta de contexto. */
+.topbar-appname {
+  max-width: 720px;
+  margin: 9px auto 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+
 .btn-link {
   background: none;
   border: none;
@@ -284,7 +308,7 @@ button {
   text-align: center;
   font-weight: 700;
   font-size: 20px;
-  color: var(--azul);
+  color: var(--azul-texto);
   margin: 0 0 4px;
 }
 
@@ -359,7 +383,7 @@ textarea {
 
 .btn-secondary {
   background: var(--superficie-suave);
-  color: var(--azul);
+  color: var(--azul-texto);
 }
 
 .auth-switch {
@@ -430,7 +454,7 @@ textarea {
 .section-title {
   font-size: 15px;
   font-weight: 700;
-  color: var(--azul);
+  color: var(--azul-texto);
   margin: 28px 0 12px;
   display: flex;
   align-items: center;
@@ -489,7 +513,7 @@ textarea {
 .stat-value {
   font-size: 26px;
   font-weight: 800;
-  color: var(--azul);
+  color: var(--azul-texto);
 }
 
 .stat-label {
@@ -521,7 +545,7 @@ textarea {
 
 .list-item-qty {
   font-weight: 700;
-  color: var(--azul);
+  color: var(--azul-texto);
   font-size: 14.5px;
   white-space: nowrap;
 }
@@ -614,14 +638,14 @@ textarea {
 .page-title {
   font-size: 19px;
   font-weight: 800;
-  color: var(--azul);
+  color: var(--azul-texto);
   margin: 0 0 4px;
 }
 
 /* Miga de pan combinada con el título (ver components/Breadcrumb.js):
    las secciones padre en negrita normal y la página actual resaltada. */
 .breadcrumb-crumb {
-  color: var(--azul);
+  color: var(--azul-texto);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -747,7 +771,7 @@ textarea {
 .nav-arrow-btn {
   border: none;
   background: none;
-  color: var(--azul);
+  color: var(--azul-texto);
   cursor: pointer;
   padding: 4px;
   display: flex;
@@ -842,7 +866,7 @@ textarea {
   padding: 2px 8px;
   border-radius: 12px;
   background: var(--superficie-suave);
-  color: var(--azul);
+  color: var(--azul-texto);
   margin-left: 4px;
   white-space: nowrap;
 }
@@ -872,7 +896,7 @@ textarea {
 .hub-link-title {
   font-weight: 700;
   font-size: 15.5px;
-  color: var(--azul);
+  color: var(--azul-texto);
 }
 
 .hub-link-desc {
@@ -937,7 +961,7 @@ textarea {
 }
 
 .edicion .list-item-title {
-  color: var(--azul);
+  color: var(--azul-texto);
 }
 
 .anulado,
@@ -981,7 +1005,7 @@ textarea {
   font-weight: 700;
   font-size: 16px;
   margin: 4px 0 0;
-  color: var(--azul);
+  color: var(--azul-texto);
 }
 
 .changelog-desc {
@@ -1031,7 +1055,7 @@ textarea {
   font: inherit;
   font-weight: 700;
   font-size: 14.5px;
-  color: var(--azul);
+  color: var(--azul-texto);
 }
 
 .manual-topic-body {
@@ -1051,7 +1075,7 @@ textarea {
 
 .manual-chevron-open {
   transform: rotate(180deg);
-  color: var(--azul);
+  color: var(--azul-texto);
 }
 
 .shots {
@@ -1142,6 +1166,39 @@ textarea {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
 }
 
+/* Variante ancha del modal (vista previa de reportes: tabla + botones). */
+.modal-panel-ancho {
+  max-width: 640px;
+  max-height: 86vh;
+  overflow: auto;
+}
+
+.reporte-preview-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.reporte-preview-tabla th {
+  background: var(--azul);
+  color: #fff;
+  text-align: left;
+  padding: 8px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+}
+
+.reporte-preview-tabla td {
+  padding: 8px 8px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.reporte-preview-tabla tr:nth-child(even) td {
+  background: var(--superficie-suave);
+}
+
 .modal-title {
   font-size: 15.5px;
   font-weight: 700;
@@ -1162,7 +1219,7 @@ textarea {
 
 .btn.secondary {
   background: var(--tarjeta);
-  color: var(--azul);
+  color: var(--azul-texto);
   border: 1px solid var(--borde);
 }
 
@@ -1258,7 +1315,7 @@ label .req {
   border-radius: 50%;
   border: 1px solid var(--borde);
   background: var(--tarjeta);
-  color: var(--azul);
+  color: var(--azul-texto);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1352,7 +1409,7 @@ label .req {
 .metric-card-value {
   font-size: 30px;
   font-weight: 800;
-  color: var(--azul);
+  color: var(--azul-texto);
   margin-bottom: 6px;
 }
 

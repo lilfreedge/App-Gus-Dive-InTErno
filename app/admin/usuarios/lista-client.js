@@ -1,8 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import {
+  IconReport,
+  IconCatalog,
+  IconHistory,
+  IconBook,
+  IconShuffle,
+  IconCompressor,
+  IconEye,
+  IconTankFill,
+  IconWrench,
+  IconReceipt,
+  IconMail,
+  IconEdit,
+  IconTank,
+} from "@/components/icons";
 
 const PERMISOS_DEFAULT = {
   reportes: false,
@@ -19,6 +35,7 @@ const PERMISOS_DEFAULT = {
   catalogo_regulador: false,
   catalogo_tanque: false,
   compresores: false,
+  correos_semanales: false,
 };
 
 // Tres tablas apiladas (en vez de una sola tabla ancha con scroll
@@ -33,30 +50,36 @@ const GRUPOS = [
   {
     titulo: "General",
     columnas: [
-      { clave: "reportes", label: "Reportes" },
-      { clave: "catalogo", label: "Catálogo" },
-      { clave: "historial", label: "Historial" },
-      { clave: "changelog", label: "Changelog" },
-      { clave: "manual", label: "Manual" },
-      { clave: "movimientos", label: "Movimientos" },
-      { clave: "compresores", label: "Compresores" },
+      { clave: "reportes", label: "Reportes", Icono: IconReport },
+      { clave: "catalogo", label: "Catálogo", Icono: IconCatalog },
+      { clave: "historial", label: "Historial", Icono: IconHistory },
+      { clave: "changelog", label: "Changelog", Icono: IconHistory },
+      { clave: "manual", label: "Manual", Icono: IconBook },
+      { clave: "movimientos", label: "Movimientos", Icono: IconShuffle },
+      { clave: "compresores", label: "Compresores", Icono: IconCompressor },
     ],
   },
   {
     titulo: "Registrar",
     columnas: [
-      { clave: "registrar_inspeccion", label: "Inspecciones" },
-      { clave: "registrar_llenado", label: "Llenados" },
-      { clave: "registrar_mantenimiento", label: "Mantenimiento" },
-      { clave: "facturacion", label: "Facturación de llenado" },
+      { clave: "registrar_inspeccion", label: "Inspecciones", Icono: IconEye },
+      { clave: "registrar_llenado", label: "Llenados", Icono: IconTankFill },
+      { clave: "registrar_mantenimiento", label: "Mantenimiento", Icono: IconWrench },
+      { clave: "facturacion", label: "Facturación de llenado", Icono: IconReceipt },
+      {
+        clave: "correos_semanales",
+        label: "Correos semanales",
+        Icono: IconMail,
+        destacado: true,
+      },
     ],
   },
   {
     titulo: "Catálogo — Registrar",
     columnas: [
-      { clave: "catalogo_codigo", label: "Código" },
-      { clave: "catalogo_regulador", label: "Regulador" },
-      { clave: "catalogo_tanque", label: "Tanque" },
+      { clave: "catalogo_codigo", label: "Código", Icono: IconEdit },
+      { clave: "catalogo_regulador", label: "Regulador", Icono: IconWrench },
+      { clave: "catalogo_tanque", label: "Tanque", Icono: IconTank },
     ],
   },
 ];
@@ -95,7 +118,10 @@ export default function ListaUsuarios({ perfiles, miId }) {
                   <th>Usuario</th>
                   {i === 0 && <th>Rol</th>}
                   {grupo.columnas.map((c) => (
-                    <th key={c.clave}>{c.label}</th>
+                    <th key={c.clave} title={c.label}>
+                      <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+                      {c.label}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -106,7 +132,11 @@ export default function ListaUsuarios({ perfiles, miId }) {
                   if (p.es_titular) {
                     return (
                       <tr key={p.id}>
-                        <td>{p.full_name}</td>
+                        <td>
+                          <Link href={`/admin/usuarios/${p.id}`} className="breadcrumb-crumb">
+                            {p.full_name}
+                          </Link>
+                        </td>
                         {i === 0 && (
                           <td>
                             <span className="role-tag role-tag-titular">Titular</span>
@@ -122,7 +152,9 @@ export default function ListaUsuarios({ perfiles, miId }) {
                   return (
                     <tr key={p.id}>
                       <td>
-                        {p.full_name}
+                        <Link href={`/admin/usuarios/${p.id}`} className="breadcrumb-crumb">
+                          {p.full_name}
+                        </Link>
                         {p.id === miId && <span className="tag-tu">Tú</span>}
                       </td>
                       {i === 0 && (
@@ -138,7 +170,14 @@ export default function ListaUsuarios({ perfiles, miId }) {
                         </td>
                       )}
                       {grupo.columnas.map((c) => (
-                        <td key={c.clave}>
+                        <td
+                          key={c.clave}
+                          style={
+                            c.destacado && permisos[c.clave]
+                              ? { background: "var(--acento-fondo)", borderRadius: 6 }
+                              : undefined
+                          }
+                        >
                           <input
                             type="checkbox"
                             checked={!!permisos[c.clave]}

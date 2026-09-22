@@ -12,6 +12,20 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V7",
+    fecha: "22 de septiembre, 2026",
+    titulo: "Reportes automáticos a varios destinatarios, vista previa de reportes, ficha de usuario y correcciones",
+    descripcion:
+      "El reporte semanal por correo ya no manda una sola cosa a una sola lista de personas: ahora se configuran \"envíos\" independientes, cada uno con su propia lista de destinatarios y su propia selección de secciones (por ejemplo, un envío solo de Facturación para contabilidad y otro con todo para el Titular), y \"Reporte instantáneo\" manda todos esos envíos de una vez. Esa configuración se movió de Administración a Reportes, y ahora se le puede dar acceso a un administrador sin que tenga que ser Titular, con el nuevo permiso \"Correos semanales\". En Reportes, \"Descargar PDF\" y \"Descargar Excel\" se reemplazaron por un solo botón \"Ver reporte\", que abre una vista previa en pantalla; desde ahí se puede descargar el PDF o mandarlo directo al propio correo. En Administración, tocar el nombre de cualquier usuario ahora abre su ficha: cuánto ha registrado (salidas, llenados, inspecciones, mantenimientos), sus permisos activos y los datos de su cuenta (correo, último acceso). Se agregó \"App Interno\" como etiqueta fija arriba del menú principal, en todas las pantallas. Se corrigió el contraste en modo oscuro (los títulos y textos en azul casi no se veían sobre el fondo oscuro) y que la sección \"Usuarios y permisos\" de Administración apareciera abierta por defecto al entrar.",
+  },
+  {
+    version: "V6",
+    fecha: "21 de septiembre, 2026",
+    titulo: "Ficha de reguladores y tanques, menú personalizado, permiso de Compresores y checklist de mantenimiento",
+    descripcion:
+      "Reguladores de alquiler y Tanques de alquiler ganaron una ficha más completa (1ra y 2da etapa, Octopus, Manómetro en los reguladores), con la fecha de su próximo mantenimiento o inspección calculada sola cada vez que se registra uno nuevo. En Mi Perfil se agregó \"Personalizar mi menú\", para que cada quien elija qué accesos directos quiere ver en el menú de arriba. \"Compresores\" pasó a ser un permiso que el Titular otorga persona por persona, en vez de estar abierto para cualquier usuario logueado. El formulario de Mantenimiento de reguladores cambió el detalle obligatorio por una lista de chequeo (Limpieza por ultrasonido, Presión intermedia, O-rings) con una nota opcional. También se corrigió que restaurar desde Historial una salida o un llenado registrado originalmente por OTRA persona fallaba con \"No se pudo restaurar\".",
+  },
+  {
     version: "V5",
     fecha: "17 de septiembre, 2026",
     titulo: "Equipos, Catálogo ampliado, Facturación, permisos granulares y más",
