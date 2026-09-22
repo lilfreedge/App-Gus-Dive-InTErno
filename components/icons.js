@@ -185,3 +185,45 @@ export function IconMinus(props) {
     </Base>
   );
 }
+
+// Tanque con una flecha entrando (llenado) -- distinto de IconTank, que es
+// el tanque "genérico" (sin flecha) usado en Catálogo > Tanques.
+export function IconTankFill(props) {
+  return (
+    <Base {...props}>
+      <path d="M12 1v7" />
+      <path d="M9 5l3 3 3-3" />
+      <rect x="8" y="10" width="8" height="12" rx="3.5" />
+      <path d="M8 14.5h8" />
+    </Base>
+  );
+}
+
+export function IconEye(props) {
+  return (
+    <Base {...props}>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </Base>
+  );
+}
+
+export function IconWrench(props) {
+  return (
+    <Base {...props}>
+      <path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 1 5.4-5.4l-2.6 2.6-2-2 2.6-2.6z" />
+    </Base>
+  );
+}
+
+// Compresor: tanque horizontal ancho con dos patas de apoyo (sin
+// manómetro -- versión simplificada a pedido, 2026-09-21).
+export function IconCompressor(props) {
+  return (
+    <Base {...props}>
+      <rect x="3" y="7" width="18" height="9" rx="4.5" />
+      <path d="M8 16v3" />
+      <path d="M16 16v3" />
+    </Base>
+  );
+}

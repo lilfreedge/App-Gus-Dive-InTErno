@@ -20,6 +20,7 @@ export default async function AppHeader() {
       esTitular={!!profile?.es_titular}
       permisos={profile?.permisos || {}}
       menuPersonalizado={profile?.menu_personalizado || {}}
+      ordenMenu={profile?.orden_menu || null}
     />
   );
 }

@@ -27,6 +27,7 @@ function leerLocalStorage(clave, porDefecto) {
 }
 
 export default function PreferenciasApariencia() {
+  const [abierto, setAbierto] = useState(false);
   const [modoOscuro, setModoOscuro] = useState(false);
   const [tamanoLetra, setTamanoLetra] = useState("normal");
 
@@ -58,48 +59,74 @@ export default function PreferenciasApariencia() {
 
   const idx = TAMANOS_LETRA.findIndex((t) => t.key === tamanoLetra);
 
+  // Colapsado detrás de un botón por defecto, mismo patrón de acordeón
+  // que "Mi actividad" (MiActividad.js) y Manual/Changelog.
   return (
-    <>
-      <div className="switch-row">
-        <span className="switch-label">Modo oscuro</span>
-        <label className="switch">
-          <input
-            type="checkbox"
-            checked={modoOscuro}
-            onChange={(e) => toggleModoOscuro(e.target.checked)}
-          />
-          <span className="slider" />
-        </label>
-      </div>
-      <p className="hint-text" style={{ marginBottom: 16 }}>
-        Aplica a toda la app en este dispositivo.
-      </p>
+    <div>
+      <button
+        type="button"
+        className="btn secondary"
+        style={{ width: "100%", justifyContent: "space-between", display: "flex" }}
+        onClick={() => setAbierto((v) => !v)}
+      >
+        <span>Apariencia</span>
+        <span style={{ transform: abierto ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>
+          ▾
+        </span>
+      </button>
 
-      <div className="switch-label" style={{ marginBottom: 10 }}>
-        Tamaño de letra
-      </div>
-      <div className="letra-stepper">
-        <button
-          type="button"
-          className="letra-stepper-btn"
-          onClick={() => irAPaso(-1)}
-          aria-label="Achicar letra"
-          disabled={idx <= 0}
-        >
-          <IconMinus size={16} />
-        </button>
-        <span className="letra-stepper-label">{TAMANOS_LETRA[idx]?.label || "Normal"}</span>
-        <button
-          type="button"
-          className="letra-stepper-btn"
-          onClick={() => irAPaso(1)}
-          aria-label="Agrandar letra"
-          disabled={idx >= TAMANOS_LETRA.length - 1}
-        >
-          <IconPlus size={16} />
-        </button>
-      </div>
-      <p className="hint-text">Agranda o achica el texto y los botones de toda la app.</p>
-    </>
+      {abierto && (
+        <div className="card" style={{ marginTop: 10 }}>
+          <div className="switch-row" style={{ marginTop: 0 }}>
+            <span className="switch-label">Modo oscuro</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={modoOscuro}
+                onChange={(e) => toggleModoOscuro(e.target.checked)}
+              />
+              <span className="slider" />
+            </label>
+          </div>
+          <p className="hint-text" style={{ marginBottom: 16 }}>
+            Aplica a toda la app en este dispositivo.
+          </p>
+
+          <div className="switch-label" style={{ marginBottom: 10 }}>
+            Tamaño de letra
+          </div>
+          <div className="letra-stepper">
+            <button
+              type="button"
+              className="letra-stepper-btn"
+              onClick={() => irAPaso(-1)}
+              aria-label="Achicar letra"
+              disabled={idx <= 0}
+            >
+              <IconMinus size={16} />
+            </button>
+            <span className="letra-stepper-label">{TAMANOS_LETRA[idx]?.label || "Normal"}</span>
+            <button
+              type="button"
+              className="letra-stepper-btn"
+              onClick={() => irAPaso(1)}
+              aria-label="Agrandar letra"
+              disabled={idx >= TAMANOS_LETRA.length - 1}
+            >
+              <IconPlus size={16} />
+            </button>
+          </div>
+          <div className="letra-stepper-dots">
+            {TAMANOS_LETRA.map((t, i) => (
+              <span
+                key={t.key}
+                className={"letra-stepper-dot" + (i === idx ? " letra-stepper-dot-activo" : "")}
+              />
+            ))}
+          </div>
+          <p className="hint-text">Agranda o achica el texto y los botones de toda la app.</p>
+        </div>
+      )}
+    </div>
   );
 }

@@ -27,10 +27,17 @@ export default function HistorialRestoreButton({ cambio }) {
       const { error: insertError } = await supabase.from(cambio.tabla).insert(cambio.datos_anteriores);
 
       if (insertError) {
+        // Se deja el detalle del error en consola y (para Titular/Admin,
+        // únicos con acceso a Historial) también en la alerta, para poder
+        // diagnosticar sin tener que abrir las herramientas de desarrollador.
+        console.error("No se pudo restaurar el registro:", cambio.tabla, insertError);
         if (insertError.code === "23505") {
           alert("No se pudo restaurar: ya existe un registro con ese identificador.");
         } else {
-          alert("No se pudo restaurar. Intenta de nuevo.");
+          alert(
+            "No se pudo restaurar. Intenta de nuevo." +
+              (insertError.message ? `\n\n(${insertError.message})` : "")
+          );
         }
         return;
       }

@@ -1,35 +1,37 @@
 import Link from "next/link";
 
-// Miga de pan simple: fila angosta arriba del <h1 className="page-title">.
-// items: [{label, href}] — el último (o cualquiera sin href) se muestra
-// como texto plano, sin link, para indicar la página actual.
+// Miga de pan + título de la página, todo en una sola línea (mismo
+// patrón que la maqueta): las secciones "padre" se muestran como
+// enlaces en negrita separados por ">" y, al final, la página actual
+// resaltada en un azul más claro. Este componente YA incluye el <h1
+// className="page-title">, así que las páginas que lo usan no deben
+// poner su propio <h1> aparte.
+// items: [{label, href}] — el último (o cualquiera sin href) es la
+// página actual, sin link.
 export default function Breadcrumb({ items }) {
   if (!items || items.length === 0) return null;
 
+  const actual = items[items.length - 1];
+  const padres = items.slice(0, -1);
+
   return (
-    <div
-      style={{
-        fontSize: 13,
-        color: "var(--texto-suave)",
-        marginBottom: 8,
-        display: "flex",
-        flexWrap: "wrap",
-        alignItems: "center",
-        gap: 6,
-      }}
-    >
-      {items.map((item, i) => (
-        <span key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          {i > 0 && <span>›</span>}
-          {item.href ? (
-            <Link href={item.href} style={{ color: "var(--texto-suave)" }}>
+    <h1 className="page-title">
+      {padres.map((item, i) =>
+        item.href ? (
+          <span key={i}>
+            <Link href={item.href} className="breadcrumb-crumb">
               {item.label}
             </Link>
-          ) : (
-            <span>{item.label}</span>
-          )}
-        </span>
-      ))}
-    </div>
+            <span className="breadcrumb-sep">&gt;</span>
+          </span>
+        ) : (
+          <span key={i}>
+            <span className="breadcrumb-crumb">{item.label}</span>
+            <span className="breadcrumb-sep">&gt;</span>
+          </span>
+        )
+      )}
+      <span className="breadcrumb-current">{actual.label}</span>
+    </h1>
   );
 }

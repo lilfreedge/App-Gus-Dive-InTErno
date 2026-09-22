@@ -5,8 +5,8 @@ import Link from "next/link";
 // ellas desde cualquiera de las tres páginas.
 const TABS = [
   { href: "/catalogo", label: "Códigos" },
-  { href: "/catalogo/reguladores", label: "Reguladores" },
   { href: "/catalogo/tanques", label: "Tanques" },
+  { href: "/catalogo/reguladores", label: "Reguladores" },
 ];
 
 export default function CatalogoTabs({ activo }) {

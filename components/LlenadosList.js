@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import RegistroActions from "@/components/RegistroActions";
@@ -13,7 +14,7 @@ import { formatFecha } from "@/lib/format";
 // con un solo número de factura. Igual que FacturacionToggle, esto es un
 // detalle de facturación (no una edición/borrado del registro principal),
 // así que tampoco pasa por registrarCambio / audit log.
-export default function LlenadosList({ llenados, puedeEditar, puedeFacturar }) {
+export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, puedeRegistrar }) {
   const router = useRouter();
   const supabase = createClient();
   const [modoSeleccion, setModoSeleccion] = useState(false);
@@ -22,6 +23,7 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar }) {
   const [facturaNo, setFacturaNo] = useState("");
   const [facturaNoError, setFacturaNoError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [soloPendientes, setSoloPendientes] = useState(false);
 
   function activarModoSeleccion() {
     setModoSeleccion(true);
@@ -73,9 +75,36 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar }) {
   }
 
   const noFacturados = (llenados || []).filter((t) => !t.facturado);
+  const visibles = soloPendientes ? noFacturados : llenados;
 
   return (
     <>
+      {(puedeRegistrar || puedeFacturar) && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+          {puedeRegistrar && (
+            <Link href="/tanques/nuevo">
+              <button className="btn btn-primary" type="button" style={{ width: "auto", margin: 0 }}>
+                + Registrar llenados
+              </button>
+            </Link>
+          )}
+          {puedeFacturar && (
+            <button
+              type="button"
+              className="btn secondary"
+              style={
+                soloPendientes
+                  ? { width: "auto", margin: 0, background: "var(--azul)", color: "#fff", borderColor: "var(--azul)" }
+                  : { width: "auto", margin: 0 }
+              }
+              onClick={() => setSoloPendientes((v) => !v)}
+            >
+              Por facturar
+            </button>
+          )}
+        </div>
+      )}
+
       {puedeFacturar && noFacturados.length > 0 && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
           {!modoSeleccion ? (
@@ -103,8 +132,8 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar }) {
       )}
 
       <div className="card">
-        {llenados && llenados.length > 0 ? (
-          llenados.map((t) => (
+        {visibles && visibles.length > 0 ? (
+          visibles.map((t) => (
             <div className="list-item" key={t.id}>
               <div className="list-item-top">
                 <span className="list-item-title" style={{ display: "flex", alignItems: "center" }}>

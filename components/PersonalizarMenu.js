@@ -6,17 +6,25 @@ import { createClient } from "@/lib/supabase/client";
 
 // Accesos directos que el usuario puede activar/desactivar para que
 // aparezcan en el menú de arriba (top nav), además de las secciones fijas
-// de lib/nav.js (NAV_SECTIONS). Ver lib/nav.js -> ATAJOS_MENU.
-const OPCIONES = [
+// de lib/nav.js (NAV_SECTIONS). Ver lib/nav.js -> ATAJOS_MENU. "Equipos"
+// se quitó de aquí porque ya es una sección fija siempre visible.
+const OPCIONES_BASE = [
   { clave: "llenados", etiqueta: "Llenados" },
   { clave: "inspeccion_visual", etiqueta: "Inspección visual" },
-  { clave: "tanques_hub", etiqueta: "Equipos" },
   { clave: "mantenimiento_reguladores", etiqueta: "Mantenimiento de reguladores" },
 ];
 
-export default function PersonalizarMenu({ menuInicial }) {
+// puedeCompresores: solo se ofrece este atajo a quien ya tenga el permiso
+// "compresores" (Administración > Usuarios y permisos > General) -- si se
+// lo quitan después, lib/nav.js -> seccionesVisibles lo revalida solo y
+// el atajo deja de aparecer en el menú aunque siga "activado" aquí.
+export default function PersonalizarMenu({ menuInicial, puedeCompresores }) {
   const router = useRouter();
   const supabase = createClient();
+
+  const opciones = puedeCompresores
+    ? [...OPCIONES_BASE, { clave: "compresores", etiqueta: "Compresores" }]
+    : OPCIONES_BASE;
 
   const [menu, setMenu] = useState(menuInicial || {});
   const [loading, setLoading] = useState(false);
@@ -50,20 +58,25 @@ export default function PersonalizarMenu({ menuInicial }) {
 
   return (
     <div>
-      <p className="hint-text" style={{ marginTop: 0, marginBottom: 10 }}>
+      <p className="hint-text" style={{ marginTop: 0, marginBottom: 14 }}>
         Actívalos para que aparezcan como acceso directo en el menú de arriba.
+        Se muestran con un borde punteado para diferenciarlos de las
+        secciones fijas del menú.
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {OPCIONES.map((op) => (
-          <label key={op.clave} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
-            <input
-              type="checkbox"
-              checked={!!menu[op.clave]}
-              disabled={loading}
-              onChange={(e) => toggleOpcion(op.clave, e.target.checked)}
-            />
-            {op.etiqueta}
-          </label>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {opciones.map((op, i) => (
+          <div key={op.clave} className="switch-row" style={i === 0 ? { marginTop: 0 } : undefined}>
+            <span className="switch-label">{op.etiqueta}</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={!!menu[op.clave]}
+                disabled={loading}
+                onChange={(e) => toggleOpcion(op.clave, e.target.checked)}
+              />
+              <span className="slider" />
+            </label>
+          </div>
         ))}
       </div>
 

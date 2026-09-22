@@ -81,11 +81,12 @@ export default function FacturacionToggle({ registro }) {
   return (
     <button
       type="button"
-      className="chip-btn"
+      className="badge badge-rojo"
+      style={{ border: "none", cursor: "pointer" }}
       onClick={() => setEditando(true)}
       disabled={loading}
     >
-      Facturar
+      Pendiente por facturar
     </button>
   );
 }
