@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import SalidasList from "@/components/SalidasList";
 
 // Solo administradores y Titular: hiding the button in the catalog list is
@@ -32,6 +33,12 @@ export default async function MovimientosArticuloPage({ params }) {
         <Link href="/catalogo" className="back-link">
           ← Volver al catálogo
         </Link>
+        <Breadcrumb
+          items={[
+            { label: "Catálogo", href: "/catalogo" },
+            { label: `Movimientos de ${articulo.nombre}` },
+          ]}
+        />
         <h1 className="page-title">Movimientos de {articulo.nombre}</h1>
         {articulo.descripcion && <p className="page-subtitle">{articulo.descripcion}</p>}
 

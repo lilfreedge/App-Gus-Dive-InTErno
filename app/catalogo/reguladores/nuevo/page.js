@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermiso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import NuevoReguladorForm from "./form-client";
 
 // Agregar un regulador de alquiler al catálogo. Gateado por el permiso
@@ -17,6 +18,13 @@ export default async function NuevoReguladorPage() {
         <Link href="/catalogo/reguladores" className="back-link">
           ← Regresar
         </Link>
+        <Breadcrumb
+          items={[
+            { label: "Catálogo", href: "/catalogo" },
+            { label: "Reguladores de alquiler", href: "/catalogo/reguladores" },
+            { label: "Nuevo regulador" },
+          ]}
+        />
         <h1 className="page-title">Nuevo regulador</h1>
 
         <NuevoReguladorForm />

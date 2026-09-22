@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermiso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import EditarCodigoForm from "./form-client";
 
 // Editar un código del catálogo: gateado por el permiso granular
@@ -27,7 +28,7 @@ export default async function EditarCodigoPage({ params }) {
         <Link href="/catalogo" className="back-link">
           ← Regresar
         </Link>
-        <h1 className="page-title">Editar código</h1>
+        <Breadcrumb items={[{ label: "Catálogo", href: "/catalogo" }, { label: "Editar código" }]} />
 
         <EditarCodigoForm articulo={articulo} />
       </div>

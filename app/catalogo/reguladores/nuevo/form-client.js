@@ -8,12 +8,11 @@ export default function NuevoReguladorForm() {
   const router = useRouter();
   const supabase = createClient();
   const [codigo, setCodigo] = useState("");
-  const [descripcion, setDescripcion] = useState("");
   const [serie, setSerie] = useState("");
-  const [etapas, setEtapas] = useState("");
-  const [octopus, setOctopus] = useState(false);
-  const [manometro, setManometro] = useState(false);
-  const [manguera_bc, setMangueraBc] = useState(false);
+  const [primeraEtapa, setPrimeraEtapa] = useState("");
+  const [segundaEtapa, setSegundaEtapa] = useState("");
+  const [octopus, setOctopus] = useState("");
+  const [manometro, setManometro] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [guardado, setGuardado] = useState(false);
@@ -23,19 +22,17 @@ export default function NuevoReguladorForm() {
     setError("");
 
     const codigoLimpio = codigo.trim();
-    const descripcionLimpia = descripcion.trim();
 
     if (!codigoLimpio) return;
 
     setLoading(true);
     const { error } = await supabase.from("reguladores_alquiler").insert({
       codigo: codigoLimpio,
-      descripcion: descripcionLimpia || null,
       serie: serie.trim() || null,
-      etapas: etapas.trim() || null,
-      octopus,
-      manometro,
-      manguera_bc,
+      primera_etapa: primeraEtapa.trim() || null,
+      segunda_etapa: segundaEtapa.trim() || null,
+      octopus: octopus.trim() || null,
+      manometro: manometro.trim() || null,
     });
     setLoading(false);
 
@@ -49,12 +46,11 @@ export default function NuevoReguladorForm() {
     }
 
     setCodigo("");
-    setDescripcion("");
     setSerie("");
-    setEtapas("");
-    setOctopus(false);
-    setManometro(false);
-    setMangueraBc(false);
+    setPrimeraEtapa("");
+    setSegundaEtapa("");
+    setOctopus("");
+    setManometro("");
     setGuardado(true);
     router.refresh();
   }
@@ -72,15 +68,6 @@ export default function NuevoReguladorForm() {
         placeholder="Ej: REG-014"
       />
 
-      <label htmlFor="descripcion">Descripción</label>
-      <textarea
-        id="descripcion"
-        rows={2}
-        value={descripcion}
-        onChange={(e) => setDescripcion(e.target.value)}
-        placeholder="Ej: Regulador Scubapro MK25, primera etapa"
-      />
-
       <label htmlFor="serie">Serie</label>
       <input
         id="serie"
@@ -90,34 +77,41 @@ export default function NuevoReguladorForm() {
         placeholder="Ej: SP-2024-118"
       />
 
-      <label htmlFor="etapas">Etapas</label>
+      <label htmlFor="primera_etapa">1ra etapa</label>
       <input
-        id="etapas"
+        id="primera_etapa"
         type="text"
-        value={etapas}
-        onChange={(e) => setEtapas(e.target.value)}
-        placeholder="Ej: 2 etapas"
+        value={primeraEtapa}
+        onChange={(e) => setPrimeraEtapa(e.target.value)}
+        placeholder="Ej: Scubapro MK25"
       />
 
-      <label style={{ marginBottom: 4 }}>Accesorios</label>
-      <div className="radio-pills">
-        <label>
-          <input type="checkbox" checked={octopus} onChange={(e) => setOctopus(e.target.checked)} />
-          Octopus
-        </label>
-        <label>
-          <input type="checkbox" checked={manometro} onChange={(e) => setManometro(e.target.checked)} />
-          Manómetro
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={manguera_bc}
-            onChange={(e) => setMangueraBc(e.target.checked)}
-          />
-          Manguera de BC
-        </label>
-      </div>
+      <label htmlFor="segunda_etapa">2da etapa</label>
+      <input
+        id="segunda_etapa"
+        type="text"
+        value={segundaEtapa}
+        onChange={(e) => setSegundaEtapa(e.target.value)}
+        placeholder="Ej: Scubapro S600"
+      />
+
+      <label htmlFor="octopus">Octopus</label>
+      <input
+        id="octopus"
+        type="text"
+        value={octopus}
+        onChange={(e) => setOctopus(e.target.value)}
+        placeholder="Ej: Scubapro R195"
+      />
+
+      <label htmlFor="manometro">Manómetro</label>
+      <input
+        id="manometro"
+        type="text"
+        value={manometro}
+        onChange={(e) => setManometro(e.target.value)}
+        placeholder="Ej: Scubapro"
+      />
 
       {error && <div className="error-box">{error}</div>}
       <button className="btn btn-primary" style={{ marginTop: 20 }} type="submit" disabled={loading}>

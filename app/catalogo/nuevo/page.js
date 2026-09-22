@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermiso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 import NuevoCodigoForm from "./form-client";
 
 // Pantalla dedicada para agregar un código al catálogo (V4: antes era un
@@ -18,7 +19,7 @@ export default async function NuevoCodigoPage() {
         <Link href="/catalogo" className="back-link">
           ← Regresar
         </Link>
-        <h1 className="page-title">Nuevo código</h1>
+        <Breadcrumb items={[{ label: "Catálogo", href: "/catalogo" }, { label: "Nuevo código" }]} />
 
         <NuevoCodigoForm />
       </div>

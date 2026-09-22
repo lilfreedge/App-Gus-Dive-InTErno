@@ -46,18 +46,11 @@ export default async function FichaReguladorPage({ params }) {
                 {regulador.activo ? "Activo" : "Inactivo"}
               </span>
             </Campo>
-            <Campo etiqueta="Descripción" valor={regulador.descripcion || "—"} />
             <Campo etiqueta="Serie" valor={regulador.serie || "—"} />
-            <Campo etiqueta="Etapas" valor={regulador.etapas || "—"} />
-            <Campo etiqueta="Octopus">
-              <SiNo valor={regulador.octopus} />
-            </Campo>
-            <Campo etiqueta="Manómetro">
-              <SiNo valor={regulador.manometro} />
-            </Campo>
-            <Campo etiqueta="Manguera de BC">
-              <SiNo valor={regulador.manguera_bc} />
-            </Campo>
+            <Campo etiqueta="1ra etapa" valor={regulador.primera_etapa || "—"} />
+            <Campo etiqueta="2da etapa" valor={regulador.segunda_etapa || "—"} />
+            <Campo etiqueta="Octopus" valor={regulador.octopus || "—"} />
+            <Campo etiqueta="Manómetro" valor={regulador.manometro || "—"} />
             <Campo etiqueta="Próximo mantenimiento">
               {regulador.proximo_mantenimiento ? (
                 formatFechaDDMMAAAADeDate(regulador.proximo_mantenimiento)
@@ -100,6 +93,3 @@ function Campo({ etiqueta, valor, children }) {
   );
 }
 
-function SiNo({ valor }) {
-  return <span className={valor ? "badge badge-verde" : "badge badge-rojo"}>{valor ? "Sí" : "No"}</span>;
-}

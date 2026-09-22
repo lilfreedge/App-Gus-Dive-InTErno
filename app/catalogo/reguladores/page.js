@@ -27,7 +27,6 @@ export default async function CatalogoReguladoresPage() {
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
         <Breadcrumb items={[{ label: "Catálogo", href: "/catalogo" }, { label: "Reguladores de alquiler" }]} />
-        <h1 className="page-title">Catálogo</h1>
         <CatalogoTabs activo="/catalogo/reguladores" />
 
         {puedeAdministrar && (
