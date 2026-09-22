@@ -15,7 +15,7 @@ import "./globals.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Gus Dive - Control Interno",
+  title: "Gus App",
   description: "Control interno de piezas, uso de tienda y llenados de tanques",
 };
 

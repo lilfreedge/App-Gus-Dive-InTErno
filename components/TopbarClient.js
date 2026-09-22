@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { seccionesVisibles, ordenarSecciones, NAV_SECTIONS, SECCIONES_FIJAS } from "@/lib/nav";
-import { IconLogout, IconGear, IconEdit, IconHistory, IconUsers, IconBook } from "./icons";
+import { IconLogout, IconGear, IconEdit, IconHistory, IconUsers, IconBook, IconShuffle } from "./icons";
 
 export default function TopbarClient({
   nombre,
@@ -125,6 +125,9 @@ export default function TopbarClient({
                 <b>{nombreCompleto}</b>
                 {correo} · {rolLabel}
               </div>
+              <Link href="/espacio" className="settings-menu-link" onClick={() => setOpen(false)}>
+                <IconShuffle size={15} /> Cambiar de espacio
+              </Link>
               <Link href="/perfil" className="settings-menu-link" onClick={() => setOpen(false)}>
                 <IconEdit size={15} /> Mi Perfil
               </Link>

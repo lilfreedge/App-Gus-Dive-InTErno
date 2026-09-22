@@ -5,7 +5,6 @@ import { obtenerUsuariosConMovimientos } from "@/lib/reportes";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import Breadcrumb from "@/components/Breadcrumb";
-import SeccionColapsable from "@/components/SeccionColapsable";
 import ReportesForm from "./form-client";
 import ReporteCorreoConfig from "./reporte-correo-client";
 
@@ -21,6 +20,7 @@ export default async function ReportesPage() {
   }
 
   const puedeCorreos = tieneAcceso(profile, "correos_semanales");
+  const esTitular = !!profile?.es_titular;
 
   const [usuarios, config] = await Promise.all([
     obtenerUsuariosConMovimientos(supabase),
@@ -43,9 +43,7 @@ export default async function ReportesPage() {
         <ReportesForm usuarios={usuarios} />
 
         {puedeCorreos && (
-          <SeccionColapsable titulo="Reporte semanal por correo">
-            <ReporteCorreoConfig enviosIniciales={config?.reporte_configs || []} />
-          </SeccionColapsable>
+          <ReporteCorreoConfig enviosIniciales={config?.reporte_configs || []} esTitular={esTitular} />
         )}
       </div>
     </div>

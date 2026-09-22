@@ -28,7 +28,7 @@ export default async function EditarCodigoPage({ params }) {
         <Link href="/catalogo" className="back-link">
           ← Regresar
         </Link>
-        <Breadcrumb items={[{ label: "Catálogo", href: "/catalogo" }, { label: "Editar código" }]} />
+        <Breadcrumb items={[{ label: "Códigos", href: "/catalogo" }, { label: "Editar código" }]} />
 
         <EditarCodigoForm articulo={articulo} />
       </div>

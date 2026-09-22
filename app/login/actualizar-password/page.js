@@ -36,7 +36,7 @@ export default function ActualizarPasswordPage() {
 
     setSuccess(true);
     setTimeout(() => {
-      router.push("/dashboard");
+      router.push("/espacio");
       router.refresh();
     }, 1500);
   }

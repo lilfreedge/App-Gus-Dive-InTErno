@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -29,6 +31,10 @@ export default function ReportesForm({ usuarios }) {
   const [errorVista, setErrorVista] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const [mensajeEnvio, setMensajeEnvio] = useState(null);
+  // Ítem 1 del backlog (22-sep-2026): antes se mandaba automático al
+  // correo de la sesión -- ahora se escribe a qué correo mandarlo.
+  const [correoDestino, setCorreoDestino] = useState("");
+  const [errorCorreo, setErrorCorreo] = useState("");
 
   const mostrarGas = tipo === "llenados" || tipo === "todos";
   const mostrarCodigoMotivo = tipo === "salidas" || tipo === "todos";
@@ -73,6 +79,8 @@ export default function ReportesForm({ usuarios }) {
     setVista(null);
     setErrorVista(null);
     setMensajeEnvio(null);
+    setCorreoDestino("");
+    setErrorCorreo("");
   }
 
   function descargarPDF() {
@@ -81,11 +89,22 @@ export default function ReportesForm({ usuarios }) {
   }
 
   async function enviarPorCorreo() {
+    const correo = correoDestino.trim();
+    if (!correo) {
+      setErrorCorreo("Escribe a qué correo mandarlo.");
+      return;
+    }
+    if (!EMAIL_REGEX.test(correo)) {
+      setErrorCorreo("Ese correo no es válido.");
+      return;
+    }
+    setErrorCorreo("");
     setEnviando(true);
     setMensajeEnvio(null);
 
     try {
       const params = armarParams();
+      params.set("correo", correo);
       const res = await fetch(`/api/reportes/enviar-a-mi?${params.toString()}`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
 
@@ -245,6 +264,28 @@ export default function ReportesForm({ usuarios }) {
                   </table>
                 </div>
               </>
+            )}
+
+            {!errorVista && (
+              <div style={{ marginTop: 14 }}>
+                <label htmlFor="correo_destino" style={{ marginTop: 0 }}>
+                  Enviar por correo a
+                </label>
+                <input
+                  id="correo_destino"
+                  type="email"
+                  value={correoDestino}
+                  onChange={(e) => {
+                    setCorreoDestino(e.target.value);
+                    setErrorCorreo("");
+                  }}
+                  placeholder="correo@ejemplo.com"
+                  disabled={enviando}
+                />
+                {errorCorreo && (
+                  <div style={{ marginTop: 6, fontSize: 13, color: "var(--rojo)" }}>{errorCorreo}</div>
+                )}
+              </div>
             )}
 
             {mensajeEnvio && (

@@ -24,7 +24,7 @@ export default function RegistroPage() {
       password,
       options: {
         data: { full_name: fullName.trim() },
-        emailRedirectTo: `${window.location.origin}/auth/confirm?type=signup&next=/dashboard`,
+        emailRedirectTo: `${window.location.origin}/auth/confirm?type=signup&next=/espacio`,
       },
     });
 

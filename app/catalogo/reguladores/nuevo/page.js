@@ -20,7 +20,7 @@ export default async function NuevoReguladorPage() {
         </Link>
         <Breadcrumb
           items={[
-            { label: "Catálogo", href: "/catalogo" },
+            { label: "Códigos", href: "/catalogo" },
             { label: "Reguladores de alquiler", href: "/catalogo/reguladores" },
             { label: "Nuevo regulador" },
           ]}

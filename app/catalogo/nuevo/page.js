@@ -19,7 +19,7 @@ export default async function NuevoCodigoPage() {
         <Link href="/catalogo" className="back-link">
           ← Regresar
         </Link>
-        <Breadcrumb items={[{ label: "Catálogo", href: "/catalogo" }, { label: "Nuevo código" }]} />
+        <Breadcrumb items={[{ label: "Códigos", href: "/catalogo" }, { label: "Nuevo código" }]} />
 
         <NuevoCodigoForm />
       </div>

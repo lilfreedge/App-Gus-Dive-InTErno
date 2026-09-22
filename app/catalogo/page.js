@@ -23,7 +23,7 @@ export default async function CatalogoPage() {
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
-        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Catálogo" }]} />
+        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Códigos" }]} />
         <CatalogoTabs activo="/catalogo" />
 
         {puedeAdministrar && (

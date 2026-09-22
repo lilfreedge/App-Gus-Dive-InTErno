@@ -194,10 +194,11 @@ button {
 .topbar-appname {
   max-width: 720px;
   margin: 9px auto 0;
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.4px;
   text-transform: uppercase;
+  text-align: center;
   color: rgba(255, 255, 255, 0.62);
 }
 
@@ -921,6 +922,73 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Pantalla selectora de espacio ("Gus App" -- Ítem 7 del backlog,
+   22-sep-2026): 2 botones grandes, App Clientes / App Interno, cada uno
+   con su propia línea de notificaciones debajo. */
+.espacio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.espacio-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  padding: 24px 12px 16px;
+  gap: 4px;
+}
+
+.espacio-icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--azul);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.espacio-title {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--azul-texto);
+}
+
+.espacio-badge {
+  margin-top: 4px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  background: var(--superficie-suave);
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.espacio-notif {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borde);
+  width: 100%;
+  font-size: 11px;
+  color: var(--texto-suave);
+  line-height: 1.4;
+}
+
+.espacio-notif-alerta {
+  color: var(--rojo);
+  font-weight: 700;
 }
 
 .folio-tag {

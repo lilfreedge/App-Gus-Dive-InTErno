@@ -7,7 +7,7 @@ import { obtenerEnviosConfigurados, enviarReportesConfigurados } from "@/lib/rep
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function POST() {
+export async function POST(request) {
   // Verifica que quien llama tenga permiso, usando el cliente con la
   // sesión del navegador (cookies), no el de servicio. V12: ya no es
   // exclusivo del Titular -- el Titular puede delegar esto a un
@@ -38,13 +38,27 @@ export async function POST() {
   const supabase = createServiceClient();
 
   const { data: config } = await supabase.from("app_config").select("reporte_configs").maybeSingle();
-  const envios = obtenerEnviosConfigurados(config);
+  let envios = obtenerEnviosConfigurados(config);
 
   if (envios.length === 0) {
     return NextResponse.json(
       { error: "Falta configurar destinatarios (Reportes > Reporte semanal por correo, o REPORT_EMAIL_TO)" },
       { status: 500 }
     );
+  }
+
+  // Ítem 2 del backlog (22-sep-2026): "Enviar solo esto ahora" en cada
+  // tarjeta de envío -- mismo endpoint, pero limitado a un solo envío por
+  // su índice dentro de la lista guardada (mismo orden que se ve en
+  // pantalla, ver reporte-correo-client.js).
+  const { searchParams } = new URL(request.url);
+  const indiceParam = searchParams.get("indice");
+  if (indiceParam !== null) {
+    const indice = Number(indiceParam);
+    if (!Number.isInteger(indice) || indice < 0 || indice >= envios.length) {
+      return NextResponse.json({ error: "Ese envío ya no existe -- recarga la página." }, { status: 400 });
+    }
+    envios = [envios[indice]];
   }
 
   const hasta = new Date();

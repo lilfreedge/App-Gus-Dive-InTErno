@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
+import { IconCatalog, IconReport, IconHistory } from "@/components/icons";
 
 // Hub "Más": une Catálogo, Historial y Reportes en un solo botón del menú
 // superior para no sobrecargarlo (antes eran 3 botones fijos aparte).
@@ -15,18 +16,21 @@ const OPCIONES = [
     titulo: "Catálogo",
     descripcion: "Códigos, reguladores y tanques de alquiler.",
     permiso: "catalogo",
+    Icono: IconCatalog,
   },
   {
     href: "/reportes",
     titulo: "Reportes",
     descripcion: "Genera y descarga reportes de movimientos.",
     permiso: "reportes",
+    Icono: IconReport,
   },
   {
     href: "/admin/historial",
     titulo: "Historial",
     descripcion: "Registro de ediciones y movimientos anulados.",
     permiso: "historial",
+    Icono: IconHistory,
   },
 ];
 
@@ -48,8 +52,15 @@ export default async function MasPage() {
         )}
         {opciones.map((o) => (
           <Link key={o.href} href={o.href} className="card hub-link-card">
-            <div className="hub-link-title">{o.titulo}</div>
-            <div className="hub-link-desc">{o.descripcion}</div>
+            <div className="hub-link-card-inner">
+              <div className="hub-link-icon">
+                <o.Icono size={20} />
+              </div>
+              <div>
+                <div className="hub-link-title">{o.titulo}</div>
+                <div className="hub-link-desc">{o.descripcion}</div>
+              </div>
+            </div>
           </Link>
         ))}
       </div>

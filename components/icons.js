@@ -258,3 +258,29 @@ export function IconShuffle(props) {
     </Base>
   );
 }
+
+export function IconLock(props) {
+  return (
+    <Base {...props}>
+      <rect x="3" y="11" width="18" height="11" rx="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </Base>
+  );
+}
+
+export function IconCheck(props) {
+  return (
+    <Base {...props}>
+      <polyline points="20 6 9 17 4 12" />
+    </Base>
+  );
+}
+
+export function IconSend(props) {
+  return (
+    <Base {...props}>
+      <line x1="22" y1="2" x2="11" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    </Base>
+  );
+}

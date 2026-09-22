@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V8",
+    fecha: "22 de septiembre, 2026",
+    titulo: "Gus App: pantalla selectora, reportes automáticos rediseñados, envío por correo a cualquier destinatario y más",
+    descripcion:
+      "La app se renombró a \"Gus App\". Al entrar, ahora aparece primero una pantalla para elegir el espacio: \"App Clientes\" (nuevo, todavía en camino) o \"App Interno\" (todo lo que ya existe), cada uno con sus propias notificaciones debajo -- por ejemplo, App Interno avisa ahí mismo si hay llenados pendientes por facturar. Desde dentro de la app se puede volver a esa pantalla con \"Cambiar de espacio\" en el menú de ajustes (el ícono de tuerca). \"Reportes automáticos\" (en Reportes) se rediseñó por completo: ya no está detrás de una sección plegada, tiene su propio aviso de \"Solo visible para ti\", y cada envío tiene un botón para mandarse solo a sí mismo (\"Enviar solo esto ahora\") sin tener que mandar todos los envíos configurados. En el modal \"Ver reporte\", \"Enviar por correo\" ahora deja escribir a qué dirección mandarlo, en vez de mandarse siempre al correo de quien tiene la sesión abierta. Al crear un tanque nuevo en el Catálogo se puede indicar la fecha de su última inspección visual, para que la próxima quede calculada bien desde el arranque en vez de partir de hoy. La sección \"Catálogo\" se renombró a \"Códigos\" en el título de esa pantalla. La etiqueta \"App Interno\" arriba del menú quedó centrada y un poco más grande.",
+  },
+  {
     version: "V7",
     fecha: "22 de septiembre, 2026",
     titulo: "Reportes automáticos a varios destinatarios, vista previa de reportes, ficha de usuario y correcciones",

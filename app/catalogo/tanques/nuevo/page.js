@@ -20,7 +20,7 @@ export default async function NuevoTanquePage() {
         </Link>
         <Breadcrumb
           items={[
-            { label: "Catálogo", href: "/catalogo" },
+            { label: "Códigos", href: "/catalogo" },
             { label: "Tanques de alquiler", href: "/catalogo/tanques" },
             { label: "Nuevo tanque" },
           ]}
