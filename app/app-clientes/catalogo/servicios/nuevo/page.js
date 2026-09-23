@@ -21,7 +21,7 @@ export default async function NuevoServicioPage() {
         </Link>
         <Breadcrumb
           items={[
-            { label: "App Clientes", href: "/app-clientes" },
+            { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
             { label: "Base de datos", href: "/app-clientes/catalogo" },
             { label: "Servicios", href: "/app-clientes/catalogo/servicios" },

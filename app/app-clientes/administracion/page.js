@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { requireTitular } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
+import SeccionColapsable from "@/components/SeccionColapsable";
 import PermisosClientes from "./permisos-client";
+import FormatearRegistrosClientes from "./formatear-registros-client";
 
 // Administración de App Clientes (23-sep-2026, pedido explícito del
 // usuario: "creame sen settings una seccion similar a la de app interno
@@ -30,22 +32,33 @@ export default async function AdministracionClientesPage() {
         <Link href="/app-clientes" className="back-link">
           ← Volver
         </Link>
-        <Breadcrumb items={[{ label: "App Clientes", href: "/app-clientes" }, { label: "Administración" }]} />
+        <Breadcrumb items={[{ label: "App Equipos de clientes", href: "/app-clientes" }, { label: "Administración" }]} />
 
         <div className="section-title" style={{ marginTop: 0 }}>
           Permisos
         </div>
         <PermisosClientes perfiles={perfiles || []} miId={user.id} />
 
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
           <Link
             href="/app-clientes/administracion/historial"
             className="btn secondary"
             style={{ width: "100%", display: "flex", justifyContent: "center", textDecoration: "none" }}
           >
-            Historial de ediciones
+            Historial de ediciones (órdenes)
+          </Link>
+          <Link
+            href="/app-clientes/administracion/historial-equipos"
+            className="btn secondary"
+            style={{ width: "100%", display: "flex", justifyContent: "center", textDecoration: "none" }}
+          >
+            Historial de ediciones de Equipos
           </Link>
         </div>
+
+        <SeccionColapsable titulo="Zona de peligro" danger>
+          <FormatearRegistrosClientes />
+        </SeccionColapsable>
       </div>
     </div>
   );

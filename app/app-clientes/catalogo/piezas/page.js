@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 
@@ -11,7 +11,12 @@ import Breadcrumb from "@/components/Breadcrumb";
 // se elimina.
 export default async function CatalogoPiezasPage() {
   const supabase = createClient();
-  const { profile } = await requirePermiso(supabase, "equipos_clientes");
+  // Ver "Base de datos" pasó a requerir el permiso granular
+  // equipos_clientes_catalogo (pedido explícito, 23-sep-2026: "ponme en
+  // administracion para dar acceso a 'base de dato' quien no lo tenga el
+  // acceso pues que no le salga") -- antes estaba abierto a cualquiera
+  // con acceso a la app, solo el botón de agregar estaba gateado.
+  const { profile } = await requirePermisoClientes(supabase, "equipos_clientes_catalogo");
   const puedeEditarCatalogo = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_catalogo;
 
   const { data: piezas } = await supabase
@@ -28,7 +33,7 @@ export default async function CatalogoPiezasPage() {
         </Link>
         <Breadcrumb
           items={[
-            { label: "App Clientes", href: "/app-clientes" },
+            { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
             { label: "Base de datos", href: "/app-clientes/catalogo" },
             { label: "Piezas" },

@@ -93,12 +93,15 @@ export default function RegistroClient({ ordenes }) {
             >
               <div className="list-item-top">
                 <span className="list-item-title">
-                  <span className="folio-tag">#{o.folio}</span>
+                  <span className="folio-tag">#{o.no_orden_fisico ?? o.folio}</span>
                   {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                 </span>
                 <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
               </div>
-              <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
+              <div className="list-item-bottom">
+                <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
+                <div className="folio-discreto">folio #{o.folio}</div>
+              </div>
             </Link>
           ))
         )}

@@ -18,7 +18,7 @@ export default async function RegistroPage() {
 
   const { data: ordenes } = await supabase
     .from("ordenes_equipos")
-    .select("id, folio, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado")
+    .select("id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado")
     .neq("estado", "Entregado")
     .order("fecha");
 
@@ -28,7 +28,7 @@ export default async function RegistroPage() {
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsClientesServer />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
-          <h1 className="page-title" style={{ margin: 0 }}>Registro</h1>
+          <h1 className="page-title" style={{ margin: 0 }}>Registro de Órdenes</h1>
           {puedeRegistrar && (
             <Link href="/app-clientes/ordenes/nueva">
               <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>

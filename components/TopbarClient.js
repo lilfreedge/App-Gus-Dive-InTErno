@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { seccionesVisibles, ordenarSecciones, NAV_SECTIONS, SECCIONES_FIJAS } from "@/lib/nav";
+import { useReorderDrag } from "@/lib/useReorderDrag";
 import { IconLogout, IconGear, IconEdit, IconHistory, IconUsers, IconBook, IconShuffle } from "./icons";
 
 export default function TopbarClient({
@@ -34,8 +35,6 @@ export default function TopbarClient({
     [esTitular, permisos, menuPersonalizado]
   );
   const [links, setLinks] = useState(() => ordenarSecciones(linksBase, ordenMenu));
-  const dragHref = useRef(null);
-  const [sobreHref, setSobreHref] = useState(null);
 
   useEffect(() => {
     setLinks(ordenarSecciones(linksBase, ordenMenu));
@@ -47,36 +46,14 @@ export default function TopbarClient({
     await supabase.from("profiles").update({ orden_menu: orden }).eq("id", (await supabase.auth.getUser()).data.user.id);
   }
 
-  function onDragStart(e, href) {
-    if (SECCIONES_FIJAS.includes(href)) return;
-    dragHref.current = href;
-    e.dataTransfer.effectAllowed = "move";
-  }
-
-  function onDragOver(e, href) {
-    if (SECCIONES_FIJAS.includes(href) || !dragHref.current || dragHref.current === href) return;
-    e.preventDefault();
-    setSobreHref(href);
-  }
-
-  function onDrop(e, href) {
-    e.preventDefault();
-    setSobreHref(null);
-    const origen = dragHref.current;
-    dragHref.current = null;
-    if (!origen || SECCIONES_FIJAS.includes(href) || origen === href) return;
-
-    setLinks((prev) => {
-      const lista = [...prev];
-      const iOrigen = lista.findIndex((l) => l.href === origen);
-      const iDestino = lista.findIndex((l) => l.href === href);
-      if (iOrigen === -1 || iDestino === -1) return prev;
-      const [item] = lista.splice(iOrigen, 1);
-      lista.splice(iDestino, 0, item);
-      guardarOrden(lista);
-      return lista;
-    });
-  }
+  // Arrastre manual con Pointer Events (lib/useReorderDrag.js) -- ver el
+  // comentario ahí para el porqué (bug reportado en vivo con el drag &
+  // drop nativo de HTML5, que un simple click con trackpad disparaba).
+  const { sobreHref, getItemProps, onNavClickCapture } = useReorderDrag({
+    fijos: SECCIONES_FIJAS,
+    setLinks,
+    guardarOrden,
+  });
 
   useEffect(() => {
     function onClick(e) {
@@ -168,7 +145,7 @@ export default function TopbarClient({
         </div>
       </div>
       <div className="topbar-appname">App Interno</div>
-      <nav className="topnav">
+      <nav className="topnav" onClickCapture={onNavClickCapture}>
         {links.map((l) => {
           const fijo = SECCIONES_FIJAS.includes(l.href);
           const esAtajo = !NAV_SECTIONS.some((s) => s.href === l.href);
@@ -176,14 +153,7 @@ export default function TopbarClient({
             <Link
               key={l.href}
               href={l.href}
-              draggable={!fijo}
-              onDragStart={(e) => onDragStart(e, l.href)}
-              onDragOver={(e) => onDragOver(e, l.href)}
-              onDrop={(e) => onDrop(e, l.href)}
-              onDragEnd={() => {
-                dragHref.current = null;
-                setSobreHref(null);
-              }}
+              {...getItemProps(l.href)}
               className={
                 "topnav-link" +
                 (pathname === l.href ? " topnav-link-active" : "") +

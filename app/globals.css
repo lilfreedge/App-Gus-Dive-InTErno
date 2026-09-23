@@ -1022,6 +1022,49 @@ textarea {
   margin-right: 4px;
 }
 
+/* Pedido explícito, 23-sep-2026: en los listados de órdenes de App
+   Clientes, el número que se anota a mano en el talonario físico
+   (no_orden_fisico) pasó a ser el número principal que se ve -- el
+   folio digital sigue viéndose, pero chico y discreto, abajo a la
+   derecha de cada fila (ver .list-item-bottom / .folio-discreto). */
+.list-item-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.folio-discreto {
+  font-size: 10.5px;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+/* Grid compacto para tarjetas de "datos" con varios campos cortos (ej.
+   info principal de una orden) -- pedido explícito, 23-sep-2026: "se ve
+   mucho espacio en blanco a la derecha". Auto-fit cae solo a una
+   columna en pantallas angostas, sin media query aparte. Los campos
+   largos (texto libre, links) usan .campo-ancho para ocupar la fila
+   completa. */
+.campos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px 28px;
+}
+
+.campo-ancho {
+  grid-column: 1 / -1;
+}
+
+/* Reportes de App Equipos de clientes (23-sep-2026): oculta navegación y
+   controles al imprimir/guardar como PDF -- solo debe quedar el
+   contenido del reporte en sí. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
 .table-mini {
   width: 100%;
   border-collapse: collapse;

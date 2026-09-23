@@ -33,7 +33,13 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
   function etiqueta(e) {
     const tipo = tipoEquipoLabel(e.tipo_equipo, e.tipo_equipo_otro);
     const marcaModelo = [e.marca, e.modelo].filter(Boolean).join(" ");
-    return marcaModelo ? `${tipo} — ${marcaModelo}` : tipo;
+    const base = marcaModelo ? `${tipo} — ${marcaModelo}` : tipo;
+    // Con el No. de serie (23-sep-2026, pedido explícito: "que aparezca
+    // el numero de serie para poder identificar cual tanque es... o
+    // regulador") -- sin esto, dos tanques o reguladores de la misma
+    // marca se veían idénticos en este buscador y no había forma de
+    // distinguirlos antes de elegir.
+    return e.serie ? `${base} (serie ${e.serie})` : base;
   }
 
   const [texto, setTexto] = useState(seleccionado ? etiqueta(seleccionado) : "");

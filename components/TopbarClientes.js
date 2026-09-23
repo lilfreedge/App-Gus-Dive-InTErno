@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { SECCIONES_FIJAS_CLIENTES, ordenarSeccionesClientes } from "@/lib/nav-clientes";
+import { useReorderDrag } from "@/lib/useReorderDrag";
 import { IconLogout, IconGear, IconEdit, IconShuffle, IconLock, IconHistory } from "./icons";
 
 // Topbar de App Equipos Clientes (23-sep-2026, primera versión real --
@@ -17,19 +18,25 @@ import { IconLogout, IconGear, IconEdit, IconShuffle, IconLock, IconHistory } fr
 // mismo patrón que TopbarClient.js, pero con columna aparte
 // (profiles.orden_menu_clientes) para no pisar el orden guardado por
 // App Interno.
-export default function TopbarClientes({ nombre, nombreCompleto, correo, esTitular, permisos, ordenMenuClientes }) {
+export default function TopbarClientes({
+  nombre,
+  nombreCompleto,
+  correo,
+  esTitular,
+  permisos,
+  ordenMenuClientes,
+  menuPersonalizadoClientes,
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 
-  const [links, setLinks] = useState(() => ordenarSeccionesClientes(ordenMenuClientes));
-  const dragHref = useRef(null);
-  const [sobreHref, setSobreHref] = useState(null);
+  const [links, setLinks] = useState(() => ordenarSeccionesClientes(ordenMenuClientes, menuPersonalizadoClientes));
 
   useEffect(() => {
-    setLinks(ordenarSeccionesClientes(ordenMenuClientes));
+    setLinks(ordenarSeccionesClientes(ordenMenuClientes, menuPersonalizadoClientes));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -41,36 +48,14 @@ export default function TopbarClientes({ nombre, nombreCompleto, correo, esTitul
       .eq("id", (await supabase.auth.getUser()).data.user.id);
   }
 
-  function onDragStart(e, href) {
-    if (SECCIONES_FIJAS_CLIENTES.includes(href)) return;
-    dragHref.current = href;
-    e.dataTransfer.effectAllowed = "move";
-  }
-
-  function onDragOver(e, href) {
-    if (SECCIONES_FIJAS_CLIENTES.includes(href) || !dragHref.current || dragHref.current === href) return;
-    e.preventDefault();
-    setSobreHref(href);
-  }
-
-  function onDrop(e, href) {
-    e.preventDefault();
-    setSobreHref(null);
-    const origen = dragHref.current;
-    dragHref.current = null;
-    if (!origen || SECCIONES_FIJAS_CLIENTES.includes(href) || origen === href) return;
-
-    setLinks((prev) => {
-      const lista = [...prev];
-      const iOrigen = lista.findIndex((l) => l.href === origen);
-      const iDestino = lista.findIndex((l) => l.href === href);
-      if (iOrigen === -1 || iDestino === -1) return prev;
-      const [item] = lista.splice(iOrigen, 1);
-      lista.splice(iDestino, 0, item);
-      guardarOrden(lista);
-      return lista;
-    });
-  }
+  // Arrastre manual con Pointer Events (lib/useReorderDrag.js) -- ver el
+  // comentario ahí para el porqué (bug reportado en vivo con el drag &
+  // drop nativo de HTML5, que un simple click con trackpad disparaba).
+  const { sobreHref, getItemProps, onNavClickCapture } = useReorderDrag({
+    fijos: SECCIONES_FIJAS_CLIENTES,
+    setLinks,
+    guardarOrden,
+  });
 
   useEffect(() => {
     function onClick(e) {
@@ -122,7 +107,11 @@ export default function TopbarClientes({ nombre, nombreCompleto, correo, esTitul
                 <IconEdit size={15} /> Mi Perfil
               </Link>
               {verChangelog && (
-                <Link href="/changelog" className="settings-menu-link" onClick={() => setOpen(false)}>
+                <Link
+                  href="/changelog?desde=clientes"
+                  className="settings-menu-link"
+                  onClick={() => setOpen(false)}
+                >
                   <IconHistory size={15} /> Changelog
                 </Link>
               )}
@@ -142,22 +131,15 @@ export default function TopbarClientes({ nombre, nombreCompleto, correo, esTitul
           )}
         </div>
       </div>
-      <div className="topbar-appname">App Clientes</div>
-      <nav className="topnav">
+      <div className="topbar-appname">App Equipos de clientes</div>
+      <nav className="topnav" onClickCapture={onNavClickCapture}>
         {links.map((l) => {
           const fijo = SECCIONES_FIJAS_CLIENTES.includes(l.href);
           return (
             <Link
               key={l.href}
               href={l.href}
-              draggable={!fijo}
-              onDragStart={(e) => onDragStart(e, l.href)}
-              onDragOver={(e) => onDragOver(e, l.href)}
-              onDrop={(e) => onDrop(e, l.href)}
-              onDragEnd={() => {
-                dragHref.current = null;
-                setSobreHref(null);
-              }}
+              {...getItemProps(l.href)}
               className={
                 "topnav-link" +
                 (pathname === l.href ? " topnav-link-active" : "") +

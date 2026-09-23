@@ -21,7 +21,7 @@ export default async function ListadoClientesPage() {
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsClientesServer />
-        <Breadcrumb items={[{ label: "App Clientes", href: "/app-clientes" }, { label: "Listado de clientes" }]} />
+        <Breadcrumb items={[{ label: "App Equipos de clientes", href: "/app-clientes" }, { label: "Listado de clientes" }]} />
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
           <h1 className="page-title" style={{ margin: 0 }}>Listado de clientes</h1>

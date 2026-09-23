@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermiso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
-import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import BotonImprimir from "@/components/BotonImprimir";
+import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 
 const BADGE_ESTADO = {
@@ -14,19 +15,17 @@ const BADGE_ESTADO = {
   Entregado: "badge-verde",
 };
 
-// Ficha de una orden (rediseñada 23-sep-2026): ya no tiene un botón para
-// avanzar el estado a mano -- el estado se calcula solo según qué campos
-// de seguimiento estén llenos (lib/ordenes-estado.js). Todo ese
-// seguimiento se llena progresivamente desde "Actualizar seguimiento",
-// cada orden a su ritmo ("cada orden como serán diferentes no se de que
-// manera es que vamos alimentar las demas cosas"). Ajustado el mismo
-// día, tras probarlo en vivo: info principal y Seguimiento quedaron en
-// una sola tarjeta, y el botón se movió arriba de la lista de campos
-// (antes había que bajar más allá de 8 campos vacíos para encontrarlo).
-export default async function FichaOrdenPage({ params }) {
+// Reporte de una orden (23-sep-2026, pedido explícito: "la idea es que
+// sea un reporte que se vaya alimentando en base al seguimiento" --
+// nada de captura nueva, se arma solo con lo ya guardado en Seguimiento,
+// igual que la ficha de la orden pero en formato de solo lectura pensado
+// para imprimir/guardar como PDF y compartir con el cliente). Por ahora
+// solo Reguladores ("El reporte de tanques... no trabajes en eso" --
+// se guarda la disciplina de alcance con un notFound() si la orden no es
+// de ese tipo, aunque alguien intente entrar por URL directa).
+export default async function ReporteOrdenPage({ params }) {
   const supabase = createClient();
-  const { profile } = await requirePermiso(supabase, "equipos_clientes");
-  const esTitular = !!profile?.es_titular;
+  await requirePermiso(supabase, "equipos_clientes");
 
   const { data: o } = await supabase
     .from("ordenes_equipos_con_nombre")
@@ -35,11 +34,22 @@ export default async function FichaOrdenPage({ params }) {
     .single();
 
   if (!o) notFound();
+  if (o.tipo_equipo !== "Reguladores") notFound();
+
+  // El folio/marca/modelo quedan como snapshot en la orden, pero el No.
+  // de serie vive en la ficha del equipo -- se busca aparte si la orden
+  // quedó enlazada a un equipo (equipo_id).
+  let serie = null;
+  if (o.equipo_id) {
+    const { data: equipo } = await supabase
+      .from("equipos_del_cliente")
+      .select("serie")
+      .eq("id", o.equipo_id)
+      .maybeSingle();
+    serie = equipo?.serie || null;
+  }
 
   const marcaModelo = [o.equipo_marca_snapshot, o.equipo_modelo_snapshot].filter(Boolean).join(" ");
-  // Prueba hidrostática ya no es un valor de "Status" -- se activa sola
-  // según el servicio (23-sep-2026, ver form-client.js de Actualizar
-  // estado de orden para el detalle completo).
   const esHidrostatica = (o.que_se_hara || "").toLowerCase().includes("hidrostat");
   const muestraRetorno = o.envio_a === "Reparación" || esHidrostatica;
 
@@ -47,63 +57,41 @@ export default async function FichaOrdenPage({ params }) {
     <div>
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href="/app-clientes/historial" className="back-link">
+        <Link href="/app-clientes/reportes" className="back-link no-print">
           ← Volver
         </Link>
-        <Breadcrumb
-          items={[
-            { label: "App Equipos de clientes", href: "/app-clientes" },
-            { label: "Listado de órdenes", href: "/app-clientes/historial" },
-            { label: `#${o.no_orden_fisico ?? o.folio}` },
-          ]}
-        />
+        <div className="no-print">
+          <Breadcrumb
+            items={[
+              { label: "App Equipos de clientes", href: "/app-clientes" },
+              { label: "Más", href: "/app-clientes/mas" },
+              { label: "Reportes", href: "/app-clientes/reportes" },
+              { label: `#${o.no_orden_fisico ?? o.folio}` },
+            ]}
+          />
+        </div>
         <h1 className="page-title" style={{ marginBottom: 2 }}>
-          #{o.no_orden_fisico ?? o.folio} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
+          Reporte — #{o.no_orden_fisico ?? o.folio}
         </h1>
         <div className="folio-discreto" style={{ marginBottom: 14 }}>
           folio #{o.folio}
         </div>
 
+        <div style={{ marginBottom: 14 }} className="no-print">
+          <BotonImprimir />
+        </div>
+
         <div className="card">
-          {/* Grid compacto (23-sep-2026, pedido explícito: "se ve mucho
-              espacio en blanco a la derecha") -- los campos cortos caen
-              uno al lado del otro; Cliente/Equipo/Servicio/Autorización/
-              Notas usan .campo-ancho porque su contenido puede ser largo
-              (links, texto libre). */}
           <div className="campos-grid">
-            {o.no_orden_fisico && <Campo etiqueta="No. de orden" valor={o.no_orden_fisico} />}
+            <Campo etiqueta="Cliente" valor={o.cliente_nombre_snapshot} />
             <Campo etiqueta="Fecha de ingreso" valor={formatFechaDDMMAAAADeDate(o.fecha)} />
+            <Campo etiqueta="Equipo" valor={tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)} />
+            <Campo etiqueta="Marca / Modelo" valor={marcaModelo || "—"} />
+            <Campo etiqueta="No. de serie" valor={serie || "—"} />
             <Campo etiqueta="Estado">
               <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ marginLeft: 0 }}>
                 {o.estado}
               </span>
-              {o.en_espera && (
-                <span className="badge badge-rojo" style={{ marginLeft: 6 }}>
-                  En espera{o.motivo_espera ? ` — ${o.motivo_espera}` : ""}
-                </span>
-              )}
-            </Campo>
-            <Campo etiqueta="Registrado por">
-              {o.full_name} · {formatFecha(o.created_at)}
-            </Campo>
-            <Campo etiqueta="Cliente" full>
-              <Link href={`/app-clientes/clientes/${o.cliente_id}`} className="breadcrumb-crumb">
-                {o.cliente_nombre_snapshot}
-              </Link>
-              {o.cliente_telefono && ` · ${o.cliente_telefono}`}
-            </Campo>
-            <Campo etiqueta="Equipo" full>
-              {o.equipo_id ? (
-                <Link href={`/app-clientes/equipos/${o.equipo_id}`} className="breadcrumb-crumb">
-                  {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
-                  {marcaModelo && ` — ${marcaModelo}`}
-                </Link>
-              ) : (
-                <>
-                  {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
-                  {marcaModelo && ` — ${marcaModelo}`}
-                </>
-              )}
             </Campo>
             <Campo etiqueta="Servicio a realizar" valor={o.que_se_hara} full />
             {o.autorizacion_cliente && (
@@ -112,28 +100,9 @@ export default async function FichaOrdenPage({ params }) {
                 {o.autorizacion_notas && <div className="hint-text" style={{ marginTop: 2 }}>{o.autorizacion_notas}</div>}
               </Campo>
             )}
-            {o.notas && <Campo etiqueta="Notas" valor={o.notas} full />}
           </div>
 
-          {o.foto_url && (
-            <>
-              <div className="section-title">Foto</div>
-              <a href={o.foto_url} target="_blank" rel="noreferrer" style={{ display: "inline-block" }}>
-                <img
-                  src={o.foto_url}
-                  alt="Foto del equipo"
-                  style={{ width: 110, height: 110, objectFit: "cover", borderRadius: 10, border: "1px solid var(--borde)", display: "block" }}
-                />
-              </a>
-            </>
-          )}
-
           <div className="section-title">Seguimiento</div>
-          <Link href={`/app-clientes/ordenes/${o.id}/editar`}>
-            <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 14 }}>
-              Actualizar estado de orden
-            </button>
-          </Link>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Campo
               etiqueta="Status"
@@ -169,10 +138,6 @@ export default async function FichaOrdenPage({ params }) {
             <Campo etiqueta="Factura de repuesto o servicio" valor={o.factura || "—"} />
           </div>
 
-          {/* Repuestos utilizados, destacado (23-sep-2026, pedido
-              explícito: "que se vea que es algo aparte, que llame la
-              atención... mandatorio [al] cerrar la orden") -- caja
-              propia en vez de un Campo más de la lista. */}
           <div
             style={{
               marginTop: 16,
@@ -183,22 +148,11 @@ export default async function FichaOrdenPage({ params }) {
             }}
           >
             <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--azul-claro)", marginBottom: 4 }}>
-              REPUESTOS UTILIZADOS {!o.repuestos_usados && o.estado !== "Entregado" && "(obligatorio antes de entregar)"}
+              REPUESTOS UTILIZADOS
             </div>
             <div style={{ fontSize: 14.5 }}>{o.repuestos_usados || "—"}</div>
           </div>
         </div>
-
-        {esTitular && (
-          <div style={{ marginTop: 4 }}>
-            <Link
-              href={`/app-clientes/administracion/historial?orden=${o.id}`}
-              style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
-            >
-              Ver historial de ediciones de esta orden →
-            </Link>
-          </div>
-        )}
       </div>
     </div>
   );

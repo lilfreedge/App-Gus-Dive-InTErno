@@ -43,7 +43,7 @@ export default async function FichaClientePage({ params }) {
   const [{ data: ordenes }, { data: equipos }] = await Promise.all([
     supabase
       .from("ordenes_equipos")
-      .select("id, folio, equipo_id, tipo_equipo, tipo_equipo_otro, fecha, estado, created_at")
+      .select("id, folio, no_orden_fisico, equipo_id, tipo_equipo, tipo_equipo_otro, fecha, estado, created_at")
       .eq("cliente_id", params.id)
       .order("created_at", { ascending: false }),
     supabase
@@ -68,7 +68,7 @@ export default async function FichaClientePage({ params }) {
         </Link>
         <Breadcrumb
           items={[
-            { label: "App Clientes", href: "/app-clientes" },
+            { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Listado de clientes", href: "/app-clientes/clientes" },
             { label: cliente.nombre },
           ]}
@@ -150,12 +150,15 @@ export default async function FichaClientePage({ params }) {
               >
                 <div className="list-item-top">
                   <span className="list-item-title">
-                    <span className="folio-tag">#{o.folio}</span>
+                    <span className="folio-tag">#{o.no_orden_fisico ?? o.folio}</span>
                     {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                   </span>
                   <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
                 </div>
-                <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
+                <div className="list-item-bottom">
+                  <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
+                  <div className="folio-discreto">folio #{o.folio}</div>
+                </div>
               </Link>
             ))
           )}

@@ -15,7 +15,12 @@ import EditarSeguimientoForm from "./form-client";
 // lib/ordenes-estado.js.
 export default async function EditarSeguimientoPage({ params }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  const { profile } = await requirePermiso(supabase, "equipos_clientes");
+  // "Verificado por" solo lo puede llenar el Titular o un Administrador
+  // (pedido explícito, 23-sep-2026: "por el momento, el 'verificado por'
+  // solamente lo podré llenar yo y a quien yo le de acceso como
+  // administrador") -- mismo profiles.is_admin de toda la cuenta.
+  const puedeVerificar = !!profile?.es_titular || !!profile?.is_admin;
 
   const { data: orden } = await supabase
     .from("ordenes_equipos")
@@ -34,7 +39,7 @@ export default async function EditarSeguimientoPage({ params }) {
         </Link>
         <Breadcrumb
           items={[
-            { label: "App Clientes", href: "/app-clientes" },
+            { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Listado de órdenes", href: "/app-clientes/historial" },
             { label: `#${orden.folio}`, href: `/app-clientes/ordenes/${params.id}` },
             { label: "Actualizar estado de orden" },
@@ -43,7 +48,7 @@ export default async function EditarSeguimientoPage({ params }) {
         <h1 className="page-title">Actualizar estado de orden</h1>
         <p className="page-subtitle">Todos estos campos son opcionales -- llénalos a medida que vaya avanzando la orden. El cambio queda anotado en el historial.</p>
 
-        <EditarSeguimientoForm orden={orden} />
+        <EditarSeguimientoForm orden={orden} puedeVerificar={puedeVerificar} />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermisoClientes } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -27,7 +27,11 @@ const OPCIONES = [
 
 export default async function BaseDeDatosPage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  // Pedido explícito, 23-sep-2026: "ponme en administracion para dar
+  // acceso a 'base de dato' quien no lo tenga el acceso pues que no le
+  // salga" -- ver también "Más" (mas/page.js), donde la tarjeta que
+  // lleva aquí ahora se esconde sin este mismo permiso.
+  await requirePermisoClientes(supabase, "equipos_clientes_catalogo", "/app-clientes/mas");
 
   return (
     <div>
@@ -38,7 +42,7 @@ export default async function BaseDeDatosPage() {
         </Link>
         <Breadcrumb
           items={[
-            { label: "App Clientes", href: "/app-clientes" },
+            { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
             { label: "Base de datos" },
           ]}

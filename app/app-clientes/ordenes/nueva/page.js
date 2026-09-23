@@ -36,8 +36,8 @@ export default async function NuevaOrdenPage({ searchParams }) {
         </Link>
         <Breadcrumb
           items={[
-            { label: "App Clientes", href: "/app-clientes" },
-            { label: "Registro", href: "/app-clientes/ordenes" },
+            { label: "App Equipos de clientes", href: "/app-clientes" },
+            { label: "Registro de Órdenes", href: "/app-clientes/ordenes" },
             { label: "Registrar orden" },
           ]}
         />

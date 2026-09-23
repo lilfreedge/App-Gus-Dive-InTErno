@@ -23,6 +23,7 @@ export default async function FichaEquipoPage({ params }) {
   const supabase = createClient();
   const { profile } = await requirePermiso(supabase, "equipos_clientes");
   const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
+  const puedeEditar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_editar_equipo;
 
   const { data: equipo } = await supabase
     .from("equipos_del_cliente")
@@ -36,7 +37,7 @@ export default async function FichaEquipoPage({ params }) {
     supabase.from("clientes_equipos").select("id, nombre").eq("id", equipo.cliente_id).maybeSingle(),
     supabase
       .from("ordenes_equipos")
-      .select("id, folio, fecha, estado, que_se_hara, created_at")
+      .select("id, folio, no_orden_fisico, fecha, estado, que_se_hara, created_at")
       .eq("equipo_id", params.id)
       .order("created_at", { ascending: false }),
   ]);
@@ -53,7 +54,7 @@ export default async function FichaEquipoPage({ params }) {
         </Link>
         <Breadcrumb
           items={[
-            { label: "App Clientes", href: "/app-clientes" },
+            { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Listado de clientes", href: "/app-clientes/clientes" },
             { label: cliente?.nombre || "Cliente", href: `/app-clientes/clientes/${equipo.cliente_id}` },
             { label: tipoLabel },
@@ -78,13 +79,22 @@ export default async function FichaEquipoPage({ params }) {
           </div>
         </div>
 
-        {puedeRegistrar && (
-          <div style={{ display: "flex", marginBottom: 16, marginTop: 4 }}>
-            <Link href={`/app-clientes/ordenes/nueva?cliente=${equipo.cliente_id}`}>
-              <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
-                + Registrar orden
-              </button>
-            </Link>
+        {(puedeRegistrar || puedeEditar) && (
+          <div style={{ display: "flex", gap: 10, marginBottom: 16, marginTop: 4 }}>
+            {puedeRegistrar && (
+              <Link href={`/app-clientes/ordenes/nueva?cliente=${equipo.cliente_id}`}>
+                <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
+                  + Registrar orden
+                </button>
+              </Link>
+            )}
+            {puedeEditar && (
+              <Link href={`/app-clientes/equipos/${equipo.id}/editar`}>
+                <button className="btn secondary" type="button" style={{ marginTop: 0 }}>
+                  Editar equipo
+                </button>
+              </Link>
+            )}
           </div>
         )}
 
@@ -104,12 +114,15 @@ export default async function FichaEquipoPage({ params }) {
               >
                 <div className="list-item-top">
                   <span className="list-item-title">
-                    <span className="folio-tag">#{o.folio}</span>
+                    <span className="folio-tag">#{o.no_orden_fisico ?? o.folio}</span>
                     {o.que_se_hara}
                   </span>
                   <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
                 </div>
-                <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
+                <div className="list-item-bottom">
+                  <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
+                  <div className="folio-discreto">folio #{o.folio}</div>
+                </div>
               </Link>
             ))
           )}

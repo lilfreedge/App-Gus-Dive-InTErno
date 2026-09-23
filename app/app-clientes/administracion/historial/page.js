@@ -41,7 +41,7 @@ export default async function HistorialAdministracionPage({ searchParams }) {
         </Link>
         <Breadcrumb
           items={[
-            { label: "App Clientes", href: "/app-clientes" },
+            { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Administración", href: "/app-clientes/administracion" },
             { label: "Historial de ediciones" },
           ]}

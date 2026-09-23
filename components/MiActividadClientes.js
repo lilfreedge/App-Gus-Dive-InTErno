@@ -67,7 +67,7 @@ export default function MiActividadClientes({ actividad }) {
               );
             })
           ) : (
-            <div className="empty">Todavía no has registrado nada en App Clientes.</div>
+            <div className="empty">Todavía no has registrado nada en App Equipos de clientes.</div>
           )}
         </div>
       )}

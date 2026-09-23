@@ -30,6 +30,8 @@ import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 // este archivo -- viene del catálogo editable en /app-clientes/catalogo
 // (tabla servicios_catalogo, ver migration_21.sql), pasado desde
 // page.js.
+const AUTORIZACION_OPCIONES = ["Autoriza cualquier cambio necesario", "Solo lo indicado, nada más"];
+
 export default function NuevaOrdenForm({
   clientes: clientesIniciales,
   equipos: equiposIniciales,
@@ -49,6 +51,14 @@ export default function NuevaOrdenForm({
   const [fecha, setFecha] = useState(hoyISO());
   const [servicio, setServicio] = useState("");
   const [servicioOtro, setServicioOtro] = useState("");
+  // Autorización del cliente (23-sep-2026, pedido explícito: casos donde
+  // hace falta un cambio no pedido de entrada -- ej. "el regulador tiene
+  // una manguera fea y nuestra recomendación es cambiarla, pero para eso
+  // necesitamos autorización del cliente" -- para dejar anotado desde el
+  // registro qué tanto autorizó el cliente, sin tener que llamarlo cada
+  // vez que aparece algo así).
+  const [autorizacionCliente, setAutorizacionCliente] = useState("");
+  const [autorizacionNotas, setAutorizacionNotas] = useState("");
   const [notas, setNotas] = useState("");
   const [foto, setFoto] = useState(null);
 
@@ -137,6 +147,8 @@ export default function NuevaOrdenForm({
         equipo_marca_snapshot: equipo?.marca || null,
         equipo_modelo_snapshot: equipo?.modelo || null,
         que_se_hara: servicioFinal,
+        autorizacion_cliente: autorizacionCliente || null,
+        autorizacion_notas: autorizacionNotas.trim() || null,
         notas: notas.trim() || null,
         foto_url: fotoUrl,
         fecha,
@@ -232,6 +244,25 @@ export default function NuevaOrdenForm({
           />
         </>
       )}
+
+      <label htmlFor="autorizacion_cliente">Autorización del cliente</label>
+      <select
+        id="autorizacion_cliente"
+        value={autorizacionCliente}
+        onChange={(e) => setAutorizacionCliente(e.target.value)}
+      >
+        <option value="">Selecciona... (opcional)</option>
+        {AUTORIZACION_OPCIONES.map((a) => (
+          <option key={a} value={a}>{a}</option>
+        ))}
+      </select>
+      <input
+        type="text"
+        value={autorizacionNotas}
+        onChange={(e) => setAutorizacionNotas(e.target.value)}
+        placeholder="Detalles o excepciones (opcional) — ej: puede cambiar manguera pero no O-rings"
+        style={{ marginTop: 6 }}
+      />
 
       <label htmlFor="notas">Notas</label>
       <textarea

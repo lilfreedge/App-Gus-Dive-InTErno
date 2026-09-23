@@ -34,7 +34,7 @@ export default async function NuevosEquiposPage({ params }) {
         </Link>
         <Breadcrumb
           items={[
-            { label: "App Clientes", href: "/app-clientes" },
+            { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Listado de clientes", href: "/app-clientes/clientes" },
             { label: cliente.nombre, href: `/app-clientes/clientes/${cliente.id}` },
             { label: "Agregar equipo" },

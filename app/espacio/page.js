@@ -26,8 +26,14 @@ export default async function EspacioPage() {
   // pantallas siempre digan lo mismo.
   const { pendientesFacturar, tanquesVencidos, reguladoresVencidos } =
     await obtenerPendientesInterno(supabase, profile);
-  const { ordenesPorTrabajar, ordenesPorDespachar } = await obtenerPendientesClientes(supabase, profile);
+  const { ordenesPorTrabajar, ordenesPorDespachar, ordenesEnEspera, ordenesEnHidrostatica, ordenesEnReparacion } =
+    await obtenerPendientesClientes(supabase, profile);
 
+  // Pedido explícito, 23-sep-2026: "pon que en esta seccion aparezcan
+  // todas las notifcaciones posibles" -- antes solo se veían por
+  // trabajar/por despachar; ahora se agregan las 3 secciones que ya
+  // existían en el hub de Inicio (en espera, prueba hidrostática,
+  // reparación) pero nunca se reflejaban acá.
   const lineasClientes = [];
   if (ordenesPorTrabajar > 0) {
     lineasClientes.push(
@@ -41,6 +47,23 @@ export default async function EspacioPage() {
       `${ordenesPorDespachar} orden${ordenesPorDespachar === 1 ? "" : "es"} pendiente${
         ordenesPorDespachar === 1 ? "" : "s"
       } por despachar`
+    );
+  }
+  if (ordenesEnEspera > 0) {
+    lineasClientes.push(
+      `${ordenesEnEspera} orden${ordenesEnEspera === 1 ? "" : "es"} en espera`
+    );
+  }
+  if (ordenesEnHidrostatica > 0) {
+    lineasClientes.push(
+      `${ordenesEnHidrostatica} orden${ordenesEnHidrostatica === 1 ? "" : "es"} en prueba hidrostática`
+    );
+  }
+  if (ordenesEnReparacion > 0) {
+    lineasClientes.push(
+      `${ordenesEnReparacion} orden${ordenesEnReparacion === 1 ? "" : "es"} enviada${
+        ordenesEnReparacion === 1 ? "" : "s"
+      } a reparación`
     );
   }
 
@@ -72,7 +95,7 @@ export default async function EspacioPage() {
             <div className="espacio-icon">
               <IconUsers size={22} />
             </div>
-            <div className="espacio-title">App Clientes</div>
+            <div className="espacio-title">App Equipos de clientes</div>
             <div className="espacio-notif">
               {lineasClientes.length > 0 ? (
                 lineasClientes.map((linea) => (

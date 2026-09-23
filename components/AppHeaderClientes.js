@@ -24,6 +24,7 @@ export default async function AppHeaderClientes() {
       esTitular={!!profile?.es_titular}
       permisos={profile?.permisos || {}}
       ordenMenuClientes={profile?.orden_menu_clientes}
+      menuPersonalizadoClientes={profile?.menu_personalizado_clientes}
     />
   );
 }

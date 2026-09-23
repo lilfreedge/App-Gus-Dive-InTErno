@@ -47,7 +47,7 @@ export default async function AppClientesPage() {
   const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
 
   const CAMPOS =
-    "id, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, envio_a, fecha_envio, fecha_retorno_tienda, fecha_listo_entrega, en_espera, motivo_espera";
+    "id, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, envio_a, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, en_espera, motivo_espera";
 
   const [{ data: porTrabajarRaw }, { data: porEntregar }, { data: enEspera }, { data: enHidrostatica }, { data: enReparacion }] =
     await Promise.all([
@@ -79,10 +79,13 @@ export default async function AppClientesPage() {
       // vuelto (sin fecha_retorno_tienda). Una vez que vuelve, deja de
       // aparecer aquí -- el seguimiento completo sigue viéndose en la
       // ficha de la orden.
+      // Prueba hidrostática ya no depende de envio_a (23-sep-2026, ver
+      // form-client.js de Actualizar estado de orden) -- ahora se rastrea
+      // con su propia fecha, fecha_envio_hidrostatica.
       supabase
         .from("ordenes_equipos")
         .select(CAMPOS)
-        .eq("envio_a", "Prueba hidrostática")
+        .not("fecha_envio_hidrostatica", "is", null)
         .is("fecha_retorno_tienda", null)
         .order("fecha"),
       supabase
@@ -96,14 +99,15 @@ export default async function AppClientesPage() {
   // Excluir de "Pendientes por trabajar" las que ya salieron a
   // hidrostática/reparación y todavía no vuelven -- ya se ven en sus
   // propias secciones más abajo (pedido explícito, para no duplicar).
-  const porTrabajar = (porTrabajarRaw || []).filter((o) => !(o.envio_a && !o.fecha_retorno_tienda));
+  const porTrabajar = (porTrabajarRaw || []).filter(
+    (o) => !((o.envio_a === "Reparación" || o.fecha_envio_hidrostatica) && !o.fecha_retorno_tienda)
+  );
 
   return (
     <div>
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsClientesServer />
-        <h1 className="page-title">App Clientes</h1>
 
         {puedeRegistrar && (
           <div style={{ marginBottom: 20 }}>
@@ -143,7 +147,7 @@ export default async function AppClientesPage() {
         {enHidrostatica && enHidrostatica.length > 0 && (
           <>
             <div className="section-title">Órdenes en prueba hidrostáticas ({enHidrostatica.length})</div>
-            <ListaOrdenes ordenes={enHidrostatica} vacio="" fechaCampo="fecha_envio" fechaLabel="Fecha enviado" />
+            <ListaOrdenes ordenes={enHidrostatica} vacio="" fechaCampo="fecha_envio_hidrostatica" fechaLabel="Fecha enviado" />
           </>
         )}
 
