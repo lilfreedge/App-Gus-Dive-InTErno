@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconLogout, IconGear, IconEdit, IconShuffle } from "./icons";
+import { IconLogout, IconGear, IconEdit, IconShuffle, IconLock } from "./icons";
 
 // Topbar de App Equipos Clientes (23-sep-2026, primera versión real --
 // hasta ahora esta app era un placeholder "próximamente" con
@@ -16,7 +16,7 @@ import { IconLogout, IconGear, IconEdit, IconShuffle } from "./icons";
 // personalizados, que son cosas específicas de App Interno.
 const LINKS = [
   { href: "/app-clientes", label: "Inicio" },
-  { href: "/app-clientes/ordenes/nueva", label: "Registro" },
+  { href: "/app-clientes/ordenes", label: "Registro" },
   { href: "/app-clientes/clientes", label: "Listado de clientes" },
   { href: "/app-clientes/historial", label: "Historial de órdenes" },
 ];
@@ -69,9 +69,14 @@ export default function TopbarClientes({ nombre, nombreCompleto, correo, esTitul
                 <b>{nombreCompleto}</b>
                 {correo} · {rolLabel}
               </div>
-              <Link href="/perfil" className="settings-menu-link" onClick={() => setOpen(false)}>
+              <Link href="/app-clientes/perfil" className="settings-menu-link" onClick={() => setOpen(false)}>
                 <IconEdit size={15} /> Mi Perfil
               </Link>
+              {esTitular && (
+                <Link href="/app-clientes/administracion" className="settings-menu-link" onClick={() => setOpen(false)}>
+                  <IconLock size={15} /> Administración
+                </Link>
+              )}
               <hr />
               <Link href="/espacio" className="settings-menu-link" onClick={() => setOpen(false)}>
                 <IconShuffle size={15} /> Cambiar de app

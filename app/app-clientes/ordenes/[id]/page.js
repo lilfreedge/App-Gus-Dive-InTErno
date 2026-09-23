@@ -5,7 +5,6 @@ import { requirePermiso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
-import EstadoOrden from "./estado-client";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -14,9 +13,16 @@ const BADGE_ESTADO = {
   Entregado: "badge-verde",
 };
 
+// Ficha de una orden (rediseñada 23-sep-2026): ya no tiene un botón para
+// avanzar el estado a mano -- el estado se calcula solo según qué campos
+// de seguimiento estén llenos (lib/ordenes-estado.js). Todo ese
+// seguimiento se llena progresivamente desde "Editar seguimiento", cada
+// orden a su ritmo ("cada orden como serán diferentes no se de que
+// manera es que vamos alimentar las demas cosas").
 export default async function FichaOrdenPage({ params }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  const { profile } = await requirePermiso(supabase, "equipos_clientes");
+  const esTitular = !!profile?.es_titular;
 
   const { data: o } = await supabase
     .from("ordenes_equipos_con_nombre")
@@ -25,6 +31,8 @@ export default async function FichaOrdenPage({ params }) {
     .single();
 
   if (!o) notFound();
+
+  const marcaModelo = [o.equipo_marca_snapshot, o.equipo_modelo_snapshot].filter(Boolean).join(" ");
 
   return (
     <div>
@@ -52,9 +60,21 @@ export default async function FichaOrdenPage({ params }) {
               </Link>
               {o.cliente_telefono && ` · ${o.cliente_telefono}`}
             </Campo>
-            <Campo etiqueta="Tipo de equipo" valor={o.tipo_equipo === "Otro" ? `Otro — ${o.tipo_equipo_otro}` : o.tipo_equipo} />
-            <Campo etiqueta="Qué se le hará" valor={o.que_se_hara} />
-            <Campo etiqueta="Fecha" valor={formatFechaDDMMAAAADeDate(o.fecha)} />
+            <Campo etiqueta="Equipo">
+              {o.equipo_id ? (
+                <Link href={`/app-clientes/equipos/${o.equipo_id}`} className="breadcrumb-crumb">
+                  {o.tipo_equipo === "Otro" ? o.tipo_equipo_otro : o.tipo_equipo}
+                  {marcaModelo && ` — ${marcaModelo}`}
+                </Link>
+              ) : (
+                <>
+                  {o.tipo_equipo === "Otro" ? o.tipo_equipo_otro : o.tipo_equipo}
+                  {marcaModelo && ` — ${marcaModelo}`}
+                </>
+              )}
+            </Campo>
+            <Campo etiqueta="Servicio a realizar" valor={o.que_se_hara} />
+            <Campo etiqueta="Fecha de ingreso" valor={formatFechaDDMMAAAADeDate(o.fecha)} />
             <Campo etiqueta="Estado">
               <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ marginLeft: 0 }}>
                 {o.estado}
@@ -78,11 +98,38 @@ export default async function FichaOrdenPage({ params }) {
               </a>
             </>
           )}
-
-          <div style={{ marginTop: 18 }}>
-            <EstadoOrden orden={o} />
-          </div>
         </div>
+
+        <div className="section-title">Seguimiento</div>
+        <div className="card">
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Campo etiqueta="Envío a" valor={o.envio_a || "—"} />
+            <Campo etiqueta="Fecha de retorno a tienda" valor={o.fecha_retorno_tienda ? formatFechaDDMMAAAADeDate(o.fecha_retorno_tienda) : "—"} />
+            <Campo etiqueta="Fecha de listo para entrega" valor={o.fecha_listo_entrega ? formatFechaDDMMAAAADeDate(o.fecha_listo_entrega) : "—"} />
+            <Campo etiqueta="Verificado por" valor={o.verificado_por || "—"} />
+            <Campo etiqueta="Fecha de notificación al cliente" valor={o.fecha_notificacion_cliente ? formatFechaDDMMAAAADeDate(o.fecha_notificacion_cliente) : "—"} />
+            <Campo etiqueta="Fecha de entrega al cliente" valor={o.fecha_entrega_cliente ? formatFechaDDMMAAAADeDate(o.fecha_entrega_cliente) : "—"} />
+            <Campo etiqueta="Nombre de quien recibe" valor={o.nombre_recibe || "—"} />
+            <Campo etiqueta="Factura de repuesto o servicio" valor={o.factura || "—"} />
+          </div>
+
+          <Link href={`/app-clientes/ordenes/${o.id}/editar`}>
+            <button className="btn btn-primary" type="button" style={{ marginTop: 18 }}>
+              Editar seguimiento
+            </button>
+          </Link>
+        </div>
+
+        {esTitular && (
+          <div style={{ marginTop: 4 }}>
+            <Link
+              href={`/app-clientes/administracion/historial?orden=${o.id}`}
+              style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
+            >
+              Ver historial de ediciones de esta orden →
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

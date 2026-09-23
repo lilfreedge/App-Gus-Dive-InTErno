@@ -4,32 +4,30 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import SelectorCliente from "@/components/SelectorCliente";
+import SelectorEquipoCliente from "@/components/SelectorEquipoCliente";
 import CampoFoto from "@/components/CampoFoto";
 import { subirFoto } from "@/lib/storage-client";
 import { hoyISO } from "@/lib/fechas";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 
-const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Otro"];
-
-// Registrar orden (App Equipos Clientes, 23-sep-2026). Pedido del
-// usuario: cliente (con opción de crearlo ahí mismo si no existe), fecha
-// con default hoy pero editable, tipo de equipo, qué se hará, y "datos
-// que apareceran automaticamente... arrastrados con el nombre del
-// cliente" -- se implementó como un historial reciente del cliente
-// elegido, visible ahí mismo (no hay otro campo que tenga sentido
-// autocompletar: lo que se hará cambia cada vez). Además, en este mismo
-// mensaje: notas opcional, foto opcional, y arranca siempre en estado
-// "Pendiente por trabajar" (no es un campo del formulario).
-export default function NuevaOrdenForm({ clientes: clientesIniciales, clientePreseleccionado }) {
+// Registrar orden (App Equipos Clientes, rediseñado 23-sep-2026 tras
+// definir "Equipo del cliente"): cliente, equipo de ese cliente (con
+// marca/modelo -- se elige uno ya existente o se crea ahí mismo),
+// servicio a realizar, fecha de ingreso. Todo lo demás (envío a,
+// fechas de retorno/listo/entrega, verificado por, factura) se llena
+// después, en la ficha de la orden, a medida que vaya pasando --
+// pedido explícito del usuario ("cada orden como serán diferentes no se
+// de que manera es que vamos alimentar las demas cosas").
+export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: equiposIniciales, clientePreseleccionado }) {
   const router = useRouter();
   const supabase = createClient();
 
   const [clientes, setClientes] = useState(clientesIniciales);
+  const [equipos, setEquipos] = useState(equiposIniciales);
   const [clienteId, setClienteId] = useState(clientePreseleccionado || "");
+  const [equipoId, setEquipoId] = useState("");
   const [fecha, setFecha] = useState(hoyISO());
-  const [tipoEquipo, setTipoEquipo] = useState("");
-  const [tipoEquipoOtro, setTipoEquipoOtro] = useState("");
-  const [queSeHara, setQueSeHara] = useState("");
+  const [servicio, setServicio] = useState("");
   const [notas, setNotas] = useState("");
   const [foto, setFoto] = useState(null);
 
@@ -59,6 +57,16 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, clientePre
 
   function onClienteCreado(nuevo) {
     setClientes((prev) => [...prev, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+    setEquipoId("");
+  }
+
+  function onClienteChange(id) {
+    setClienteId(id);
+    setEquipoId("");
+  }
+
+  function onEquipoCreado(nuevo) {
+    setEquipos((prev) => [...prev, nuevo]);
   }
 
   async function handleSubmit(e) {
@@ -66,12 +74,12 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, clientePre
     setError("");
 
     if (!clienteId) return setError("Selecciona o crea un cliente.");
-    if (!fecha) return setError("Selecciona la fecha.");
-    if (!tipoEquipo) return setError("Selecciona el tipo de equipo.");
-    if (tipoEquipo === "Otro" && !tipoEquipoOtro.trim()) return setError("Especifica qué tipo de equipo es.");
-    if (!queSeHara.trim()) return setError("Completa qué se le hará al equipo.");
+    if (!equipoId) return setError("Selecciona o crea el equipo.");
+    if (!fecha) return setError("Selecciona la fecha de ingreso.");
+    if (!servicio.trim()) return setError("Completa el servicio a realizar.");
 
     const cliente = clientes.find((c) => c.id === clienteId);
+    const equipo = equipos.find((e) => e.id === equipoId);
 
     setLoading(true);
 
@@ -98,9 +106,12 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, clientePre
         nombre_usuario_snapshot: perfil?.full_name || null,
         cliente_id: clienteId,
         cliente_nombre_snapshot: cliente?.nombre || null,
-        tipo_equipo: tipoEquipo,
-        tipo_equipo_otro: tipoEquipo === "Otro" ? tipoEquipoOtro.trim() : null,
-        que_se_hara: queSeHara.trim(),
+        equipo_id: equipoId,
+        tipo_equipo: equipo?.tipo_equipo || null,
+        tipo_equipo_otro: equipo?.tipo_equipo_otro || null,
+        equipo_marca_snapshot: equipo?.marca || null,
+        equipo_modelo_snapshot: equipo?.modelo || null,
+        que_se_hara: servicio.trim(),
         notas: notas.trim() || null,
         foto_url: fotoUrl,
         fecha,
@@ -128,7 +139,7 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, clientePre
       <SelectorCliente
         clientes={clientes}
         valor={clienteId}
-        onChange={setClienteId}
+        onChange={onClienteChange}
         onClienteCreado={onClienteCreado}
       />
 
@@ -143,45 +154,29 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, clientePre
         </div>
       )}
 
+      <label htmlFor="equipo" style={{ marginTop: 14 }}>
+        Equipo <span className="req">*</span>
+      </label>
+      <SelectorEquipoCliente
+        equipos={equipos}
+        clienteId={clienteId}
+        valor={equipoId}
+        onChange={setEquipoId}
+        onEquipoCreado={onEquipoCreado}
+      />
+
       <label htmlFor="fecha" style={{ marginTop: 14 }}>
-        Fecha <span className="req">*</span>
+        Fecha de ingreso <span className="req">*</span>
       </label>
       <input id="fecha" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
 
-      <label htmlFor="tipo_equipo">
-        Tipo de equipo <span className="req">*</span>
-      </label>
-      <select id="tipo_equipo" value={tipoEquipo} onChange={(e) => setTipoEquipo(e.target.value)}>
-        <option value="">Selecciona...</option>
-        {TIPOS.map((t) => (
-          <option key={t} value={t}>
-            {t}
-          </option>
-        ))}
-      </select>
-
-      {tipoEquipo === "Otro" && (
-        <>
-          <label htmlFor="tipo_equipo_otro">
-            ¿Qué tipo de equipo? <span className="req">*</span>
-          </label>
-          <input
-            id="tipo_equipo_otro"
-            type="text"
-            value={tipoEquipoOtro}
-            onChange={(e) => setTipoEquipoOtro(e.target.value)}
-            placeholder="Ej: Aleta, careta, traje..."
-          />
-        </>
-      )}
-
-      <label htmlFor="que_se_hara">
-        Qué se le hará <span className="req">*</span>
+      <label htmlFor="servicio">
+        Servicio a realizar <span className="req">*</span>
       </label>
       <textarea
-        id="que_se_hara"
-        value={queSeHara}
-        onChange={(e) => setQueSeHara(e.target.value)}
+        id="servicio"
+        value={servicio}
+        onChange={(e) => setServicio(e.target.value)}
         placeholder="Ej: Revisión y mantenimiento general"
       />
 

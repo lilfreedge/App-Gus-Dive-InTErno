@@ -13,9 +13,15 @@ export default async function HistorialCambiosPage() {
   const esTitular = !!profile?.es_titular;
   const esAdmin = esTitular || !!profile?.is_admin;
 
+  // Las ediciones de ordenes_equipos (App Clientes) no se muestran acá --
+  // son Titular-only, tienen su propia página en /app-clientes/administracion/historial
+  // (23-sep-2026). La política RLS de cambios_historial ya las oculta a
+  // administradores comunes; este filtro además evita que aparezcan sin
+  // formato ("Cambio de nombre" por defecto) para el Titular acá.
   const { data: cambios } = await supabase
     .from("historial_con_nombre")
     .select("*")
+    .neq("tabla", "ordenes_equipos")
     .limit(300);
 
   const anulados = (cambios || []).filter((c) => c.accion === "borrar");

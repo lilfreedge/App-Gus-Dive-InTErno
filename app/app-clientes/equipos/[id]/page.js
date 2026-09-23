@@ -13,60 +13,68 @@ const BADGE_ESTADO = {
   Entregado: "badge-verde",
 };
 
-// Ficha de un cliente: sus datos + su historial de órdenes -- cada una
-// es un link a su propia ficha (no acordeón, misma lección aprendida en
-// Compresores el 23-sep-2026: "que sea boton, no que se abra ahi mismo
-// todo junto").
-export default async function FichaClientePage({ params }) {
+// Ficha de un equipo del cliente: esto es lo que responde al pedido
+// explícito del usuario (23-sep-2026) de "tener un historial de que se le
+// ha hecho cada vez que ha ido un mismo equipo a la tienda" -- cada visita
+// (orden) de este equipo, sin importar cuántas veces haya venido, listada
+// como botón hacia su propia ficha (no acordeón).
+export default async function FichaEquipoPage({ params }) {
   const supabase = createClient();
   await requirePermiso(supabase, "equipos_clientes");
 
-  const { data: cliente } = await supabase
-    .from("clientes_equipos")
-    .select("id, nombre, telefono, created_at")
+  const { data: equipo } = await supabase
+    .from("equipos_del_cliente")
+    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, created_at")
     .eq("id", params.id)
     .maybeSingle();
 
-  if (!cliente) notFound();
+  if (!equipo) notFound();
 
-  const [{ data: ordenes }, { data: equipos }] = await Promise.all([
+  const [{ data: cliente }, { data: ordenes }] = await Promise.all([
+    supabase.from("clientes_equipos").select("id, nombre").eq("id", equipo.cliente_id).maybeSingle(),
     supabase
       .from("ordenes_equipos")
-      .select("id, folio, tipo_equipo, tipo_equipo_otro, fecha, estado, created_at")
-      .eq("cliente_id", params.id)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("equipos_del_cliente")
-      .select("id, tipo_equipo, tipo_equipo_otro, marca, modelo")
-      .eq("cliente_id", params.id)
+      .select("id, folio, fecha, estado, que_se_hara, created_at")
+      .eq("equipo_id", params.id)
       .order("created_at", { ascending: false }),
   ]);
+
+  const tipoLabel = equipo.tipo_equipo === "Otro" ? equipo.tipo_equipo_otro : equipo.tipo_equipo;
+  const marcaModelo = [equipo.marca, equipo.modelo].filter(Boolean).join(" ");
 
   return (
     <div>
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href="/app-clientes/clientes" className="back-link">
+        <Link href={`/app-clientes/clientes/${equipo.cliente_id}`} className="back-link">
           ← Volver
         </Link>
         <Breadcrumb
           items={[
             { label: "App Clientes", href: "/app-clientes" },
             { label: "Listado de clientes", href: "/app-clientes/clientes" },
-            { label: cliente.nombre },
+            { label: cliente?.nombre || "Cliente", href: `/app-clientes/clientes/${equipo.cliente_id}` },
+            { label: tipoLabel },
           ]}
         />
-        <h1 className="page-title">{cliente.nombre}</h1>
+        <h1 className="page-title">{marcaModelo ? `${tipoLabel} — ${marcaModelo}` : tipoLabel}</h1>
 
         <div className="card">
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Campo etiqueta="Teléfono" valor={cliente.telefono || "—"} />
-            <Campo etiqueta="Cliente desde" valor={formatFecha(cliente.created_at)} />
+            <Campo etiqueta="Cliente">
+              <Link href={`/app-clientes/clientes/${equipo.cliente_id}`} className="breadcrumb-crumb">
+                {cliente?.nombre || "—"}
+              </Link>
+            </Campo>
+            <Campo etiqueta="Tipo de equipo" valor={tipoLabel} />
+            <Campo etiqueta="Marca" valor={equipo.marca || "—"} />
+            <Campo etiqueta="Modelo" valor={equipo.modelo || "—"} />
+            <Campo etiqueta="Registrado" valor={formatFecha(equipo.created_at)} />
           </div>
         </div>
 
         <div style={{ display: "flex", marginBottom: 16, marginTop: 4 }}>
-          <Link href={`/app-clientes/ordenes/nueva?cliente=${cliente.id}`}>
+          <Link href={`/app-clientes/ordenes/nueva?cliente=${equipo.cliente_id}`}>
             <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
               + Registrar orden
             </button>
@@ -74,38 +82,11 @@ export default async function FichaClientePage({ params }) {
         </div>
 
         <div className="section-title" style={{ marginTop: 0 }}>
-          Equipos registrados
-        </div>
-        <div className="card">
-          {!equipos || equipos.length === 0 ? (
-            <div className="empty">Este cliente todavía no tiene equipos registrados.</div>
-          ) : (
-            equipos.map((e) => {
-              const tipoLabel = e.tipo_equipo === "Otro" ? e.tipo_equipo_otro : e.tipo_equipo;
-              const marcaModelo = [e.marca, e.modelo].filter(Boolean).join(" ");
-              return (
-                <Link
-                  key={e.id}
-                  href={`/app-clientes/equipos/${e.id}`}
-                  className="list-item"
-                  style={{ display: "block", textDecoration: "none", color: "inherit" }}
-                >
-                  <span className="list-item-title">
-                    {tipoLabel}
-                    {marcaModelo && ` — ${marcaModelo}`}
-                  </span>
-                </Link>
-              );
-            })
-          )}
-        </div>
-
-        <div className="section-title">
-          Historial de órdenes
+          Historial de este equipo
         </div>
         <div className="card">
           {!ordenes || ordenes.length === 0 ? (
-            <div className="empty">Este cliente todavía no tiene órdenes registradas.</div>
+            <div className="empty">Este equipo todavía no tiene órdenes registradas.</div>
           ) : (
             ordenes.map((o) => (
               <Link
@@ -117,7 +98,7 @@ export default async function FichaClientePage({ params }) {
                 <div className="list-item-top">
                   <span className="list-item-title">
                     <span className="folio-tag">#{o.folio}</span>
-                    {o.tipo_equipo === "Otro" ? o.tipo_equipo_otro : o.tipo_equipo}
+                    {o.que_se_hara}
                   </span>
                   <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
                 </div>
@@ -131,13 +112,13 @@ export default async function FichaClientePage({ params }) {
   );
 }
 
-function Campo({ etiqueta, valor }) {
+function Campo({ etiqueta, valor, children }) {
   return (
     <div>
       <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--texto-suave)", marginBottom: 2 }}>
         {etiqueta}
       </div>
-      <div style={{ fontSize: 14.5 }}>{valor}</div>
+      <div style={{ fontSize: 14.5 }}>{children !== undefined ? children : valor}</div>
     </div>
   );
 }
