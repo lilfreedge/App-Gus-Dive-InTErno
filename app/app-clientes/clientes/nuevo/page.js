@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevoClienteForm from "./form-client";
 
+// Gateado por el permiso granular equipos_clientes_agregar_cliente
+// (item 15, pedido explícito).
 export default async function NuevoClientePage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  await requirePermisoClientes(supabase, "equipos_clientes_agregar_cliente", "/app-clientes/clientes");
 
   return (
     <div>

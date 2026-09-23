@@ -35,12 +35,12 @@ export default async function EditarSeguimientoPage({ params }) {
         <Breadcrumb
           items={[
             { label: "App Clientes", href: "/app-clientes" },
-            { label: "Historial de órdenes", href: "/app-clientes/historial" },
+            { label: "Listado de órdenes", href: "/app-clientes/historial" },
             { label: `#${orden.folio}`, href: `/app-clientes/ordenes/${params.id}` },
-            { label: "Actualizar seguimiento" },
+            { label: "Actualizar estado de orden" },
           ]}
         />
-        <h1 className="page-title">Actualizar seguimiento</h1>
+        <h1 className="page-title">Actualizar estado de orden</h1>
         <p className="page-subtitle">Todos estos campos son opcionales -- llénalos a medida que vaya avanzando la orden. El cambio queda anotado en el historial.</p>
 
         <EditarSeguimientoForm orden={orden} />

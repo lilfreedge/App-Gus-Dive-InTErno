@@ -21,7 +21,8 @@ const BADGE_ESTADO = {
 // como botón hacia su propia ficha (no acordeón).
 export default async function FichaEquipoPage({ params }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  const { profile } = await requirePermiso(supabase, "equipos_clientes");
+  const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
 
   const { data: equipo } = await supabase
     .from("equipos_del_cliente")
@@ -77,13 +78,15 @@ export default async function FichaEquipoPage({ params }) {
           </div>
         </div>
 
-        <div style={{ display: "flex", marginBottom: 16, marginTop: 4 }}>
-          <Link href={`/app-clientes/ordenes/nueva?cliente=${equipo.cliente_id}`}>
-            <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
-              + Registrar orden
-            </button>
-          </Link>
-        </div>
+        {puedeRegistrar && (
+          <div style={{ display: "flex", marginBottom: 16, marginTop: 4 }}>
+            <Link href={`/app-clientes/ordenes/nueva?cliente=${equipo.cliente_id}`}>
+              <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
+                + Registrar orden
+              </button>
+            </Link>
+          </div>
+        )}
 
         <div className="section-title" style={{ marginTop: 0 }}>
           Historial de este equipo

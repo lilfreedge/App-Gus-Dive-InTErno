@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevaOrdenForm from "./form-client";
 
 // Registrar orden -- App Equipos Clientes (23-sep-2026, primera versión
 // real). Si viene ?cliente=<id> (desde la ficha de un cliente), llega
-// preseleccionado.
+// preseleccionado. Gateado por el permiso granular
+// equipos_clientes_registrar (item 15, pedido explícito).
 export default async function NuevaOrdenPage({ searchParams }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  const { profile } = await requirePermisoClientes(supabase, "equipos_clientes_registrar", "/app-clientes");
+  const esTitular = !!profile?.es_titular;
+  const permisos = profile?.permisos || {};
+  const puedeAgregarCliente = esTitular || !!permisos.equipos_clientes_agregar_cliente;
+  const puedeAgregarEquipo = esTitular || !!permisos.equipos_clientes_agregar_equipo;
 
   const [{ data: clientes }, { data: equipos }, { data: servicios }] = await Promise.all([
     supabase.from("clientes_equipos").select("id, nombre, telefono").order("nombre"),
@@ -43,6 +48,8 @@ export default async function NuevaOrdenPage({ searchParams }) {
           equipos={equipos || []}
           servicios={servicios || []}
           clientePreseleccionado={searchParams?.cliente || ""}
+          puedeAgregarCliente={puedeAgregarCliente}
+          puedeAgregarEquipo={puedeAgregarEquipo}
         />
       </div>
     </div>

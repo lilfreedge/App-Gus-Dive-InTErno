@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requirePermiso } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
+import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
 import { IconCatalog } from "@/components/icons";
 
 // Hub "Más" de App Clientes (23-sep-2026, pedido explícito: "agregar un
@@ -13,8 +14,8 @@ import { IconCatalog } from "@/components/icons";
 const OPCIONES = [
   {
     href: "/app-clientes/catalogo",
-    titulo: "Catálogo",
-    descripcion: "Servicios que se pueden elegir en Registrar orden.",
+    titulo: "Base de datos",
+    descripcion: "Servicios y piezas que se usan al registrar y dar seguimiento a órdenes.",
     Icono: IconCatalog,
   },
 ];
@@ -27,6 +28,7 @@ export default async function MasClientesPage() {
     <div>
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
+        <NavArrowsClientesServer />
         <h1 className="page-title">Más</h1>
 
         {OPCIONES.map((o) => (

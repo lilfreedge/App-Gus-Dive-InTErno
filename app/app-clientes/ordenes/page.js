@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermiso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
+import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
 import RegistroClient from "./registro-client";
 
 // "Registro" (23-sep-2026, feedback en vivo tras probar v24): dejó de ser
@@ -12,7 +13,8 @@ import RegistroClient from "./registro-client";
 // buscador de cliente. Pedido explícito del usuario.
 export default async function RegistroPage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  const { profile } = await requirePermiso(supabase, "equipos_clientes");
+  const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
 
   const { data: ordenes } = await supabase
     .from("ordenes_equipos")
@@ -24,13 +26,16 @@ export default async function RegistroPage() {
     <div>
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
+        <NavArrowsClientesServer />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
           <h1 className="page-title" style={{ margin: 0 }}>Registro</h1>
-          <Link href="/app-clientes/ordenes/nueva">
-            <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
-              + Registrar orden
-            </button>
-          </Link>
+          {puedeRegistrar && (
+            <Link href="/app-clientes/ordenes/nueva">
+              <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
+                + Registrar orden
+              </button>
+            </Link>
+          )}
         </div>
 
         <RegistroClient ordenes={ordenes || []} />

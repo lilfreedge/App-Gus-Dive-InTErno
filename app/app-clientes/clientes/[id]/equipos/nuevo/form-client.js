@@ -72,7 +72,8 @@ export default function AgregarEquiposForm({ clienteId }) {
     setGuardando(false);
 
     if (err) {
-      setError("No se pudieron guardar los equipos. Intenta de nuevo.");
+      console.error("Error guardando equipos:", err);
+      setError(err?.message ? `No se pudieron guardar los equipos: ${err.message}` : "No se pudieron guardar los equipos. Intenta de nuevo.");
       return;
     }
 

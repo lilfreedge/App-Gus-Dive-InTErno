@@ -30,7 +30,14 @@ import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 // este archivo -- viene del catálogo editable en /app-clientes/catalogo
 // (tabla servicios_catalogo, ver migration_21.sql), pasado desde
 // page.js.
-export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: equiposIniciales, servicios, clientePreseleccionado }) {
+export default function NuevaOrdenForm({
+  clientes: clientesIniciales,
+  equipos: equiposIniciales,
+  servicios,
+  clientePreseleccionado,
+  puedeAgregarCliente = true,
+  puedeAgregarEquipo = true,
+}) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -170,6 +177,7 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: e
         valor={clienteId}
         onChange={onClienteChange}
         onClienteCreado={onClienteCreado}
+        puedeCrear={puedeAgregarCliente}
       />
 
       {historialCliente.length > 0 && (
@@ -192,6 +200,7 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: e
         valor={equipoId}
         onChange={setEquipoId}
         onEquipoCreado={onEquipoCreado}
+        puedeAgregarEquipo={puedeAgregarEquipo}
       />
 
       <label htmlFor="fecha" style={{ marginTop: 14 }}>

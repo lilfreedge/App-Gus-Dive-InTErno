@@ -4,9 +4,9 @@ import TopbarClientes from "./TopbarClientes";
 
 // Mismo split que AppHeader/TopbarClient (App Interno): esta parte trae
 // el perfil en el servidor, TopbarClientes (cliente) dibuja el topbar.
-// App Equipos Clientes (23-sep-2026, primera versión real) tiene su
-// propio topbar más simple -- sin drag&drop ni accesos personalizados,
-// solo 4 pestañas fijas.
+// Ahora también trae permisos (para el link de Changelog) y
+// orden_menu_clientes (para el drag & drop del menú, columna aparte de
+// la de App Interno).
 export default async function AppHeaderClientes() {
   const supabase = createClient();
   const { user, profile } = await getProfileYUser(supabase);
@@ -22,6 +22,8 @@ export default async function AppHeaderClientes() {
       nombreCompleto={nombreCompleto}
       correo={user.email}
       esTitular={!!profile?.es_titular}
+      permisos={profile?.permisos || {}}
+      ordenMenuClientes={profile?.orden_menu_clientes}
     />
   );
 }

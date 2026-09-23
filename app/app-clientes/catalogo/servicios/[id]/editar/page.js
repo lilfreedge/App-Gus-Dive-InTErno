@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import EditarServicioForm from "./form-client";
 
+// Gateado por el permiso granular equipos_clientes_catalogo (item 15).
 export default async function EditarServicioPage({ params }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  await requirePermisoClientes(supabase, "equipos_clientes_catalogo", "/app-clientes/catalogo/servicios");
 
   const { data: servicio } = await supabase
     .from("servicios_catalogo")
@@ -22,14 +23,15 @@ export default async function EditarServicioPage({ params }) {
     <div>
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href="/app-clientes/catalogo" className="back-link">
+        <Link href="/app-clientes/catalogo/servicios" className="back-link">
           ← Volver
         </Link>
         <Breadcrumb
           items={[
             { label: "App Clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
-            { label: "Catálogo", href: "/app-clientes/catalogo" },
+            { label: "Base de datos", href: "/app-clientes/catalogo" },
+            { label: "Servicios", href: "/app-clientes/catalogo/servicios" },
             { label: servicio.nombre },
           ]}
         />

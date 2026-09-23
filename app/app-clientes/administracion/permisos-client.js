@@ -3,18 +3,31 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconUsers } from "@/components/icons";
+import { IconUsers, IconEdit, IconTank, IconPlus, IconCatalog } from "@/components/icons";
 
 const PERMISOS_DEFAULT = {
   equipos_clientes: false,
+  equipos_clientes_registrar: false,
+  equipos_clientes_agregar_equipo: false,
+  equipos_clientes_agregar_cliente: false,
+  equipos_clientes_catalogo: false,
 };
 
 // Tabla de permisos propia de App Clientes -- mismo patrón que
-// app/admin/usuarios/lista-client.js (togglePermiso), pero acotada a los
-// permisos de esta app. Hoy solo existe "equipos_clientes"; si se agregan
-// más secciones acá adentro (p. ej. facturación propia de clientes), se
-// suman como columnas nuevas.
-const COLUMNAS = [{ clave: "equipos_clientes", label: "Equipos de clientes", Icono: IconUsers }];
+// app/admin/usuarios/lista-client.js (togglePermiso). "Equipos de
+// clientes" sigue gateando poder ENTRAR a la app; las 4 columnas nuevas
+// (item 15, pedido explícito: "ponme permisos para dar a los demas de:
+// registrar orden... agregar equipo, agregar cliente, acceso a
+// Catalogo") son más finas, para acciones puntuales dentro de ella --
+// sin una de ellas, el usuario igual puede VER todo, solo no puede
+// hacer esa acción en concreto.
+const COLUMNAS = [
+  { clave: "equipos_clientes", label: "Equipos de clientes", Icono: IconUsers },
+  { clave: "equipos_clientes_registrar", label: "Registrar orden", Icono: IconEdit },
+  { clave: "equipos_clientes_agregar_equipo", label: "Agregar equipo", Icono: IconTank },
+  { clave: "equipos_clientes_agregar_cliente", label: "Agregar cliente", Icono: IconPlus },
+  { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
+];
 
 export default function PermisosClientes({ perfiles, miId }) {
   const router = useRouter();
@@ -50,7 +63,7 @@ export default function PermisosClientes({ perfiles, miId }) {
                 <tr key={p.id}>
                   <td>
                     {p.full_name}
-                    {p.id === miId && <span className="tag-tu">Tú</span>}
+                    <span className="role-tag role-tag-titular">Titular</span>
                   </td>
                   {COLUMNAS.map((c) => (
                     <td key={c.clave}>—</td>

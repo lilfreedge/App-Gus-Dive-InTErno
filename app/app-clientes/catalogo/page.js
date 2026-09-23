@@ -1,24 +1,33 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { requirePermiso } from "@/lib/roles";
+import { createClient } from "@/lib/supabase/server";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
+import { IconCatalog, IconPackage } from "@/components/icons";
 
-// Catálogo de servicios de App Clientes (23-sep-2026, pedido explícito,
-// dentro del nuevo botón "Más"). Reemplaza la lista fija que antes
-// estaba en el código de "Registrar orden" -- ahora se puede
-// agregar/editar un servicio, o desactivarlo, desde aquí. Un servicio
-// desactivado deja de aparecer en el desplegable de "Registrar orden",
-// pero las órdenes que ya lo usaron no cambian (que_se_hara guarda el
-// texto, no una referencia).
-export default async function CatalogoServiciosPage() {
+// Hub "Base de datos" de App Clientes (23-sep-2026, renombrado de
+// "Catálogo" -- pedido explícito -- y convertido en hub con dos
+// secciones: Servicios (lo que ya existía) y Piezas y repuestos
+// (nuevo, "me parece bien que agregues lo de las piezas. luego vamos
+// viendo como se le da forma"). Mismo patrón de tarjetas que /mas.
+const OPCIONES = [
+  {
+    href: "/app-clientes/catalogo/servicios",
+    titulo: "Servicios",
+    descripcion: "Servicios que se pueden elegir en Registrar orden.",
+    Icono: IconCatalog,
+  },
+  {
+    href: "/app-clientes/catalogo/piezas",
+    titulo: "Piezas y repuestos",
+    descripcion: "Piezas y repuestos usados al dar servicio a un equipo.",
+    Icono: IconPackage,
+  },
+];
+
+export default async function BaseDeDatosPage() {
   const supabase = createClient();
   await requirePermiso(supabase, "equipos_clientes");
-
-  const { data: servicios } = await supabase
-    .from("servicios_catalogo")
-    .select("id, nombre, activo")
-    .order("nombre");
 
   return (
     <div>
@@ -31,39 +40,24 @@ export default async function CatalogoServiciosPage() {
           items={[
             { label: "App Clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
-            { label: "Catálogo" },
+            { label: "Base de datos" },
           ]}
         />
-        <h1 className="page-title">Catálogo de servicios</h1>
-        <p className="page-subtitle">Estos son los servicios que aparecen para elegir en &quot;Registrar orden&quot;.</p>
+        <h1 className="page-title">Base de datos</h1>
 
-        <div style={{ marginBottom: 16 }}>
-          <Link href="/app-clientes/catalogo/nuevo">
-            <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
-              + Agregar servicio
-            </button>
+        {OPCIONES.map((o) => (
+          <Link key={o.href} href={o.href} className="card hub-link-card">
+            <div className="hub-link-card-inner">
+              <div className="hub-link-icon">
+                <o.Icono size={20} />
+              </div>
+              <div>
+                <div className="hub-link-title">{o.titulo}</div>
+                <div className="hub-link-desc">{o.descripcion}</div>
+              </div>
+            </div>
           </Link>
-        </div>
-
-        <div className="card">
-          {!servicios || servicios.length === 0 ? (
-            <div className="empty">Todavía no hay servicios en el catálogo.</div>
-          ) : (
-            servicios.map((s) => (
-              <Link
-                key={s.id}
-                href={`/app-clientes/catalogo/${s.id}/editar`}
-                className="list-item"
-                style={{ display: "block", textDecoration: "none", color: "inherit" }}
-              >
-                <div className="list-item-top">
-                  <span className="list-item-title">{s.nombre}</span>
-                  {!s.activo && <span className="badge">Inactivo</span>}
-                </div>
-              </Link>
-            ))
-          )}
-        </div>
+        ))}
       </div>
     </div>
   );

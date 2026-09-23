@@ -48,7 +48,7 @@ export default async function FichaOrdenPage({ params }) {
         <Breadcrumb
           items={[
             { label: "App Clientes", href: "/app-clientes" },
-            { label: "Historial de órdenes", href: "/app-clientes/historial" },
+            { label: "Listado de órdenes", href: "/app-clientes/historial" },
             { label: `#${o.folio}` },
           ]}
         />
@@ -84,6 +84,11 @@ export default async function FichaOrdenPage({ params }) {
               <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ marginLeft: 0 }}>
                 {o.estado}
               </span>
+              {o.en_espera && (
+                <span className="badge badge-rojo" style={{ marginLeft: 6 }}>
+                  En espera{o.motivo_espera ? ` — ${o.motivo_espera}` : ""}
+                </span>
+              )}
             </Campo>
             {o.notas && <Campo etiqueta="Notas" valor={o.notas} />}
             <Campo etiqueta="Registrado por">
@@ -107,7 +112,7 @@ export default async function FichaOrdenPage({ params }) {
           <div className="section-title">Seguimiento</div>
           <Link href={`/app-clientes/ordenes/${o.id}/editar`}>
             <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 14 }}>
-              Actualizar seguimiento
+              Actualizar estado de orden
             </button>
           </Link>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -124,6 +129,7 @@ export default async function FichaOrdenPage({ params }) {
             <Campo etiqueta="Fecha de entrega al cliente" valor={o.fecha_entrega_cliente ? formatFechaDDMMAAAADeDate(o.fecha_entrega_cliente) : "—"} />
             <Campo etiqueta="Nombre de quien recibe" valor={o.nombre_recibe || "—"} />
             <Campo etiqueta="Factura de repuesto o servicio" valor={o.factura || "—"} />
+            <Campo etiqueta="Repuestos utilizados" valor={o.repuestos_usados || "—"} />
           </div>
         </div>
 

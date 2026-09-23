@@ -35,7 +35,7 @@ export default function NuevoServicioForm() {
       return;
     }
 
-    window.location.href = "/app-clientes/catalogo";
+    window.location.href = "/app-clientes/catalogo/servicios";
   }
 
   return (

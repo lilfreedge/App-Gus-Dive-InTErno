@@ -15,7 +15,10 @@ import { createClient } from "@/lib/supabase/client";
 // onChange: (id) => void
 // onClienteCreado: (cliente) => void -- para que el padre agregue el
 // cliente nuevo a su lista en memoria sin tener que recargar la página.
-export default function SelectorCliente({ clientes, valor, onChange, onClienteCreado }) {
+// puedeCrear: si es false (permiso granular equipos_clientes_agregar_cliente
+// faltante, item 15), no se muestra la opción de crear -- solo se puede
+// elegir entre los clientes ya existentes.
+export default function SelectorCliente({ clientes, valor, onChange, onClienteCreado, puedeCrear = true }) {
   const supabase = createClient();
   const seleccionado = clientes.find((c) => c.id === valor);
   const [texto, setTexto] = useState(seleccionado?.nombre || "");
@@ -163,12 +166,14 @@ export default function SelectorCliente({ clientes, valor, onChange, onClienteCr
               {c.telefono ? ` — ${c.telefono}` : ""}
             </div>
           ))}
-          <div
-            onMouseDown={abrirCrear}
-            style={{ fontWeight: 700, color: "var(--azul-claro)" }}
-          >
-            + Agregar {texto.trim() ? `"${texto.trim()}"` : ""} como cliente nuevo
-          </div>
+          {puedeCrear && (
+            <div
+              onMouseDown={abrirCrear}
+              style={{ fontWeight: 700, color: "var(--azul-claro)" }}
+            >
+              + Agregar {texto.trim() ? `"${texto.trim()}"` : ""} como cliente nuevo
+            </div>
+          )}
         </div>
       )}
     </div>

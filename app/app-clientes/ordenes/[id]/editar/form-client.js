@@ -11,7 +11,12 @@ const VERIFICADO_POR = ["Pipe", "Gugi"];
 export default function EditarSeguimientoForm({ orden }) {
   const supabase = createClient();
 
-  const [envioA, setEnvioA] = useState(orden.envio_a || "");
+  // Preseleccionar "Envío a" según el servicio de la orden (pedido
+  // explícito, 23-sep-2026) -- solo cuando el campo está vacío, nunca
+  // pisa una elección manual ya guardada.
+  const envioAInicial = orden.envio_a || (orden.que_se_hara === "Prueba hidrostática" ? "Prueba hidrostática" : "");
+
+  const [envioA, setEnvioA] = useState(envioAInicial);
   const [fechaEnvio, setFechaEnvio] = useState(orden.fecha_envio || "");
   const [fechaRetorno, setFechaRetorno] = useState(orden.fecha_retorno_tienda || "");
   const [fechaListo, setFechaListo] = useState(orden.fecha_listo_entrega || "");
@@ -20,6 +25,12 @@ export default function EditarSeguimientoForm({ orden }) {
   const [fechaEntrega, setFechaEntrega] = useState(orden.fecha_entrega_cliente || "");
   const [nombreRecibe, setNombreRecibe] = useState(orden.nombre_recibe || "");
   const [factura, setFactura] = useState(orden.factura || "");
+  // Órdenes en espera (Opción A, pedido explícito: dar seguimiento a
+  // órdenes en hold, p. ej. esperando piezas) y repuestos utilizados
+  // (pedido explícito: para que el cajero sepa qué cobrar al entregar).
+  const [enEspera, setEnEspera] = useState(!!orden.en_espera);
+  const [motivoEspera, setMotivoEspera] = useState(orden.motivo_espera || "");
+  const [repuestosUsados, setRepuestosUsados] = useState(orden.repuestos_usados || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -57,6 +68,9 @@ export default function EditarSeguimientoForm({ orden }) {
       fecha_entrega_cliente: fechaEntrega || null,
       nombre_recibe: nombreRecibe.trim() || null,
       factura: factura.trim() || null,
+      en_espera: enEspera,
+      motivo_espera: enEspera ? motivoEspera.trim() || null : null,
+      repuestos_usados: repuestosUsados.trim() || null,
     };
 
     const nuevoEstado = calcularEstadoOrden({ ...orden, ...cambios });
@@ -82,6 +96,23 @@ export default function EditarSeguimientoForm({ orden }) {
 
   return (
     <form onSubmit={handleSubmit} className="card">
+      <label className="check-label" style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+        <input type="checkbox" checked={enEspera} onChange={(e) => setEnEspera(e.target.checked)} style={{ width: "auto" }} />
+        En espera
+      </label>
+      {enEspera && (
+        <>
+          <label htmlFor="motivo_espera">Motivo</label>
+          <input
+            id="motivo_espera"
+            type="text"
+            value={motivoEspera}
+            onChange={(e) => setMotivoEspera(e.target.value)}
+            placeholder="Ej: esperando que lleguen piezas"
+          />
+        </>
+      )}
+
       <label htmlFor="envio_a">Envío a</label>
       <select id="envio_a" value={envioA} onChange={(e) => onEnvioAChange(e.target.value)}>
         <option value="">Sin enviar / no aplica</option>
@@ -122,6 +153,15 @@ export default function EditarSeguimientoForm({ orden }) {
 
       <label htmlFor="factura">Factura de repuesto o servicio</label>
       <input id="factura" type="text" value={factura} onChange={(e) => setFactura(e.target.value)} placeholder="Opcional" />
+
+      <label htmlFor="repuestos_usados">Repuestos utilizados</label>
+      <textarea
+        id="repuestos_usados"
+        rows={3}
+        value={repuestosUsados}
+        onChange={(e) => setRepuestosUsados(e.target.value)}
+        placeholder="Para que en tienda sepan qué cobrar al momento de entregar"
+      />
 
       {error && <div className="error-box">{error}</div>}
 

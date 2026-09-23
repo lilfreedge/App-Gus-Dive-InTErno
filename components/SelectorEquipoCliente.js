@@ -21,7 +21,11 @@ const CON_SERIE = ["Reguladores", "Tanques", "Computadora"];
 // valor: id del equipo elegido (o "")
 // onChange: (id) => void
 // onEquipoCreado: (equipo) => void
-export default function SelectorEquipoCliente({ equipos, clienteId, valor, onChange, onEquipoCreado }) {
+// puedeAgregarEquipo: si es false (permiso granular
+// equipos_clientes_agregar_equipo faltante, item 15), no se muestra la
+// opción de crear -- solo se puede elegir entre los equipos ya
+// registrados de ese cliente.
+export default function SelectorEquipoCliente({ equipos, clienteId, valor, onChange, onEquipoCreado, puedeAgregarEquipo = true }) {
   const supabase = createClient();
   const equiposDelCliente = equipos.filter((e) => e.cliente_id === clienteId);
   const seleccionado = equiposDelCliente.find((e) => e.id === valor);
@@ -126,7 +130,8 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
     setGuardando(false);
 
     if (err || !data) {
-      setError("No se pudo crear el equipo. Intenta de nuevo.");
+      console.error("Error creando equipo:", err);
+      setError(err?.message ? `No se pudo crear el equipo: ${err.message}` : "No se pudo crear el equipo. Intenta de nuevo.");
       return;
     }
 
@@ -218,9 +223,11 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
               {etiqueta(e)}
             </div>
           ))}
-          <div onMouseDown={abrirCrear} style={{ fontWeight: 700, color: "var(--azul-claro)" }}>
-            + Agregar equipo nuevo para este cliente
-          </div>
+          {puedeAgregarEquipo && (
+            <div onMouseDown={abrirCrear} style={{ fontWeight: 700, color: "var(--azul-claro)" }}>
+              + Agregar equipo nuevo para este cliente
+            </div>
+          )}
         </div>
       )}
     </div>

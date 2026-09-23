@@ -30,7 +30,7 @@ export default function EditarServicioForm({ servicio }) {
       return;
     }
 
-    window.location.href = "/app-clientes/catalogo";
+    window.location.href = "/app-clientes/catalogo/servicios";
   }
 
   async function toggleActivo() {
@@ -46,7 +46,7 @@ export default function EditarServicioForm({ servicio }) {
       return;
     }
 
-    window.location.href = "/app-clientes/catalogo";
+    window.location.href = "/app-clientes/catalogo/servicios";
   }
 
   return (

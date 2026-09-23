@@ -20,7 +20,11 @@ const BADGE_ESTADO = {
 // todo junto").
 export default async function FichaClientePage({ params }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  const { profile } = await requirePermiso(supabase, "equipos_clientes");
+  // Permisos granulares (item 15, pedido explícito): sin ellos se ve
+  // todo igual, solo se ocultan los botones de crear.
+  const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
+  const puedeAgregarEquipo = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_agregar_equipo;
 
   const { data: cliente } = await supabase
     .from("clientes_equipos")
@@ -30,10 +34,16 @@ export default async function FichaClientePage({ params }) {
 
   if (!cliente) notFound();
 
+  // Fecha de última vez en tienda por equipo (pedido explícito,
+  // 23-sep-2026: "en clientes, a equipos regitrados, ponle a cada
+  // equipo fecha de su ultima vez en tienda") -- la fecha (de ingreso)
+  // más reciente entre las órdenes de este equipo.
+  const ultimaFechaPorEquipo = new Map();
+
   const [{ data: ordenes }, { data: equipos }] = await Promise.all([
     supabase
       .from("ordenes_equipos")
-      .select("id, folio, tipo_equipo, tipo_equipo_otro, fecha, estado, created_at")
+      .select("id, folio, equipo_id, tipo_equipo, tipo_equipo_otro, fecha, estado, created_at")
       .eq("cliente_id", params.id)
       .order("created_at", { ascending: false }),
     supabase
@@ -42,6 +52,12 @@ export default async function FichaClientePage({ params }) {
       .eq("cliente_id", params.id)
       .order("created_at", { ascending: false }),
   ]);
+
+  for (const o of ordenes || []) {
+    if (!o.equipo_id || !o.fecha) continue;
+    const actual = ultimaFechaPorEquipo.get(o.equipo_id);
+    if (!actual || o.fecha > actual) ultimaFechaPorEquipo.set(o.equipo_id, o.fecha);
+  }
 
   return (
     <div>
@@ -66,23 +82,27 @@ export default async function FichaClientePage({ params }) {
           </div>
         </div>
 
-        <div style={{ display: "flex", marginBottom: 16, marginTop: 4 }}>
-          <Link href={`/app-clientes/ordenes/nueva?cliente=${cliente.id}`}>
-            <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
-              + Registrar orden
-            </button>
-          </Link>
-        </div>
+        {puedeRegistrar && (
+          <div style={{ display: "flex", marginBottom: 16, marginTop: 4 }}>
+            <Link href={`/app-clientes/ordenes/nueva?cliente=${cliente.id}`}>
+              <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
+                + Registrar orden
+              </button>
+            </Link>
+          </div>
+        )}
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 0, marginBottom: 10 }}>
           <div className="section-title" style={{ margin: 0 }}>
             Equipos registrados
           </div>
-          <Link href={`/app-clientes/clientes/${cliente.id}/equipos/nuevo`}>
-            <button className="btn secondary" type="button" style={{ marginTop: 0 }}>
-              + Agregar equipo
-            </button>
-          </Link>
+          {puedeAgregarEquipo && (
+            <Link href={`/app-clientes/clientes/${cliente.id}/equipos/nuevo`}>
+              <button className="btn secondary" type="button" style={{ marginTop: 0 }}>
+                + Agregar equipo
+              </button>
+            </Link>
+          )}
         </div>
         <div className="card">
           {!equipos || equipos.length === 0 ? (
@@ -91,6 +111,7 @@ export default async function FichaClientePage({ params }) {
             equipos.map((e) => {
               const tipoLabel = tipoEquipoLabel(e.tipo_equipo, e.tipo_equipo_otro);
               const marcaModelo = [e.marca, e.modelo].filter(Boolean).join(" ");
+              const ultimaFecha = ultimaFechaPorEquipo.get(e.id);
               return (
                 <Link
                   key={e.id}
@@ -98,10 +119,15 @@ export default async function FichaClientePage({ params }) {
                   className="list-item"
                   style={{ display: "block", textDecoration: "none", color: "inherit" }}
                 >
-                  <span className="list-item-title">
-                    {tipoLabel}
-                    {marcaModelo && ` — ${marcaModelo}`}
-                  </span>
+                  <div className="list-item-top">
+                    <span className="list-item-title">
+                      {tipoLabel}
+                      {marcaModelo && ` — ${marcaModelo}`}
+                    </span>
+                  </div>
+                  <div className="list-item-meta">
+                    {ultimaFecha ? `Última vez en tienda: ${formatFechaDDMMAAAADeDate(ultimaFecha)}` : "Sin órdenes todavía"}
+                  </div>
                 </Link>
               );
             })
