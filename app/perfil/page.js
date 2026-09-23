@@ -45,15 +45,11 @@ export default async function PerfilPage() {
         </Link>
         <Breadcrumb items={[{ label: "Mi Perfil" }]} />
 
-        <div className="section-title" style={{ marginTop: 0 }}>
-          Mi actividad
-        </div>
-        <p className="hint-text" style={{ marginTop: 0, marginBottom: 10 }}>
-          Tus propias salidas y llenados registrados, sin tener que buscarlos en Salidas/Tanques.
-        </p>
-        <MiActividad actividad={actividad} />
-
         <PerfilForm userId={user.id} nombreActual={profile?.full_name || ""} correo={user.email} />
+
+        <div style={{ marginTop: 16 }}>
+          <MiActividad actividad={actividad} />
+        </div>
 
         <div style={{ marginTop: 26 }}>
           <PreferenciasApariencia />

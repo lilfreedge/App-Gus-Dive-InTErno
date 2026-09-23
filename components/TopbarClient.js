@@ -125,9 +125,6 @@ export default function TopbarClient({
                 <b>{nombreCompleto}</b>
                 {correo} · {rolLabel}
               </div>
-              <Link href="/espacio" className="settings-menu-link" onClick={() => setOpen(false)}>
-                <IconShuffle size={15} /> Cambiar de espacio
-              </Link>
               <Link href="/perfil" className="settings-menu-link" onClick={() => setOpen(false)}>
                 <IconEdit size={15} /> Mi Perfil
               </Link>
@@ -160,6 +157,9 @@ export default function TopbarClient({
                 </Link>
               )}
               <hr />
+              <Link href="/espacio" className="settings-menu-link" onClick={() => setOpen(false)}>
+                <IconShuffle size={15} /> Cambiar de app
+              </Link>
               <button className="settings-menu-link settings-menu-danger" onClick={salir}>
                 <IconLogout size={15} /> Cerrar sesión
               </button>

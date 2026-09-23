@@ -216,6 +216,21 @@ export function IconWrench(props) {
   );
 }
 
+// Regulador de buceo: primera etapa (el disco que va en la válvula del
+// tanque) + manguera curva + segunda etapa/boquilla -- ítem 8 del feedback
+// de v14 (22-sep-2026): reemplaza a IconWrench en la tarjeta de
+// "Mantenimiento de reguladores" del hub de Equipos, para no confundirlo
+// con un ícono genérico de "mantenimiento".
+export function IconRegulator(props) {
+  return (
+    <Base {...props}>
+      <circle cx="7" cy="6" r="3" />
+      <path d="M9.3 8.2c3.2 2 4.7 5.4 3.5 9.3" />
+      <path d="M10.5 20.5h5a2.2 2.2 0 0 0 0-4.4h-3.3" />
+    </Base>
+  );
+}
+
 // Compresor: tanque horizontal ancho con dos patas de apoyo (sin
 // manómetro -- versión simplificada a pedido, 2026-09-21).
 export function IconCompressor(props) {

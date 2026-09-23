@@ -193,8 +193,8 @@ button {
    el menú principal -- no es un link, es solo una etiqueta de contexto. */
 .topbar-appname {
   max-width: 720px;
-  margin: 9px auto 0;
-  font-size: 12.5px;
+  margin: 4px auto 0;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.4px;
   text-transform: uppercase;

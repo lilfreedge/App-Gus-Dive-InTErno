@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { getProfileYUser } from "@/lib/roles";
+import { obtenerPendientesInterno } from "@/lib/notificaciones";
 import HeaderSimple from "@/components/HeaderSimple";
 import { IconUsers, IconPackage } from "@/components/icons";
 
@@ -10,28 +11,38 @@ import { IconUsers, IconPackage } from "@/components/icons";
 // izquierda y "App Interno" (todo lo que existe hoy: salidas, equipos,
 // reportes, etc.) a la derecha, cada uno con sus notificaciones debajo.
 // No reemplaza /dashboard -- solo se muestra una vez al entrar; desde
-// dentro de App Interno se puede volver aquí con "Cambiar de espacio" en
-// el menú de ajustes (ver components/TopbarClient.js).
+// dentro de App Interno se puede volver aquí con "Cambiar de app" en el
+// menú de ajustes (ver components/TopbarClient.js).
 export default async function EspacioPage() {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
   const nombreCompleto = profile?.full_name || "";
   const nombre = nombreCompleto.split(" ")[0] || "";
 
-  // Notificación de App Interno: reusa la misma alerta de "pendiente por
-  // facturar" que ya existe en el Inicio (app/dashboard/page.js) -- no se
-  // inventa un sistema de notificaciones nuevo, se adelanta la que ya
-  // existía. Falta definir el resto (qué más cuenta como notificación en
-  // cada espacio); se puede ampliar más adelante.
-  const puedeFacturar = tieneAcceso(profile, "facturacion");
-  const { count: pendientesFacturar } = puedeFacturar
-    ? await supabase
-        .from("llenados_tanques")
-        .select("id", { count: "exact", head: true })
-        .eq("facturado", false)
-    : { count: 0 };
+  // Notificación de App Interno (ítem 6 del feedback de v14, 22-sep-2026):
+  // reune TODOS los pendientes que ya existen en Inicio -- facturar,
+  // inspecciones y mantenimientos vencidos -- con la misma consulta que
+  // usa app/dashboard/page.js (lib/notificaciones.js), para que ambas
+  // pantallas siempre digan lo mismo.
+  const { pendientesFacturar, tanquesVencidos, reguladoresVencidos } =
+    await obtenerPendientesInterno(supabase, profile);
 
-  const hayAlertaInterno = puedeFacturar && (pendientesFacturar || 0) > 0;
+  const lineasInterno = [];
+  if (pendientesFacturar > 0) {
+    lineasInterno.push(
+      `${pendientesFacturar} llenado${pendientesFacturar === 1 ? "" : "s"} pendiente${
+        pendientesFacturar === 1 ? "" : "s"
+      } por facturar`
+    );
+  }
+  if (tanquesVencidos > 0) {
+    lineasInterno.push(`${tanquesVencidos} tanque${tanquesVencidos === 1 ? "" : "s"} con inspección vencida`);
+  }
+  if (reguladoresVencidos > 0) {
+    lineasInterno.push(
+      `${reguladoresVencidos} regulador${reguladoresVencidos === 1 ? "" : "es"} con mantenimiento vencido`
+    );
+  }
 
   return (
     <div>
@@ -55,11 +66,12 @@ export default async function EspacioPage() {
             </div>
             <div className="espacio-title">App Interno</div>
             <div className="espacio-notif">
-              {hayAlertaInterno ? (
-                <span className="espacio-notif-alerta">
-                  {pendientesFacturar} llenado{pendientesFacturar === 1 ? "" : "s"} pendiente
-                  {pendientesFacturar === 1 ? "" : "s"} por facturar
-                </span>
+              {lineasInterno.length > 0 ? (
+                lineasInterno.map((linea) => (
+                  <div className="espacio-notif-alerta" key={linea}>
+                    {linea}
+                  </div>
+                ))
               ) : (
                 "Sin novedades."
               )}

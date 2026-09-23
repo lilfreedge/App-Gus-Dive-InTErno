@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
-import { IconTankFill, IconEye, IconWrench, IconCompressor } from "@/components/icons";
+import { IconTankFill, IconEye, IconRegulator, IconCompressor } from "@/components/icons";
 
 // Grupo "Tanques": llenados e inspección visual, todo lo relacionado
 // a los tanques de alquiler, agrupado bajo un mismo encabezado.
@@ -30,7 +30,7 @@ const OTRAS_OPCIONES = [
     href: "/equipos/mantenimiento-reguladores",
     titulo: "Mantenimiento de reguladores",
     descripcion: "Historial de mantenimientos hechos a los reguladores.",
-    Icono: IconWrench,
+    Icono: IconRegulator,
   },
   {
     href: "/equipos/compresores",

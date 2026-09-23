@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V9",
+    fecha: "22 de septiembre, 2026",
+    titulo: "Avisos de inspecciones y mantenimientos vencidos, ajustes a la pantalla selectora y a Mi Perfil",
+    descripcion:
+      "Inicio (y la pantalla selectora de espacio) ahora también avisan si hay tanques con la inspección visual vencida o reguladores con el mantenimiento vencido, además del aviso de llenados pendientes por facturar que ya existía -- los tres avisos juntos en un solo lugar. En el menú de ajustes, \"Cambiar de espacio\" se renombró a \"Cambiar de app\" y se movió justo encima de \"Cerrar sesión\". La pantalla selectora de espacio ahora tiene el logo de Gus Dive y una tuerquita de ajustes arriba a la derecha para poder cerrar sesión sin tener que entrar a App Interno primero; su título \"Selecciona tu espacio\" quedó más arriba y más grande. Mantenimiento de reguladores, en el hub de Equipos, estrenó ícono propio (ya no comparte el de llave inglesa). Mi Perfil se reordenó: primero el nombre (con el botón de editar), luego \"Ver mi actividad\", y por último Apariencia -- se quitó el texto explicativo que sobraba arriba de \"Mi actividad\". En Administración se quitaron \"Logo de inicio de sesión\" y \"Dominio personalizado\", dos secciones que ya no hacían falta, y se agregó \"Permisos por defecto para nuevos Administradores\": una plantilla debajo de \"Catálogo — Registrar\" que se pre-marca sola la primera vez que alguien pasa de Usuario a Administrador, sin tocar a quienes ya lo son hoy.",
+  },
+  {
     version: "V8",
     fecha: "22 de septiembre, 2026",
     titulo: "Gus App: pantalla selectora, reportes automáticos rediseñados, envío por correo a cualquier destinatario y más",

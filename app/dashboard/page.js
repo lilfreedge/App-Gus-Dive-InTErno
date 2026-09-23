@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { obtenerPendientesInterno } from "@/lib/notificaciones";
 import AppHeader from "@/components/AppHeader";
 import { IconPackage, IconTank, IconAlert } from "@/components/icons";
 
@@ -26,7 +27,7 @@ export default async function DashboardPage({ searchParams }) {
   else if (periodo === "mes") desde.setDate(desde.getDate() - 30);
   else desde.setDate(desde.getDate() - 7);
 
-  const [salidasRes, tanquesRes, ultimasSalidas, ultimosTanques, pendientesRes] =
+  const [salidasRes, tanquesRes, ultimasSalidas, ultimosTanques, pendientes] =
     await Promise.all([
       supabase
         .from("salidas")
@@ -40,15 +41,11 @@ export default async function DashboardPage({ searchParams }) {
         .limit(1000),
       supabase.from("salidas_con_nombre").select("*").limit(8),
       supabase.from("llenados_con_nombre").select("*").limit(8),
-      // Notificación de "pendiente por facturar": cuenta TODOS los llenados
-      // sin facturar, sin importar el periodo (semana/mes/año) del dashboard
-      // — es una alerta operativa, no una estadística del periodo.
-      puedeFacturar
-        ? supabase
-            .from("llenados_tanques")
-            .select("id", { count: "exact", head: true })
-            .eq("facturado", false)
-        : Promise.resolve({ count: 0 }),
+      // Notificaciones operativas (pendiente por facturar, inspecciones/
+      // mantenimientos vencidos): sin importar el periodo (semana/mes/
+      // año) del dashboard -- son alertas del momento, no estadísticas del
+      // periodo. Lógica compartida con /espacio en lib/notificaciones.js.
+      obtenerPendientesInterno(supabase, profile),
     ]);
 
   const totalSalidas = (salidasRes.data || []).length;
@@ -56,7 +53,8 @@ export default async function DashboardPage({ searchParams }) {
     (acc, r) => acc + Number(r.cantidad),
     0
   );
-  const totalPendientesFacturar = pendientesRes.count || 0;
+  const totalPendientesFacturar = pendientes.pendientesFacturar;
+  const { tanquesVencidos, reguladoresVencidos } = pendientes;
 
   const topArticulos = calcularTopArticulos(salidasRes.data || []).slice(0, 3);
 
@@ -109,6 +107,29 @@ export default async function DashboardPage({ searchParams }) {
             <IconAlert size={18} />
             {totalPendientesFacturar} llenado{totalPendientesFacturar === 1 ? "" : "s"} pendiente
             {totalPendientesFacturar === 1 ? "" : "s"} por facturar
+          </Link>
+        )}
+
+        {tanquesVencidos > 0 && (
+          <Link
+            href="/catalogo/tanques"
+            className="error-box"
+            style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
+          >
+            <IconAlert size={18} />
+            {tanquesVencidos} tanque{tanquesVencidos === 1 ? "" : "s"} con inspección vencida
+          </Link>
+        )}
+
+        {reguladoresVencidos > 0 && (
+          <Link
+            href="/catalogo/reguladores"
+            className="error-box"
+            style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
+          >
+            <IconAlert size={18} />
+            {reguladoresVencidos} regulador{reguladoresVencidos === 1 ? "" : "es"} con mantenimiento
+            vencido
           </Link>
         )}
 

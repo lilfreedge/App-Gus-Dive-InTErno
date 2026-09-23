@@ -19,7 +19,7 @@ export default async function AppClientesPage() {
       <HeaderSimple nombre={nombre} etiqueta="App Clientes" />
       <div className="page" style={{ paddingTop: 24 }}>
         <Link href="/espacio" className="back-link">
-          ← Cambiar de espacio
+          ← Cambiar de app
         </Link>
 
         <div className="card" style={{ textAlign: "center", padding: "40px 20px", marginTop: 16 }}>

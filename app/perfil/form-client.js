@@ -121,7 +121,7 @@ export default function PerfilForm({ userId, nombreActual, correo }) {
 
   return (
     <>
-      <div className="section-title" style={{ marginTop: 26 }}>
+      <div className="section-title" style={{ marginTop: 0 }}>
         Mi información
       </div>
       <div className="card">

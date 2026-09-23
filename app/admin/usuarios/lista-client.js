@@ -20,7 +20,7 @@ import {
   IconTank,
 } from "@/components/icons";
 
-const PERMISOS_DEFAULT = {
+export const PERMISOS_DEFAULT = {
   reportes: false,
   catalogo: true,
   historial: false,
@@ -46,7 +46,7 @@ const PERMISOS_DEFAULT = {
 // Admin/Usuario — sin esto, solo ve la lista, no puede registrar.
 // "Catálogo — Registrar": lo mismo pero para agregar/editar cada
 // sub-catálogo (Código, Regulador, Tanque).
-const GRUPOS = [
+export const GRUPOS = [
   {
     titulo: "General",
     columnas: [
@@ -84,14 +84,29 @@ const GRUPOS = [
   },
 ];
 
-export default function ListaUsuarios({ perfiles, miId }) {
+export default function ListaUsuarios({ perfiles, miId, plantillaAdmin }) {
   const router = useRouter();
   const supabase = createClient();
   const [loadingId, setLoadingId] = useState(null);
+  const [plantilla, setPlantilla] = useState({ ...PERMISOS_DEFAULT, ...(plantillaAdmin || {}) });
+  const [guardandoPlantilla, setGuardandoPlantilla] = useState(false);
 
+  // Al pasar a alguien de Usuario a Administrador, se le PRE-MARCAN los
+  // permisos activados en la plantilla de abajo -- sumados a lo que ya
+  // tuviera, sin quitarle nada. Bajarlo de rol (o volver a subirlo) no
+  // vuelve a aplicar la plantilla, para no pisar ajustes hechos a mano.
   async function cambiarRol(perfil, esAdmin) {
     setLoadingId(perfil.id);
-    await supabase.from("profiles").update({ is_admin: esAdmin }).eq("id", perfil.id);
+    const updates = { is_admin: esAdmin };
+    if (esAdmin && !perfil.is_admin) {
+      const permisosActuales = { ...PERMISOS_DEFAULT, ...(perfil.permisos || {}) };
+      const permisosNuevos = { ...permisosActuales };
+      for (const clave of Object.keys(plantilla)) {
+        if (plantilla[clave]) permisosNuevos[clave] = true;
+      }
+      updates.permisos = permisosNuevos;
+    }
+    await supabase.from("profiles").update(updates).eq("id", perfil.id);
     setLoadingId(null);
     router.refresh();
   }
@@ -102,6 +117,14 @@ export default function ListaUsuarios({ perfiles, miId }) {
     await supabase.from("profiles").update({ permisos }).eq("id", perfil.id);
     setLoadingId(null);
     router.refresh();
+  }
+
+  async function togglePlantilla(clave, valor) {
+    const nueva = { ...plantilla, [clave]: valor };
+    setPlantilla(nueva);
+    setGuardandoPlantilla(true);
+    await supabase.from("app_config").update({ permisos_default_admin: nueva }).eq("id", true);
+    setGuardandoPlantilla(false);
   }
 
   return (
@@ -194,6 +217,63 @@ export default function ListaUsuarios({ perfiles, miId }) {
           </div>
         </div>
       ))}
+
+      {/* Ítem 12 del feedback de v14 (22-sep-2026): plantilla de permisos
+          que se pre-marcan automáticamente la primera vez que alguien pasa
+          de Usuario a Administrador (ver cambiarRol arriba) -- no se
+          aplica retroactivamente ni le quita nada a quien ya sea
+          Administrador hoy. */}
+      <div style={{ marginTop: 24 }}>
+        <div className="section-title" style={{ marginTop: 0 }}>
+          Permisos por defecto para nuevos Administradores
+        </div>
+        <p className="hint-text" style={{ marginTop: 0, marginBottom: 10 }}>
+          Se pre-marcan solos la primera vez que pasas a alguien de Usuario a Administrador —
+          no cambian los permisos de quienes ya son Administrador hoy, y cada persona los puede
+          seguir ajustando individualmente arriba.
+        </p>
+        {GRUPOS.map((grupo) => (
+          <div key={grupo.titulo} style={{ marginTop: 10 }}>
+            <div style={{ overflowX: "auto" }}>
+              <table className="perm-table">
+                <thead>
+                  <tr>
+                    <th>{grupo.titulo}</th>
+                    {grupo.columnas.map((c) => (
+                      <th key={c.clave} title={c.label}>
+                        <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+                        {c.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Nuevo Administrador</td>
+                    {grupo.columnas.map((c) => (
+                      <td
+                        key={c.clave}
+                        style={
+                          c.destacado && plantilla[c.clave]
+                            ? { background: "var(--acento-fondo)", borderRadius: 6 }
+                            : undefined
+                        }
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!plantilla[c.clave]}
+                          disabled={guardandoPlantilla}
+                          onChange={(e) => togglePlantilla(c.clave, e.target.checked)}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

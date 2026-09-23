@@ -6,10 +6,8 @@ import Breadcrumb from "@/components/Breadcrumb";
 import SeccionColapsable from "@/components/SeccionColapsable";
 import ListaUsuarios from "./lista-client";
 import RolesInfo from "./roles-info";
-import LogoLoginSelector from "./logo-login-client";
 import FormatearRegistros from "./formatear-registros-client";
 import RespaldoDatos from "./respaldo-client";
-import DominioPersonalizado from "./dominio-client";
 
 // Administración: solo el Titular puede entrar (ni siquiera los
 // administradores comunes). No está en el nav de arriba, solo en el
@@ -25,7 +23,7 @@ export default async function UsuariosPage() {
 
   const { data: config } = await supabase
     .from("app_config")
-    .select("logo_login, dominio_personalizado")
+    .select("permisos_default_admin")
     .maybeSingle();
 
   return (
@@ -38,15 +36,15 @@ export default async function UsuariosPage() {
         <Breadcrumb items={[{ label: "Administración" }]} />
 
         <SeccionColapsable titulo="Usuarios y permisos">
-          <ListaUsuarios perfiles={perfiles || []} miId={user.id} />
+          <ListaUsuarios
+            perfiles={perfiles || []}
+            miId={user.id}
+            plantillaAdmin={config?.permisos_default_admin}
+          />
         </SeccionColapsable>
 
         <SeccionColapsable titulo="Roles">
           <RolesInfo />
-        </SeccionColapsable>
-
-        <SeccionColapsable titulo="Logo de inicio de sesión">
-          <LogoLoginSelector logoActual={config?.logo_login || "grande"} />
         </SeccionColapsable>
 
         <div style={{ marginTop: 14 }}>
@@ -58,10 +56,6 @@ export default async function UsuariosPage() {
             Estado del sistema
           </Link>
         </div>
-
-        <SeccionColapsable titulo="Dominio personalizado">
-          <DominioPersonalizado dominioActual={config?.dominio_personalizado} />
-        </SeccionColapsable>
 
         <SeccionColapsable titulo="Respaldo de datos">
           <RespaldoDatos />
