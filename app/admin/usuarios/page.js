@@ -21,11 +21,6 @@ export default async function UsuariosPage() {
     .select("id, full_name, is_admin, es_titular, permisos")
     .order("full_name");
 
-  const { data: config } = await supabase
-    .from("app_config")
-    .select("permisos_default_admin")
-    .maybeSingle();
-
   return (
     <div>
       <AppHeader />
@@ -36,11 +31,7 @@ export default async function UsuariosPage() {
         <Breadcrumb items={[{ label: "Administración" }]} />
 
         <SeccionColapsable titulo="Usuarios y permisos">
-          <ListaUsuarios
-            perfiles={perfiles || []}
-            miId={user.id}
-            plantillaAdmin={config?.permisos_default_admin}
-          />
+          <ListaUsuarios perfiles={perfiles || []} miId={user.id} />
         </SeccionColapsable>
 
         <SeccionColapsable titulo="Roles">

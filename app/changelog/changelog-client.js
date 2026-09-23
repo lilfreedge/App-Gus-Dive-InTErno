@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V10",
+    fecha: "23 de septiembre, 2026",
+    titulo: "Avisos de tanques por inspeccionar en Equipos, ajustes finos a V9 y Administradores reales en Administración",
+    descripcion:
+      "Inspección visual (dentro de Equipos) ahora tiene, debajo de la lista, dos avisos nuevos: tanques pendientes por inspección visual (los que nunca se han inspeccionado o ya tienen la fecha vencida) y tanques a los que les faltan 2 semanas o menos para que venza su próxima inspección. Los avisos de \"inspección/mantenimiento vencido\" de Inicio ahora llevan directo a Inspección visual y a Mantenimiento de reguladores (antes llevaban al Catálogo). La etiqueta \"Selecciona tu espacio\" quedó todavía más arriba, casi al nivel del logo. En Administración, la sección de Administradores debajo de \"Catálogo — Registrar\" se rehizo: ya no es una fila de \"plantilla\" para futuros ascensos, ahora muestra directamente a quienes ya tienen el rol Administrador hoy, con sus permisos reales editables ahí mismo.",
+  },
+  {
     version: "V9",
     fecha: "22 de septiembre, 2026",
     titulo: "Avisos de inspecciones y mantenimientos vencidos, ajustes a la pantalla selectora y a Mi Perfil",

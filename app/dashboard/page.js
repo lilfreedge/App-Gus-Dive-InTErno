@@ -112,7 +112,7 @@ export default async function DashboardPage({ searchParams }) {
 
         {tanquesVencidos > 0 && (
           <Link
-            href="/catalogo/tanques"
+            href="/equipos/inspeccion-visual"
             className="error-box"
             style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
           >
@@ -123,7 +123,7 @@ export default async function DashboardPage({ searchParams }) {
 
         {reguladoresVencidos > 0 && (
           <Link
-            href="/catalogo/reguladores"
+            href="/equipos/mantenimiento-reguladores"
             className="error-box"
             style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
           >

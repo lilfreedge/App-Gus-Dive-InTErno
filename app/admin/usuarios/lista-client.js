@@ -84,29 +84,14 @@ export const GRUPOS = [
   },
 ];
 
-export default function ListaUsuarios({ perfiles, miId, plantillaAdmin }) {
+export default function ListaUsuarios({ perfiles, miId }) {
   const router = useRouter();
   const supabase = createClient();
   const [loadingId, setLoadingId] = useState(null);
-  const [plantilla, setPlantilla] = useState({ ...PERMISOS_DEFAULT, ...(plantillaAdmin || {}) });
-  const [guardandoPlantilla, setGuardandoPlantilla] = useState(false);
 
-  // Al pasar a alguien de Usuario a Administrador, se le PRE-MARCAN los
-  // permisos activados en la plantilla de abajo -- sumados a lo que ya
-  // tuviera, sin quitarle nada. Bajarlo de rol (o volver a subirlo) no
-  // vuelve a aplicar la plantilla, para no pisar ajustes hechos a mano.
   async function cambiarRol(perfil, esAdmin) {
     setLoadingId(perfil.id);
-    const updates = { is_admin: esAdmin };
-    if (esAdmin && !perfil.is_admin) {
-      const permisosActuales = { ...PERMISOS_DEFAULT, ...(perfil.permisos || {}) };
-      const permisosNuevos = { ...permisosActuales };
-      for (const clave of Object.keys(plantilla)) {
-        if (plantilla[clave]) permisosNuevos[clave] = true;
-      }
-      updates.permisos = permisosNuevos;
-    }
-    await supabase.from("profiles").update(updates).eq("id", perfil.id);
+    await supabase.from("profiles").update({ is_admin: esAdmin }).eq("id", perfil.id);
     setLoadingId(null);
     router.refresh();
   }
@@ -119,13 +104,15 @@ export default function ListaUsuarios({ perfiles, miId, plantillaAdmin }) {
     router.refresh();
   }
 
-  async function togglePlantilla(clave, valor) {
-    const nueva = { ...plantilla, [clave]: valor };
-    setPlantilla(nueva);
-    setGuardandoPlantilla(true);
-    await supabase.from("app_config").update({ permisos_default_admin: nueva }).eq("id", true);
-    setGuardandoPlantilla(false);
-  }
+  // Ítem 12 del feedback de v14/v16 (22-sep-2026): primero se probó una
+  // fila-plantilla ("Nuevo Administrador") que pre-marcaba permisos para
+  // futuros ascensos -- el usuario la rechazó explícitamente ("que me
+  // aparezcan los administradores actuales, no eso dique nuevo
+  // administrador, no hace sentido"). Ahora, en su lugar, esta sección
+  // filtra y muestra a quienes YA tienen el rol Administrador hoy, con
+  // las mismas casillas de las 3 tablas de arriba -- son sus permisos
+  // reales (togglePermiso), el cambio es inmediato, no una plantilla.
+  const administradores = perfiles.filter((p) => p.is_admin && !p.es_titular);
 
   return (
     <div>
@@ -218,61 +205,71 @@ export default function ListaUsuarios({ perfiles, miId, plantillaAdmin }) {
         </div>
       ))}
 
-      {/* Ítem 12 del feedback de v14 (22-sep-2026): plantilla de permisos
-          que se pre-marcan automáticamente la primera vez que alguien pasa
-          de Usuario a Administrador (ver cambiarRol arriba) -- no se
-          aplica retroactivamente ni le quita nada a quien ya sea
-          Administrador hoy. */}
+      {/* Ítem 12 del feedback de v14/v16 (22-sep-2026): vista filtrada de
+          quienes ya tienen el rol Administrador, con las mismas casillas
+          de las 3 tablas de arriba, para revisar/ajustar sus permisos sin
+          tener que buscarlos entre el resto de usuarios. Son sus permisos
+          reales (togglePermiso) -- el cambio aplica al toque, igual que
+          arriba. */}
       <div style={{ marginTop: 24 }}>
         <div className="section-title" style={{ marginTop: 0 }}>
-          Permisos por defecto para nuevos Administradores
+          Administradores
         </div>
-        <p className="hint-text" style={{ marginTop: 0, marginBottom: 10 }}>
-          Se pre-marcan solos la primera vez que pasas a alguien de Usuario a Administrador —
-          no cambian los permisos de quienes ya son Administrador hoy, y cada persona los puede
-          seguir ajustando individualmente arriba.
-        </p>
-        {GRUPOS.map((grupo) => (
-          <div key={grupo.titulo} style={{ marginTop: 10 }}>
-            <div style={{ overflowX: "auto" }}>
-              <table className="perm-table">
-                <thead>
-                  <tr>
-                    <th>{grupo.titulo}</th>
-                    {grupo.columnas.map((c) => (
-                      <th key={c.clave} title={c.label}>
-                        <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
-                        {c.label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Nuevo Administrador</td>
-                    {grupo.columnas.map((c) => (
-                      <td
-                        key={c.clave}
-                        style={
-                          c.destacado && plantilla[c.clave]
-                            ? { background: "var(--acento-fondo)", borderRadius: 6 }
-                            : undefined
-                        }
-                      >
-                        <input
-                          type="checkbox"
-                          checked={!!plantilla[c.clave]}
-                          disabled={guardandoPlantilla}
-                          onChange={(e) => togglePlantilla(c.clave, e.target.checked)}
-                        />
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
+        {administradores.length === 0 ? (
+          <div className="empty">Todavía no hay nadie con el rol Administrador.</div>
+        ) : (
+          GRUPOS.map((grupo) => (
+            <div key={grupo.titulo} style={{ marginTop: 10 }}>
+              <div style={{ overflowX: "auto" }}>
+                <table className="perm-table">
+                  <thead>
+                    <tr>
+                      <th>{grupo.titulo}</th>
+                      {grupo.columnas.map((c) => (
+                        <th key={c.clave} title={c.label}>
+                          <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+                          {c.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {administradores.map((p) => {
+                      const permisos = { ...PERMISOS_DEFAULT, ...(p.permisos || {}) };
+                      return (
+                        <tr key={p.id}>
+                          <td>
+                            <Link href={`/admin/usuarios/${p.id}`} className="breadcrumb-crumb">
+                              {p.full_name}
+                            </Link>
+                            {p.id === miId && <span className="tag-tu">Tú</span>}
+                          </td>
+                          {grupo.columnas.map((c) => (
+                            <td
+                              key={c.clave}
+                              style={
+                                c.destacado && permisos[c.clave]
+                                  ? { background: "var(--acento-fondo)", borderRadius: 6 }
+                                  : undefined
+                              }
+                            >
+                              <input
+                                type="checkbox"
+                                checked={!!permisos[c.clave]}
+                                disabled={loadingId === p.id}
+                                onChange={(e) => togglePermiso(p, c.clave, e.target.checked)}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

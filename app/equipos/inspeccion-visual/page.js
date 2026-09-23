@@ -4,7 +4,8 @@ import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
-import { formatFecha } from "@/lib/format";
+import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { hoyISO, sumarDias } from "@/lib/fechas";
 
 export default async function InspeccionVisualPage() {
   const supabase = createClient();
@@ -12,10 +13,27 @@ export default async function InspeccionVisualPage() {
   const puedeRegistrar = tieneAcceso(profile, "registrar_inspeccion");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
 
-  const { data: inspecciones } = await supabase
-    .from("inspecciones_con_nombre")
-    .select("*")
-    .limit(200);
+  const [{ data: inspecciones }, { data: tanques }] = await Promise.all([
+    supabase.from("inspecciones_con_nombre").select("*").limit(200),
+    // Ítem 14 del feedback de v16 (22-sep-2026): abajo de la lista de
+    // inspecciones registradas, dos avisos aparte -- tanques que necesitan
+    // inspección (nunca tuvieron una, o la tienen vencida) y tanques a los
+    // que les faltan 2 semanas o menos para que venza la suya.
+    supabase
+      .from("tanques_alquiler")
+      .select("id, codigo, proxima_inspeccion")
+      .eq("activo", true)
+      .order("proxima_inspeccion", { ascending: true, nullsFirst: true }),
+  ]);
+
+  const hoy = hoyISO();
+  const limite = sumarDias(hoy, 14);
+  const tanquesPendientes = (tanques || []).filter(
+    (t) => !t.proxima_inspeccion || t.proxima_inspeccion < hoy
+  );
+  const tanquesProximos = (tanques || []).filter(
+    (t) => t.proxima_inspeccion && t.proxima_inspeccion >= hoy && t.proxima_inspeccion <= limite
+  );
 
   return (
     <div>
@@ -67,6 +85,46 @@ export default async function InspeccionVisualPage() {
             <div className="empty">Aún no hay inspecciones registradas.</div>
           )}
         </div>
+
+        {tanquesPendientes.length > 0 && (
+          <>
+            <div className="section-title" style={{ marginTop: 24 }}>
+              Tanques pendientes por inspección visual
+            </div>
+            <div className="card">
+              {tanquesPendientes.map((t) => (
+                <div className="list-item" key={t.id}>
+                  <div className="list-item-top">
+                    <span className="list-item-title">{t.codigo}</span>
+                    <span className="badge badge-rojo">
+                      {t.proxima_inspeccion
+                        ? `Vencida desde ${formatFechaDDMMAAAADeDate(t.proxima_inspeccion)}`
+                        : "Nunca inspeccionado"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tanquesProximos.length > 0 && (
+          <>
+            <div className="section-title" style={{ marginTop: 24 }}>
+              Inspección visual próxima a vencer (2 semanas o menos)
+            </div>
+            <div className="card">
+              {tanquesProximos.map((t) => (
+                <div className="list-item" key={t.id}>
+                  <div className="list-item-top">
+                    <span className="list-item-title">{t.codigo}</span>
+                    <span className="list-item-qty">{formatFechaDDMMAAAADeDate(t.proxima_inspeccion)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
