@@ -9,15 +9,17 @@ import EstadoCompresor from "./estado-client";
 
 // Ficha de un compresor: datos + acceso a su historial + registrar un
 // mantenimiento (ya preseleccionado este compresor) + horómetro más
-// reciente (propuesta agregada, 23-sep-2026) + Inactivar/Reactivar
-// (solo Titular).
+// reciente, última inspección y último mantenimiento preventivo/
+// correctivo (propuesta agregada, 23-sep-2026, tipo "dashboard" -- se ve
+// todo el estado del compresor de un vistazo) + Editar + Inactivar/
+// Reactivar (solo Titular).
 export default async function FichaCompresorPage({ params }) {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
   const puedeAdministrar = tieneAcceso(profile, "compresores");
   const esTitular = !!profile?.es_titular;
 
-  const [{ data: compresor }, { data: ultimoMantenimiento }] = await Promise.all([
+  const [{ data: compresor }, { data: mantenimientos }] = await Promise.all([
     supabase.from("compresores").select("*").eq("id", params.id).single(),
     supabase
       .from("mantenimientos_compresores")
@@ -25,11 +27,16 @@ export default async function FichaCompresorPage({ params }) {
       .eq("compresor_id", params.id)
       .order("fecha", { ascending: false })
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(200),
   ]);
 
   if (!compresor) notFound();
+
+  const historial = mantenimientos || [];
+  const ultimoMantenimiento = historial[0] || null;
+  const ultimaInspeccion = historial.find((m) => m.tipo_mantenimiento === "Inspección") || null;
+  const ultimoPreventivo = historial.find((m) => m.tipo_mantenimiento === "Mantenimiento preventivo") || null;
+  const ultimoCorrectivo = historial.find((m) => m.tipo_mantenimiento === "Mantenimiento correctivo") || null;
 
   return (
     <div>
@@ -76,6 +83,34 @@ export default async function FichaCompresorPage({ params }) {
                 <span className="hint-text" style={{ margin: 0 }}>Sin mantenimientos registrados aún</span>
               )}
             </Campo>
+            <Campo etiqueta="Próxima inspección">
+              {compresor.proxima_inspeccion ? (
+                formatFechaDDMMAAAADeDate(compresor.proxima_inspeccion)
+              ) : (
+                <span className="hint-text" style={{ margin: 0 }}>Sin inspecciones registradas aún</span>
+              )}
+            </Campo>
+            <Campo etiqueta="Última inspección">
+              {ultimaInspeccion ? (
+                formatFechaDDMMAAAADeDate(ultimaInspeccion.fecha)
+              ) : (
+                <span className="hint-text" style={{ margin: 0 }}>Sin inspecciones registradas</span>
+              )}
+            </Campo>
+            <Campo etiqueta="Último mantenimiento preventivo">
+              {ultimoPreventivo ? (
+                formatFechaDDMMAAAADeDate(ultimoPreventivo.fecha)
+              ) : (
+                <span className="hint-text" style={{ margin: 0 }}>Sin registros</span>
+              )}
+            </Campo>
+            <Campo etiqueta="Último mantenimiento correctivo">
+              {ultimoCorrectivo ? (
+                formatFechaDDMMAAAADeDate(ultimoCorrectivo.fecha)
+              ) : (
+                <span className="hint-text" style={{ margin: 0 }}>Sin registros</span>
+              )}
+            </Campo>
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 24 }}>
@@ -88,6 +123,13 @@ export default async function FichaCompresorPage({ params }) {
               <Link href={`/equipos/compresores/mantenimiento/nueva?compresor=${compresor.id}`}>
                 <button className="btn btn-primary" type="button">
                   + Registrar mantenimiento
+                </button>
+              </Link>
+            )}
+            {puedeAdministrar && (
+              <Link href={`/equipos/compresores/${compresor.id}/editar`}>
+                <button className="btn secondary" type="button">
+                  Editar
                 </button>
               </Link>
             )}

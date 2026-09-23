@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import Link from "next/link";
+import { formatFecha } from "@/lib/format";
 
 const TIPOS = ["Inspección", "Mantenimiento preventivo", "Mantenimiento correctivo"];
 const RESPONSABLES = ["Gugi", "Pipe", "Frederick", "Alexander", "Danny"];
@@ -91,56 +92,29 @@ export default function HistorialClient({ mantenimientos, compresores, compresor
               : "Ningún mantenimiento coincide con esos filtros."}
           </div>
         ) : (
-          filtrados.map((m) => {
-            const fotos = [m.foto_horometro_url, m.foto_espacio_url, m.foto_otra_inspeccion_url, m.foto_reparacion_url].filter(Boolean);
-            return (
-              <div className="list-item" key={m.id}>
-                <div className="list-item-top">
-                  <span className="list-item-title">
-                    <span className="folio-tag">#{m.folio}</span>
-                    {m.tipo_mantenimiento}
-                  </span>
-                  <span className="list-item-qty">{m.compresor_codigo_snapshot}</span>
-                </div>
-                <div className="list-item-meta">
-                  {m.full_name} · {formatFecha(m.created_at)} · Responsable: {m.responsable}
-                </div>
-                <div className="list-item-meta">
-                  Fecha: {formatFechaDDMMAAAADeDate(m.fecha)} · Horómetro: {m.horometro} h
-                </div>
-                {m.tipo_mantenimiento === "Inspección" && (
-                  <div className="list-item-meta">
-                    {[
-                      `Aceite: ${m.nivel_aceite || "—"}`,
-                      `Limpieza compresor: ${m.limpieza_compresor || "—"}`,
-                      `Manguera: ${m.estado_manguera || "—"}`,
-                      `Filtro principal: ${m.estado_filtro_principal || "—"}`,
-                      `Filtro final: ${m.estado_filtro_final || "—"}`,
-                      `Espacio: ${m.limpieza_espacio || "—"}`,
-                    ].join(" · ")}
-                  </div>
-                )}
-                {m.otra_inspeccion && <div className="list-item-note">Otra inspección: {m.otra_inspeccion}</div>}
-                {(m.tipo_mantenimiento === "Mantenimiento preventivo" || m.tipo_mantenimiento === "Mantenimiento correctivo") && m.proceso_piezas && (
-                  <div className="list-item-note">{m.proceso_piezas}</div>
-                )}
-                {m.notas && <div className="list-item-note">{m.notas}</div>}
-                {fotos.length > 0 && (
-                  <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-                    {fotos.map((url) => (
-                      <a href={url} target="_blank" rel="noreferrer" key={url}>
-                        <img
-                          src={url}
-                          alt="Foto del mantenimiento"
-                          style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6, border: "1px solid var(--borde)" }}
-                        />
-                      </a>
-                    ))}
-                  </div>
-                )}
+          filtrados.map((m) => (
+            // Botón que lleva a la ficha del mantenimiento (ajuste del
+            // usuario, 23-sep-2026: no acordeón que se abre ahí mismo).
+            // Cerrado en la lista solo se ve fecha de registro + tipo +
+            // responsable -- el código del compresor ("ese 1" del
+            // feedback) y todo lo demás se ve solo adentro.
+            <Link
+              key={m.id}
+              href={`/equipos/compresores/mantenimiento/${m.id}`}
+              className="list-item"
+              style={{ display: "block", textDecoration: "none", color: "inherit" }}
+            >
+              <div className="list-item-top">
+                <span className="list-item-title">
+                  <span className="folio-tag">#{m.folio}</span>
+                  {m.tipo_mantenimiento}
+                </span>
               </div>
-            );
-          })
+              <div className="list-item-meta">
+                {formatFecha(m.created_at)} · Responsable: {m.responsable}
+              </div>
+            </Link>
+          ))
         )}
       </div>
     </div>

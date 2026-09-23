@@ -666,6 +666,17 @@ textarea {
   color: var(--azul-brillante);
 }
 
+/* Pedido del usuario (23-sep-2026): el breadcrumb (título + migas de
+   pan combinados, ver components/Breadcrumb.js) hacía mucho ruido
+   visual al tamaño de un <h1> normal -- se achica en TODA la app. Los
+   títulos simples sin breadcrumb (hubs como Equipos/Catálogo/
+   Movimientos/etc, que no usan este componente) se quedan con el
+   tamaño normal de .page-title. */
+.breadcrumb-title {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
 .page-subtitle {
   font-size: 13.5px;
   color: var(--texto-suave);
@@ -880,6 +891,20 @@ textarea {
 .badge-rojo {
   background: rgba(214, 69, 69, 0.12);
   color: var(--rojo);
+}
+
+/* App Equipos Clientes (23-sep-2026): estados intermedios de una orden
+   ("En proceso" / "Pendiente por despachar") -- no había un color
+   ámbar/naranja todavía, así que se usa uno fijo (no ligado a --root)
+   para no tocar las variables de tema claro/oscuro. */
+.badge-amarillo {
+  background: rgba(196, 130, 33, 0.14);
+  color: #b5691f;
+}
+
+.badge-azul {
+  background: rgba(30, 96, 145, 0.14);
+  color: var(--azul-claro);
 }
 
 .hub-link-card {

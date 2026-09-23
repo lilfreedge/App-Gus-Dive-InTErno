@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import SelectorBusqueda from "@/components/SelectorBusqueda";
 import CampoFoto from "@/components/CampoFoto";
 import { subirFoto } from "@/lib/storage-client";
-import { hoyISO } from "@/lib/fechas";
+import { hoyISO, sumarDias } from "@/lib/fechas";
 
 const TIPOS = ["Inspección", "Mantenimiento preventivo", "Mantenimiento correctivo"];
 const RESPONSABLES = ["Gugi", "Pipe", "Frederick", "Alexander", "Danny"];
@@ -143,6 +143,21 @@ export default function NuevoMantenimientoCompresorForm({ userId, nombreUsuario,
     if (error) {
       setError("No se pudo guardar. Intenta de nuevo.");
       return;
+    }
+
+    // Mejor esfuerzo: si fue una Inspección, actualiza la próxima
+    // inspección del compresor (+14 días -- cada 2 semanas, confirmado
+    // por el usuario). Preventivo/Correctivo no llevan rango todavía.
+    // No bloquea la navegación si falla.
+    if (esInspeccion) {
+      try {
+        await supabase
+          .from("compresores")
+          .update({ proxima_inspeccion: sumarDias(fecha, 14) })
+          .eq("id", compresorId);
+      } catch (e) {
+        console.error("No se pudo actualizar proxima_inspeccion del compresor:", e);
+      }
     }
 
     router.push(`/equipos/compresores/${compresorId}`);

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser } from "@/lib/roles";
-import { obtenerPendientesInterno } from "@/lib/notificaciones";
+import { obtenerPendientesInterno, obtenerPendientesClientes } from "@/lib/notificaciones";
 import HeaderSimple from "@/components/HeaderSimple";
 import { IconUsers, IconPackage } from "@/components/icons";
 
@@ -26,6 +26,23 @@ export default async function EspacioPage() {
   // pantallas siempre digan lo mismo.
   const { pendientesFacturar, tanquesVencidos, reguladoresVencidos } =
     await obtenerPendientesInterno(supabase, profile);
+  const { ordenesPorTrabajar, ordenesPorDespachar } = await obtenerPendientesClientes(supabase, profile);
+
+  const lineasClientes = [];
+  if (ordenesPorTrabajar > 0) {
+    lineasClientes.push(
+      `${ordenesPorTrabajar} orden${ordenesPorTrabajar === 1 ? "" : "es"} pendiente${
+        ordenesPorTrabajar === 1 ? "" : "s"
+      } por trabajar`
+    );
+  }
+  if (ordenesPorDespachar > 0) {
+    lineasClientes.push(
+      `${ordenesPorDespachar} orden${ordenesPorDespachar === 1 ? "" : "es"} pendiente${
+        ordenesPorDespachar === 1 ? "" : "s"
+      } por despachar`
+    );
+  }
 
   const lineasInterno = [];
   if (pendientesFacturar > 0) {
@@ -56,8 +73,17 @@ export default async function EspacioPage() {
               <IconUsers size={22} />
             </div>
             <div className="espacio-title">App Clientes</div>
-            <div className="espacio-badge">Próximamente</div>
-            <div className="espacio-notif">Sin novedades todavía.</div>
+            <div className="espacio-notif">
+              {lineasClientes.length > 0 ? (
+                lineasClientes.map((linea) => (
+                  <div className="espacio-notif-alerta" key={linea}>
+                    {linea}
+                  </div>
+                ))
+              ) : (
+                "Sin novedades."
+              )}
+            </div>
           </Link>
 
           <Link href="/dashboard" className="card espacio-card">

@@ -5,7 +5,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { requireTitular } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
-import { IconReport, IconCatalog, IconHistory, IconBook, IconShuffle, IconCompressor, IconEye, IconTankFill, IconWrench, IconReceipt, IconMail, IconEdit, IconTank } from "@/components/icons";
+import { IconReport, IconCatalog, IconHistory, IconBook, IconShuffle, IconCompressor, IconEye, IconTankFill, IconWrench, IconReceipt, IconMail, IconEdit, IconTank, IconUsers } from "@/components/icons";
 import { formatFecha } from "@/lib/format";
 
 const PERMISOS_DEFAULT = {
@@ -24,6 +24,7 @@ const PERMISOS_DEFAULT = {
   catalogo_tanque: false,
   compresores: false,
   correos_semanales: false,
+  equipos_clientes: false,
 };
 
 // Mismos íconos y etiquetas que la tabla de permisos (lista-client.js) --
@@ -36,6 +37,7 @@ const PERMISOS_LABELS = [
   { clave: "manual", label: "Manual", Icono: IconBook },
   { clave: "movimientos", label: "Movimientos", Icono: IconShuffle },
   { clave: "compresores", label: "Compresores", Icono: IconCompressor },
+  { clave: "equipos_clientes", label: "Equipos de clientes", Icono: IconUsers },
   { clave: "registrar_inspeccion", label: "Inspecciones", Icono: IconEye },
   { clave: "registrar_llenado", label: "Llenados", Icono: IconTankFill },
   { clave: "registrar_mantenimiento", label: "Mantenimiento", Icono: IconWrench },

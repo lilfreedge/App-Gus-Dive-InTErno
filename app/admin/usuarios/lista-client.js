@@ -18,6 +18,7 @@ import {
   IconMail,
   IconEdit,
   IconTank,
+  IconUsers,
 } from "@/components/icons";
 
 export const PERMISOS_DEFAULT = {
@@ -36,6 +37,7 @@ export const PERMISOS_DEFAULT = {
   catalogo_tanque: false,
   compresores: false,
   correos_semanales: false,
+  equipos_clientes: false,
 };
 
 // Tres tablas apiladas (en vez de una sola tabla ancha con scroll
@@ -57,6 +59,7 @@ export const GRUPOS = [
       { clave: "manual", label: "Manual", Icono: IconBook },
       { clave: "movimientos", label: "Movimientos", Icono: IconShuffle },
       { clave: "compresores", label: "Compresores", Icono: IconCompressor },
+      { clave: "equipos_clientes", label: "Equipos de clientes", Icono: IconUsers },
     ],
   },
   {

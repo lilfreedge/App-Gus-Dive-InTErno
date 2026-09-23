@@ -15,7 +15,7 @@ export default function Breadcrumb({ items }) {
   const padres = items.slice(0, -1);
 
   return (
-    <h1 className="page-title">
+    <h1 className="page-title breadcrumb-title">
       {padres.map((item, i) =>
         item.href ? (
           <span key={i}>

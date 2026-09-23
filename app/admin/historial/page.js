@@ -226,6 +226,53 @@ function TarjetaEdicion({ cambio, esTitular }) {
     );
   }
 
+  if (cambio.tabla === "compresores") {
+    return (
+      <div className="card edicion">
+        <div className="list-item-top">
+          <div className="list-item-title">Compresor de catálogo editado</div>
+          {esTitular && <HistorialDeleteButton cambioId={cambio.id} />}
+        </div>
+        <table className="table-mini" style={{ marginTop: 8 }}>
+          <tbody>
+            <tr>
+              <td>Código</td>
+              <td>{d.codigo || "—"}</td>
+            </tr>
+            <tr>
+              <td>Descripción antes de editar</td>
+              <td>{d.descripcion || "—"}</td>
+            </tr>
+            <tr>
+              <td>Marca antes de editar</td>
+              <td>{d.marca || "—"}</td>
+            </tr>
+            <tr>
+              <td>Modelo antes de editar</td>
+              <td>{d.modelo || "—"}</td>
+            </tr>
+            <tr>
+              <td>No. Bloque antes de editar</td>
+              <td>{d.no_bloque || "—"}</td>
+            </tr>
+            <tr>
+              <td>Serie antes de editar</td>
+              <td>{d.serie || "—"}</td>
+            </tr>
+            <tr>
+              <td>Editado por</td>
+              <td>{cambio.full_name}</td>
+            </tr>
+            <tr>
+              <td>Fecha de edición</td>
+              <td>{formatFecha(cambio.created_at)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <div className="card edicion">
       <div className="list-item-top">
