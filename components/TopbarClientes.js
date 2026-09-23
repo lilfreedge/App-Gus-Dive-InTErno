@@ -19,6 +19,10 @@ const LINKS = [
   { href: "/app-clientes/ordenes", label: "Registro" },
   { href: "/app-clientes/clientes", label: "Listado de clientes" },
   { href: "/app-clientes/historial", label: "Historial de órdenes" },
+  // "Más" (agregado 23-sep-2026, pedido explícito, mismo patrón que el
+  // hub /mas de App Interno): por ahora solo tiene Catálogo (de
+  // servicios) adentro -- "ya luego vemos que mas agregar".
+  { href: "/app-clientes/mas", label: "Más" },
 ];
 
 export default function TopbarClientes({ nombre, nombreCompleto, correo, esTitular }) {

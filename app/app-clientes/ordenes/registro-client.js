@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -16,6 +17,11 @@ const TABS = [
   { clave: "por_entregar", label: "Pendientes por entregar" },
 ];
 
+const SORTS = [
+  { clave: "fecha_asc", label: "Más antiguas primero" },
+  { clave: "fecha_desc", label: "Más recientes primero" },
+];
+
 // Cola de trabajo de "Registro" (23-sep-2026, pedido explícito tras
 // probar v24 en vivo): ordenes ya viene sin las Entregado (filtradas en
 // el server). Acá solo se reparten entre las 3 pestañas + el buscador de
@@ -23,6 +29,7 @@ const TABS = [
 export default function RegistroClient({ ordenes }) {
   const [tab, setTab] = useState("abiertas");
   const [q, setQ] = useState("");
+  const [sort, setSort] = useState("fecha_asc");
 
   const filtrados = useMemo(() => {
     let base = ordenes;
@@ -35,8 +42,11 @@ export default function RegistroClient({ ordenes }) {
     if (query) {
       base = base.filter((o) => o.cliente_nombre_snapshot?.toLowerCase().includes(query));
     }
+    base = [...base].sort((a, b) =>
+      sort === "fecha_desc" ? b.fecha.localeCompare(a.fecha) : a.fecha.localeCompare(b.fecha)
+    );
     return base;
-  }, [ordenes, tab, q]);
+  }, [ordenes, tab, q, sort]);
 
   return (
     <div>
@@ -61,6 +71,13 @@ export default function RegistroClient({ ordenes }) {
         style={{ marginBottom: 14 }}
       />
 
+      <label htmlFor="sort_ordenes" style={{ marginTop: 0 }}>Ordenar por</label>
+      <select id="sort_ordenes" value={sort} onChange={(e) => setSort(e.target.value)} style={{ marginBottom: 14 }}>
+        {SORTS.map((s) => (
+          <option key={s.clave} value={s.clave}>{s.label}</option>
+        ))}
+      </select>
+
       <div className="card">
         {filtrados.length === 0 ? (
           <div className="empty">
@@ -77,7 +94,7 @@ export default function RegistroClient({ ordenes }) {
               <div className="list-item-top">
                 <span className="list-item-title">
                   <span className="folio-tag">#{o.folio}</span>
-                  {o.cliente_nombre_snapshot} — {o.tipo_equipo === "Otro" ? o.tipo_equipo_otro : o.tipo_equipo}
+                  {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                 </span>
                 <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
               </div>

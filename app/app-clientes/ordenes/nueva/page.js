@@ -12,11 +12,14 @@ export default async function NuevaOrdenPage({ searchParams }) {
   const supabase = createClient();
   await requirePermiso(supabase, "equipos_clientes");
 
-  const [{ data: clientes }, { data: equipos }] = await Promise.all([
+  const [{ data: clientes }, { data: equipos }, { data: servicios }] = await Promise.all([
     supabase.from("clientes_equipos").select("id, nombre, telefono").order("nombre"),
     supabase
       .from("equipos_del_cliente")
-      .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo"),
+      .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie"),
+    // Catálogo de servicios (23-sep-2026) -- reemplaza la lista fija que
+    // antes estaba en form-client.js, ver migration_21.sql.
+    supabase.from("servicios_catalogo").select("id, nombre").eq("activo", true).order("nombre"),
   ]);
 
   return (
@@ -38,6 +41,7 @@ export default async function NuevaOrdenPage({ searchParams }) {
         <NuevaOrdenForm
           clientes={clientes || []}
           equipos={equipos || []}
+          servicios={servicios || []}
           clientePreseleccionado={searchParams?.cliente || ""}
         />
       </div>

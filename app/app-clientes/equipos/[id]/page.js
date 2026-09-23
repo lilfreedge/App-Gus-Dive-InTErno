@@ -5,6 +5,7 @@ import { requirePermiso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -24,7 +25,7 @@ export default async function FichaEquipoPage({ params }) {
 
   const { data: equipo } = await supabase
     .from("equipos_del_cliente")
-    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, created_at")
+    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, created_at")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -39,7 +40,7 @@ export default async function FichaEquipoPage({ params }) {
       .order("created_at", { ascending: false }),
   ]);
 
-  const tipoLabel = equipo.tipo_equipo === "Otro" ? equipo.tipo_equipo_otro : equipo.tipo_equipo;
+  const tipoLabel = tipoEquipoLabel(equipo.tipo_equipo, equipo.tipo_equipo_otro);
   const marcaModelo = [equipo.marca, equipo.modelo].filter(Boolean).join(" ");
 
   return (
@@ -67,8 +68,11 @@ export default async function FichaEquipoPage({ params }) {
               </Link>
             </Campo>
             <Campo etiqueta="Tipo de equipo" valor={tipoLabel} />
-            <Campo etiqueta="Marca" valor={equipo.marca || "—"} />
-            <Campo etiqueta="Modelo" valor={equipo.modelo || "—"} />
+            <Campo etiqueta={equipo.tipo_equipo === "Tanques" ? "Fabricante" : "Marca"} valor={equipo.marca || "—"} />
+            {equipo.tipo_equipo !== "Tanques" && <Campo etiqueta="Modelo" valor={equipo.modelo || "—"} />}
+            {["Reguladores", "Tanques", "Computadora"].includes(equipo.tipo_equipo) && (
+              <Campo etiqueta="No. Serie" valor={equipo.serie || "—"} />
+            )}
             <Campo etiqueta="Registrado" valor={formatFecha(equipo.created_at)} />
           </div>
         </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import { calcularEstadoOrden } from "@/lib/ordenes-estado";
@@ -10,10 +9,10 @@ const ENVIO_A = ["Prueba hidrostática", "Reparación"];
 const VERIFICADO_POR = ["Pipe", "Gugi"];
 
 export default function EditarSeguimientoForm({ orden }) {
-  const router = useRouter();
   const supabase = createClient();
 
   const [envioA, setEnvioA] = useState(orden.envio_a || "");
+  const [fechaEnvio, setFechaEnvio] = useState(orden.fecha_envio || "");
   const [fechaRetorno, setFechaRetorno] = useState(orden.fecha_retorno_tienda || "");
   const [fechaListo, setFechaListo] = useState(orden.fecha_listo_entrega || "");
   const [verificadoPor, setVerificadoPor] = useState(orden.verificado_por || "");
@@ -23,6 +22,18 @@ export default function EditarSeguimientoForm({ orden }) {
   const [factura, setFactura] = useState(orden.factura || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function onEnvioAChange(v) {
+    setEnvioA(v);
+    // "Sin enviar / no aplica" -- ni fecha de envío ni fecha de retorno
+    // aplican, se limpian (pedido explícito: "si en envia a esta en sin
+    // enviar/no aplica descarta lo de abajo que dice fecha de retorno a
+    // tienda").
+    if (!v) {
+      setFechaEnvio("");
+      setFechaRetorno("");
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -38,6 +49,7 @@ export default function EditarSeguimientoForm({ orden }) {
 
     const cambios = {
       envio_a: envioA || null,
+      fecha_envio: fechaEnvio || null,
       fecha_retorno_tienda: fechaRetorno || null,
       fecha_listo_entrega: fechaListo || null,
       verificado_por: verificadoPor || null,
@@ -61,22 +73,32 @@ export default function EditarSeguimientoForm({ orden }) {
       return;
     }
 
-    router.push(`/app-clientes/ordenes/${orden.id}`);
-    router.refresh();
+    // Navegación dura (no router.push/refresh): la ficha es la misma
+    // ruta de la que se vino hace un momento, y quedaba mostrando datos
+    // viejos por el caché de rutas de Next -- esto fuerza a traerla
+    // de nuevo del servidor, ya actualizada.
+    window.location.href = `/app-clientes/ordenes/${orden.id}`;
   }
 
   return (
     <form onSubmit={handleSubmit} className="card">
       <label htmlFor="envio_a">Envío a</label>
-      <select id="envio_a" value={envioA} onChange={(e) => setEnvioA(e.target.value)}>
+      <select id="envio_a" value={envioA} onChange={(e) => onEnvioAChange(e.target.value)}>
         <option value="">Sin enviar / no aplica</option>
         {ENVIO_A.map((v) => (
           <option key={v} value={v}>{v}</option>
         ))}
       </select>
 
-      <label htmlFor="fecha_retorno">Fecha de retorno a tienda</label>
-      <input id="fecha_retorno" type="date" value={fechaRetorno} onChange={(e) => setFechaRetorno(e.target.value)} />
+      {envioA && (
+        <>
+          <label htmlFor="fecha_envio">Fecha de envío</label>
+          <input id="fecha_envio" type="date" value={fechaEnvio} onChange={(e) => setFechaEnvio(e.target.value)} />
+
+          <label htmlFor="fecha_retorno">Fecha de retorno a tienda</label>
+          <input id="fecha_retorno" type="date" value={fechaRetorno} onChange={(e) => setFechaRetorno(e.target.value)} />
+        </>
+      )}
 
       <label htmlFor="fecha_listo">Fecha de listo para entrega</label>
       <input id="fecha_listo" type="date" value={fechaListo} onChange={(e) => setFechaListo(e.target.value)} />

@@ -2,8 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { tipoEquipoDisplay, tipoEquipoLabel } from "@/lib/tipo-equipo";
 
 const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Otro"];
+
+// Reguladores, Tanques y Computadora llevan número de serie (pedido
+// explícito, 23-sep-2026) -- BC y Otro no lo piden.
+const CON_SERIE = ["Reguladores", "Tanques", "Computadora"];
 
 // Selector del equipo de un cliente (23-sep-2026, pedido explícito: "me
 // interesa tener un historial de que se le ha hecho cada vez que ha ido
@@ -11,7 +16,7 @@ const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Otro"];
 // (buscar o crear ahí mismo), pero acotado al cliente ya elegido -- cada
 // equipo (tipo + marca + modelo) le pertenece a un solo cliente.
 //
-// equipos: [{ id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo }]
+// equipos: [{ id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie }]
 // clienteId: cliente ya elegido en el formulario (si no hay, no se puede buscar/crear todavía)
 // valor: id del equipo elegido (o "")
 // onChange: (id) => void
@@ -22,7 +27,7 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
   const seleccionado = equiposDelCliente.find((e) => e.id === valor);
 
   function etiqueta(e) {
-    const tipo = e.tipo_equipo === "Otro" ? e.tipo_equipo_otro : e.tipo_equipo;
+    const tipo = tipoEquipoLabel(e.tipo_equipo, e.tipo_equipo_otro);
     const marcaModelo = [e.marca, e.modelo].filter(Boolean).join(" ");
     return marcaModelo ? `${tipo} — ${marcaModelo}` : tipo;
   }
@@ -34,6 +39,7 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
   const [tipoOtroNuevo, setTipoOtroNuevo] = useState("");
   const [marcaNueva, setMarcaNueva] = useState("");
   const [modeloNuevo, setModeloNuevo] = useState("");
+  const [serieNueva, setSerieNueva] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const wrapRef = useRef(null);
@@ -82,6 +88,7 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
     setTipoOtroNuevo("");
     setMarcaNueva("");
     setModeloNuevo("");
+    setSerieNueva("");
     setError("");
     setCreando(true);
     setAbierto(false);
@@ -108,11 +115,12 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
         tipo_equipo: tipoNuevo,
         tipo_equipo_otro: tipoNuevo === "Otro" ? tipoOtroNuevo.trim() : null,
         marca: marcaNueva.trim() || null,
-        modelo: modeloNuevo.trim() || null,
+        modelo: tipoNuevo === "Tanques" ? null : modeloNuevo.trim() || null,
+        serie: CON_SERIE.includes(tipoNuevo) ? serieNueva.trim() || null : null,
         user_id: user?.id || null,
         nombre_usuario_snapshot: perfil?.full_name || null,
       })
-      .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo")
+      .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie")
       .single();
 
     setGuardando(false);
@@ -140,7 +148,7 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
         <select id="equipo_nuevo_tipo" value={tipoNuevo} onChange={(e) => setTipoNuevo(e.target.value)}>
           <option value="">Selecciona...</option>
           {TIPOS.map((t) => (
-            <option key={t} value={t}>{t}</option>
+            <option key={t} value={t}>{tipoEquipoDisplay(t)}</option>
           ))}
         </select>
         {tipoNuevo === "Otro" && (
@@ -156,10 +164,30 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
             />
           </>
         )}
-        <label htmlFor="equipo_nuevo_marca">Marca</label>
-        <input id="equipo_nuevo_marca" type="text" value={marcaNueva} onChange={(e) => setMarcaNueva(e.target.value)} placeholder="Opcional" />
-        <label htmlFor="equipo_nuevo_modelo">Modelo</label>
-        <input id="equipo_nuevo_modelo" type="text" value={modeloNuevo} onChange={(e) => setModeloNuevo(e.target.value)} placeholder="Opcional" />
+        {tipoNuevo === "Tanques" ? (
+          // Tanques -- pedido explícito: ni marca ni modelo, solo
+          // Fabricante (mismo campo "marca" de la base de datos, solo
+          // relabelado) y No. Serie.
+          <>
+            <label htmlFor="equipo_nuevo_marca">Fabricante</label>
+            <input id="equipo_nuevo_marca" type="text" value={marcaNueva} onChange={(e) => setMarcaNueva(e.target.value)} placeholder="Opcional" />
+            <label htmlFor="equipo_nuevo_serie">No. Serie</label>
+            <input id="equipo_nuevo_serie" type="text" value={serieNueva} onChange={(e) => setSerieNueva(e.target.value)} placeholder="Opcional" />
+          </>
+        ) : (
+          <>
+            <label htmlFor="equipo_nuevo_marca">Marca</label>
+            <input id="equipo_nuevo_marca" type="text" value={marcaNueva} onChange={(e) => setMarcaNueva(e.target.value)} placeholder="Opcional" />
+            <label htmlFor="equipo_nuevo_modelo">Modelo</label>
+            <input id="equipo_nuevo_modelo" type="text" value={modeloNuevo} onChange={(e) => setModeloNuevo(e.target.value)} placeholder="Opcional" />
+            {CON_SERIE.includes(tipoNuevo) && (
+              <>
+                <label htmlFor="equipo_nuevo_serie">No. Serie</label>
+                <input id="equipo_nuevo_serie" type="text" value={serieNueva} onChange={(e) => setSerieNueva(e.target.value)} placeholder="Opcional" />
+              </>
+            )}
+          </>
+        )}
         {error && <div className="error-box">{error}</div>}
         <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
           <button className="btn btn-primary" type="button" disabled={guardando} onClick={guardarNuevo} style={{ marginTop: 0 }}>

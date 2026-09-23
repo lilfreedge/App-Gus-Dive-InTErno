@@ -5,6 +5,7 @@ import { requirePermiso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -73,15 +74,22 @@ export default async function FichaClientePage({ params }) {
           </Link>
         </div>
 
-        <div className="section-title" style={{ marginTop: 0 }}>
-          Equipos registrados
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 0, marginBottom: 10 }}>
+          <div className="section-title" style={{ margin: 0 }}>
+            Equipos registrados
+          </div>
+          <Link href={`/app-clientes/clientes/${cliente.id}/equipos/nuevo`}>
+            <button className="btn secondary" type="button" style={{ marginTop: 0 }}>
+              + Agregar equipo
+            </button>
+          </Link>
         </div>
         <div className="card">
           {!equipos || equipos.length === 0 ? (
             <div className="empty">Este cliente todavía no tiene equipos registrados.</div>
           ) : (
             equipos.map((e) => {
-              const tipoLabel = e.tipo_equipo === "Otro" ? e.tipo_equipo_otro : e.tipo_equipo;
+              const tipoLabel = tipoEquipoLabel(e.tipo_equipo, e.tipo_equipo_otro);
               const marcaModelo = [e.marca, e.modelo].filter(Boolean).join(" ");
               return (
                 <Link
@@ -117,7 +125,7 @@ export default async function FichaClientePage({ params }) {
                 <div className="list-item-top">
                   <span className="list-item-title">
                     <span className="folio-tag">#{o.folio}</span>
-                    {o.tipo_equipo === "Otro" ? o.tipo_equipo_otro : o.tipo_equipo}
+                    {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                   </span>
                   <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
                 </div>

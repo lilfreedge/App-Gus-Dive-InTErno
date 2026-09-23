@@ -5,6 +5,7 @@ import { requirePermiso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -16,9 +17,12 @@ const BADGE_ESTADO = {
 // Ficha de una orden (rediseñada 23-sep-2026): ya no tiene un botón para
 // avanzar el estado a mano -- el estado se calcula solo según qué campos
 // de seguimiento estén llenos (lib/ordenes-estado.js). Todo ese
-// seguimiento se llena progresivamente desde "Editar seguimiento", cada
-// orden a su ritmo ("cada orden como serán diferentes no se de que
-// manera es que vamos alimentar las demas cosas").
+// seguimiento se llena progresivamente desde "Actualizar seguimiento",
+// cada orden a su ritmo ("cada orden como serán diferentes no se de que
+// manera es que vamos alimentar las demas cosas"). Ajustado el mismo
+// día, tras probarlo en vivo: info principal y Seguimiento quedaron en
+// una sola tarjeta, y el botón se movió arriba de la lista de campos
+// (antes había que bajar más allá de 8 campos vacíos para encontrarlo).
 export default async function FichaOrdenPage({ params }) {
   const supabase = createClient();
   const { profile } = await requirePermiso(supabase, "equipos_clientes");
@@ -49,11 +53,12 @@ export default async function FichaOrdenPage({ params }) {
           ]}
         />
         <h1 className="page-title">
-          #{o.folio} — {o.tipo_equipo === "Otro" ? o.tipo_equipo_otro : o.tipo_equipo}
+          #{o.folio} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
         </h1>
 
         <div className="card">
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {o.no_orden_fisico && <Campo etiqueta="No. de orden" valor={o.no_orden_fisico} />}
             <Campo etiqueta="Cliente">
               <Link href={`/app-clientes/clientes/${o.cliente_id}`} className="breadcrumb-crumb">
                 {o.cliente_nombre_snapshot}
@@ -63,12 +68,12 @@ export default async function FichaOrdenPage({ params }) {
             <Campo etiqueta="Equipo">
               {o.equipo_id ? (
                 <Link href={`/app-clientes/equipos/${o.equipo_id}`} className="breadcrumb-crumb">
-                  {o.tipo_equipo === "Otro" ? o.tipo_equipo_otro : o.tipo_equipo}
+                  {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                   {marcaModelo && ` — ${marcaModelo}`}
                 </Link>
               ) : (
                 <>
-                  {o.tipo_equipo === "Otro" ? o.tipo_equipo_otro : o.tipo_equipo}
+                  {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                   {marcaModelo && ` — ${marcaModelo}`}
                 </>
               )}
@@ -98,13 +103,21 @@ export default async function FichaOrdenPage({ params }) {
               </a>
             </>
           )}
-        </div>
 
-        <div className="section-title">Seguimiento</div>
-        <div className="card">
+          <div className="section-title">Seguimiento</div>
+          <Link href={`/app-clientes/ordenes/${o.id}/editar`}>
+            <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 14 }}>
+              Actualizar seguimiento
+            </button>
+          </Link>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Campo etiqueta="Envío a" valor={o.envio_a || "—"} />
-            <Campo etiqueta="Fecha de retorno a tienda" valor={o.fecha_retorno_tienda ? formatFechaDDMMAAAADeDate(o.fecha_retorno_tienda) : "—"} />
+            {o.envio_a && (
+              <>
+                <Campo etiqueta="Fecha de envío" valor={o.fecha_envio ? formatFechaDDMMAAAADeDate(o.fecha_envio) : "—"} />
+                <Campo etiqueta="Fecha de retorno a tienda" valor={o.fecha_retorno_tienda ? formatFechaDDMMAAAADeDate(o.fecha_retorno_tienda) : "—"} />
+              </>
+            )}
             <Campo etiqueta="Fecha de listo para entrega" valor={o.fecha_listo_entrega ? formatFechaDDMMAAAADeDate(o.fecha_listo_entrega) : "—"} />
             <Campo etiqueta="Verificado por" valor={o.verificado_por || "—"} />
             <Campo etiqueta="Fecha de notificación al cliente" valor={o.fecha_notificacion_cliente ? formatFechaDDMMAAAADeDate(o.fecha_notificacion_cliente) : "—"} />
@@ -112,12 +125,6 @@ export default async function FichaOrdenPage({ params }) {
             <Campo etiqueta="Nombre de quien recibe" valor={o.nombre_recibe || "—"} />
             <Campo etiqueta="Factura de repuesto o servicio" valor={o.factura || "—"} />
           </div>
-
-          <Link href={`/app-clientes/ordenes/${o.id}/editar`}>
-            <button className="btn btn-primary" type="button" style={{ marginTop: 18 }}>
-              Editar seguimiento
-            </button>
-          </Link>
         </div>
 
         {esTitular && (

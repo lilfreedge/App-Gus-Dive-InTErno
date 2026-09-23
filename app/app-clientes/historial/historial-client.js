@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { tipoEquipoDisplay, tipoEquipoLabel } from "@/lib/tipo-equipo";
 
 const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Otro"];
 const ESTADOS = ["Pendiente por trabajar", "En proceso", "Pendiente por despachar", "Entregado"];
@@ -54,7 +55,7 @@ export default function HistorialClient({ ordenes, clientes }) {
             <select id="f_tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
               <option value="">Todos</option>
               {TIPOS.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>{tipoEquipoDisplay(t)}</option>
               ))}
             </select>
           </div>
@@ -109,7 +110,7 @@ export default function HistorialClient({ ordenes, clientes }) {
               <div className="list-item-top">
                 <span className="list-item-title">
                   <span className="folio-tag">#{o.folio}</span>
-                  {o.cliente_nombre_snapshot} — {o.tipo_equipo === "Otro" ? o.tipo_equipo_otro : o.tipo_equipo}
+                  {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                 </span>
                 <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
               </div>

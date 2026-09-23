@@ -9,25 +9,39 @@ import CampoFoto from "@/components/CampoFoto";
 import { subirFoto } from "@/lib/storage-client";
 import { hoyISO } from "@/lib/fechas";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 
 // Registrar orden (App Equipos Clientes, rediseñado 23-sep-2026 tras
-// definir "Equipo del cliente"): cliente, equipo de ese cliente (con
-// marca/modelo -- se elige uno ya existente o se crea ahí mismo),
-// servicio a realizar, fecha de ingreso. Todo lo demás (envío a,
+// definir "Equipo del cliente"): No. de orden, cliente, equipo de ese
+// cliente (con marca/modelo -- se elige uno ya existente o se crea ahí
+// mismo), servicio a realizar, fecha de ingreso. Todo lo demás (envío a,
 // fechas de retorno/listo/entrega, verificado por, factura) se llena
 // después, en la ficha de la orden, a medida que vaya pasando --
 // pedido explícito del usuario ("cada orden como serán diferentes no se
 // de que manera es que vamos alimentar las demas cosas").
-export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: equiposIniciales, clientePreseleccionado }) {
+//
+// "No. de orden" (agregado el mismo día, pedido explícito) va primero,
+// antes que el cliente: "es un numero de una secuencia que tenemos de
+// un talonario fisico, donde se registraran las ordenes por primera
+// vez" -- es el número que se anota a mano en el talonario de papel,
+// no el folio digital (que sigue generándose solo).
+//
+// "servicios" (23-sep-2026, pedido explícito) ya no es una lista fija en
+// este archivo -- viene del catálogo editable en /app-clientes/catalogo
+// (tabla servicios_catalogo, ver migration_21.sql), pasado desde
+// page.js.
+export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: equiposIniciales, servicios, clientePreseleccionado }) {
   const router = useRouter();
   const supabase = createClient();
 
   const [clientes, setClientes] = useState(clientesIniciales);
   const [equipos, setEquipos] = useState(equiposIniciales);
+  const [noOrdenFisico, setNoOrdenFisico] = useState("");
   const [clienteId, setClienteId] = useState(clientePreseleccionado || "");
   const [equipoId, setEquipoId] = useState("");
   const [fecha, setFecha] = useState(hoyISO());
   const [servicio, setServicio] = useState("");
+  const [servicioOtro, setServicioOtro] = useState("");
   const [notas, setNotas] = useState("");
   const [foto, setFoto] = useState(null);
 
@@ -73,13 +87,16 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: e
     e.preventDefault();
     setError("");
 
+    if (!noOrdenFisico.trim()) return setError("Escribe el No. de orden del talonario.");
     if (!clienteId) return setError("Selecciona o crea un cliente.");
     if (!equipoId) return setError("Selecciona o crea el equipo.");
     if (!fecha) return setError("Selecciona la fecha de ingreso.");
-    if (!servicio.trim()) return setError("Completa el servicio a realizar.");
+    if (!servicio) return setError("Selecciona el servicio a realizar.");
+    if (servicio === "Otro" && !servicioOtro.trim()) return setError("Especifica qué servicio se hará.");
 
     const cliente = clientes.find((c) => c.id === clienteId);
     const equipo = equipos.find((e) => e.id === equipoId);
+    const servicioFinal = servicio === "Otro" ? servicioOtro.trim() : servicio;
 
     setLoading(true);
 
@@ -104,6 +121,7 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: e
       .insert({
         user_id: user?.id,
         nombre_usuario_snapshot: perfil?.full_name || null,
+        no_orden_fisico: noOrdenFisico.trim(),
         cliente_id: clienteId,
         cliente_nombre_snapshot: cliente?.nombre || null,
         equipo_id: equipoId,
@@ -111,7 +129,7 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: e
         tipo_equipo_otro: equipo?.tipo_equipo_otro || null,
         equipo_marca_snapshot: equipo?.marca || null,
         equipo_modelo_snapshot: equipo?.modelo || null,
-        que_se_hara: servicio.trim(),
+        que_se_hara: servicioFinal,
         notas: notas.trim() || null,
         foto_url: fotoUrl,
         fecha,
@@ -133,7 +151,18 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: e
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      <label htmlFor="cliente">
+      <label htmlFor="no_orden_fisico">
+        No. de orden <span className="req">*</span>
+      </label>
+      <input
+        id="no_orden_fisico"
+        type="text"
+        value={noOrdenFisico}
+        onChange={(e) => setNoOrdenFisico(e.target.value)}
+        placeholder="Número del talonario físico"
+      />
+
+      <label htmlFor="cliente" style={{ marginTop: 14 }}>
         Cliente <span className="req">*</span>
       </label>
       <SelectorCliente
@@ -148,7 +177,7 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: e
           <div className="hint-text" style={{ marginBottom: 4 }}>Historial reciente de este cliente:</div>
           {historialCliente.map((o) => (
             <div key={o.id} className="hint-text" style={{ marginBottom: 2 }}>
-              · {o.tipo_equipo === "Otro" ? o.tipo_equipo_otro : o.tipo_equipo} — {formatFechaDDMMAAAADeDate(o.fecha)} ({o.estado})
+              · {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)} — {formatFechaDDMMAAAADeDate(o.fecha)} ({o.estado})
             </div>
           ))}
         </div>
@@ -173,12 +202,27 @@ export default function NuevaOrdenForm({ clientes: clientesIniciales, equipos: e
       <label htmlFor="servicio">
         Servicio a realizar <span className="req">*</span>
       </label>
-      <textarea
-        id="servicio"
-        value={servicio}
-        onChange={(e) => setServicio(e.target.value)}
-        placeholder="Ej: Revisión y mantenimiento general"
-      />
+      <select id="servicio" value={servicio} onChange={(e) => setServicio(e.target.value)}>
+        <option value="">Selecciona...</option>
+        {servicios.map((s) => (
+          <option key={s.id} value={s.nombre}>{s.nombre}</option>
+        ))}
+        <option value="Otro">Otro</option>
+      </select>
+      {servicio === "Otro" && (
+        <>
+          <label htmlFor="servicio_otro">
+            ¿Qué servicio se hará? <span className="req">*</span>
+          </label>
+          <input
+            id="servicio_otro"
+            type="text"
+            value={servicioOtro}
+            onChange={(e) => setServicioOtro(e.target.value)}
+            placeholder="Especifica el servicio"
+          />
+        </>
+      )}
 
       <label htmlFor="notas">Notas</label>
       <textarea
