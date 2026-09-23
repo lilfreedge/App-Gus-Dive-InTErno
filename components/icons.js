@@ -299,3 +299,12 @@ export function IconSend(props) {
     </Base>
   );
 }
+
+export function IconCamera(props) {
+  return (
+    <Base {...props}>
+      <path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
+      <circle cx="12" cy="14" r="3.5" />
+    </Base>
+  );
+}

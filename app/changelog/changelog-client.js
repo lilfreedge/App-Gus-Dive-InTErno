@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V11",
+    fecha: "23 de septiembre, 2026",
+    titulo: "Compresores: catálogo, registro de mantenimientos con fotos e historial filtrable",
+    descripcion:
+      "Compresores (dentro de Equipos) ya no es un \"próximamente\" -- tiene catálogo de compresores en tarjetas con foto (3 por fila), un formulario para registrar cada compresor (descripción, código, marca, modelo, no. de bloque, serie y foto opcional), la ficha de cada compresor con sus datos, su horómetro más reciente y un botón para inactivar/reactivar (Titular), y el registro de mantenimientos: tipo (Inspección, Preventivo o Correctivo), responsable, fecha, horómetro y foto, con casillas adicionales que aparecen según el tipo elegido (para Inspección: nivel de aceite, limpieza, estado de manguera y filtros, limpieza de espacio, más fotos; para Preventivo/Correctivo: proceso y piezas utilizadas, foto de la reparación). El Historial de mantenimientos se puede filtrar por tipo, compresor, responsable y rango de fechas.",
+  },
+  {
     version: "V10",
     fecha: "23 de septiembre, 2026",
     titulo: "Avisos de tanques por inspeccionar en Equipos, ajustes finos a V9 y Administradores reales en Administración",

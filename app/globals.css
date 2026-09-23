@@ -1503,3 +1503,109 @@ label .req {
   margin-bottom: 18px;
   line-height: 1.5;
 }
+
+/* ============================================================
+   Compresores (migración 14, 23-sep-2026): listado en tarjetas
+   horizontales con foto, 3 por fila (spec del usuario), y botón de
+   subir foto reutilizable (CampoFoto).
+   ============================================================ */
+.compresor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.compresor-card {
+  background: var(--tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--texto);
+  box-shadow: 0 1px 3px rgba(10, 61, 98, 0.06);
+  display: block;
+}
+
+.compresor-card:active {
+  transform: scale(0.98);
+}
+
+.compresor-card-inactivo {
+  opacity: 0.55;
+}
+
+.compresor-card-foto {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: var(--superficie-suave);
+  display: block;
+}
+
+.compresor-card-foto-placeholder {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--superficie-suave);
+  color: var(--texto-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compresor-card-body {
+  padding: 8px 8px 10px;
+}
+
+.compresor-card-codigo {
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--azul-texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compresor-card-desc {
+  font-size: 11px;
+  color: var(--texto-suave);
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.campo-foto-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--superficie-suave);
+  border: 1px solid var(--borde);
+  border-radius: 9px;
+  padding: 9px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--azul-texto);
+  cursor: pointer;
+  width: fit-content;
+}
+
+.campo-foto-btn:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 420px) {
+  .compresor-grid {
+    gap: 7px;
+  }
+  .compresor-card-body {
+    padding: 6px 6px 8px;
+  }
+  .compresor-card-codigo {
+    font-size: 11px;
+  }
+  .compresor-card-desc {
+    font-size: 10px;
+  }
+}

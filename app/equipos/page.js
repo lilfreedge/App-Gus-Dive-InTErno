@@ -35,7 +35,7 @@ const OTRAS_OPCIONES = [
   {
     href: "/equipos/compresores",
     titulo: "Compresores",
-    descripcion: "Control de horas de uso y mantenimiento (próximamente).",
+    descripcion: "Catálogo de compresores y su historial de mantenimiento.",
     permiso: "compresores",
     Icono: IconCompressor,
   },
