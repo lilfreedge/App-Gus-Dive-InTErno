@@ -4,7 +4,8 @@ import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
-import { formatFecha } from "@/lib/format";
+import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { hoyISO, sumarDias } from "@/lib/fechas";
 
 export default async function MantenimientoReguladoresPage({ searchParams }) {
   const supabase = createClient();
@@ -18,7 +19,28 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
   if (reguladorId) {
     query = query.eq("regulador_id", reguladorId);
   }
-  const { data: mantenimientos } = await query;
+  const [{ data: mantenimientos }, { data: reguladores }] = await Promise.all([
+    query,
+    // Ítem 14 del feedback (23-sep-2026): mismo aviso que ya existe en
+    // Inspección visual, ahora también para reguladores -- solo se pide
+    // en la vista general (sin filtrar por un regulador puntual).
+    reguladorId
+      ? Promise.resolve({ data: [] })
+      : supabase
+          .from("reguladores_alquiler")
+          .select("id, codigo, proximo_mantenimiento")
+          .eq("activo", true)
+          .order("proximo_mantenimiento", { ascending: true, nullsFirst: true }),
+  ]);
+
+  const hoy = hoyISO();
+  const limite = sumarDias(hoy, 14);
+  const reguladoresPendientes = (reguladores || []).filter(
+    (r) => !r.proximo_mantenimiento || r.proximo_mantenimiento < hoy
+  );
+  const reguladoresProximos = (reguladores || []).filter(
+    (r) => r.proximo_mantenimiento && r.proximo_mantenimiento >= hoy && r.proximo_mantenimiento <= limite
+  );
 
   return (
     <div>
@@ -81,6 +103,48 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
             <div className="empty">Aún no hay mantenimientos registrados.</div>
           )}
         </div>
+
+        {reguladoresPendientes.length > 0 && (
+          <>
+            <div className="section-title" style={{ marginTop: 24 }}>
+              Reguladores pendientes por mantenimiento
+            </div>
+            <div className="card">
+              {reguladoresPendientes.map((r) => (
+                <div className="list-item" key={r.id}>
+                  <div className="list-item-top">
+                    <span className="list-item-title">{r.codigo}</span>
+                    <span className="badge badge-rojo">
+                      {r.proximo_mantenimiento
+                        ? `Vencido desde ${formatFechaDDMMAAAADeDate(r.proximo_mantenimiento)}`
+                        : "Nunca tuvo mantenimiento"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {reguladoresProximos.length > 0 && (
+          <>
+            <div className="section-title" style={{ marginTop: 24 }}>
+              Mantenimiento próximo a vencer (2 semanas o menos)
+            </div>
+            <div className="card">
+              {reguladoresProximos.map((r) => (
+                <div className="list-item" key={r.id}>
+                  <div className="list-item-top">
+                    <span className="list-item-title">{r.codigo}</span>
+                    <span className="list-item-qty">
+                      {formatFechaDDMMAAAADeDate(r.proximo_mantenimiento)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
