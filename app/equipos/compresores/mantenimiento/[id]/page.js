@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermiso, getProfileYUser } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
+import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 
 // Ficha de un mantenimiento de compresor: el Historial (botón, no
@@ -13,6 +14,11 @@ import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 export default async function FichaMantenimientoCompresorPage({ params }) {
   const supabase = createClient();
   await requirePermiso(supabase, "compresores");
+  // Editar/anular un mantenimiento (item 8, pedido explícito, 26-sep-2026)
+  // -- la base de datos ya solo deja editar/borrar a Titular/Admin
+  // (migration_14.sql), mismo criterio para los botones.
+  const { profile } = await getProfileYUser(supabase);
+  const puedeEditarAnular = !!profile?.es_titular || !!profile?.is_admin;
 
   const { data: m } = await supabase
     .from("mantenimientos_compresores_con_nombre")
@@ -48,9 +54,19 @@ export default async function FichaMantenimientoCompresorPage({ params }) {
             { label: `#${m.folio}` },
           ]}
         />
-        <h1 className="page-title">
-          #{m.folio} — {m.tipo_mantenimiento}
-        </h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+          <h1 className="page-title">
+            #{m.folio} — {m.tipo_mantenimiento}
+          </h1>
+          {puedeEditarAnular && (
+            <RegistroActions
+              tabla="mantenimientos_compresores"
+              registro={m}
+              editHref={`/equipos/compresores/mantenimiento/${m.id}/editar`}
+              afterDelete={`/equipos/compresores/historial?compresor=${m.compresor_id}`}
+            />
+          )}
+        </div>
 
         <div className="card">
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

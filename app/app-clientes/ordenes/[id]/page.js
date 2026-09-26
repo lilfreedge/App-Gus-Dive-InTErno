@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermiso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
+import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 
@@ -27,6 +28,11 @@ export default async function FichaOrdenPage({ params }) {
   const supabase = createClient();
   const { profile } = await requirePermiso(supabase, "equipos_clientes");
   const esTitular = !!profile?.es_titular;
+  // Editar/anular una orden (item 7, pedido explícito, 26-sep-2026) --
+  // el borrado ya está restringido a Titular/Admin en la base de datos
+  // (migration_16.sql), así que los botones se muestran con el mismo
+  // criterio para no ofrecer algo que el servidor va a rechazar.
+  const puedeEditarAnular = esTitular || !!profile?.is_admin;
 
   const { data: o } = await supabase
     .from("ordenes_equipos_con_nombre")
@@ -37,11 +43,14 @@ export default async function FichaOrdenPage({ params }) {
   if (!o) notFound();
 
   const marcaModelo = [o.equipo_marca_snapshot, o.equipo_modelo_snapshot].filter(Boolean).join(" ");
-  // Prueba hidrostática ya no es un valor de "Status" -- se activa sola
-  // según el servicio (23-sep-2026, ver form-client.js de Actualizar
-  // estado de orden para el detalle completo).
+  // "Status" desapareció (item 13, pedido explícito, 26-sep-2026: "quita
+  // esa seccion. quiero probar si sin eso podemos trabajar") -- Reparación
+  // pasa a detectarse sola según el servicio, igual que Prueba
+  // hidrostática desde el 23-sep.
   const esHidrostatica = (o.que_se_hara || "").toLowerCase().includes("hidrostat");
-  const muestraRetorno = o.envio_a === "Reparación" || esHidrostatica;
+  const esReparacion = (o.que_se_hara || "").toLowerCase().includes("reparaci");
+  const muestraRetorno = esReparacion || esHidrostatica;
+  const esRegulador = o.tipo_equipo === "Reguladores";
 
   return (
     <div>
@@ -57,9 +66,22 @@ export default async function FichaOrdenPage({ params }) {
             { label: `#${o.no_orden_fisico ?? o.folio}` },
           ]}
         />
-        <h1 className="page-title" style={{ marginBottom: 2 }}>
-          #{o.no_orden_fisico ?? o.folio} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
-        </h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+          <h1 className="page-title" style={{ marginBottom: 2 }}>
+            #{o.no_orden_fisico ?? o.folio} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
+          </h1>
+          {/* Editar/anular la orden (item 7, pedido explícito, 26-sep-2026:
+              "más allá del seguimiento" -- cliente/equipo/servicio/No. de
+              orden). Mismo componente que ya usa el resto de la app. */}
+          {puedeEditarAnular && (
+            <RegistroActions
+              tabla="ordenes_equipos"
+              registro={o}
+              editHref={`/app-clientes/ordenes/${o.id}/editar-datos`}
+              afterDelete="/app-clientes/historial"
+            />
+          )}
+        </div>
         <div className="folio-discreto" style={{ marginBottom: 14 }}>
           folio #{o.folio}
         </div>
@@ -82,9 +104,6 @@ export default async function FichaOrdenPage({ params }) {
                   En espera{o.motivo_espera ? ` — ${o.motivo_espera}` : ""}
                 </span>
               )}
-            </Campo>
-            <Campo etiqueta="Registrado por">
-              {o.full_name} · {formatFecha(o.created_at)}
             </Campo>
             <Campo etiqueta="Cliente" full>
               <Link href={`/app-clientes/clientes/${o.cliente_id}`} className="breadcrumb-crumb">
@@ -135,12 +154,8 @@ export default async function FichaOrdenPage({ params }) {
             </button>
           </Link>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Campo
-              etiqueta="Status"
-              valor={o.en_espera ? `En espera${o.motivo_espera ? ` — ${o.motivo_espera}` : ""}` : o.envio_a === "Reparación" ? "Reparación" : "—"}
-            />
-            {o.envio_a === "Reparación" && (
-              <Campo etiqueta="Fecha de envío" valor={o.fecha_envio ? formatFechaDDMMAAAADeDate(o.fecha_envio) : "—"} />
+            {esReparacion && (
+              <Campo etiqueta="Fecha de envío a taller o proveedor" valor={o.fecha_envio ? formatFechaDDMMAAAADeDate(o.fecha_envio) : "—"} />
             )}
             {esHidrostatica && (
               <Campo etiqueta="Fecha de envío a prueba hidrostática" valor={o.fecha_envio_hidrostatica ? formatFechaDDMMAAAADeDate(o.fecha_envio_hidrostatica) : "—"} />
@@ -157,9 +172,12 @@ export default async function FichaOrdenPage({ params }) {
               {!o.notificaciones_cliente || o.notificaciones_cliente.length === 0 ? (
                 "—"
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   {o.notificaciones_cliente.map((n, i) => (
-                    <div key={i}>{formatFechaDDMMAAAADeDate(n.fecha)} — {n.medio}</div>
+                    <div key={i}>
+                      <div>{formatFechaDDMMAAAADeDate(n.fecha)} — {n.medio}</div>
+                      {n.notas && <div className="hint-text" style={{ marginTop: 0 }}>{n.notas}</div>}
+                    </div>
                   ))}
                 </div>
               )}
@@ -187,10 +205,47 @@ export default async function FichaOrdenPage({ params }) {
             </div>
             <div style={{ fontSize: 14.5 }}>{o.repuestos_usados || "—"}</div>
           </div>
+
+          {/* Notas del técnico sobre el regulador (item 12, pedido
+              explícito, 25-sep-2026) -- visible al cliente, aquí y en el
+              reporte. */}
+          {o.notas_tecnico_regulador && (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--texto-suave)", marginBottom: 2 }}>
+                Notas del técnico sobre el regulador
+              </div>
+              <div style={{ fontSize: 14.5 }}>{o.notas_tecnico_regulador}</div>
+            </div>
+          )}
+
+          {/* "Registrado por" (item 14, pedido explícito, 25-sep-2026:
+              "pon el 'registrado por' abajo a la derecha, que se vea
+              sutil. No es una info muy necesaria ni practica") -- se
+              sacó de la grilla de arriba y se movió aquí. */}
+          <div style={{ marginTop: 14, textAlign: "right", fontSize: 11, color: "var(--texto-suave)" }}>
+            Registrado por {o.full_name} · {formatFecha(o.created_at)}
+          </div>
         </div>
 
+        {/* Reporte de esta orden (items 5/14/15, pedido explícito,
+            25-sep-2026: "agrega en alguna parte de esta ventana para
+            poder ver y descargar o enviar por correo el reporte de las
+            ordenes" -- por ahora solo Reguladores, mismo alcance que ya
+            tenía Reportes). */}
+        {esRegulador && (
+          <div style={{ marginTop: 10 }}>
+            <Link
+              href={`/app-clientes/reportes/${o.id}`}
+              className="btn secondary"
+              style={{ width: "100%", display: "flex", justifyContent: "center", textDecoration: "none" }}
+            >
+              Ver, descargar o enviar el reporte de esta orden
+            </Link>
+          </div>
+        )}
+
         {esTitular && (
-          <div style={{ marginTop: 4 }}>
+          <div style={{ marginTop: 10 }}>
             <Link
               href={`/app-clientes/administracion/historial?orden=${o.id}`}
               style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconUsers, IconEdit, IconTank, IconPlus, IconCatalog } from "@/components/icons";
+import { IconEdit, IconTank, IconPlus, IconCatalog } from "@/components/icons";
 
 const PERMISOS_DEFAULT = {
   equipos_clientes: false,
@@ -15,16 +15,22 @@ const PERMISOS_DEFAULT = {
 };
 
 // Tabla de permisos propia de App Clientes -- mismo patrón que
-// app/admin/usuarios/lista-client.js (togglePermiso). "Equipos de
-// clientes" sigue gateando poder ENTRAR a la app; las columnas de
+// app/admin/usuarios/lista-client.js (togglePermiso). Las columnas de
 // permiso (item 15, pedido explícito: "ponme permisos para dar a los
 // demas de: registrar orden... agregar equipo, agregar cliente, acceso
 // a Catalogo"; "Editar equipo" sumado 23-sep-2026, pedido explícito
-// aparte) son más finas, para acciones puntuales dentro de ella -- sin
+// aparte) son finas, para acciones puntuales dentro de la app -- sin
 // una de ellas, el usuario igual puede VER todo, solo no puede hacer
 // esa acción en concreto.
+//
+// "Equipos de clientes" (el check que gatea poder ENTRAR a la app) ya
+// no vive en esta tabla (26-sep-2026, pedido explícito: "quites el check
+// que esta dentro de administracion del app equipos cliente... y lo
+// pongas en esta ventana donde estan los apps" -- ver /espacio/accesos,
+// nueva pantalla del Titular donde se decide quién entra a cada app).
+// El campo real (profiles.permisos.equipos_clientes) sigue siendo el
+// mismo -- solo cambió DESDE DÓNDE se edita.
 const COLUMNAS = [
-  { clave: "equipos_clientes", label: "Equipos de clientes", Icono: IconUsers },
   { clave: "equipos_clientes_registrar", label: "Registrar orden", Icono: IconEdit },
   { clave: "equipos_clientes_agregar_equipo", label: "Agregar equipo", Icono: IconTank },
   { clave: "equipos_clientes_agregar_cliente", label: "Agregar cliente", Icono: IconPlus },
@@ -61,72 +67,131 @@ export default function PermisosClientes({ perfiles, miId }) {
     router.refresh();
   }
 
+  // Ítem 2 del backlog (26-sep-2026, pedido explícito: "creale una
+  // seccion separada en administracion, para yo darle accesos a quien
+  // tenga ese rol, asi como está en el app interno") -- mismo patrón que
+  // la sección "Administradores" de app/admin/usuarios/lista-client.js:
+  // filtra y muestra a quienes YA tienen el rol Administrador hoy, con
+  // las mismas casillas de la tabla de arriba (sin la columna Rol, que
+  // aquí no aplica -- ya se sabe que son administradores).
+  const administradores = perfiles.filter((p) => p.is_admin && !p.es_titular);
+
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table className="perm-table">
-        <thead>
-          <tr>
-            <th>Usuario</th>
-            <th>Rol</th>
-            {COLUMNAS.map((c) => (
-              <th key={c.clave} title={c.label}>
-                <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
-                {c.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {perfiles.map((p) => {
-            if (p.es_titular) {
+    <div>
+      <div style={{ overflowX: "auto" }}>
+        <table className="perm-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Rol</th>
+              {COLUMNAS.map((c) => (
+                <th key={c.clave} title={c.label}>
+                  <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+                  {c.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {perfiles.map((p) => {
+              if (p.es_titular) {
+                return (
+                  <tr key={p.id}>
+                    <td>
+                      {p.full_name}
+                      <span className="role-tag role-tag-titular">Titular</span>
+                    </td>
+                    <td>
+                      <span className="role-tag role-tag-titular">Titular</span>
+                    </td>
+                    {COLUMNAS.map((c) => (
+                      <td key={c.clave}>—</td>
+                    ))}
+                  </tr>
+                );
+              }
+
+              const permisos = { ...PERMISOS_DEFAULT, ...(p.permisos || {}) };
               return (
                 <tr key={p.id}>
                   <td>
                     {p.full_name}
-                    <span className="role-tag role-tag-titular">Titular</span>
+                    {p.id === miId && <span className="tag-tu">Tú</span>}
                   </td>
                   <td>
-                    <span className="role-tag role-tag-titular">Titular</span>
+                    <select
+                      value={p.is_admin ? "admin" : "usuario"}
+                      disabled={loadingId === p.id}
+                      onChange={(e) => cambiarRol(p, e.target.value === "admin")}
+                    >
+                      <option value="admin">Administrador</option>
+                      <option value="usuario">Usuario</option>
+                    </select>
                   </td>
                   {COLUMNAS.map((c) => (
-                    <td key={c.clave}>—</td>
+                    <td key={c.clave}>
+                      <input
+                        type="checkbox"
+                        checked={!!permisos[c.clave]}
+                        disabled={loadingId === p.id}
+                        onChange={(e) => togglePermiso(p, c.clave, e.target.checked)}
+                      />
+                    </td>
                   ))}
                 </tr>
               );
-            }
+            })}
+          </tbody>
+        </table>
+      </div>
 
-            const permisos = { ...PERMISOS_DEFAULT, ...(p.permisos || {}) };
-            return (
-              <tr key={p.id}>
-                <td>
-                  {p.full_name}
-                  {p.id === miId && <span className="tag-tu">Tú</span>}
-                </td>
-                <td>
-                  <select
-                    value={p.is_admin ? "admin" : "usuario"}
-                    disabled={loadingId === p.id}
-                    onChange={(e) => cambiarRol(p, e.target.value === "admin")}
-                  >
-                    <option value="admin">Administrador</option>
-                    <option value="usuario">Usuario</option>
-                  </select>
-                </td>
-                {COLUMNAS.map((c) => (
-                  <td key={c.clave}>
-                    <input
-                      type="checkbox"
-                      checked={!!permisos[c.clave]}
-                      disabled={loadingId === p.id}
-                      onChange={(e) => togglePermiso(p, c.clave, e.target.checked)}
-                    />
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div style={{ marginTop: 24 }}>
+        <div className="section-title" style={{ marginTop: 0 }}>
+          Administradores
+        </div>
+        {administradores.length === 0 ? (
+          <div className="empty">Todavía no hay nadie con el rol Administrador.</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table className="perm-table">
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  {COLUMNAS.map((c) => (
+                    <th key={c.clave} title={c.label}>
+                      <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+                      {c.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {administradores.map((p) => {
+                  const permisos = { ...PERMISOS_DEFAULT, ...(p.permisos || {}) };
+                  return (
+                    <tr key={p.id}>
+                      <td>
+                        {p.full_name}
+                        {p.id === miId && <span className="tag-tu">Tú</span>}
+                      </td>
+                      {COLUMNAS.map((c) => (
+                        <td key={c.clave}>
+                          <input
+                            type="checkbox"
+                            checked={!!permisos[c.clave]}
+                            disabled={loadingId === p.id}
+                            onChange={(e) => togglePermiso(p, c.clave, e.target.checked)}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

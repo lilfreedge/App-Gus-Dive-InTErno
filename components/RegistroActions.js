@@ -7,7 +7,14 @@ import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import { IconEdit, IconTrash } from "./icons";
 
-export default function RegistroActions({ tabla, registro, editHref }) {
+// `afterDelete` (26-sep-2026, pedido explícito -- item 7: "editar/anular
+// una orden"): en un listado, borrar y quedarse en la misma pantalla
+// (router.refresh()) tiene sentido, la fila simplemente desaparece. Pero
+// usado dentro de una ficha/detalle, refrescar la misma ruta después de
+// borrar el registro que esa ficha muestra rompe (notFound()) -- así que
+// si se pasa una ruta, navega ahí en vez de refrescar. Sin este prop, el
+// comportamiento no cambia para los usos existentes (listados).
+export default function RegistroActions({ tabla, registro, editHref, afterDelete }) {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -53,7 +60,11 @@ export default function RegistroActions({ tabla, registro, editHref }) {
     }
 
     setModalAbierto(false);
-    router.refresh();
+    if (afterDelete) {
+      router.push(afterDelete);
+    } else {
+      router.refresh();
+    }
   }
 
   return (

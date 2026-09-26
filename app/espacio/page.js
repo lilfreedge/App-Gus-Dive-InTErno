@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser } from "@/lib/roles";
+import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import { obtenerPendientesInterno, obtenerPendientesClientes } from "@/lib/notificaciones";
 import HeaderSimple from "@/components/HeaderSimple";
-import { IconUsers, IconPackage } from "@/components/icons";
+import { IconUsers, IconWrench } from "@/components/icons";
 
 // Ítem 7 del backlog (22-sep-2026): pantalla que aparece justo después de
 // iniciar sesión, para elegir en qué espacio entrar -- "App Clientes"
@@ -18,6 +18,13 @@ export default async function EspacioPage() {
   const { profile } = await getProfileYUser(supabase);
   const nombreCompleto = profile?.full_name || "";
   const nombre = nombreCompleto.split(" ")[0] || "";
+
+  // Accesos a apps (26-sep-2026, pedido explícito: "quien no tenga el
+  // acceso pues que no le salga el boton del app") -- cada tarjeta solo
+  // se muestra si el perfil tiene ese acceso (el Titular siempre tiene
+  // los dos, vía tieneAcceso). Se controla desde /espacio/accesos.
+  const tieneClientes = tieneAcceso(profile, "equipos_clientes");
+  const tieneInterno = tieneAcceso(profile, "acceso_app_interno");
 
   // Notificación de App Interno (ítem 6 del feedback de v14, 22-sep-2026):
   // reune TODOS los pendientes que ya existen en Inicio -- facturar,
@@ -84,48 +91,77 @@ export default async function EspacioPage() {
     );
   }
 
+  // Sin acceso a ninguna (26-sep-2026, pedido explícito) -- puede pasar
+  // con un perfil nuevo, antes de que el Titular le dé acceso a algo
+  // desde /espacio/accesos.
+  if (!tieneClientes && !tieneInterno) {
+    return (
+      <div>
+        <HeaderSimple nombre={nombre} etiqueta="Selecciona tu espacio" esTitular={!!profile?.es_titular} />
+        <div className="page" style={{ paddingTop: 24 }}>
+          <h1 className="page-title">¿A dónde quieres entrar?</h1>
+          <div className="card">
+            <div className="empty">Todavía no tienes acceso a ninguna app. Habla con el Titular.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Con acceso a una sola app: se muestra igual esta pantalla (sin
+  // saltar directo, pedido explícito), pero con una sola tarjeta -- se
+  // ve como una tarjeta centrada, no como una mitad vacía del grid de 2.
+  const soloUna = tieneClientes !== tieneInterno;
+
   return (
     <div>
-      <HeaderSimple nombre={nombre} etiqueta="Selecciona tu espacio" />
+      <HeaderSimple nombre={nombre} etiqueta="Selecciona tu espacio" esTitular={!!profile?.es_titular} />
       <div className="page" style={{ paddingTop: 24 }}>
         <h1 className="page-title">¿A dónde quieres entrar?</h1>
 
-        <div className="espacio-grid">
-          <Link href="/app-clientes" className="card espacio-card">
-            <div className="espacio-icon">
-              <IconUsers size={22} />
-            </div>
-            <div className="espacio-title">App Equipos de clientes</div>
-            <div className="espacio-notif">
-              {lineasClientes.length > 0 ? (
-                lineasClientes.map((linea) => (
-                  <div className="espacio-notif-alerta" key={linea}>
-                    {linea}
-                  </div>
-                ))
-              ) : (
-                "Sin novedades."
-              )}
-            </div>
-          </Link>
+        <div
+          className="espacio-grid"
+          style={soloUna ? { gridTemplateColumns: "1fr", maxWidth: 280, margin: "18px auto 0" } : undefined}
+        >
+          {tieneClientes && (
+            <Link href="/app-clientes" className="card espacio-card">
+              <div className="espacio-icon">
+                <IconUsers size={22} />
+              </div>
+              <div className="espacio-title">App Equipos de clientes</div>
+              <div className="espacio-notif">
+                {lineasClientes.length > 0 ? (
+                  lineasClientes.map((linea) => (
+                    <div className="espacio-notif-alerta" key={linea}>
+                      {linea}
+                    </div>
+                  ))
+                ) : (
+                  "Sin novedades."
+                )}
+              </div>
+            </Link>
+          )}
 
-          <Link href="/dashboard" className="card espacio-card">
-            <div className="espacio-icon">
-              <IconPackage size={22} />
-            </div>
-            <div className="espacio-title">App Interno</div>
-            <div className="espacio-notif">
-              {lineasInterno.length > 0 ? (
-                lineasInterno.map((linea) => (
-                  <div className="espacio-notif-alerta" key={linea}>
-                    {linea}
-                  </div>
-                ))
-              ) : (
-                "Sin novedades."
-              )}
-            </div>
-          </Link>
+          {tieneInterno && (
+            <Link href="/dashboard" className="card espacio-card">
+              <div className="espacio-icon">
+                <IconWrench size={22} />
+              </div>
+              <div className="espacio-title">App Interno</div>
+              <div className="espacio-notif">
+                {lineasInterno.length > 0 ? (
+                  lineasInterno.map((linea) => (
+                    <div className="espacio-notif-alerta" key={linea}>
+                      {linea}
+                    </div>
+                  ))
+                ) : (
+                  "Sin novedades."
+                )}
+              </div>
+            </Link>
+          )}
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import { obtenerPendientesInterno } from "@/lib/notificaciones";
@@ -14,6 +15,17 @@ const ETIQUETAS_PERIODO = {
 export default async function DashboardPage({ searchParams }) {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
+  // Acceso a App Interno (26-sep-2026, pedido explícito: nueva pantalla
+  // "Accesos a apps" desde /espacio -- "quien no tenga el acceso pues
+  // que no le salga el boton del app"). /dashboard nunca había tenido un
+  // gate propio -- se agrega aquí, en la entrada de la app, y no con
+  // requirePermiso (que manda de vuelta a /dashboard, un loop) sino con
+  // este redirect a /espacio. migration_28.sql le puso este permiso en
+  // true a todos los perfiles ya existentes, así que nadie que ya
+  // estuviera usando App Interno se queda afuera de golpe.
+  if (!tieneAcceso(profile, "acceso_app_interno")) {
+    redirect("/espacio");
+  }
   // "Ver movimientos" (destino de las tarjetas de "Artículos más sacados")
   // es solo para Titular/Administrador — mismo gate que en Catálogo.
   const puedeVerMovimientos = !!(profile?.is_admin || profile?.es_titular);

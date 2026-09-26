@@ -4,15 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconGear, IconLogout } from "./icons";
+import Link from "next/link";
+import { IconGear, IconLogout, IconLock } from "./icons";
 
 // Header liviano para pantallas fuera de "un espacio" (selector de espacio,
 // placeholder de App Clientes) -- mismo look navy que el topbar normal
 // (components/TopbarClient.js), con el logo de siempre, pero sin el nav de
-// pestañas ni el resto del menú de ajustes: acá solo hace falta poder
-// cerrar sesión (ítem 7 del feedback de v14, 22-sep-2026), porque todavía
-// no se ha elegido en qué espacio se está.
-export default function HeaderSimple({ nombre, etiqueta }) {
+// pestañas. Al principio solo tenía "Cerrar sesión" (ítem 7 del feedback
+// de v14, 22-sep-2026); se le agregó "Accesos a apps" (26-sep-2026,
+// pedido explícito: mover aquí el control de quién entra a cada app,
+// antes repartido dentro de la Administración de cada una) -- solo la
+// ve el Titular.
+export default function HeaderSimple({ nombre, etiqueta, esTitular }) {
   const router = useRouter();
   const supabase = createClient();
   const [open, setOpen] = useState(false);
@@ -57,6 +60,11 @@ export default function HeaderSimple({ nombre, etiqueta }) {
           </button>
           {open && (
             <div className="settings-menu">
+              {esTitular && (
+                <Link href="/espacio/accesos" className="settings-menu-link" onClick={() => setOpen(false)}>
+                  <IconLock size={15} /> Accesos a apps
+                </Link>
+              )}
               <button
                 className="settings-menu-link settings-menu-danger"
                 onClick={salir}

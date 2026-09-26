@@ -30,6 +30,18 @@ export default async function EditarSeguimientoPage({ params }) {
 
   if (!orden) notFound();
 
+  // Repuestos utilizados, como selector del catálogo (item 4, pedido
+  // explícito: "realmente lo que ponemos en esta seccion son codigos.
+  // asi que si quieres podemos crear una seccion para esto en base de
+  // datos" -- ya existía ese catálogo, piezas_catalogo, solo faltaba
+  // ligarlo aquí). Piezas inactivas no se ofrecen para uno nuevas, pero
+  // no se filtran del texto ya guardado (eso se resuelve en el cliente).
+  const { data: piezas } = await supabase
+    .from("piezas_catalogo")
+    .select("id, nombre")
+    .eq("activo", true)
+    .order("nombre");
+
   return (
     <div>
       <AppHeaderClientes />
@@ -48,7 +60,7 @@ export default async function EditarSeguimientoPage({ params }) {
         <h1 className="page-title">Actualizar estado de orden</h1>
         <p className="page-subtitle">Todos estos campos son opcionales -- llénalos a medida que vaya avanzando la orden. El cambio queda anotado en el historial.</p>
 
-        <EditarSeguimientoForm orden={orden} puedeVerificar={puedeVerificar} />
+        <EditarSeguimientoForm orden={orden} puedeVerificar={puedeVerificar} piezas={piezas || []} />
       </div>
     </div>
   );

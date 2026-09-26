@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { IconEdit } from "@/components/icons";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -85,24 +86,37 @@ export default function RegistroClient({ ordenes }) {
           </div>
         ) : (
           filtrados.map((o) => (
-            <Link
-              key={o.id}
-              href={`/app-clientes/ordenes/${o.id}`}
-              className="list-item"
-              style={{ display: "block", textDecoration: "none", color: "inherit" }}
-            >
-              <div className="list-item-top">
-                <span className="list-item-title">
-                  <span className="folio-tag">#{o.no_orden_fisico ?? o.folio}</span>
-                  {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
-                </span>
-                <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
-              </div>
-              <div className="list-item-bottom">
-                <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
-                <div className="folio-discreto">folio #{o.folio}</div>
-              </div>
-            </Link>
+            <div key={o.id} className="list-item" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Link
+                href={`/app-clientes/ordenes/${o.id}`}
+                style={{ display: "block", flex: 1, minWidth: 0, textDecoration: "none", color: "inherit" }}
+              >
+                <div className="list-item-top">
+                  <span className="list-item-title">
+                    <span className="folio-tag">#{o.no_orden_fisico ?? o.folio}</span>
+                    {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
+                  </span>
+                  <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
+                </div>
+                <div className="list-item-bottom">
+                  <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
+                  <div className="folio-discreto">folio #{o.folio}</div>
+                </div>
+              </Link>
+              {/* Shortcut a "Actualizar estado de orden" (item 11, pedido
+                  explícito, 25-sep-2026: "poner boton aqui tipo shortcut
+                  para llegar a 'Actualizar estado de orden', en cada
+                  orden") -- evita tener que entrar primero a la ficha. */}
+              <Link
+                href={`/app-clientes/ordenes/${o.id}/editar`}
+                className="icon-btn"
+                aria-label="Actualizar estado de orden"
+                title="Actualizar estado de orden"
+                style={{ flexShrink: 0 }}
+              >
+                <IconEdit size={15} />
+              </Link>
+            </div>
           ))
         )}
       </div>

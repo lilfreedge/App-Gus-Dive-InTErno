@@ -47,7 +47,7 @@ export default async function AppClientesPage() {
   const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
 
   const CAMPOS =
-    "id, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, envio_a, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, en_espera, motivo_espera";
+    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, en_espera, motivo_espera";
 
   const [{ data: porTrabajarRaw }, { data: porEntregar }, { data: enEspera }, { data: enHidrostatica }, { data: enReparacion }] =
     await Promise.all([
@@ -88,10 +88,15 @@ export default async function AppClientesPage() {
         .not("fecha_envio_hidrostatica", "is", null)
         .is("fecha_retorno_tienda", null)
         .order("fecha"),
+      // Reparación ya no depende de "Status"/envio_a (26-sep-2026, ver
+      // form-client.js de Actualizar estado de orden) -- lo que importa
+      // es que YA se haya puesto fecha_envio (fecha de envío a taller o
+      // proveedor), mismo criterio que ya usaba hidrostática con su
+      // propia fecha.
       supabase
         .from("ordenes_equipos")
         .select(CAMPOS)
-        .eq("envio_a", "Reparación")
+        .not("fecha_envio", "is", null)
         .is("fecha_retorno_tienda", null)
         .order("fecha"),
     ]);
@@ -100,7 +105,7 @@ export default async function AppClientesPage() {
   // hidrostática/reparación y todavía no vuelven -- ya se ven en sus
   // propias secciones más abajo (pedido explícito, para no duplicar).
   const porTrabajar = (porTrabajarRaw || []).filter(
-    (o) => !((o.envio_a === "Reparación" || o.fecha_envio_hidrostatica) && !o.fecha_retorno_tienda)
+    (o) => !((o.fecha_envio || o.fecha_envio_hidrostatica) && !o.fecha_retorno_tienda)
   );
 
   return (
@@ -137,26 +142,37 @@ export default async function AppClientesPage() {
           fechaLabel="Fecha listo para entrega"
         />
 
-        {enEspera && enEspera.length > 0 && (
-          <>
-            <div className="section-title">Órdenes en espera ({enEspera.length})</div>
-            <ListaOrdenes ordenes={enEspera} vacio="" fechaCampo="fecha" fechaLabel="Fecha de ingreso a tienda" />
-          </>
-        )}
+        {/* Estas 3 secciones ahora siempre se muestran, aunque estén en 0
+            (25-sep-2026, pedido explícito: "pon que aparezcan las otra
+            secciones aunque no tengan ordenes, solo para que se sepa que
+            esta en '0'") -- antes se escondían por completo si no había
+            ninguna orden en ese estado ("en caso de que no haya ninguna
+            orden pues que no salga en inicio esto", pedido de v28), pero
+            tras probar en vivo el usuario prefirió verlas siempre. */}
+        <div className="section-title">Órdenes en espera ({(enEspera || []).length})</div>
+        <ListaOrdenes
+          ordenes={enEspera}
+          vacio="No hay órdenes en espera."
+          fechaCampo="fecha"
+          fechaLabel="Fecha de ingreso a tienda"
+        />
 
-        {enHidrostatica && enHidrostatica.length > 0 && (
-          <>
-            <div className="section-title">Órdenes en prueba hidrostáticas ({enHidrostatica.length})</div>
-            <ListaOrdenes ordenes={enHidrostatica} vacio="" fechaCampo="fecha_envio_hidrostatica" fechaLabel="Fecha enviado" />
-          </>
-        )}
+        <div className="section-title">Órdenes en prueba hidrostáticas ({(enHidrostatica || []).length})</div>
+        <ListaOrdenes
+          ordenes={enHidrostatica}
+          vacio="No hay órdenes en prueba hidrostática."
+          fechaCampo="fecha_envio_hidrostatica"
+          fechaLabel="Fecha enviado"
+        />
 
-        {enReparacion && enReparacion.length > 0 && (
-          <>
-            <div className="section-title">Órdenes enviadas a reparación ({enReparacion.length})</div>
-            <ListaOrdenes ordenes={enReparacion} vacio="" fechaCampo="fecha_envio" fechaLabel="Fecha enviado" />
-          </>
-        )}
+        <div className="section-title">Órdenes enviadas a reparación ({(enReparacion || []).length})</div>
+        <ListaOrdenes
+          ordenes={enReparacion}
+          vacio="No hay órdenes enviadas a reparación."
+          fechaCampo="fecha_envio"
+          fechaLabel="Fecha enviado"
+          mostrarDiasAfuera
+        />
       </div>
     </div>
   );
@@ -168,7 +184,12 @@ export default async function AppClientesPage() {
 // acotado a este hub, Registro e Historial ya tenían el badge separado
 // de la fecha en su propio diseño. `fechaCampo`/`fechaLabel` deciden
 // qué fecha real mostrar y cómo se llama, según la sección (item 12).
-function ListaOrdenes({ ordenes, vacio, fechaCampo = "fecha", fechaLabel = "Fecha" }) {
+// `mostrarDiasAfuera` (item 13, pedido explícito, 26-sep-2026) agrega un
+// aviso de cuántos días lleva afuera, para las que están en reparación.
+// El No. de orden (item 10, pedido explícito) se agregó como `folio-tag`
+// al inicio del título -- mismo patrón que ya usan Registro de Órdenes e
+// Historial (folio-tag), antes solo se veía cliente + equipo aquí.
+function ListaOrdenes({ ordenes, vacio, fechaCampo = "fecha", fechaLabel = "Fecha", mostrarDiasAfuera = false }) {
   return (
     <div className="card">
       {!ordenes || ordenes.length === 0 ? (
@@ -176,6 +197,10 @@ function ListaOrdenes({ ordenes, vacio, fechaCampo = "fecha", fechaLabel = "Fech
       ) : (
         ordenes.map((o) => {
           const fechaValor = o[fechaCampo];
+          const diasAfuera =
+            mostrarDiasAfuera && fechaValor
+              ? Math.floor((Date.now() - new Date(fechaValor).getTime()) / (1000 * 60 * 60 * 24))
+              : null;
           return (
             <Link
               key={o.id}
@@ -185,6 +210,7 @@ function ListaOrdenes({ ordenes, vacio, fechaCampo = "fecha", fechaLabel = "Fech
             >
               <div className="list-item-top" style={{ alignItems: "center" }}>
                 <span className="list-item-title" style={{ flex: 1, minWidth: 0 }}>
+                  <span className="folio-tag">#{o.no_orden_fisico ?? o.folio}</span>
                   {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                 </span>
                 <span style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
@@ -196,6 +222,11 @@ function ListaOrdenes({ ordenes, vacio, fechaCampo = "fecha", fechaLabel = "Fech
                   <div>{fechaValor ? formatFechaDDMMAAAADeDate(fechaValor) : "—"}</div>
                 </span>
               </div>
+              {diasAfuera !== null && (
+                <div className="hint-text" style={{ marginTop: 4, color: "var(--rojo)", fontWeight: 600 }}>
+                  Lleva {diasAfuera} día{diasAfuera === 1 ? "" : "s"} afuera
+                </div>
+              )}
             </Link>
           );
         })

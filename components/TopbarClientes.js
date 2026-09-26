@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { SECCIONES_FIJAS_CLIENTES, ordenarSeccionesClientes } from "@/lib/nav-clientes";
+import { NAV_SECTIONS_CLIENTES, SECCIONES_FIJAS_CLIENTES, ordenarSeccionesClientes } from "@/lib/nav-clientes";
 import { useReorderDrag } from "@/lib/useReorderDrag";
 import { IconLogout, IconGear, IconEdit, IconShuffle, IconLock, IconHistory } from "./icons";
 
@@ -135,6 +135,11 @@ export default function TopbarClientes({
       <nav className="topnav" onClickCapture={onNavClickCapture}>
         {links.map((l) => {
           const fijo = SECCIONES_FIJAS_CLIENTES.includes(l.href);
+          // Accesos directos opcionales (26-sep-2026, pedido explícito:
+          // "haz que estos shortcuts opcionales se vean diferentes a los
+          // fijos, asi como en el app interno") -- mismo cálculo y misma
+          // clase (.topnav-link-atajo) que ya usa components/TopbarClient.js.
+          const esAtajo = !NAV_SECTIONS_CLIENTES.some((s) => s.href === l.href);
           return (
             <Link
               key={l.href}
@@ -144,9 +149,16 @@ export default function TopbarClientes({
                 "topnav-link" +
                 (pathname === l.href ? " topnav-link-active" : "") +
                 (!fijo ? " topnav-link-drag" : "") +
+                (esAtajo ? " topnav-link-atajo" : "") +
                 (sobreHref === l.href ? " topnav-link-over" : "")
               }
-              title={!fijo ? "Arrastra para reordenar" : undefined}
+              title={
+                esAtajo
+                  ? "Acceso directo que activaste en Mi Perfil"
+                  : !fijo
+                  ? "Arrastra para reordenar"
+                  : undefined
+              }
             >
               {l.label}
             </Link>
