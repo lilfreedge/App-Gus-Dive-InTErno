@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { IconCheck } from "@/components/icons";
+import { IconRefresh } from "@/components/icons";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -109,11 +109,12 @@ export default function RegistroClient({ ordenes }) {
                   orden") -- evita tener que entrar primero a la ficha.
                   ?from=registro (item 11a) le dice a esa pantalla que la
                   miga de pan debe decir "Registro de Órdenes", no "Listado
-                  de órdenes". Ícono de check (item 11b, pedido explícito,
-                  26-sep-2026: "Cambiar icono para poder diferenciarlo de el
-                  icono de editar la orden, son iguales") -- antes usaba el
-                  mismo lápiz (IconEdit) que "Editar/anular la orden" en la
-                  ficha, y se confundían. */}
+                  de órdenes". Ícono de refrescar (item 3, pedido explícito,
+                  27-sep-2026: "cambiar icono de seguimiento en registro de
+                  ordenes... quiero algo relacionado con 'actualizar
+                  estado'") -- antes era un check (26-sep-2026, para
+                  diferenciarlo del lápiz de "Editar/anular la orden"), pero
+                  el usuario pidió algo más asociado a "actualizar estado". */}
               <Link
                 href={`/app-clientes/ordenes/${o.id}/editar?from=registro`}
                 className="icon-btn"
@@ -121,7 +122,7 @@ export default function RegistroClient({ ordenes }) {
                 title="Actualizar estado de orden"
                 style={{ flexShrink: 0 }}
               >
-                <IconCheck size={15} />
+                <IconRefresh size={15} />
               </Link>
             </div>
           ))

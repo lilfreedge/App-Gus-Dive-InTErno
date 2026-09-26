@@ -26,17 +26,20 @@ export default function EditarTanqueForm({ tanque }) {
 
     setLoading(true);
 
+    // Guarda también el "después" (item 11, pedido explícito, 27-sep-2026:
+    // "pon este mismo formato de historial en app interno") -- mismo
+    // patrón que ya usa App Equipos de clientes (item 20).
+    const cambios = { codigo: codigoLimpio, descripcion: descripcionLimpia || null, serie: serieLimpia || null };
+
     await registrarCambio(supabase, {
       tabla: "tanques_alquiler",
       registroId: tanque.id,
       accion: "editar",
       datosAnteriores: tanque,
+      datosNuevos: cambios,
     });
 
-    const { error } = await supabase
-      .from("tanques_alquiler")
-      .update({ codigo: codigoLimpio, descripcion: descripcionLimpia || null, serie: serieLimpia || null })
-      .eq("id", tanque.id);
+    const { error } = await supabase.from("tanques_alquiler").update(cambios).eq("id", tanque.id);
     setLoading(false);
 
     if (error) {

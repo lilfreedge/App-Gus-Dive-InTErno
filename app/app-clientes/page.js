@@ -5,6 +5,7 @@ import AppHeaderClientes from "@/components/AppHeaderClientes";
 import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { ATAJOS_INICIO_CLIENTES } from "@/lib/nav-clientes";
 
 const BADGE_ESTADO = {
   "En proceso": "badge-amarillo",
@@ -40,7 +41,11 @@ const BADGE_ESTADO = {
 // para no aparecer duplicadas -- ya tienen su propia sección más abajo.
 export default async function AppClientesPage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  const { profile } = await requirePermiso(supabase, "equipos_clientes");
+
+  // Accesos directos opcionales en Inicio (item 4, pedido explícito,
+  // 27-sep-2026) -- activados desde "Personalizar mi menú" en Mi Perfil.
+  const atajosInicio = ATAJOS_INICIO_CLIENTES.filter((a) => !!profile?.atajos_inicio_clientes?.[a.id]);
 
   const CAMPOS =
     "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, en_espera, motivo_espera";
@@ -114,6 +119,19 @@ export default async function AppClientesPage() {
             explícito, 26-sep-2026) -- se sigue registrando desde Registro
             de Órdenes, que ya tiene su propio botón. */}
 
+        {/* Accesos directos opcionales en Inicio (item 4, pedido explícito,
+            27-sep-2026) -- solo se ven si el usuario los activó desde
+            "Personalizar mi menú" en Mi Perfil. */}
+        {atajosInicio.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            {atajosInicio.map((a) => (
+              <Link key={a.id} href={a.href} className="btn secondary" style={{ marginTop: 0, width: "auto" }}>
+                {a.label}
+              </Link>
+            ))}
+          </div>
+        )}
+
         <div className="section-title" style={{ marginTop: 0 }}>
           Órdenes pendientes por trabajar ({porTrabajar.length})
         </div>
@@ -154,6 +172,8 @@ export default async function AppClientesPage() {
           vacio="No hay órdenes en prueba hidrostática."
           fechaCampo="fecha_envio_hidrostatica"
           fechaLabel="Fecha enviado"
+          mostrarDiasAfuera
+          diasAfueraMinimo={15}
         />
 
         <div className="section-title">Órdenes enviadas a reparación ({(enReparacion || []).length})</div>
@@ -191,6 +211,7 @@ function ListaOrdenes({
   fechaCampo = "fecha",
   fechaLabel = "Fecha",
   mostrarDiasAfuera = false,
+  diasAfueraMinimo = null,
   avisoAtrasadaDias = null,
 }) {
   return (
@@ -203,7 +224,15 @@ function ListaOrdenes({
           const diasTranscurridos = fechaValor
             ? Math.floor((Date.now() - new Date(fechaValor).getTime()) / (1000 * 60 * 60 * 24))
             : null;
-          const diasAfuera = mostrarDiasAfuera ? diasTranscurridos : null;
+          // `diasAfueraMinimo` (item 7, pedido explícito, 27-sep-2026: "a
+          // cada tanque que tenga mas de 15 dias fuera, ponle la cantidad
+          // de dias que tiene fuera a cada uno") -- a diferencia de
+          // Reparación (siempre lo muestra), en Prueba hidrostática solo
+          // se quiere el aviso a partir de cierto umbral.
+          const diasAfuera =
+            mostrarDiasAfuera && (diasAfueraMinimo === null || (diasTranscurridos !== null && diasTranscurridos > diasAfueraMinimo))
+              ? diasTranscurridos
+              : null;
           const atrasada = avisoAtrasadaDias !== null && diasTranscurridos !== null && diasTranscurridos > avisoAtrasadaDias;
           return (
             <Link

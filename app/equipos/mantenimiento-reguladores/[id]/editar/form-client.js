@@ -31,24 +31,27 @@ export default function EditarMantenimientoForm({ registro, reguladores }) {
 
     setLoading(true);
 
+    // Guarda también el "después" (item 11, pedido explícito, 27-sep-2026:
+    // "pon este mismo formato de historial en app interno") -- mismo
+    // patrón que ya usa App Equipos de clientes (item 20).
+    const cambios = {
+      regulador_id: reguladorId,
+      regulador_codigo_snapshot: regulador?.codigo || registro.regulador_codigo_snapshot,
+      limpieza_ultrasonido: limpiezaUltrasonido,
+      presion_intermedia: presionIntermedia,
+      o_rings: oRingsAplica ? oRings.trim() || null : null,
+      detalle: nota.trim() || null,
+    };
+
     await registrarCambio(supabase, {
       tabla: "mantenimientos_reguladores",
       registroId: registro.id,
       accion: "editar",
       datosAnteriores: registro,
+      datosNuevos: cambios,
     });
 
-    const { error } = await supabase
-      .from("mantenimientos_reguladores")
-      .update({
-        regulador_id: reguladorId,
-        regulador_codigo_snapshot: regulador?.codigo || registro.regulador_codigo_snapshot,
-        limpieza_ultrasonido: limpiezaUltrasonido,
-        presion_intermedia: presionIntermedia,
-        o_rings: oRingsAplica ? oRings.trim() || null : null,
-        detalle: nota.trim() || null,
-      })
-      .eq("id", registro.id);
+    const { error } = await supabase.from("mantenimientos_reguladores").update(cambios).eq("id", registro.id);
 
     setLoading(false);
 

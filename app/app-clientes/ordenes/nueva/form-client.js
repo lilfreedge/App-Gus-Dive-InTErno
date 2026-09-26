@@ -148,6 +148,25 @@ export default function NuevaOrdenForm({
 
     setLoading(true);
 
+    // No permitir dos órdenes abiertas para el mismo Equipo a la vez (item
+    // 5, pedido explícito, 27-sep-2026: "No permitir registrar una orden de
+    // un equipo que aún tenga una orden abierta, no hace sentido").
+    const { data: abierta } = await supabase
+      .from("ordenes_equipos")
+      .select("id, no_orden_fisico, folio")
+      .eq("equipo_id", equipoId)
+      .neq("estado", "Entregado")
+      .limit(1)
+      .maybeSingle();
+
+    if (abierta) {
+      setLoading(false);
+      setError(
+        `Este equipo ya tiene una orden abierta (No. ${abierta.no_orden_fisico ?? abierta.folio}) -- primero hay que cerrarla o anularla.`
+      );
+      return;
+    }
+
     let fotoUrl = null;
     try {
       if (foto) fotoUrl = await subirFoto(supabase, foto, `ordenes/${clienteId}`, "equipos-clientes");

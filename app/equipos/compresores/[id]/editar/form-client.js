@@ -53,18 +53,21 @@ export default function EditarCompresorForm({ compresor }) {
     }
 
     // Queda en Administración > Historial > Ediciones, con los datos de
-    // ANTES de este cambio (pedido explícito del usuario, 23-sep-2026).
+    // ANTES y de DESPUÉS de este cambio (item 11, pedido explícito,
+    // 27-sep-2026: "pon este mismo formato de historial en app interno" --
+    // antes sólo se guardaba el "antes"; mismo patrón que ya usa App
+    // Equipos de clientes, item 20).
+    const cambios = { ...datos, foto_url: fotoUrl };
+
     await registrarCambio(supabase, {
       tabla: "compresores",
       registroId: compresor.id,
       accion: "editar",
       datosAnteriores: compresor,
+      datosNuevos: cambios,
     });
 
-    const { error } = await supabase
-      .from("compresores")
-      .update({ ...datos, foto_url: fotoUrl })
-      .eq("id", compresor.id);
+    const { error } = await supabase.from("compresores").update(cambios).eq("id", compresor.id);
 
     setLoading(false);
 

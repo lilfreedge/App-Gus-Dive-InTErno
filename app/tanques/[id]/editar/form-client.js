@@ -23,21 +23,24 @@ export default function EditarLlenadoForm({ registro }) {
 
     setLoading(true);
 
+    // Guarda también el "después" (item 11, pedido explícito, 27-sep-2026:
+    // "pon este mismo formato de historial en app interno") -- mismo
+    // patrón que ya usa App Equipos de clientes (item 20).
+    const cambios = {
+      cantidad: Number(cantidad),
+      tipo_gas: tipoGas,
+      nota: nota.trim() || null,
+    };
+
     await registrarCambio(supabase, {
       tabla: "llenados_tanques",
       registroId: registro.id,
       accion: "editar",
       datosAnteriores: registro,
+      datosNuevos: cambios,
     });
 
-    const { error } = await supabase
-      .from("llenados_tanques")
-      .update({
-        cantidad: Number(cantidad),
-        tipo_gas: tipoGas,
-        nota: nota.trim() || null,
-      })
-      .eq("id", registro.id);
+    const { error } = await supabase.from("llenados_tanques").update(cambios).eq("id", registro.id);
 
     setLoading(false);
 

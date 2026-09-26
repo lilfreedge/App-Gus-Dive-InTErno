@@ -49,24 +49,27 @@ export default function EditarSalidaForm({ registro, articulos }) {
 
     setLoading(true);
 
+    // Guarda también el "después" (item 11, pedido explícito, 27-sep-2026:
+    // "pon este mismo formato de historial en app interno") -- mismo
+    // patrón que ya usa App Equipos de clientes (item 20).
+    const cambios = {
+      articulo_id: articuloId,
+      articulo: articulo?.nombre || registro.articulo,
+      cantidad: Number(cantidad),
+      motivo: motivoFinal,
+      autorizado_por: autorizadoPor,
+      nota: nota.trim() || null,
+    };
+
     await registrarCambio(supabase, {
       tabla: "salidas",
       registroId: registro.id,
       accion: "editar",
       datosAnteriores: registro,
+      datosNuevos: cambios,
     });
 
-    const { error } = await supabase
-      .from("salidas")
-      .update({
-        articulo_id: articuloId,
-        articulo: articulo?.nombre || registro.articulo,
-        cantidad: Number(cantidad),
-        motivo: motivoFinal,
-        autorizado_por: autorizadoPor,
-        nota: nota.trim() || null,
-      })
-      .eq("id", registro.id);
+    const { error } = await supabase.from("salidas").update(cambios).eq("id", registro.id);
 
     setLoading(false);
 

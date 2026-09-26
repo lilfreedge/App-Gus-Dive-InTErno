@@ -116,37 +116,40 @@ export default function EditarMantenimientoCompresorForm({ mantenimiento: m, com
       return;
     }
 
+    // Guarda también el "después" (item 11, pedido explícito, 27-sep-2026:
+    // "pon este mismo formato de historial en app interno") -- mismo
+    // patrón que ya usa App Equipos de clientes (item 20).
+    const cambios = {
+      compresor_id: compresorId,
+      compresor_codigo_snapshot: compresor?.codigo || m.compresor_codigo_snapshot,
+      tipo_mantenimiento: tipo,
+      responsable,
+      fecha,
+      horometro: Number(horometro),
+      foto_horometro_url: fotoHorometroUrl,
+      notas: notas.trim() || null,
+      nivel_aceite: esInspeccion ? nivelAceite.trim() || null : null,
+      limpieza_compresor: esInspeccion ? limpiezaCompresor || null : null,
+      estado_manguera: esInspeccion ? estadoManguera || null : null,
+      estado_filtro_principal: esInspeccion ? estadoFiltroPrincipal || null : null,
+      estado_filtro_final: esInspeccion ? estadoFiltroFinal || null : null,
+      limpieza_espacio: esInspeccion ? limpiezaEspacio || null : null,
+      foto_espacio_url: esInspeccion ? fotoEspacioUrl || null : null,
+      otra_inspeccion: esInspeccion ? otraInspeccion.trim() || null : null,
+      foto_otra_inspeccion_url: esInspeccion ? fotoOtraInspeccionUrl || null : null,
+      proceso_piezas: esPreventivoCorrectivo ? procesoPiezas.trim() || null : null,
+      foto_reparacion_url: esPreventivoCorrectivo ? fotoReparacionUrl || null : null,
+    };
+
     await registrarCambio(supabase, {
       tabla: "mantenimientos_compresores",
       registroId: m.id,
       accion: "editar",
       datosAnteriores: m,
+      datosNuevos: cambios,
     });
 
-    const { error: err } = await supabase
-      .from("mantenimientos_compresores")
-      .update({
-        compresor_id: compresorId,
-        compresor_codigo_snapshot: compresor?.codigo || m.compresor_codigo_snapshot,
-        tipo_mantenimiento: tipo,
-        responsable,
-        fecha,
-        horometro: Number(horometro),
-        foto_horometro_url: fotoHorometroUrl,
-        notas: notas.trim() || null,
-        nivel_aceite: esInspeccion ? nivelAceite.trim() || null : null,
-        limpieza_compresor: esInspeccion ? limpiezaCompresor || null : null,
-        estado_manguera: esInspeccion ? estadoManguera || null : null,
-        estado_filtro_principal: esInspeccion ? estadoFiltroPrincipal || null : null,
-        estado_filtro_final: esInspeccion ? estadoFiltroFinal || null : null,
-        limpieza_espacio: esInspeccion ? limpiezaEspacio || null : null,
-        foto_espacio_url: esInspeccion ? fotoEspacioUrl || null : null,
-        otra_inspeccion: esInspeccion ? otraInspeccion.trim() || null : null,
-        foto_otra_inspeccion_url: esInspeccion ? fotoOtraInspeccionUrl || null : null,
-        proceso_piezas: esPreventivoCorrectivo ? procesoPiezas.trim() || null : null,
-        foto_reparacion_url: esPreventivoCorrectivo ? fotoReparacionUrl || null : null,
-      })
-      .eq("id", m.id);
+    const { error: err } = await supabase.from("mantenimientos_compresores").update(cambios).eq("id", m.id);
 
     setLoading(false);
 

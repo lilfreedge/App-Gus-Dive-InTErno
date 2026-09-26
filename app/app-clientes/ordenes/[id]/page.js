@@ -58,13 +58,22 @@ export default async function FichaOrdenPage({ params }) {
     <div>
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href="/app-clientes/historial" className="back-link">
+        {/* "← Volver"/miga de pan de la ficha (item 1, pedido explícito,
+            27-sep-2026: "Click a orden en inicio o registro me lleva a
+            listado de ordenes, deberia de llevarme a registro de ordenes")
+            -- antes siempre regresaba a "Listado de órdenes"; ahora
+            siempre regresa a "Registro de Órdenes", sin importar desde
+            dónde se entró a la ficha ("aplica donde sea. el listado de
+            ordenes solo se usa para quienes quieran hacer una consulta
+            general de todo" -- ese listado sigue disponible aparte, desde
+            "Más"). */}
+        <Link href="/app-clientes/ordenes" className="back-link">
           ← Volver
         </Link>
         <Breadcrumb
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
-            { label: "Listado de órdenes", href: "/app-clientes/historial" },
+            { label: "Registro de Órdenes", href: "/app-clientes/ordenes" },
             { label: `No. ${o.no_orden_fisico ?? o.folio}` },
           ]}
         />

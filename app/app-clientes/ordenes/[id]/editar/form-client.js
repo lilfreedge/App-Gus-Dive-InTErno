@@ -33,7 +33,7 @@ function HintToggle({ mensaje }) {
   );
 }
 
-export default function EditarSeguimientoForm({ orden, puedeVerificar = true }) {
+export default function EditarSeguimientoForm({ orden, puedeVerificar = true, piezas = [] }) {
   const supabase = createClient();
 
   // Prueba hidrostática y Reparación (26-sep-2026: "en cuanto al status,
@@ -142,6 +142,22 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true }) 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+
+    // No permitir una fecha de envío (a taller/proveedor o a prueba
+    // hidrostática) anterior a la fecha de ingreso de la orden -- no tiene
+    // sentido que salga de la tienda antes de haber llegado (item 6,
+    // pedido explícito, 27-sep-2026: "No permitir poner fecha de envio
+    // anterior a la fecha de ingreso de la orden... aplica igual" para
+    // las dos fechas de envío). Comparación de texto ISO (YYYY-MM-DD)
+    // funciona igual que comparar fechas reales.
+    if (esReparacion && fechaEnvio && fechaEnvio < orden.fecha) {
+      setError("La fecha de envío a taller o proveedor no puede ser anterior a la fecha de ingreso de la orden.");
+      return;
+    }
+    if (esHidrostatica && fechaEnvioHidrostatica && fechaEnvioHidrostatica < orden.fecha) {
+      setError("La fecha de envío a prueba hidrostática no puede ser anterior a la fecha de ingreso de la orden.");
+      return;
+    }
 
     // Repuestos utilizados: opcional mientras la orden sigue abierta,
     // pero obligatorio al momento de cerrarla (23-sep-2026, reconfirmado
@@ -433,11 +449,22 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true }) 
             }}
             placeholder="Nombre del repuesto"
             style={{ marginTop: 0 }}
+            list="piezas-catalogo"
           />
           <button type="button" className="btn secondary" onClick={agregarRepuesto} style={{ marginTop: 0, width: "auto" }}>
             + Agregar
           </button>
         </div>
+        {/* Sugerencias desde el catálogo de Piezas y repuestos (item 4,
+            pedido explícito, 27-sep-2026: "que ayude a escribir lo que
+            tenemos en base de datos. Asi como texto libre no me
+            funciona") -- <datalist> nativo: sugiere mientras se escribe,
+            pero sigue dejando escribir algo que no esté en el catálogo. */}
+        <datalist id="piezas-catalogo">
+          {piezas.map((p) => (
+            <option key={p.id} value={p.nombre} />
+          ))}
+        </datalist>
         {repuestos.length === 0 && (
           <div className="hint-text">
             Obligatorio al poner &quot;Fecha de entrega al cliente&quot; -- si no se usó ninguno, agrega &quot;Ninguno&quot;.

@@ -291,6 +291,21 @@ export function IconCheck(props) {
   );
 }
 
+// Ícono de "actualizar estado" (item 3, pedido explícito, 27-sep-2026:
+// "cambiar icono de seguimiento en registro de ordenes... quiero algo
+// relacionado con 'actualizar estado'") -- dos flechas circulares, el
+// símbolo estándar de refrescar/actualizar. Reemplaza a IconCheck en el
+// atajo de Registro de Órdenes.
+export function IconRefresh(props) {
+  return (
+    <Base {...props}>
+      <polyline points="23 4 23 10 17 10" />
+      <polyline points="1 20 1 14 7 14" />
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+    </Base>
+  );
+}
+
 export function IconSend(props) {
   return (
     <Base {...props}>

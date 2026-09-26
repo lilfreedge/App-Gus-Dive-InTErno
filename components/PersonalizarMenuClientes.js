@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ATAJOS_MENU_CLIENTES } from "@/lib/nav-clientes";
+import { ATAJOS_MENU_CLIENTES, ATAJOS_INICIO_CLIENTES } from "@/lib/nav-clientes";
 
 // Accesos directos opcionales de App Equipos de clientes (23-sep-2026,
 // pedido explícito: "agrega boton opcional (asi como esta en app
@@ -12,17 +12,34 @@ import { ATAJOS_MENU_CLIENTES } from "@/lib/nav-clientes";
 // components/PersonalizarMenu.js de App Interno, pero escribiendo en
 // profiles.menu_personalizado_clientes (columna aparte) para no pisar
 // la de allá.
-export default function PersonalizarMenuClientes({ menuInicial }) {
+//
+// Ampliado 27-sep-2026 (item 4, pedido explícito: "Shortcuts de botones
+// opcionales en 'mi perfil' para que aparezcan en INICIO") -- segunda
+// sección independiente, misma idea pero para que el atajo aparezca
+// dentro del Hub de Inicio en vez del menú de arriba. Columna aparte,
+// profiles.atajos_inicio_clientes.
+export default function PersonalizarMenuClientes({ menuInicial, atajosInicioInicial }) {
   const router = useRouter();
   const supabase = createClient();
 
   const [menu, setMenu] = useState(menuInicial || {});
+  const [atajosInicio, setAtajosInicio] = useState(atajosInicioInicial || {});
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState(null);
 
   async function toggleOpcion(clave, valor) {
     const menuNuevo = { ...menu, [clave]: valor };
     setMenu(menuNuevo);
+    await guardar({ menu_personalizado_clientes: menuNuevo });
+  }
+
+  async function toggleAtajoInicio(clave, valor) {
+    const atajosNuevo = { ...atajosInicio, [clave]: valor };
+    setAtajosInicio(atajosNuevo);
+    await guardar({ atajos_inicio_clientes: atajosNuevo });
+  }
+
+  async function guardar(cambios) {
     setLoading(true);
     setMensaje(null);
 
@@ -30,10 +47,7 @@ export default function PersonalizarMenuClientes({ menuInicial }) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({ menu_personalizado_clientes: menuNuevo })
-      .eq("id", user.id);
+    const { error } = await supabase.from("profiles").update(cambios).eq("id", user.id);
 
     setLoading(false);
 
@@ -61,6 +75,26 @@ export default function PersonalizarMenuClientes({ menuInicial }) {
                 checked={!!menu[op.id]}
                 disabled={loading}
                 onChange={(e) => toggleOpcion(op.id, e.target.checked)}
+              />
+              <span className="slider" />
+            </label>
+          </div>
+        ))}
+      </div>
+
+      <p className="hint-text" style={{ marginTop: 18, marginBottom: 8 }}>
+        Accesos directos en Inicio -- aparecen como botón arriba del hub principal.
+      </p>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {ATAJOS_INICIO_CLIENTES.map((op, i) => (
+          <div key={op.id} className="switch-row" style={i === 0 ? { marginTop: 0 } : undefined}>
+            <span className="switch-label">{op.label}</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={!!atajosInicio[op.id]}
+                disabled={loading}
+                onChange={(e) => toggleAtajoInicio(op.id, e.target.checked)}
               />
               <span className="slider" />
             </label>

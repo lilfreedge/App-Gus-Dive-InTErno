@@ -31,17 +31,22 @@ export default function EditarCodigoForm({ articulo }) {
 
     setLoading(true);
 
+    // Guarda también el "después" (item 11, pedido explícito, 27-sep-2026:
+    // "pon este mismo formato de historial en app interno") -- mismo
+    // patrón que ya usa App Equipos de clientes (item 20): se arma el
+    // objeto de cambios una sola vez y se pasa tanto a datosNuevos como
+    // al update que sigue.
+    const cambios = { nombre: nombreLimpio, descripcion: descripcionLimpia };
+
     await registrarCambio(supabase, {
       tabla: "articulos",
       registroId: articulo.id,
       accion: "editar",
       datosAnteriores: articulo,
+      datosNuevos: cambios,
     });
 
-    const { error } = await supabase
-      .from("articulos")
-      .update({ nombre: nombreLimpio, descripcion: descripcionLimpia })
-      .eq("id", articulo.id);
+    const { error } = await supabase.from("articulos").update(cambios).eq("id", articulo.id);
     setLoading(false);
 
     if (error) {

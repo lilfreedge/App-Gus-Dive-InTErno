@@ -27,24 +27,27 @@ export default function EditarReguladorForm({ regulador }) {
 
     setLoading(true);
 
+    // Guarda también el "después" (item 11, pedido explícito, 27-sep-2026:
+    // "pon este mismo formato de historial en app interno") -- mismo
+    // patrón que ya usa App Equipos de clientes (item 20).
+    const cambios = {
+      codigo: codigoLimpio,
+      serie: serie.trim() || null,
+      primera_etapa: primeraEtapa.trim() || null,
+      segunda_etapa: segundaEtapa.trim() || null,
+      octopus: octopus.trim() || null,
+      manometro: manometro.trim() || null,
+    };
+
     await registrarCambio(supabase, {
       tabla: "reguladores_alquiler",
       registroId: regulador.id,
       accion: "editar",
       datosAnteriores: regulador,
+      datosNuevos: cambios,
     });
 
-    const { error } = await supabase
-      .from("reguladores_alquiler")
-      .update({
-        codigo: codigoLimpio,
-        serie: serie.trim() || null,
-        primera_etapa: primeraEtapa.trim() || null,
-        segunda_etapa: segundaEtapa.trim() || null,
-        octopus: octopus.trim() || null,
-        manometro: manometro.trim() || null,
-      })
-      .eq("id", regulador.id);
+    const { error } = await supabase.from("reguladores_alquiler").update(cambios).eq("id", regulador.id);
     setLoading(false);
 
     if (error) {

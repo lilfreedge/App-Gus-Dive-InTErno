@@ -31,6 +31,14 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
 
   if (!orden) notFound();
 
+  // Catálogo de Piezas y repuestos (item 4, pedido explícito, 27-sep-2026:
+  // "que ayude a escribir lo que tenemos en base de datos. Asi como texto
+  // libre no me funciona") -- se pasa solo para sugerir/autocompletar
+  // mientras se escribe (un <datalist>, ver form-client.js); "Repuestos
+  // utilizados" sigue siendo texto libre, así que también se puede escribir
+  // algo que no esté en el catálogo.
+  const { data: piezas } = await supabase.from("piezas_catalogo").select("id, nombre").eq("activo", true).order("nombre");
+
   // BUG corregido (item 11a, reportado en vivo, 26-sep-2026: "cuando le
   // doy me abre el actualizar estado de orden desde el 'listado de
   // ordenes' en vez de 'registro de ordenes'"). Causa: esta pantalla tiene
@@ -71,7 +79,7 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
           {tipoEquipoLabel(orden.tipo_equipo, orden.tipo_equipo_otro)}
         </div>
 
-        <EditarSeguimientoForm orden={orden} puedeVerificar={puedeVerificar} />
+        <EditarSeguimientoForm orden={orden} puedeVerificar={puedeVerificar} piezas={piezas || []} />
       </div>
     </div>
   );
