@@ -42,15 +42,6 @@ export default function EditarEquipoForm({ equipo }) {
 
     setGuardando(true);
 
-    // Queda en Administración > Historial de ediciones de Equipos, con
-    // los datos de ANTES de este cambio.
-    await registrarCambio(supabase, {
-      tabla: "equipos_del_cliente",
-      registroId: equipo.id,
-      accion: "editar",
-      datosAnteriores: equipo,
-    });
-
     const cambios = {
       tipo_equipo: tipoEquipo,
       tipo_equipo_otro: tipoEquipo === "Otro" ? tipoEquipoOtro.trim() : null,
@@ -58,6 +49,17 @@ export default function EditarEquipoForm({ equipo }) {
       modelo: tipoEquipo === "Tanques" ? null : modelo.trim() || null,
       serie: CON_SERIE.includes(tipoEquipo) ? serie.trim() || null : null,
     };
+
+    // Queda en Administración > Historial de ediciones de Equipos, con los
+    // datos de ANTES y de DESPUÉS de este cambio (item 20, pedido
+    // explícito: "que en las ediciones aparezca el before and after").
+    await registrarCambio(supabase, {
+      tabla: "equipos_del_cliente",
+      registroId: equipo.id,
+      accion: "editar",
+      datosAnteriores: equipo,
+      datosNuevos: cambios,
+    });
 
     const { error: err } = await supabase.from("equipos_del_cliente").update(cambios).eq("id", equipo.id);
 

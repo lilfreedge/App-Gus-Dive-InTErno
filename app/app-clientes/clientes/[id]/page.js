@@ -150,7 +150,7 @@ export default async function FichaClientePage({ params }) {
               >
                 <div className="list-item-top">
                   <span className="list-item-title">
-                    <span className="folio-tag">#{o.no_orden_fisico ?? o.folio}</span>
+                    <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
                     {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                   </span>
                   <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>

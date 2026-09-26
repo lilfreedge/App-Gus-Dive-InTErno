@@ -1082,6 +1082,19 @@ textarea {
   width: 120px;
 }
 
+/* Encabezado "Campo / Antes / Después" (item 20, pedido explícito,
+   26-sep-2026: "que en las ediciones aparezca el before and after"). */
+.table-mini th {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--borde);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .anulado {
   background: var(--anulado-fondo);
   border-color: var(--anulado-borde);
@@ -1376,6 +1389,34 @@ label .req {
   font-size: 11.5px;
   color: var(--texto-suave);
   margin-top: 4px;
+}
+
+/* Botón "?" que revela un .hint-text al hacer click (item 3, pedido
+   explícito, 26-sep-2026: "pon que no salga el mensaje y que solo salga si
+   le hacen click, asi la seccion se ve mas limpia") -- antes los mensajes
+   de "Aún no puedes X porque falta Y" se mostraban siempre. */
+.hint-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1px solid var(--borde);
+  background: var(--tarjeta);
+  color: var(--texto-suave);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.hint-toggle-btn:hover {
+  border-color: var(--azul-claro);
+  color: var(--azul-claro);
 }
 
 /* Apariencia (Mi Perfil): toggle de modo oscuro */

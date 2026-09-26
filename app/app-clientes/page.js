@@ -40,11 +40,7 @@ const BADGE_ESTADO = {
 // para no aparecer duplicadas -- ya tienen su propia sección más abajo.
 export default async function AppClientesPage() {
   const supabase = createClient();
-  const { profile } = await requirePermiso(supabase, "equipos_clientes");
-  // Permiso granular equipos_clientes_registrar (item 15, pedido
-  // explícito): sin él, se puede ver todo el hub pero no el botón de
-  // registrar una orden nueva.
-  const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
+  await requirePermiso(supabase, "equipos_clientes");
 
   const CAMPOS =
     "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, en_espera, motivo_espera";
@@ -114,15 +110,9 @@ export default async function AppClientesPage() {
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsClientesServer />
 
-        {puedeRegistrar && (
-          <div style={{ marginBottom: 20 }}>
-            <Link href="/app-clientes/ordenes/nueva">
-              <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
-                + Registrar orden
-              </button>
-            </Link>
-          </div>
-        )}
+        {/* Botón "+ Registrar orden" quitado de Inicio (item 18, pedido
+            explícito, 26-sep-2026) -- se sigue registrando desde Registro
+            de Órdenes, que ya tiene su propio botón. */}
 
         <div className="section-title" style={{ marginTop: 0 }}>
           Órdenes pendientes por trabajar ({porTrabajar.length})
@@ -132,6 +122,7 @@ export default async function AppClientesPage() {
           vacio="No hay órdenes pendientes por trabajar."
           fechaCampo="fecha"
           fechaLabel="Fecha de ingreso a tienda"
+          avisoAtrasadaDias={5}
         />
 
         <div className="section-title">Órdenes pendientes por entregar ({(porEntregar || []).length})</div>
@@ -186,10 +177,22 @@ export default async function AppClientesPage() {
 // qué fecha real mostrar y cómo se llama, según la sección (item 12).
 // `mostrarDiasAfuera` (item 13, pedido explícito, 26-sep-2026) agrega un
 // aviso de cuántos días lleva afuera, para las que están en reparación.
-// El No. de orden (item 10, pedido explícito) se agregó como `folio-tag`
-// al inicio del título -- mismo patrón que ya usan Registro de Órdenes e
-// Historial (folio-tag), antes solo se veía cliente + equipo aquí.
-function ListaOrdenes({ ordenes, vacio, fechaCampo = "fecha", fechaLabel = "Fecha", mostrarDiasAfuera = false }) {
+// `avisoAtrasadaDias` (item 25, pedido explícito, 26-sep-2026: "aqui en
+// cada orden que este pendiente por trabajar y tenga mas de 5 dias en ese
+// estado, que salga una notificacion tipo 'esta orden esta atrasada'")
+// agrega un aviso rojo cuando la orden lleva más de N días desde
+// `fechaCampo` sin que haya pasado a otro estado. El No. de orden (item
+// 10, pedido explícito) se agregó como `folio-tag` al inicio del título --
+// mismo patrón que ya usan Registro de Órdenes e Historial (folio-tag),
+// antes solo se veía cliente + equipo aquí.
+function ListaOrdenes({
+  ordenes,
+  vacio,
+  fechaCampo = "fecha",
+  fechaLabel = "Fecha",
+  mostrarDiasAfuera = false,
+  avisoAtrasadaDias = null,
+}) {
   return (
     <div className="card">
       {!ordenes || ordenes.length === 0 ? (
@@ -197,10 +200,11 @@ function ListaOrdenes({ ordenes, vacio, fechaCampo = "fecha", fechaLabel = "Fech
       ) : (
         ordenes.map((o) => {
           const fechaValor = o[fechaCampo];
-          const diasAfuera =
-            mostrarDiasAfuera && fechaValor
-              ? Math.floor((Date.now() - new Date(fechaValor).getTime()) / (1000 * 60 * 60 * 24))
-              : null;
+          const diasTranscurridos = fechaValor
+            ? Math.floor((Date.now() - new Date(fechaValor).getTime()) / (1000 * 60 * 60 * 24))
+            : null;
+          const diasAfuera = mostrarDiasAfuera ? diasTranscurridos : null;
+          const atrasada = avisoAtrasadaDias !== null && diasTranscurridos !== null && diasTranscurridos > avisoAtrasadaDias;
           return (
             <Link
               key={o.id}
@@ -210,7 +214,7 @@ function ListaOrdenes({ ordenes, vacio, fechaCampo = "fecha", fechaLabel = "Fech
             >
               <div className="list-item-top" style={{ alignItems: "center" }}>
                 <span className="list-item-title" style={{ flex: 1, minWidth: 0 }}>
-                  <span className="folio-tag">#{o.no_orden_fisico ?? o.folio}</span>
+                  <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
                   {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                 </span>
                 <span style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
@@ -225,6 +229,11 @@ function ListaOrdenes({ ordenes, vacio, fechaCampo = "fecha", fechaLabel = "Fech
               {diasAfuera !== null && (
                 <div className="hint-text" style={{ marginTop: 4, color: "var(--rojo)", fontWeight: 600 }}>
                   Lleva {diasAfuera} día{diasAfuera === 1 ? "" : "s"} afuera
+                </div>
+              )}
+              {atrasada && (
+                <div className="hint-text" style={{ marginTop: 4, color: "var(--rojo)", fontWeight: 600 }}>
+                  Atrasada — lleva {diasTranscurridos} día{diasTranscurridos === 1 ? "" : "s"} sin trabajar
                 </div>
               )}
             </Link>

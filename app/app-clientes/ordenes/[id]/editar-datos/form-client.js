@@ -44,6 +44,30 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
     setEquipos((prev) => [...prev, nuevo]);
   }
 
+  // Servicio a realizar, filtrado por tipo de Equipo (item 21) y
+  // Autorización del cliente solo para Reguladores (item 22) -- mismas
+  // reglas que "Registrar orden". El valor ya guardado en la orden se deja
+  // en la lista aunque el catálogo ya no lo tenga marcado para este tipo
+  // de equipo (para no ocultar/perder lo que ya estaba elegido); cambiar
+  // de equipo a mano sí resetea el servicio, para no dejar uno que ya no
+  // aplica.
+  const equipoSeleccionado = equipos.find((e) => e.id === equipoId);
+  const tipoEquipoActual = equipoSeleccionado?.tipo_equipo || "";
+  const esRegulador = tipoEquipoActual === "Reguladores";
+  const serviciosFiltrados = tipoEquipoActual
+    ? servicios.filter((s) => Array.isArray(s.tipos_equipo) && s.tipos_equipo.includes(tipoEquipoActual))
+    : servicios;
+  const serviciosParaMostrar =
+    servicio && servicio !== "Otro" && !serviciosFiltrados.some((s) => s.nombre === servicio)
+      ? [...serviciosFiltrados, { id: "__actual", nombre: servicio }]
+      : serviciosFiltrados;
+
+  function onEquipoChange(id) {
+    setEquipoId(id);
+    setServicio("");
+    setServicioOtro("");
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
@@ -61,31 +85,35 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
 
     setLoading(true);
 
+    const cambios = {
+      no_orden_fisico: noOrdenFisico.trim(),
+      cliente_id: clienteId,
+      cliente_nombre_snapshot: cliente?.nombre || orden.cliente_nombre_snapshot,
+      equipo_id: equipoId,
+      tipo_equipo: equipo?.tipo_equipo || orden.tipo_equipo,
+      tipo_equipo_otro: equipo?.tipo_equipo_otro || null,
+      equipo_marca_snapshot: equipo?.marca || null,
+      equipo_modelo_snapshot: equipo?.modelo || null,
+      que_se_hara: servicioFinal,
+      autorizacion_cliente: esRegulador ? autorizacionCliente || null : null,
+      autorizacion_notas: esRegulador ? autorizacionNotas.trim() || null : null,
+      notas: notas.trim() || null,
+      fecha,
+    };
+
+    // datosNuevos (item 20, pedido explícito: "que en las ediciones
+    // aparezca el before and after").
     await registrarCambio(supabase, {
       tabla: "ordenes_equipos",
       registroId: orden.id,
       accion: "editar",
       datosAnteriores: orden,
+      datosNuevos: cambios,
     });
 
     const { error: err } = await supabase
       .from("ordenes_equipos")
-      .update({
-        no_orden_fisico: noOrdenFisico.trim(),
-        cliente_id: clienteId,
-        cliente_nombre_snapshot: cliente?.nombre || orden.cliente_nombre_snapshot,
-        equipo_id: equipoId,
-        tipo_equipo: equipo?.tipo_equipo || orden.tipo_equipo,
-        tipo_equipo_otro: equipo?.tipo_equipo_otro || null,
-        equipo_marca_snapshot: equipo?.marca || null,
-        equipo_modelo_snapshot: equipo?.modelo || null,
-        que_se_hara: servicioFinal,
-        autorizacion_cliente: autorizacionCliente || null,
-        autorizacion_notas: autorizacionNotas.trim() || null,
-        notas: notas.trim() || null,
-        fecha,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ ...cambios, updated_at: new Date().toISOString() })
       .eq("id", orden.id);
 
     setLoading(false);
@@ -124,7 +152,7 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
         equipos={equipos}
         clienteId={clienteId}
         valor={equipoId}
-        onChange={setEquipoId}
+        onChange={onEquipoChange}
         onEquipoCreado={onEquipoCreado}
         puedeAgregarEquipo
       />
@@ -137,9 +165,14 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
       <label htmlFor="servicio">
         Servicio a realizar <span className="req">*</span>
       </label>
-      <select id="servicio" value={servicio} onChange={(e) => setServicio(e.target.value)}>
-        <option value="">Selecciona...</option>
-        {servicios.map((s) => (
+      <select
+        id="servicio"
+        value={servicio}
+        onChange={(e) => setServicio(e.target.value)}
+        disabled={!equipoId}
+      >
+        <option value="">{equipoId ? "Selecciona..." : "Selecciona un equipo primero"}</option>
+        {serviciosParaMostrar.map((s) => (
           <option key={s.id} value={s.nombre}>{s.nombre}</option>
         ))}
         <option value="Otro">Otro</option>
@@ -159,20 +192,24 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
         </>
       )}
 
-      <label htmlFor="autorizacion_cliente">Autorización del cliente</label>
-      <select id="autorizacion_cliente" value={autorizacionCliente} onChange={(e) => setAutorizacionCliente(e.target.value)}>
-        <option value="">Selecciona... (opcional)</option>
-        {AUTORIZACION_OPCIONES.map((a) => (
-          <option key={a} value={a}>{a}</option>
-        ))}
-      </select>
-      <input
-        type="text"
-        value={autorizacionNotas}
-        onChange={(e) => setAutorizacionNotas(e.target.value)}
-        placeholder="Detalles o excepciones (opcional)"
-        style={{ marginTop: 6 }}
-      />
+      {esRegulador && (
+        <>
+          <label htmlFor="autorizacion_cliente">Autorización del cliente</label>
+          <select id="autorizacion_cliente" value={autorizacionCliente} onChange={(e) => setAutorizacionCliente(e.target.value)}>
+            <option value="">Selecciona... (opcional)</option>
+            {AUTORIZACION_OPCIONES.map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={autorizacionNotas}
+            onChange={(e) => setAutorizacionNotas(e.target.value)}
+            placeholder="Detalles o excepciones (opcional)"
+            style={{ marginTop: 6 }}
+          />
+        </>
+      )}
 
       <label htmlFor="notas">Notas</label>
       <textarea id="notas" value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Cualquier detalle extra (opcional)" />

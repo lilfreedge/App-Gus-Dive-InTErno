@@ -7,6 +7,8 @@ import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
+import FotoLightbox from "@/components/FotoLightbox";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -47,8 +49,8 @@ export default async function FichaOrdenPage({ params }) {
   // esa seccion. quiero probar si sin eso podemos trabajar") -- Reparación
   // pasa a detectarse sola según el servicio, igual que Prueba
   // hidrostática desde el 23-sep.
-  const esHidrostatica = (o.que_se_hara || "").toLowerCase().includes("hidrostat");
-  const esReparacion = (o.que_se_hara || "").toLowerCase().includes("reparaci");
+  const esHidrostatica = esServicioHidrostatica(o.que_se_hara);
+  const esReparacion = esServicioReparacion(o.que_se_hara);
   const muestraRetorno = esReparacion || esHidrostatica;
   const esRegulador = o.tipo_equipo === "Reguladores";
 
@@ -63,12 +65,12 @@ export default async function FichaOrdenPage({ params }) {
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Listado de órdenes", href: "/app-clientes/historial" },
-            { label: `#${o.no_orden_fisico ?? o.folio}` },
+            { label: `No. ${o.no_orden_fisico ?? o.folio}` },
           ]}
         />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
           <h1 className="page-title" style={{ marginBottom: 2 }}>
-            #{o.no_orden_fisico ?? o.folio} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
+            No. {o.no_orden_fisico ?? o.folio} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
           </h1>
           {/* Editar/anular la orden (item 7, pedido explícito, 26-sep-2026:
               "más allá del seguimiento" -- cliente/equipo/servicio/No. de
@@ -82,9 +84,6 @@ export default async function FichaOrdenPage({ params }) {
             />
           )}
         </div>
-        <div className="folio-discreto" style={{ marginBottom: 14 }}>
-          folio #{o.folio}
-        </div>
 
         <div className="card">
           {/* Grid compacto (23-sep-2026, pedido explícito: "se ve mucho
@@ -93,9 +92,13 @@ export default async function FichaOrdenPage({ params }) {
               Notas usan .campo-ancho porque su contenido puede ser largo
               (links, texto libre). */}
           <div className="campos-grid">
-            {o.no_orden_fisico && <Campo etiqueta="No. de orden" valor={o.no_orden_fisico} />}
+            {/* No. de orden / Estado / Cliente / Equipo destacados (item 24,
+                pedido explícito, 26-sep-2026: "pon esta info que resalten un
+                poco mas, es lo principal de una orden") -- mismo grid de
+                siempre, solo con más peso visual que Fecha/Servicio/etc. */}
+            {o.no_orden_fisico && <Campo etiqueta="No. de orden" valor={o.no_orden_fisico} destacado />}
             <Campo etiqueta="Fecha de ingreso" valor={formatFechaDDMMAAAADeDate(o.fecha)} />
-            <Campo etiqueta="Estado">
+            <Campo etiqueta="Estado" destacado>
               <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ marginLeft: 0 }}>
                 {o.estado}
               </span>
@@ -105,13 +108,13 @@ export default async function FichaOrdenPage({ params }) {
                 </span>
               )}
             </Campo>
-            <Campo etiqueta="Cliente" full>
+            <Campo etiqueta="Cliente" full destacado>
               <Link href={`/app-clientes/clientes/${o.cliente_id}`} className="breadcrumb-crumb">
                 {o.cliente_nombre_snapshot}
               </Link>
               {o.cliente_telefono && ` · ${o.cliente_telefono}`}
             </Campo>
-            <Campo etiqueta="Equipo" full>
+            <Campo etiqueta="Equipo" full destacado>
               {o.equipo_id ? (
                 <Link href={`/app-clientes/equipos/${o.equipo_id}`} className="breadcrumb-crumb">
                   {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
@@ -137,14 +140,29 @@ export default async function FichaOrdenPage({ params }) {
           {o.foto_url && (
             <>
               <div className="section-title">Foto</div>
-              <a href={o.foto_url} target="_blank" rel="noreferrer" style={{ display: "inline-block" }}>
-                <img
-                  src={o.foto_url}
-                  alt="Foto del equipo"
-                  style={{ width: 110, height: 110, objectFit: "cover", borderRadius: 10, border: "1px solid var(--borde)", display: "block" }}
-                />
-              </a>
+              {/* Lightbox en la misma página (item 23, pedido explícito,
+                  26-sep-2026: "cuando se le de click a la foto, que se abra
+                  ahi mismo, no en otra ventana") -- antes abría foto_url en
+                  una pestaña nueva. */}
+              <FotoLightbox src={o.foto_url} alt="Foto del equipo" />
             </>
+          )}
+
+          {/* Reporte de esta orden (items 5/14/15; reubicado arriba de
+              Seguimiento -- item 14, pedido explícito, 26-sep-2026: "ponlo
+              en la seccion de la orden. arriba de seguimiento" -- antes
+              vivía fuera de esta tarjeta, después de "Registrado por"). Por
+              ahora solo Reguladores, mismo alcance que ya tenía Reportes. */}
+          {esRegulador && (
+            <div style={{ marginTop: 16 }}>
+              <Link
+                href={`/app-clientes/reportes/${o.id}`}
+                className="btn secondary"
+                style={{ width: "100%", display: "flex", justifyContent: "center", textDecoration: "none" }}
+              >
+                Ver, descargar o enviar el reporte de esta orden
+              </Link>
+            </div>
           )}
 
           <div className="section-title">Seguimiento</div>
@@ -225,24 +243,15 @@ export default async function FichaOrdenPage({ params }) {
           <div style={{ marginTop: 14, textAlign: "right", fontSize: 11, color: "var(--texto-suave)" }}>
             Registrado por {o.full_name} · {formatFecha(o.created_at)}
           </div>
-        </div>
 
-        {/* Reporte de esta orden (items 5/14/15, pedido explícito,
-            25-sep-2026: "agrega en alguna parte de esta ventana para
-            poder ver y descargar o enviar por correo el reporte de las
-            ordenes" -- por ahora solo Reguladores, mismo alcance que ya
-            tenía Reportes). */}
-        {esRegulador && (
-          <div style={{ marginTop: 10 }}>
-            <Link
-              href={`/app-clientes/reportes/${o.id}`}
-              className="btn secondary"
-              style={{ width: "100%", display: "flex", justifyContent: "center", textDecoration: "none" }}
-            >
-              Ver, descargar o enviar el reporte de esta orden
-            </Link>
+          {/* "folio #X" (item 30, pedido explícito, 26-sep-2026: "pon que el
+              numero de folio, en vez de que salga arriba, que salga abajo,
+              al final de todo") -- antes vivía justo debajo del título de la
+              página; ahora es lo último que se ve en toda la ficha. */}
+          <div className="folio-discreto" style={{ marginTop: 10, textAlign: "right" }}>
+            folio #{o.folio}
           </div>
-        )}
+        </div>
 
         {esTitular && (
           <div style={{ marginTop: 10 }}>
@@ -259,13 +268,15 @@ export default async function FichaOrdenPage({ params }) {
   );
 }
 
-function Campo({ etiqueta, valor, children, full }) {
+function Campo({ etiqueta, valor, children, full, destacado }) {
   return (
     <div className={full ? "campo-ancho" : undefined}>
       <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--texto-suave)", marginBottom: 2 }}>
         {etiqueta}
       </div>
-      <div style={{ fontSize: 14.5 }}>{children !== undefined ? children : valor}</div>
+      <div style={destacado ? { fontSize: 16.5, fontWeight: 700, color: "var(--texto)" } : { fontSize: 14.5 }}>
+        {children !== undefined ? children : valor}
+      </div>
     </div>
   );
 }

@@ -30,7 +30,10 @@ export default async function EditarDatosOrdenPage({ params }) {
   const [{ data: clientes }, { data: equipos }, { data: servicios }] = await Promise.all([
     supabase.from("clientes_equipos").select("id, nombre, telefono").order("nombre"),
     supabase.from("equipos_del_cliente").select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie"),
-    supabase.from("servicios_catalogo").select("id, nombre").eq("activo", true).order("nombre"),
+    // `tipos_equipo` (item 21, migration_29.sql) filtra qué servicios se
+    // ofrecen según el tipo de Equipo elegido -- mismo criterio que
+    // "Registrar orden".
+    supabase.from("servicios_catalogo").select("id, nombre, tipos_equipo").eq("activo", true).order("nombre"),
   ]);
 
   return (
@@ -44,7 +47,7 @@ export default async function EditarDatosOrdenPage({ params }) {
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Listado de órdenes", href: "/app-clientes/historial" },
-            { label: `#${orden.no_orden_fisico ?? orden.folio}`, href: `/app-clientes/ordenes/${params.id}` },
+            { label: `No. ${orden.no_orden_fisico ?? orden.folio}`, href: `/app-clientes/ordenes/${params.id}` },
             { label: "Editar orden" },
           ]}
         />

@@ -3,14 +3,37 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
-import { calcularEstadoOrden } from "@/lib/ordenes-estado";
+import { calcularEstadoOrden, esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
 import { hoyISO } from "@/lib/fechas";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 
 const VERIFICADO_POR = ["Pipe", "Gugi"];
 const MEDIOS_NOTIFICACION = ["Llamada", "WhatsApp", "Correo", "Otro"];
 
-export default function EditarSeguimientoForm({ orden, puedeVerificar = true, piezas = [] }) {
+// Botón "?" que revela un mensaje de validación al hacer click (item 3,
+// pedido explícito, 26-sep-2026: "pon que no salga el mensaje y que solo
+// salga si le hacen click, asi la seccion se ve mas limpia") -- antes esos
+// mensajes ("Aún no puedes X porque falta Y") se mostraban siempre que el
+// campo estaba deshabilitado.
+function HintToggle({ mensaje }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <span style={{ display: "inline-flex", flexDirection: "column" }}>
+      <button
+        type="button"
+        className="hint-toggle-btn"
+        onClick={() => setVisible((v) => !v)}
+        aria-label="Por qué está deshabilitado"
+        title="Por qué está deshabilitado"
+      >
+        ?
+      </button>
+      {visible && <span className="hint-text" style={{ marginTop: 4 }}>{mensaje}</span>}
+    </span>
+  );
+}
+
+export default function EditarSeguimientoForm({ orden, puedeVerificar = true }) {
   const supabase = createClient();
 
   // Prueba hidrostática y Reparación (26-sep-2026: "en cuanto al status,
@@ -20,8 +43,14 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   // como ya funcionaba Prueba hidrostática desde el 23-sep) -- las dos
   // tienen su propia fecha de envío, independiente entre sí, y comparten
   // "Fecha de retorno a tienda".
-  const esHidrostatica = (orden.que_se_hara || "").toLowerCase().includes("hidrostat");
-  const esReparacion = (orden.que_se_hara || "").toLowerCase().includes("reparaci");
+  //
+  // BUG corregido (item 27, 27-sep-2026): esto comparaba con
+  // `.toLowerCase().includes("hidrostat")` directo -- se rompía con el
+  // nombre EXACTO del Catálogo de servicios, "Prueba Hidrostática" (con
+  // tilde), porque toLowerCase() no le quita el acento a la "á". Ver
+  // lib/ordenes-estado.js.
+  const esHidrostatica = esServicioHidrostatica(orden.que_se_hara);
+  const esReparacion = esServicioReparacion(orden.que_se_hara);
   const muestraRetorno = esReparacion || esHidrostatica;
 
   // "En espera" vuelve a ser un check independiente, separado de
@@ -49,15 +78,21 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   const [fechaEntrega, setFechaEntrega] = useState(orden.fecha_entrega_cliente || "");
   const [nombreRecibe, setNombreRecibe] = useState(orden.nombre_recibe || "");
   const [factura, setFactura] = useState(orden.factura || "");
-  // Repuestos utilizados, como selector del catálogo + "Otro" (item 4,
-  // pedido explícito: "realmente lo que ponemos en esta seccion son
-  // codigos. asi que si quieres podemos crear una seccion para esto en
-  // base de datos" -- piezas_catalogo). No se intenta adivinar qué parte
-  // de un texto ya guardado corresponde a qué pieza del catálogo -- el
-  // valor existente se conserva tal cual en "Otro", editable, y las
-  // piezas que se marquen aquí se le agregan encima al guardar.
-  const [repuestosSeleccionados, setRepuestosSeleccionados] = useState(new Set());
-  const [repuestosOtro, setRepuestosOtro] = useState(orden.repuestos_usados || "");
+  // Repuestos utilizados (item 4, pedido explícito, 27-sep-2026: "No me
+  // gusta [el selector del catálogo]. Ponlo que sea una seccion para
+  // escribir los repuestos y que se vayan enlistando" -- mismo patrón que
+  // "Notificaciones al cliente": se escribe uno, se agrega, y se va
+  // enlistando con un "Quitar" por ítem. Se sigue guardando como el mismo
+  // texto separado por comas de siempre (repuestos_usados), para no
+  // necesitar una migración ni perder nada de lo ya guardado -- solo
+  // cambia cómo se arma ese texto en pantalla.
+  const [repuestos, setRepuestos] = useState(() =>
+    (orden.repuestos_usados || "")
+      .split(",")
+      .map((r) => r.trim())
+      .filter(Boolean)
+  );
+  const [nuevoRepuesto, setNuevoRepuesto] = useState("");
   // Notas del técnico sobre el regulador (item 12, pedido explícito:
   // "abajo de lo repuestos, agrega una seccion para que el tecnico ponga
   // notas del regulador, asi el tecnico puede poner alguna recomendacion
@@ -78,16 +113,18 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   const puedeEditarEntrega = notificaciones.length > 0;
   const puedeEditarRecibe = !!fechaEntrega;
 
-  function toggleRepuesto(nombre) {
-    setRepuestosSeleccionados((prev) => {
-      const next = new Set(prev);
-      if (next.has(nombre)) next.delete(nombre);
-      else next.add(nombre);
-      return next;
-    });
+  function agregarRepuesto() {
+    const valor = nuevoRepuesto.trim();
+    if (!valor) return;
+    setRepuestos((prev) => [...prev, valor]);
+    setNuevoRepuesto("");
   }
 
-  const repuestosUsadosFinal = [...repuestosSeleccionados, repuestosOtro.trim()].filter(Boolean).join(", ");
+  function quitarRepuesto(i) {
+    setRepuestos((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  const repuestosUsadosFinal = repuestos.join(", ");
 
   function agregarNotificacion() {
     if (!notifFecha) return;
@@ -117,13 +154,6 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
 
     setLoading(true);
 
-    await registrarCambio(supabase, {
-      tabla: "ordenes_equipos",
-      registroId: orden.id,
-      accion: "editar",
-      datosAnteriores: orden,
-    });
-
     const cambios = {
       en_espera: enEspera,
       motivo_espera: enEspera ? motivoEspera.trim() || null : null,
@@ -144,6 +174,16 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
     };
 
     const nuevoEstado = calcularEstadoOrden({ ...orden, ...cambios });
+
+    // datosNuevos (item 20): antes Y después, en el mismo registro del
+    // historial.
+    await registrarCambio(supabase, {
+      tabla: "ordenes_equipos",
+      registroId: orden.id,
+      accion: "editar",
+      datosAnteriores: orden,
+      datosNuevos: { ...cambios, estado: nuevoEstado },
+    });
 
     const { error: err } = await supabase
       .from("ordenes_equipos")
@@ -229,7 +269,18 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
       <label htmlFor="fecha_listo" style={{ marginTop: 14 }}>Fecha de listo para entrega</label>
       <input id="fecha_listo" type="date" value={fechaListo} onChange={(e) => setFechaListo(e.target.value)} />
 
-      <label htmlFor="verificado_por">Verificado por</label>
+      <label htmlFor="verificado_por" style={{ display: "flex", alignItems: "center" }}>
+        Verificado por
+        {!puedeEditarVerificado && (
+          <HintToggle
+            mensaje={
+              !fechaListo
+                ? "Aún no puedes verificar porque falta la fecha de listo para entrega."
+                : "Solo el Titular o un Administrador puede llenar esto."
+            }
+          />
+        )}
+      </label>
       <select
         id="verificado_por"
         value={verificadoPor}
@@ -241,13 +292,6 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
           <option key={v} value={v}>{v}</option>
         ))}
       </select>
-      {!puedeEditarVerificado && (
-        <div className="hint-text">
-          {!fechaListo
-            ? "Aún no puedes verificar porque falta la fecha de listo para entrega."
-            : "Solo el Titular o un Administrador puede llenar esto."}
-        </div>
-      )}
 
       <label style={{ marginTop: 14 }}>Notificaciones al cliente</label>
       {notificaciones.length > 0 && (
@@ -270,15 +314,20 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
         </div>
       )}
       {!agregandoNotif ? (
-        <button
-          type="button"
-          className="btn secondary"
-          disabled={!puedeAgregarNotif}
-          onClick={() => setAgregandoNotif(true)}
-          style={{ marginTop: 0, width: "auto" }}
-        >
-          + Agregar notificación
-        </button>
+        <span style={{ display: "flex", alignItems: "center" }}>
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={!puedeAgregarNotif}
+            onClick={() => setAgregandoNotif(true)}
+            style={{ marginTop: 0, width: "auto" }}
+          >
+            + Agregar notificación
+          </button>
+          {!puedeAgregarNotif && (
+            <HintToggle mensaje="Aún no puedes agregar una notificación porque falta verificar la orden." />
+          )}
+        </span>
       ) : (
         <div style={{ marginTop: 4 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -304,9 +353,13 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
           />
         </div>
       )}
-      {!puedeAgregarNotif && <div className="hint-text">Aún no puedes agregar una notificación porque falta verificar la orden.</div>}
 
-      <label htmlFor="fecha_entrega" style={{ marginTop: 14 }}>Fecha de entrega al cliente</label>
+      <label htmlFor="fecha_entrega" style={{ marginTop: 14, display: "flex", alignItems: "center" }}>
+        Fecha de entrega al cliente
+        {!puedeEditarEntrega && (
+          <HintToggle mensaje="Aún no puedes poner la fecha de entrega porque falta registrar una notificación al cliente." />
+        )}
+      </label>
       <input
         id="fecha_entrega"
         type="date"
@@ -314,9 +367,13 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
         onChange={(e) => setFechaEntrega(e.target.value)}
         disabled={!puedeEditarEntrega}
       />
-      {!puedeEditarEntrega && <div className="hint-text">Aún no puedes poner la fecha de entrega porque falta registrar una notificación al cliente.</div>}
 
-      <label htmlFor="nombre_recibe">Nombre de quien recibe</label>
+      <label htmlFor="nombre_recibe" style={{ display: "flex", alignItems: "center" }}>
+        Nombre de quien recibe
+        {!puedeEditarRecibe && (
+          <HintToggle mensaje="Aún no puedes anotar quién recibe porque falta la fecha de entrega al cliente." />
+        )}
+      </label>
       <input
         id="nombre_recibe"
         type="text"
@@ -325,14 +382,16 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
         placeholder="Opcional"
         disabled={!puedeEditarRecibe}
       />
-      {!puedeEditarRecibe && <div className="hint-text">Aún no puedes anotar quién recibe porque falta la fecha de entrega al cliente.</div>}
 
       <label htmlFor="factura">Factura de repuesto o servicio</label>
       <input id="factura" type="text" value={factura} onChange={(e) => setFactura(e.target.value)} placeholder="Opcional" />
 
-      {/* Repuestos utilizados, destacado (23-sep-2026: caja propia;
-          26-sep-2026: selector del catálogo de Piezas y repuestos +
-          "Otro" en vez de un solo texto libre -- item 4). */}
+      {/* Repuestos utilizados, destacado (23-sep-2026: caja propia; 27-sep-2026,
+          item 4, pedido explícito tras probar el selector del catálogo en
+          vivo: "No me gusta. Ponlo que sea una seccion para escribir los
+          repuestos y que se vayan enlistando" -- mismo patrón que
+          Notificaciones al cliente: se escribe uno, se agrega, se enlista
+          con "Quitar" por ítem). */}
       <div
         style={{
           marginTop: 20,
@@ -345,31 +404,45 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
         <label style={{ marginTop: 0, fontWeight: 700, color: "var(--azul-claro)" }}>
           REPUESTOS UTILIZADOS
         </label>
-        {piezas.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 6, marginBottom: 10 }}>
-            {piezas.map((p) => (
-              <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400, fontSize: 13.5 }}>
-                <input
-                  type="checkbox"
-                  checked={repuestosSeleccionados.has(p.nombre)}
-                  onChange={() => toggleRepuesto(p.nombre)}
-                  style={{ width: "auto" }}
-                />
-                {p.nombre}
-              </label>
+        {repuestos.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8, marginBottom: 10 }}>
+            {repuestos.map((r, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5 }}>
+                <span>{r}</span>
+                <button
+                  type="button"
+                  onClick={() => quitarRepuesto(i)}
+                  style={{ background: "none", border: "none", color: "var(--rojo)", cursor: "pointer", fontSize: 12.5, padding: 0 }}
+                >
+                  Quitar
+                </button>
+              </div>
             ))}
           </div>
         )}
-        <label htmlFor="repuestos_otro" style={{ marginTop: 0, fontWeight: 400, fontSize: 12.5 }}>
-          Otro (lo que ya estaba escrito, o cualquier repuesto que no esté en el catálogo)
-        </label>
-        <textarea
-          id="repuestos_otro"
-          rows={2}
-          value={repuestosOtro}
-          onChange={(e) => setRepuestosOtro(e.target.value)}
-          placeholder='Opcional por ahora -- obligatorio al poner "Fecha de entrega al cliente" (escribe "Ninguno" si no se usó ninguno).'
-        />
+        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <input
+            type="text"
+            value={nuevoRepuesto}
+            onChange={(e) => setNuevoRepuesto(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                agregarRepuesto();
+              }
+            }}
+            placeholder="Nombre del repuesto"
+            style={{ marginTop: 0 }}
+          />
+          <button type="button" className="btn secondary" onClick={agregarRepuesto} style={{ marginTop: 0, width: "auto" }}>
+            + Agregar
+          </button>
+        </div>
+        {repuestos.length === 0 && (
+          <div className="hint-text">
+            Obligatorio al poner &quot;Fecha de entrega al cliente&quot; -- si no se usó ninguno, agrega &quot;Ninguno&quot;.
+          </div>
+        )}
       </div>
 
       {/* Notas del técnico sobre el regulador (item 12, pedido explícito

@@ -48,7 +48,7 @@ export default function ReportesClient({ ordenes }) {
               >
                 <div className="list-item-top">
                   <span className="list-item-title">
-                    <span className="folio-tag">#{o.no_orden_fisico ?? o.folio}</span>
+                    <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
                     {o.cliente_nombre_snapshot}
                     {marcaModelo ? ` — ${marcaModelo}` : ""}
                   </span>

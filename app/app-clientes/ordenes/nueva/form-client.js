@@ -39,13 +39,19 @@ export default function NuevaOrdenForm({
   clientePreseleccionado,
   puedeAgregarCliente = true,
   puedeAgregarEquipo = true,
+  noOrdenSugerido = "",
 }) {
   const router = useRouter();
   const supabase = createClient();
 
   const [clientes, setClientes] = useState(clientesIniciales);
   const [equipos, setEquipos] = useState(equiposIniciales);
-  const [noOrdenFisico, setNoOrdenFisico] = useState("");
+  // No. de orden auto-sugerido (item 17, pedido explícito, 26-sep-2026:
+  // "que la secuencia de no. al registrar una orden se ponga sola y se
+  // base en el ultimo numero escrito. Y que esto sea editable pero con un
+  // warning") -- arranca con el sugerido (último + 1), pero sigue siendo
+  // un campo de texto normal, editable libremente.
+  const [noOrdenFisico, setNoOrdenFisico] = useState(noOrdenSugerido || "");
   const [clienteId, setClienteId] = useState(clientePreseleccionado || "");
   const [equipoId, setEquipoId] = useState("");
   const [fecha, setFecha] = useState(hoyISO());
@@ -94,10 +100,35 @@ export default function NuevaOrdenForm({
   function onClienteChange(id) {
     setClienteId(id);
     setEquipoId("");
+    setServicio("");
+    setServicioOtro("");
   }
 
   function onEquipoCreado(nuevo) {
     setEquipos((prev) => [...prev, nuevo]);
+  }
+
+  // Servicio a realizar, filtrado por tipo de Equipo (item 21, pedido
+  // explícito, 26-sep-2026: "Cambiar esto a que si el equipo es tanque,
+  // que en servicio a realizar solo salga..."). El catálogo de servicios
+  // ahora trae `tipos_equipo` (migration_29.sql) -- cada servicio dice a
+  // qué tipo(s) de equipo aplica, para no adivinar por el nombre. Cambiar
+  // de equipo resetea el servicio elegido, para no dejar seleccionado uno
+  // que ya no aplica.
+  const equipoSeleccionado = equipos.find((e) => e.id === equipoId);
+  const tipoEquipoActual = equipoSeleccionado?.tipo_equipo || "";
+  const serviciosFiltrados = tipoEquipoActual
+    ? servicios.filter((s) => Array.isArray(s.tipos_equipo) && s.tipos_equipo.includes(tipoEquipoActual))
+    : [];
+  // Autorización del cliente (item 22, pedido explícito, 26-sep-2026:
+  // "quita la seccion de autorizacion del cliente, para todo. solo dejalo
+  // para regulador") -- antes se mostraba siempre.
+  const esRegulador = tipoEquipoActual === "Reguladores";
+
+  function onEquipoChange(id) {
+    setEquipoId(id);
+    setServicio("");
+    setServicioOtro("");
   }
 
   async function handleSubmit(e) {
@@ -147,8 +178,11 @@ export default function NuevaOrdenForm({
         equipo_marca_snapshot: equipo?.marca || null,
         equipo_modelo_snapshot: equipo?.modelo || null,
         que_se_hara: servicioFinal,
-        autorizacion_cliente: autorizacionCliente || null,
-        autorizacion_notas: autorizacionNotas.trim() || null,
+        // Autorización del cliente solo aplica a Reguladores (item 22) --
+        // se descarta si quedó algo cargado en el estado de una selección
+        // anterior de equipo.
+        autorizacion_cliente: esRegulador ? autorizacionCliente || null : null,
+        autorizacion_notas: esRegulador ? autorizacionNotas.trim() || null : null,
         notas: notas.trim() || null,
         foto_url: fotoUrl,
         fecha,
@@ -180,6 +214,11 @@ export default function NuevaOrdenForm({
         onChange={(e) => setNoOrdenFisico(e.target.value)}
         placeholder="Número del talonario físico"
       />
+      {noOrdenSugerido && noOrdenFisico.trim() !== noOrdenSugerido && (
+        <div className="hint-text" style={{ color: "var(--rojo)" }}>
+          ⚠ El siguiente número esperado era {noOrdenSugerido} -- verifica que {noOrdenFisico.trim() || "este"} sea correcto.
+        </div>
+      )}
 
       <label htmlFor="cliente" style={{ marginTop: 14 }}>
         Cliente <span className="req">*</span>
@@ -210,7 +249,7 @@ export default function NuevaOrdenForm({
         equipos={equipos}
         clienteId={clienteId}
         valor={equipoId}
-        onChange={setEquipoId}
+        onChange={onEquipoChange}
         onEquipoCreado={onEquipoCreado}
         puedeAgregarEquipo={puedeAgregarEquipo}
       />
@@ -223,9 +262,14 @@ export default function NuevaOrdenForm({
       <label htmlFor="servicio">
         Servicio a realizar <span className="req">*</span>
       </label>
-      <select id="servicio" value={servicio} onChange={(e) => setServicio(e.target.value)}>
-        <option value="">Selecciona...</option>
-        {servicios.map((s) => (
+      <select
+        id="servicio"
+        value={servicio}
+        onChange={(e) => setServicio(e.target.value)}
+        disabled={!equipoId}
+      >
+        <option value="">{equipoId ? "Selecciona..." : "Selecciona un equipo primero"}</option>
+        {serviciosFiltrados.map((s) => (
           <option key={s.id} value={s.nombre}>{s.nombre}</option>
         ))}
         <option value="Otro">Otro</option>
@@ -245,24 +289,32 @@ export default function NuevaOrdenForm({
         </>
       )}
 
-      <label htmlFor="autorizacion_cliente">Autorización del cliente</label>
-      <select
-        id="autorizacion_cliente"
-        value={autorizacionCliente}
-        onChange={(e) => setAutorizacionCliente(e.target.value)}
-      >
-        <option value="">Selecciona... (opcional)</option>
-        {AUTORIZACION_OPCIONES.map((a) => (
-          <option key={a} value={a}>{a}</option>
-        ))}
-      </select>
-      <input
-        type="text"
-        value={autorizacionNotas}
-        onChange={(e) => setAutorizacionNotas(e.target.value)}
-        placeholder="Detalles o excepciones (opcional) — ej: puede cambiar manguera pero no O-rings"
-        style={{ marginTop: 6 }}
-      />
+      {/* Autorización del cliente (item 22, pedido explícito, 26-sep-2026:
+          "quita la seccion de autorizacion del cliente, para todo. solo
+          dejalo para regulador") -- antes se mostraba para cualquier
+          equipo. */}
+      {esRegulador && (
+        <>
+          <label htmlFor="autorizacion_cliente">Autorización del cliente</label>
+          <select
+            id="autorizacion_cliente"
+            value={autorizacionCliente}
+            onChange={(e) => setAutorizacionCliente(e.target.value)}
+          >
+            <option value="">Selecciona... (opcional)</option>
+            {AUTORIZACION_OPCIONES.map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={autorizacionNotas}
+            onChange={(e) => setAutorizacionNotas(e.target.value)}
+            placeholder="Detalles o excepciones (opcional) — ej: puede cambiar manguera pero no O-rings"
+            style={{ marginTop: 6 }}
+          />
+        </>
+      )}
 
       <label htmlFor="notas">Notas</label>
       <textarea

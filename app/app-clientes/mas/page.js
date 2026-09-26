@@ -3,7 +3,7 @@ import { requirePermiso } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
-import { IconCatalog, IconReport, IconReceipt } from "@/components/icons";
+import { IconCatalog, IconReport, IconReceipt, IconHistory } from "@/components/icons";
 
 // Hub "Más" de App Clientes (23-sep-2026, pedido explícito: "agregar un
 // botón de 'mas' al lado de historial de ordenes... igual como que en
@@ -53,13 +53,30 @@ const OPCIONES = [
     descripcion: "Reporte de seguimiento por orden -- por ahora, solo para Reguladores.",
     Icono: IconReceipt,
   },
+  // "Historial" (item 31, pedido explícito, 27-sep-2026: "en mas, crea un
+  // boton de historial y ahi dentro pone los historiales que te dije
+  // anteriormente. tambien pon movimientos anulados") -- reemplaza los dos
+  // botones que antes vivían sueltos dentro de Administración. Solo
+  // Titular (mismo criterio de siempre para estos dos historiales) -- se
+  // filtra acá para que la tarjeta ni se muestre a los demás, aunque la
+  // página también se protege sola del lado del servidor.
+  {
+    href: "/app-clientes/administracion/historial",
+    titulo: "Historial",
+    descripcion: "Ediciones y movimientos anulados de órdenes y equipos.",
+    Icono: IconHistory,
+    soloTitular: true,
+  },
 ];
 
 export default async function MasClientesPage() {
   const supabase = createClient();
   const { profile } = await requirePermiso(supabase, "equipos_clientes");
-  const puedeVer = (o) =>
-    !o.permiso || !!profile?.es_titular || !!profile?.permisos?.[o.permiso];
+  const esTitular = !!profile?.es_titular;
+  const puedeVer = (o) => {
+    if (o.soloTitular) return esTitular;
+    return !o.permiso || esTitular || !!profile?.permisos?.[o.permiso];
+  };
   const opcionesVisibles = OPCIONES.filter(puedeVer);
 
   return (

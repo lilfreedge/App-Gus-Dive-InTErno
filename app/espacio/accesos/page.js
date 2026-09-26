@@ -25,6 +25,15 @@ export default async function AccesosAppsPage() {
     .select("id, full_name, es_titular, permisos")
     .order("full_name");
 
+  // Resumen de conteos (item 9, pedido explícito, 26-sep-2026) -- cuántos
+  // usuarios tienen acceso marcado a cada app, del total. El Titular no
+  // entra en el conteo -- siempre tiene acceso a las dos sin necesitar
+  // este check (ver AccesosClient, fila con "—").
+  const noTitulares = (perfiles || []).filter((p) => !p.es_titular);
+  const totalUsuarios = noTitulares.length;
+  const conAccesoClientes = noTitulares.filter((p) => !!p.permisos?.equipos_clientes).length;
+  const conAccesoInterno = noTitulares.filter((p) => !!p.permisos?.acceso_app_interno).length;
+
   return (
     <div>
       <HeaderSimple nombre="" etiqueta="Accesos a apps" esTitular />
@@ -37,6 +46,19 @@ export default async function AccesosAppsPage() {
         <p className="page-subtitle">
           Quién puede entrar a cada app. Quien no tenga el acceso marcado ya no ve el botón de esa app en &quot;Selecciona tu espacio&quot;.
         </p>
+
+        {totalUsuarios > 0 && (
+          <div className="stat-row">
+            <div className="stat-card">
+              <div className="stat-value">{conAccesoClientes} de {totalUsuarios}</div>
+              <div className="stat-label">Con acceso a Equipos de clientes</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{conAccesoInterno} de {totalUsuarios}</div>
+              <div className="stat-label">Con acceso a App Interno</div>
+            </div>
+          </div>
+        )}
 
         <AccesosClient perfiles={perfiles || []} miId={user.id} />
       </div>

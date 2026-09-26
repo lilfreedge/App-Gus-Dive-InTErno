@@ -39,22 +39,11 @@ export default async function AdministracionClientesPage() {
         </div>
         <PermisosClientes perfiles={perfiles || []} miId={user.id} />
 
-        <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
-          <Link
-            href="/app-clientes/administracion/historial"
-            className="btn secondary"
-            style={{ width: "100%", display: "flex", justifyContent: "center", textDecoration: "none" }}
-          >
-            Historial de ediciones (órdenes)
-          </Link>
-          <Link
-            href="/app-clientes/administracion/historial-equipos"
-            className="btn secondary"
-            style={{ width: "100%", display: "flex", justifyContent: "center", textDecoration: "none" }}
-          >
-            Historial de ediciones de Equipos
-          </Link>
-        </div>
+        {/* El Historial se movió a un solo botón dentro de "Más" (item 31,
+            pedido explícito, 27-sep-2026: "en mas, crea un boton de
+            historial y ahi dentro pone los historiales que te dije
+            anteriormente. tambien pon movimientos anulados") -- antes
+            vivía acá como dos botones sueltos. */}
 
         <SeccionColapsable titulo="Zona de peligro" danger>
           <FormatearRegistrosClientes />

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { IconEdit } from "@/components/icons";
+import { IconCheck } from "@/components/icons";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -93,7 +93,7 @@ export default function RegistroClient({ ordenes }) {
               >
                 <div className="list-item-top">
                   <span className="list-item-title">
-                    <span className="folio-tag">#{o.no_orden_fisico ?? o.folio}</span>
+                    <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
                     {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                   </span>
                   <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
@@ -106,15 +106,22 @@ export default function RegistroClient({ ordenes }) {
               {/* Shortcut a "Actualizar estado de orden" (item 11, pedido
                   explícito, 25-sep-2026: "poner boton aqui tipo shortcut
                   para llegar a 'Actualizar estado de orden', en cada
-                  orden") -- evita tener que entrar primero a la ficha. */}
+                  orden") -- evita tener que entrar primero a la ficha.
+                  ?from=registro (item 11a) le dice a esa pantalla que la
+                  miga de pan debe decir "Registro de Órdenes", no "Listado
+                  de órdenes". Ícono de check (item 11b, pedido explícito,
+                  26-sep-2026: "Cambiar icono para poder diferenciarlo de el
+                  icono de editar la orden, son iguales") -- antes usaba el
+                  mismo lápiz (IconEdit) que "Editar/anular la orden" en la
+                  ficha, y se confundían. */}
               <Link
-                href={`/app-clientes/ordenes/${o.id}/editar`}
+                href={`/app-clientes/ordenes/${o.id}/editar?from=registro`}
                 className="icon-btn"
                 aria-label="Actualizar estado de orden"
                 title="Actualizar estado de orden"
                 style={{ flexShrink: 0 }}
               >
-                <IconEdit size={15} />
+                <IconCheck size={15} />
               </Link>
             </div>
           ))

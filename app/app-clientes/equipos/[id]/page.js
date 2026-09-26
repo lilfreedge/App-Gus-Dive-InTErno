@@ -114,7 +114,7 @@ export default async function FichaEquipoPage({ params }) {
               >
                 <div className="list-item-top">
                   <span className="list-item-title">
-                    <span className="folio-tag">#{o.no_orden_fisico ?? o.folio}</span>
+                    <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
                     {o.que_se_hara}
                   </span>
                   <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>

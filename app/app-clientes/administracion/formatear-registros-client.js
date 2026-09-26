@@ -22,21 +22,18 @@ import { createClient } from "@/lib/supabase/client";
 // esa casilla no se marque aparte -- se refleja marcando y
 // deshabilitando esa casilla sola, y se explica en la primera
 // confirmación antes de ejecutar.
+// "Piezas y repuestos" y "Servicios" se quitaron de aquí (item 28,
+// pedido explícito, 26-sep-2026) -- el catálogo de servicios y la lista
+// de repuestos usados ya no tienen sentido como algo "formateable" por
+// separado con el rediseño de items 4 y 21. El RPC
+// formatear_registros_clientes sigue aceptando p_borrar_piezas/
+// p_borrar_servicios (default false) por compatibilidad -- no hizo falta
+// tocar la base de datos, solo se dejaron de mandar en `true`.
 const CATEGORIAS = [
   {
     clave: "ordenes",
     label: "Órdenes",
     detalle: "Borra todas las órdenes y reinicia su numeración (folio) desde 1.",
-  },
-  {
-    clave: "piezas",
-    label: "Piezas y repuestos",
-    detalle: "Borra el catálogo de piezas y repuestos (Base de datos).",
-  },
-  {
-    clave: "servicios",
-    label: "Servicios",
-    detalle: "Borra el catálogo de servicios (Base de datos).",
   },
   {
     clave: "clientes",
@@ -88,8 +85,6 @@ export default function FormatearRegistrosClientes() {
 
     const { error } = await supabase.rpc("formatear_registros_clientes", {
       p_borrar_ordenes: !!marcadas.ordenes,
-      p_borrar_piezas: !!marcadas.piezas,
-      p_borrar_servicios: !!marcadas.servicios,
       p_borrar_clientes: !!marcadas.clientes,
     });
 
