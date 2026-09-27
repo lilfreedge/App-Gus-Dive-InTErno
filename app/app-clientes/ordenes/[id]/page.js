@@ -10,11 +10,13 @@ import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
 import { holdActivo, diasEnHold, labelTipoHold, detalleHold } from "@/lib/holds";
 import FotoLightbox from "@/components/FotoLightbox";
+import { IconRefresh } from "@/components/icons";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
   "En proceso": "badge-amarillo",
   "Pendiente por despachar": "badge-azul",
+  "En Hold": "badge-rojo",
   Entregado: "badge-verde",
 };
 
@@ -104,20 +106,25 @@ export default async function FichaOrdenPage({ params }) {
           <h1 className="page-title" style={{ marginBottom: 2 }}>
             No. {o.no_orden_fisico ?? o.folio} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
           </h1>
-          {/* Editar/anular la orden (item 7, pedido explícito, 26-sep-2026:
-              "más allá del seguimiento" -- cliente/equipo/servicio/No. de
-              orden). Mismo componente que ya usa el resto de la app.
-              Editar y Anular se muestran por separado según corresponda
-              (ver puedeEditar/puedeAnular arriba). */}
-          {(puedeEditar || puedeAnular) && (
-            <RegistroActions
-              tabla="ordenes_equipos"
-              registro={o}
-              editHref={`/app-clientes/ordenes/${o.id}/editar-datos`}
-              afterDelete="/app-clientes/historial"
-              mostrarEditar={puedeEditar}
-              mostrarAnular={puedeAnular}
-            />
+          {/* "Actualizar estado de orden" subió junto al título (item
+              6.5, feedback sobre v40, pedido explícito: "poner el editar
+              y anular al final de la ficha y poner el actualizar estado
+              de orden arriba") -- antes vivía más abajo, junto a
+              "Seguimiento". Mismo ícono que su atajo en Registro de
+              Órdenes (item 6.4, pedido explícito). Ya no se muestra una
+              vez Entregada (item 7.3, pedido explícito) -- no hay nada
+              más que actualizar. */}
+          {puedeActualizarEstado && o.estado !== "Entregado" && (
+            <Link href={`/app-clientes/ordenes/${o.id}/editar`} style={{ flexShrink: 0 }}>
+              <button
+                className="btn btn-primary"
+                type="button"
+                style={{ marginTop: 0, width: "auto", display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <IconRefresh size={15} />
+                Actualizar estado de orden
+              </button>
+            </Link>
           )}
         </div>
 
@@ -135,17 +142,13 @@ export default async function FichaOrdenPage({ params }) {
             {o.no_orden_fisico && <Campo etiqueta="No. de orden" valor={o.no_orden_fisico} destacado />}
             <Campo etiqueta="Fecha de ingreso" valor={formatFechaDDMMAAAADeDate(o.fecha)} />
             <Campo etiqueta="Estado" destacado>
+              {/* El badge de "En Hold" separado se quitó (feedback sobre
+                  v40, pedido explícito) -- ahora `o.estado` ES "En Hold"
+                  mientras dure (ver lib/ordenes-estado.js), así que ya no
+                  hace falta un segundo badge repitiendo lo mismo. */}
               <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ marginLeft: 0 }}>
                 {o.estado}
               </span>
-              {o.en_espera && (
-                <span className="badge badge-rojo" style={{ marginLeft: 6 }}>
-                  {/* "En Hold" (pedido explícito, ronda grande de feedback,
-                      27-sep-2026: renombrar también este badge, no solo el
-                      título de la sección en Inicio). */}
-                  En Hold{o.motivo_espera ? ` — ${o.motivo_espera}` : ""}
-                </span>
-              )}
             </Campo>
             <Campo etiqueta="Cliente" full destacado>
               <Link href={`/app-clientes/clientes/${o.cliente_id}`} className="breadcrumb-crumb">
@@ -199,6 +202,34 @@ export default async function FichaOrdenPage({ params }) {
             </div>
           )}
 
+          {/* Historial de Holds resueltos (item 16, feedback sobre v40,
+              pedido explícito: mostrar también en la ficha, no solo en
+              "Actualizar estado de orden" -- para consulta rápida sin
+              tener que entrar al wizard). */}
+          {(o.holds || []).some((h) => !h.activo) && (
+            <div style={{ marginTop: 12 }}>
+              <div className="section-title" style={{ marginTop: 0, marginBottom: 6, fontSize: 12.5 }}>
+                Holds resueltos
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {(o.holds || [])
+                  .filter((h) => !h.activo)
+                  .map((h) => (
+                    <div key={h.id} style={{ fontSize: 12.5, padding: "8px 10px", background: "var(--superficie-suave)", borderRadius: 8 }}>
+                      <div style={{ fontWeight: 600 }}>
+                        {labelTipoHold(h)} — {detalleHold(h)}
+                      </div>
+                      <div className="hint-text" style={{ marginTop: 2 }}>
+                        Decisión del cliente: {h.decision === "si" ? "Sí" : h.decision === "no" ? "No" : "—"}
+                        {h.decision_nota ? ` — ${h.decision_nota}` : ""} · {formatFechaDDMMAAAADeDate(h.fecha_inicio)} →{" "}
+                        {formatFechaDDMMAAAADeDate(h.fecha_resolucion)}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {o.foto_url && (
             <>
               <div className="section-title">Foto</div>
@@ -210,44 +241,41 @@ export default async function FichaOrdenPage({ params }) {
             </>
           )}
 
-          {/* Reporte de esta orden (items 5/14/15; reubicado arriba de
-              Seguimiento -- item 14, pedido explícito, 26-sep-2026: "ponlo
-              en la seccion de la orden. arriba de seguimiento" -- antes
-              vivía fuera de esta tarjeta, después de "Registrado por"). Por
-              ahora solo Reguladores, mismo alcance que ya tenía Reportes. */}
+          {/* "Ver informe de orden" (items 5/14/15/36; reubicado arriba de
+              Seguimiento -- pedido explícito, 26-sep-2026: "ponlo en la
+              seccion de la orden. arriba de seguimiento"). Fusiona lo que
+              antes eran 2 botones grandes ("Ver, descargar o enviar el
+              reporte de esta orden" + "Informe de mantenimiento") en un
+              solo bloque más chico y discreto (feedback sobre v40, pedido
+              explícito: "junta esos 2 botones en 1, ponle 'ver informe de
+              orden'") -- ninguno de los 2 destinos se perdió, solo dejaron
+              de ser 2 botones anchos y prominentes. Por ahora solo
+              Reguladores, mismo alcance que ya tenía Reportes. */}
           {esRegulador && (
-            <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-              <Link
-                href={`/app-clientes/reportes/${o.id}`}
-                className="btn secondary"
-                style={{ width: "100%", display: "flex", justifyContent: "center", textDecoration: "none" }}
-              >
-                Ver, descargar o enviar el reporte de esta orden
-              </Link>
-              {/* Informe de mantenimiento (item 36, nueva feature, mockup
-                  Informe.dc.html) -- distinto del Reporte de arriba: un
-                  formulario estructurado que llena el técnico y se
-                  convierte en el documento que se entrega al cliente. */}
-              {puedeVerInforme && (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--texto-suave)", marginBottom: 4 }}>
+                Ver informe de orden
+              </div>
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
                 <Link
-                  href={`/app-clientes/ordenes/${o.id}/informe`}
-                  className="btn secondary"
-                  style={{ width: "100%", display: "flex", justifyContent: "center", textDecoration: "none" }}
+                  href={`/app-clientes/reportes/${o.id}`}
+                  style={{ fontSize: 13, fontWeight: 600, color: "var(--azul-claro)", textDecoration: "none" }}
                 >
-                  Informe de mantenimiento
+                  Reporte de la orden →
                 </Link>
-              )}
+                {puedeVerInforme && (
+                  <Link
+                    href={`/app-clientes/ordenes/${o.id}/informe`}
+                    style={{ fontSize: 13, fontWeight: 600, color: "var(--azul-claro)", textDecoration: "none" }}
+                  >
+                    Informe de mantenimiento →
+                  </Link>
+                )}
+              </div>
             </div>
           )}
 
           <div className="section-title">Seguimiento</div>
-          {puedeActualizarEstado && (
-            <Link href={`/app-clientes/ordenes/${o.id}/editar`}>
-              <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 14 }}>
-                Actualizar estado de orden
-              </button>
-            </Link>
-          )}
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {esReparacion && (
               <Campo etiqueta="Fecha de envío a taller o proveedor" valor={o.fecha_envio ? formatFechaDDMMAAAADeDate(o.fecha_envio) : "—"} />
@@ -282,10 +310,14 @@ export default async function FichaOrdenPage({ params }) {
             <Campo etiqueta="Factura de repuesto o servicio" valor={o.factura || "—"} />
           </div>
 
-          {/* Repuestos utilizados, destacado (23-sep-2026, pedido
-              explícito: "que se vea que es algo aparte, que llame la
-              atención... mandatorio [al] cerrar la orden") -- caja
-              propia en vez de un Campo más de la lista. */}
+          {/* "Códigos a cobrar", destacado (23-sep-2026, pedido explícito:
+              "que se vea que es algo aparte, que llame la atención") --
+              caja propia en vez de un Campo más de la lista. Renombrado
+              de "Repuestos utilizados" (feedback sobre v40, pedido
+              explícito: "pon 'códigos a cobrar'") -- y ya no se marca
+              como obligatorio: ahora se puede cerrar la orden sin nada
+              aquí, con una advertencia al guardar en vez de un bloqueo
+              (item 7.1). */}
           <div
             style={{
               marginTop: 16,
@@ -296,7 +328,7 @@ export default async function FichaOrdenPage({ params }) {
             }}
           >
             <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--azul-claro)", marginBottom: 4 }}>
-              REPUESTOS UTILIZADOS {!o.repuestos_usados && o.estado !== "Entregado" && "(obligatorio antes de entregar)"}
+              CÓDIGOS A COBRAR
             </div>
             <div style={{ fontSize: 14.5 }}>{o.repuestos_usados || "—"}</div>
           </div>
@@ -338,7 +370,8 @@ export default async function FichaOrdenPage({ params }) {
           {/* "folio #X" (item 30, pedido explícito, 26-sep-2026: "pon que el
               numero de folio, en vez de que salga arriba, que salga abajo,
               al final de todo") -- antes vivía justo debajo del título de la
-              página; ahora es lo último que se ve en toda la ficha. */}
+              página; ahora es lo último dentro de esta tarjeta (lo último de
+              toda la ficha pasó a ser Editar/Anular, ver más abajo). */}
           <div className="folio-discreto" style={{ marginTop: 10, textAlign: "right" }}>
             folio #{o.folio}
           </div>
@@ -352,6 +385,27 @@ export default async function FichaOrdenPage({ params }) {
             >
               Ver historial de ediciones de esta orden →
             </Link>
+          </div>
+        )}
+
+        {/* Editar/anular la orden (item 7, pedido explícito, 26-sep-2026:
+            "más allá del seguimiento" -- cliente/equipo/servicio/No. de
+            orden) -- movidos al final de todo (item 6.5, feedback sobre
+            v40, pedido explícito: "poner el editar y anular al final de
+            la ficha"), ya no junto al título; ese lugar ahora lo ocupa
+            "Actualizar estado de orden" (ver arriba). Editar y Anular se
+            muestran por separado según corresponda (puedeEditar/
+            puedeAnular). */}
+        {(puedeEditar || puedeAnular) && (
+          <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end" }}>
+            <RegistroActions
+              tabla="ordenes_equipos"
+              registro={o}
+              editHref={`/app-clientes/ordenes/${o.id}/editar-datos`}
+              afterDelete="/app-clientes/historial"
+              mostrarEditar={puedeEditar}
+              mostrarAnular={puedeAnular}
+            />
           </div>
         )}
       </div>

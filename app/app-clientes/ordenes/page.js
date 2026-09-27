@@ -27,13 +27,22 @@ export default async function RegistroPage() {
   // gana 3 pestañas más que ya existían como secciones en Inicio (En Hold,
   // En prueba hidrostática, Enviadas a reparación), por eso necesita estos
   // campos extra para poder filtrar igual que allá.
-  const { data: ordenes } = await supabase
-    .from("ordenes_equipos")
-    .select(
-      "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, en_espera"
-    )
-    .neq("estado", "Entregado")
-    .order("fecha");
+  const CAMPOS =
+    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, en_espera";
+
+  const [{ data: ordenes }, { data: cerradas }] = await Promise.all([
+    supabase.from("ordenes_equipos").select(CAMPOS).neq("estado", "Entregado").order("fecha"),
+    // "Órdenes cerradas" (feedback sobre v40, pedido explícito) -- lista
+    // aparte y acotada (las últimas 100), en vez de sumarlas a `ordenes`
+    // (que el resto de las pestañas asume que son todas abiertas) o de
+    // traer el historial completo acá.
+    supabase
+      .from("ordenes_equipos")
+      .select(CAMPOS)
+      .eq("estado", "Entregado")
+      .order("fecha_entrega_cliente", { ascending: false })
+      .limit(100),
+  ]);
 
   return (
     <div>
@@ -42,6 +51,30 @@ export default async function RegistroPage() {
         <NavArrowsClientesServer />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
           <h1 className="page-title" style={{ margin: 0 }}>Registro de Órdenes</h1>
+          {/* Píldora "Órdenes abiertas", destacada (feedback sobre v40,
+              pedido explícito: "ordenes abiertas ponlo entre registro de
+              ordenes y registrar orden") -- reemplaza la pestaña "Abiertas"
+              que había en RegistroClient, para que este número no se pierda
+              entre las demás pestañas. Es el total de `ordenes` (todo lo
+              que no está Entregado), el mismo criterio que ya usaba esa
+              pestaña. Por ahora es informativa (no hay una pestaña propia
+              a la que llevar: el listado completo sin filtro no existe
+              como pestaña) -- si hace falta un atajo, RegistroClient sigue
+              mostrando "Pendientes por trabajar" por defecto.
+              */}
+          <span
+            style={{
+              background: "var(--rojo)",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: 13,
+              padding: "6px 14px",
+              borderRadius: 999,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Órdenes abiertas ({(ordenes || []).length})
+          </span>
           {puedeRegistrar && (
             <Link href="/app-clientes/ordenes/nueva">
               <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
@@ -51,7 +84,7 @@ export default async function RegistroPage() {
           )}
         </div>
 
-        <RegistroClient ordenes={ordenes || []} puedeActualizarEstado={puedeActualizarEstado} />
+        <RegistroClient ordenes={ordenes || []} cerradas={cerradas || []} puedeActualizarEstado={puedeActualizarEstado} />
       </div>
     </div>
   );

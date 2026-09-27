@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermisoClientes } from "@/lib/roles";
+import { requirePermisoClientes, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
@@ -29,6 +29,10 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
   // solamente lo podré llenar yo y a quien yo le de acceso como
   // administrador") -- mismo profiles.is_admin de toda la cuenta.
   const puedeVerificar = !!profile?.es_titular || !!profile?.is_admin;
+  // Editar un Hold ya activo (item 6, feedback sobre v40, pedido
+  // explícito: "pon el permiso en administración") -- exclusivo de
+  // Administradores, mismo patrón que editar_orden/editar_cliente.
+  const puedeEditarHold = tieneAcceso(profile, "equipos_clientes_editar_hold");
 
   const { data: orden } = await supabase
     .from("ordenes_equipos")
@@ -106,7 +110,12 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
           )}
         </div>
 
-        <EditarSeguimientoForm orden={orden} puedeVerificar={puedeVerificar} piezas={piezas || []} />
+        <EditarSeguimientoForm
+          orden={orden}
+          puedeVerificar={puedeVerificar}
+          piezas={piezas || []}
+          puedeEditarHold={puedeEditarHold}
+        />
       </div>
     </div>
   );

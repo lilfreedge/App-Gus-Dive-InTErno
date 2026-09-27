@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import { calcularEstadoOrden, esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
@@ -12,6 +13,7 @@ import {
   resumenHold,
   detalleHold,
   crearHold,
+  editarHold,
   resolverHold,
   labelTipoHold,
   textoAutorizacionHold,
@@ -48,8 +50,9 @@ const MEDIOS_NOTIFICACION = ["Llamada", "WhatsApp", "Correo", "Otro"];
 //     nativo -- son clickeables, y el click muestra el motivo + una
 //     sacudida ("click denegado", ver lib/useDenegado.js) en vez de no
 //     hacer nada.
-export default function EditarSeguimientoForm({ orden, puedeVerificar = true, piezas = [] }) {
+export default function EditarSeguimientoForm({ orden, puedeVerificar = true, piezas = [], puedeEditarHold = false }) {
   const supabase = createClient();
+  const router = useRouter();
   const denegado = useDenegado();
 
   const esHidrostatica = esServicioHidrostatica(orden.que_se_hara);
@@ -147,8 +150,21 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   // Hold (item 33: modal unificado -- una consulta obligatoria + código
   // de pieza opcional; ver lib/holds.js para la retrocompatibilidad con
   // Holds guardados antes de este cambio).
+  //
+  // Editar un Hold activo (item 6, feedback sobre v40, pedido explícito:
+  // "pon el permiso en administración") -- mismo modal, en modo edición
+  // (holdEditando), gateado por el permiso equipos_clientes_editar_hold
+  // (exclusivo de Administradores, ver puedeEditarHold).
+  //
+  // Confirmación antes de guardar (item 6.1, pedido explícito: "agrega
+  // confirmacion cuando se ponga en hold") -- confirmarHold() ya no
+  // guarda directo al primer click: primero muestra un resumen
+  // (confirmandoHold) y hace falta un segundo click para guardar de
+  // verdad, tanto al crear como al editar un Hold.
   // ---------------------------------------------------------------
   const [holdModalAbierto, setHoldModalAbierto] = useState(false);
+  const [holdEditando, setHoldEditando] = useState(false);
+  const [confirmandoHold, setConfirmandoHold] = useState(false);
   const [consulta, setConsulta] = useState("");
   const [codigo, setCodigo] = useState("");
   const [holdError, setHoldError] = useState("");
@@ -161,11 +177,27 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
     setConsulta("");
     setCodigo("");
     setHoldError("");
+    setHoldEditando(false);
+    setConfirmandoHold(false);
+    setHoldModalAbierto(true);
+  }
+
+  // Abrir el modal en modo edición, con los datos del Hold activo ya
+  // puestos (item 6).
+  function abrirEditarHold() {
+    if (!hold) return;
+    setConsulta(hold.consulta || "");
+    setCodigo(hold.codigo || "");
+    setHoldError("");
+    setHoldEditando(true);
+    setConfirmandoHold(false);
     setHoldModalAbierto(true);
   }
 
   function cerrarHoldModal() {
     setHoldModalAbierto(false);
+    setConfirmandoHold(false);
+    setHoldEditando(false);
   }
 
   async function confirmarHold() {
@@ -173,16 +205,29 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
       setHoldError("Escribe la consulta para el cliente.");
       return;
     }
-    const nuevo = crearHold({ consulta, codigo });
+    if (!confirmandoHold) {
+      setHoldError("");
+      setConfirmandoHold(true);
+      return;
+    }
     setGuardandoHold(true);
     setHoldError("");
     try {
-      await guardarCampos({
-        holds: [...ordenLocal.holds, nuevo],
-        en_espera: true,
-        motivo_espera: resumenHold(nuevo),
-      });
+      if (holdEditando && hold) {
+        const editado = editarHold(hold, { consulta, codigo });
+        const holdsNuevo = ordenLocal.holds.map((h) => (h.id === hold.id ? editado : h));
+        await guardarCampos({ holds: holdsNuevo, motivo_espera: resumenHold(editado) });
+      } else {
+        const nuevo = crearHold({ consulta, codigo });
+        await guardarCampos({
+          holds: [...ordenLocal.holds, nuevo],
+          en_espera: true,
+          motivo_espera: resumenHold(nuevo),
+        });
+      }
       setHoldModalAbierto(false);
+      setConfirmandoHold(false);
+      setHoldEditando(false);
     } catch (e) {
       setHoldError("No se pudo guardar. Intenta de nuevo.");
     } finally {
@@ -443,13 +488,23 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   const [cierreEditando, setCierreEditando] = useState(false);
   const [guardandoCierre, setGuardandoCierre] = useState(false);
   const [erroresCierre, setErroresCierre] = useState({});
+  // Confirmar cierre sin "Códigos a cobrar" (item 7.1, pedido explícito:
+  // "permitir cerrar con esta seccion vacia, pero avisar al guardar en
+  // vez de bloquear") -- ya no es un error que impida guardar; solo pide
+  // un segundo click de confirmación cuando la lista está vacía.
+  const [confirmandoCierreSinCodigos, setConfirmandoCierreSinCodigos] = useState(false);
 
   function abrirEdicionCierre() {
     setDraftEntrega(ordenLocal.fecha_entrega_cliente || "");
     setDraftRecibe(ordenLocal.nombre_recibe || "");
     setDraftFactura(ordenLocal.factura || "");
     setErroresCierre({});
+    setConfirmandoCierreSinCodigos(false);
     setCierreEditando(true);
+  }
+
+  function cancelarConfirmacionCierre() {
+    setConfirmandoCierreSinCodigos(false);
   }
 
   async function guardarCierre() {
@@ -457,11 +512,13 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
     if (!draftEntrega) errores.entrega = "Indica la fecha de entrega al cliente.";
     if (!draftRecibe.trim()) errores.recibe = "Indica el nombre de quien recibe.";
     if (!draftFactura.trim()) errores.factura = "Indica la factura de repuesto o servicio.";
-    if (repuestos.length === 0) {
-      errores.repuestos = 'Antes de cerrar la orden, indica los repuestos utilizados arriba -- si no se usó ninguno, escribe "Ninguno".';
-    }
     if (Object.keys(errores).length > 0) {
       setErroresCierre(errores);
+      return;
+    }
+    if (repuestos.length === 0 && !confirmandoCierreSinCodigos) {
+      setErroresCierre({});
+      setConfirmandoCierreSinCodigos(true);
       return;
     }
     setGuardandoCierre(true);
@@ -473,8 +530,14 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
         factura: draftFactura.trim(),
       });
       setCierreEditando(false);
+      setConfirmandoCierreSinCodigos(false);
+      // Al cerrar la orden, ir directo a la ficha (item 7.3, pedido
+      // explícito) -- antes se quedaba en este mismo wizard, que ya no
+      // tiene nada más que hacer con la orden Entregada.
+      router.push(`/app-clientes/ordenes/${orden.id}`);
     } catch (e) {
       setErroresCierre({ general: "No se pudo guardar. Intenta de nuevo." });
+      setConfirmandoCierreSinCodigos(false);
     } finally {
       setGuardandoCierre(false);
     }
@@ -510,8 +573,22 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
       ) : (
         <>
           <div style={{ background: "var(--error-fondo)", border: "2px solid var(--rojo)", borderRadius: 10, padding: 14 }}>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--rojo)", textTransform: "uppercase", letterSpacing: 0.3 }}>
-              En Hold — {labelTipoHold(hold)}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--rojo)", textTransform: "uppercase", letterSpacing: 0.3 }}>
+                En Hold — {labelTipoHold(hold)}
+              </div>
+              {/* Editar un Hold ya creado (item 6, pedido explícito: "pon
+                  el permiso en administración") -- gateado por
+                  equipos_clientes_editar_hold. */}
+              {puedeEditarHold && (
+                <button
+                  type="button"
+                  onClick={abrirEditarHold}
+                  style={{ border: "none", background: "none", color: "var(--rojo)", fontWeight: 700, fontSize: 11.5, cursor: "pointer", flexShrink: 0 }}
+                >
+                  Editar
+                </button>
+              )}
             </div>
             <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: "var(--texto-suave)" }}>Consulta para cliente</div>
             <div style={{ marginTop: 2, fontSize: 14 }}>{detalleHold(hold)}</div>
@@ -559,7 +636,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             </div>
           </div>
           <div className="hint-text" style={{ textAlign: "center", padding: "6px 4px" }}>
-            Todo lo demás queda bloqueado hasta resolver el Hold — excepto Repuestos utilizados, abajo.
+            Todo lo demás queda bloqueado hasta resolver el Hold — excepto Códigos a cobrar, abajo.
           </div>
         </>
       )}
@@ -567,32 +644,58 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
       {holdModalAbierto && (
         <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) cerrarHoldModal(); }}>
           <div className="modal-panel">
-            <div className="modal-title">Poner en Hold</div>
+            <div className="modal-title">{holdEditando ? "Editar Hold" : "Poner en Hold"}</div>
 
-            <label style={{ marginTop: 14 }}>
-              Consulta para cliente <span className="req">*</span>
-            </label>
-            <textarea
-              rows={3}
-              value={consulta}
-              onChange={(e) => setConsulta(e.target.value)}
-              placeholder="Qué hay que consultarle al cliente"
-              autoFocus
-            />
+            {confirmandoHold ? (
+              <>
+                {/* Confirmación (item 6.1, pedido explícito: "agrega
+                    confirmacion cuando se ponga en hold") -- resumen antes
+                    de guardar de verdad, para crear o editar. */}
+                <div className="hint-text" style={{ marginTop: 14 }}>
+                  {holdEditando ? "Vas a guardar estos cambios en el Hold:" : "Vas a poner esta orden en Hold:"}
+                </div>
+                <div style={{ marginTop: 8, padding: 10, background: "var(--superficie-suave)", borderRadius: 8, fontSize: 14 }}>
+                  <div>{consulta.trim()}</div>
+                  {codigo.trim() && <div className="hint-text" style={{ marginTop: 4 }}>Código: {codigo.trim()}</div>}
+                </div>
+                {holdError && <div className="error-msg">⚠ {holdError}</div>}
+                <div className="modal-actions">
+                  <button className="btn secondary" type="button" onClick={() => setConfirmandoHold(false)} disabled={guardandoHold}>
+                    Volver
+                  </button>
+                  <button className="btn btn-primary" type="button" onClick={confirmarHold} disabled={guardandoHold}>
+                    {guardandoHold ? "Guardando..." : holdEditando ? "Guardar cambios" : "Confirmar Hold"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <label style={{ marginTop: 14 }}>
+                  Consulta para cliente <span className="req">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={consulta}
+                  onChange={(e) => setConsulta(e.target.value)}
+                  placeholder="Qué hay que consultarle al cliente"
+                  autoFocus
+                />
 
-            <label style={{ marginTop: 10 }}>Código de la pieza (opcional)</label>
-            <input type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="Opcional" list="piezas-catalogo" />
+                <label style={{ marginTop: 10 }}>Código de la pieza (opcional)</label>
+                <input type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="Opcional" list="piezas-catalogo" />
 
-            {holdError && <div className="error-msg">⚠ {holdError}</div>}
+                {holdError && <div className="error-msg">⚠ {holdError}</div>}
 
-            <div className="modal-actions">
-              <button className="btn secondary" type="button" onClick={cerrarHoldModal} disabled={guardandoHold}>
-                Cancelar
-              </button>
-              <button className="btn btn-primary" type="button" onClick={confirmarHold} disabled={guardandoHold}>
-                {guardandoHold ? "Guardando..." : "Poner en Hold"}
-              </button>
-            </div>
+                <div className="modal-actions">
+                  <button className="btn secondary" type="button" onClick={cerrarHoldModal} disabled={guardandoHold}>
+                    Cancelar
+                  </button>
+                  <button className="btn btn-primary" type="button" onClick={confirmarHold} disabled={guardandoHold}>
+                    Continuar
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -624,8 +727,11 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
         </div>
       )}
 
-      {/* Repuestos utilizados -- siempre disponible (item 31), con o sin
-          Hold activo. */}
+      {/* "Códigos a cobrar" -- siempre disponible (item 31), con o sin
+          Hold activo. Renombrado de "Repuestos utilizados" (feedback
+          sobre v40, pedido explícito: "pon 'códigos a cobrar'"). La
+          etiqueta "Siempre disponible" se quitó (pedido explícito) --
+          quedaba redundante ahora que ya no bloquea el cierre. */}
       <div
         style={{
           marginTop: 16,
@@ -635,10 +741,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
           padding: 14,
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <label style={{ marginTop: 0, fontWeight: 700, color: "var(--azul-claro)" }}>REPUESTOS UTILIZADOS</label>
-          <span style={{ fontSize: 10.5, color: "var(--texto-suave)", fontWeight: 600 }}>Siempre disponible</span>
-        </div>
+        <label style={{ marginTop: 0, fontWeight: 700, color: "var(--azul-claro)" }}>CÓDIGOS A COBRAR</label>
         {repuestos.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8, marginBottom: 10 }}>
             {repuestos.map((r, i) => (
@@ -693,8 +796,12 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
           ))}
         </datalist>
         {repuestos.length === 0 && (
+          // Ya no bloquea el cierre (item 7.1, pedido explícito: permitir
+          // cerrar con esto vacío, con una advertencia al guardar en vez
+          // de un bloqueo duro) -- solo un aviso suave aquí; la
+          // confirmación real aparece al guardar el Cierre de la orden.
           <div className="hint-text">
-            Obligatorio para cerrar la orden -- si no se usó ninguno, agrega &quot;Ninguno&quot;.
+            Si no se usó ninguno, puedes dejarlo vacío -- se pedirá confirmar al cerrar la orden.
           </div>
         )}
       </div>
@@ -985,6 +1092,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             guardando={guardandoCierre}
             error={erroresCierre.general}
             onGuardar={guardarCierre}
+            labelGuardar={confirmandoCierreSinCodigos ? "Confirmar y cerrar sin códigos a cobrar" : undefined}
             denegado={denegado}
             explicado={explicado}
             onClickBloqueado={clickBloqueado}
@@ -1007,7 +1115,34 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             <input type="text" value={draftFactura} onChange={(e) => setDraftFactura(e.target.value)} />
             {erroresCierre.factura && <div className="error-msg">⚠ {erroresCierre.factura}</div>}
 
-            {erroresCierre.repuestos && <div className="error-msg">⚠ {erroresCierre.repuestos}</div>}
+            {/* Advertencia en vez de bloqueo (item 7.1, pedido explícito)
+                -- solo aparece si "Códigos a cobrar" está vacío; un
+                segundo click en el botón de abajo (ya con otra etiqueta)
+                cierra la orden así. */}
+            {confirmandoCierreSinCodigos && (
+              <div
+                style={{
+                  marginTop: 10,
+                  padding: 10,
+                  background: "rgba(196, 130, 33, 0.10)",
+                  border: "1px solid #b5691f",
+                  borderRadius: 8,
+                }}
+              >
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: "#b5691f" }}>
+                  ⚠ No se indicó ningún código a cobrar para esta orden. Si no se usó ninguno, puedes continuar --
+                  o cancela para agregarlo primero.
+                </div>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={cancelarConfirmacionCierre}
+                  style={{ marginTop: 8, width: "auto" }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
           </PasoWizard>
 
           {/* Notas del técnico sobre el regulador -- siempre disponible
@@ -1053,6 +1188,7 @@ function PasoWizard({
   guardando,
   error,
   onGuardar,
+  labelGuardar,
   denegado,
   explicado,
   onClickBloqueado,
@@ -1110,7 +1246,7 @@ function PasoWizard({
       {children}
       {error && <div className="error-msg">⚠ {error}</div>}
       <button type="button" className="btn btn-primary" onClick={onGuardar} disabled={guardando} style={{ marginTop: 10, width: "100%" }}>
-        {guardando ? "Guardando..." : "Guardar y continuar"}
+        {guardando ? "Guardando..." : labelGuardar || "Guardar y continuar"}
       </button>
     </div>
   );

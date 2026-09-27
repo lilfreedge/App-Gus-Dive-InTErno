@@ -10,6 +10,8 @@ const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
   "En proceso": "badge-amarillo",
   "Pendiente por despachar": "badge-azul",
+  "En Hold": "badge-rojo",
+  Entregado: "badge-verde",
 };
 
 // Pestañas (pedido explícito, mid-flow: "agrega aqui junto a abiertas,
@@ -17,18 +19,27 @@ const BADGE_ESTADO = {
 // que hay en inicio y que sea clickeable asi") -- las 3 últimas replican
 // las secciones que ya existían en Inicio (Órdenes en espera/Hold, En
 // prueba hidrostática, Enviadas a reparación), con el mismo criterio de
-// filtro que usa esa pantalla. "Abiertas" se renombró a "Órdenes
-// abiertas" (pedido explícito). No se agregó una pestaña de "Cerradas":
-// esta pantalla es la cola de trabajo de lo que sigue abierto a propósito
-// (las Entregado viven en Historial de órdenes, no acá) -- agregarla
-// duplicaría esa otra pantalla.
+// filtro que usa esa pantalla.
+//
+// "Abiertas" se sacó de esta fila de pestañas (feedback sobre v40, pedido
+// explícito: "ordenes abiertas ponlo entre registro de ordenes y
+// registrar orden") -- ahora vive como una píldora roja destacada en el
+// encabezado de la página (ver ordenes/page.js), entre el título y el
+// botón "+ Registrar orden", en vez de ser una pestaña más entre seis.
+//
+// "Órdenes cerradas" se agregó al final (feedback sobre v40, pedido
+// explícito: "agrega boton de ordenes cerradas despues de Enviadas a
+// reparacion") -- antes se había decidido no agregarla para no duplicar
+// Historial de órdenes, pero el usuario la pidió igual; usa una lista
+// aparte (`cerradas`, ver prop más abajo) porque el resto de las pestañas
+// trabaja sobre `ordenes`, que el server sigue trayendo sin las Entregado.
 const TABS = [
-  { clave: "abiertas", label: "Órdenes abiertas" },
   { clave: "por_trabajar", label: "Pendientes por trabajar" },
   { clave: "por_entregar", label: "Pendientes por entregar" },
   { clave: "en_hold", label: "En Hold" },
   { clave: "hidrostatica", label: "En prueba hidrostática" },
   { clave: "reparacion", label: "Enviadas a reparación" },
+  { clave: "cerradas", label: "Órdenes cerradas" },
 ];
 
 const SORTS = [
@@ -40,13 +51,13 @@ const SORTS = [
 // probar v24 en vivo): ordenes ya viene sin las Entregado (filtradas en
 // el server). Acá solo se reparten entre las 3 pestañas + el buscador de
 // cliente, todo combinado (tab Y búsqueda a la vez).
-export default function RegistroClient({ ordenes, puedeActualizarEstado = true }) {
-  const [tab, setTab] = useState("abiertas");
+export default function RegistroClient({ ordenes, cerradas = [], puedeActualizarEstado = true }) {
+  const [tab, setTab] = useState("por_trabajar");
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("fecha_asc");
 
   const filtrados = useMemo(() => {
-    let base = ordenes;
+    let base = tab === "cerradas" ? cerradas : ordenes;
     if (tab === "por_trabajar") {
       // Mismo criterio que Inicio: excluye las que ya salieron a
       // hidrostática/reparación y no han vuelto -- esas se ven en su
@@ -95,7 +106,7 @@ export default function RegistroClient({ ordenes, puedeActualizarEstado = true }
 
       <input
         type="text"
-        placeholder="Buscar cliente con órdenes abiertas..."
+        placeholder="Buscar cliente..."
         value={q}
         onChange={(e) => setQ(e.target.value)}
         style={{ marginBottom: 14 }}
@@ -111,7 +122,11 @@ export default function RegistroClient({ ordenes, puedeActualizarEstado = true }
       <div className="card">
         {filtrados.length === 0 ? (
           <div className="empty">
-            {ordenes.length === 0 ? "No hay órdenes abiertas." : "Ninguna orden coincide con esos filtros."}
+            {tab === "cerradas"
+              ? "No hay órdenes cerradas recientes."
+              : ordenes.length === 0
+                ? "No hay órdenes abiertas."
+                : "Ninguna orden coincide con esos filtros."}
           </div>
         ) : (
           filtrados.map((o) => (

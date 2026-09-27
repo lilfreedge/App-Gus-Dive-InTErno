@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermiso, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { ATAJOS_INICIO_CLIENTES } from "@/lib/nav-clientes";
 import { holdActivo } from "@/lib/holds";
 
 const BADGE_ESTADO = {
@@ -43,10 +42,13 @@ const BADGE_ESTADO = {
 export default async function AppClientesPage() {
   const supabase = createClient();
   const { profile } = await requirePermiso(supabase, "equipos_clientes");
-
-  // Accesos directos opcionales en Inicio (item 4, pedido explícito,
-  // 27-sep-2026) -- activados desde "Personalizar mi menú" en Mi Perfil.
-  const atajosInicio = ATAJOS_INICIO_CLIENTES.filter((a) => !!profile?.atajos_inicio_clientes?.[a.id]);
+  // Botón fijo "+ Registrar orden" (item 14, feedback sobre v40, pedido
+  // explícito: "quita el toggle de Registro de Órdenes de Personalizar mi
+  // menú, pon un botón fijo de Registrar orden en Inicio") -- reemplaza
+  // el atajo opcional que antes vivía en "Personalizar mi menú" (Mi
+  // Perfil): dejó de ser opcional, ahora siempre está si el usuario tiene
+  // el permiso, igual que ya pasa en Registro de Órdenes.
+  const puedeRegistrar = tieneAcceso(profile, "equipos_clientes_registrar");
 
   const CAMPOS =
     "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, en_espera, motivo_espera, holds";
@@ -124,20 +126,18 @@ export default async function AppClientesPage() {
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsClientesServer />
 
-        {/* Botón "+ Registrar orden" quitado de Inicio (item 18, pedido
-            explícito, 26-sep-2026) -- se sigue registrando desde Registro
-            de Órdenes, que ya tiene su propio botón. */}
-
-        {/* Accesos directos opcionales en Inicio (item 4, pedido explícito,
-            27-sep-2026) -- solo se ven si el usuario los activó desde
-            "Personalizar mi menú" en Mi Perfil. */}
-        {atajosInicio.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-            {atajosInicio.map((a) => (
-              <Link key={a.id} href={a.href} className="btn secondary" style={{ marginTop: 0, width: "auto" }}>
-                {a.label}
-              </Link>
-            ))}
+        {/* Botón "+ Registrar orden" (item 18, pedido explícito,
+            26-sep-2026, quitado de aquí; reintroducido item 14, feedback
+            sobre v40, pedido explícito -- esta vez fijo, no un atajo
+            opcional) -- mismo destino y estilo que el de Registro de
+            Órdenes. */}
+        {puedeRegistrar && (
+          <div style={{ marginBottom: 16 }}>
+            <Link href="/app-clientes/ordenes/nueva">
+              <button className="btn btn-primary" type="button" style={{ marginTop: 0, width: "auto" }}>
+                + Registrar orden
+              </button>
+            </Link>
           </div>
         )}
 

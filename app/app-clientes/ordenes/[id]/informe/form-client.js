@@ -96,7 +96,11 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
 
   return (
     <div className="card">
-      <div style={{ display: "flex", gap: 6, background: "var(--superficie-suave)", borderRadius: 8, padding: 5, marginBottom: 16 }}>
+      {/* Arreglo de impresión (feedback sobre v40, pedido explícito) -- a
+          esta barra de pestañas le faltaba "no-print": se imprimía junto
+          con el informe (vista "Informe (cliente)"), empujando el
+          contenido real a una 2da página. */}
+      <div className="no-print" style={{ display: "flex", gap: 6, background: "var(--superficie-suave)", borderRadius: 8, padding: 5, marginBottom: 16 }}>
         <button
           type="button"
           className={vista === "formulario" ? "btn btn-primary" : "btn secondary"}
@@ -172,7 +176,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
             <label style={{ marginTop: 12 }}>Presión intermedia ajustada (PSI)</label>
             <input type="text" value={informe.presion} onChange={(e) => set("presion", e.target.value)} placeholder="Ej. 140 PSI" />
             <div className="hint-text" style={{ marginTop: 10 }}>
-              Las piezas reemplazadas ya se ven en «Repuestos utilizados» de la orden -- no se repiten aquí.
+              Las piezas reemplazadas ya se ven en «Códigos a cobrar» de la orden -- no se repiten aquí.
             </div>
           </div>
 
@@ -225,11 +229,13 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
         </>
       ) : (
         <>
+          {/* "Descargar PDF" se quitó (feedback sobre v40, pedido
+              explícito: "quita el botón de descargar pdf, con el de
+              imprimir ya se puede guardar como PDF") -- BotonImprimir ya
+              cubre ese caso (imprimir → "Guardar como PDF" del propio
+              navegador), y era la ruta con el bug de las 2 páginas. */}
           <div className="no-print" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
             <BotonImprimir />
-            <a href={`/api/informes-mantenimiento/${orden.id}/pdf`} className="btn secondary" style={{ marginTop: 0, textDecoration: "none" }}>
-              Descargar PDF
-            </a>
             <EnviarInformeClient ordenId={orden.id} />
           </div>
 

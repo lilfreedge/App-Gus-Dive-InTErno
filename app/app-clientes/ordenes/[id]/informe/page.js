@@ -44,18 +44,26 @@ export default async function InformeMantenimientoPage({ params }) {
     <div>
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href={`/app-clientes/ordenes/${params.id}`} className="back-link">
+        {/* Arreglo de impresión (feedback sobre v40, pedido explícito:
+            "el pdf del informe sale mal, en 2 paginas") -- a esta pantalla
+            le faltaban las clases "no-print" que ya usa el patrón que
+            funciona bien (ver reportes/[id]/page.js): sin ellas, "←
+            Volver", la miga de pan y el título también se imprimían junto
+            con el informe, empujando el contenido real a una 2da página. */}
+        <Link href={`/app-clientes/ordenes/${params.id}`} className="back-link no-print">
           ← Volver
         </Link>
-        <Breadcrumb
-          items={[
-            { label: "App Equipos de clientes", href: "/app-clientes" },
-            { label: "Registro de Órdenes", href: "/app-clientes/ordenes" },
-            { label: `No. ${orden.no_orden_fisico ?? orden.folio}`, href: `/app-clientes/ordenes/${params.id}` },
-            { label: "Informe de mantenimiento" },
-          ]}
-        />
-        <h1 className="page-title">Informe de mantenimiento</h1>
+        <div className="no-print">
+          <Breadcrumb
+            items={[
+              { label: "App Equipos de clientes", href: "/app-clientes" },
+              { label: "Registro de Órdenes", href: "/app-clientes/ordenes" },
+              { label: `No. ${orden.no_orden_fisico ?? orden.folio}`, href: `/app-clientes/ordenes/${params.id}` },
+              { label: "Informe de mantenimiento" },
+            ]}
+          />
+        </div>
+        <h1 className="page-title no-print">Informe de mantenimiento</h1>
 
         <InformeMantenimientoForm orden={orden} serie={serie} tecnicoSugerido={profile?.full_name || ""} />
       </div>

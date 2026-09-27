@@ -12,92 +12,64 @@ const PERMISOS_DEFAULT = {
   equipos_clientes_agregar_cliente: false,
   equipos_clientes_catalogo: false,
   equipos_clientes_editar_equipo: false,
-  // 6 permisos nuevos de la ronda grande de feedback (27-sep-2026, pedido
-  // explícito): Historial y Reportes pasan a ser permisos granulares
-  // (antes Titular-only / siempre visibles); Actualizar estado de orden
-  // se puede ocultar por permiso; y 3 permisos nuevos exclusivos de
-  // Administradores (ver COLUMNAS_ADMIN más abajo).
   equipos_clientes_historial: false,
   equipos_clientes_reportes: false,
   equipos_clientes_actualizar_estado: false,
   equipos_clientes_editar_cliente: false,
   equipos_clientes_editar_orden: false,
   equipos_clientes_editar_mantenimiento_compresor: false,
-  // Item 36, nueva feature (mockup Informe.dc.html): informe de
-  // mantenimiento de un Regulador, permiso propio igual que Actualizar
-  // estado de orden (no exclusivo de Administradores).
   equipos_clientes_informe_mantenimiento: false,
+  equipos_clientes_bitacora_movimientos: false,
+  // Item 6 de la ronda de feedback sobre v40 (27-sep-2026, pedido
+  // explícito: "permite que el hold se pueda editar, por si algún día es
+  // necesario. pon el permiso en administración") -- exclusivo de
+  // Administradores, mismo patrón que editar orden/cliente/equipo.
+  equipos_clientes_editar_hold: false,
 };
 
-// Tabla de permisos propia de App Clientes -- mismo patrón que
-// app/admin/usuarios/lista-client.js (togglePermiso). Las columnas de
-// permiso (item 15, pedido explícito: "ponme permisos para dar a los
-// demas de: registrar orden... agregar equipo, agregar cliente, acceso
-// a Catalogo"; "Editar equipo" sumado 23-sep-2026, pedido explícito
-// aparte) son finas, para acciones puntuales dentro de la app -- sin
-// una de ellas, el usuario igual puede VER todo, solo no puede hacer
-// esa acción en concreto.
-//
-// "Equipos de clientes" (el check que gatea poder ENTRAR a la app) ya
-// no vive en esta tabla (26-sep-2026, pedido explícito: "quites el check
-// que esta dentro de administracion del app equipos cliente... y lo
-// pongas en esta ventana donde estan los apps" -- ver /espacio/accesos,
-// nueva pantalla del Titular donde se decide quién entra a cada app).
-// El campo real (profiles.permisos.equipos_clientes) sigue siendo el
-// mismo -- solo cambió DESDE DÓNDE se edita.
-// "Editar equipo" salió de esta tabla general (27-sep-2026, pedido
-// explícito: "quitar editar equipo de aqui") -- se quedó exclusivo de la
-// tabla "Administradores" de abajo (ver COLUMNAS_ADMIN), que a su vez
-// perdió las otras 4 columnas (pedido explícito, mismo día: "quitar todo
-// aqui, dejar solo editar equipo"). El campo real
-// (profiles.permisos.equipos_clientes_editar_equipo) es el mismo de
-// siempre -- solo cambió desde qué tabla se activa.
-const COLUMNAS = [
-  { clave: "equipos_clientes_registrar", label: "Registrar orden", Icono: IconEdit },
-  { clave: "equipos_clientes_agregar_equipo", label: "Agregar equipo", Icono: IconTank },
-  { clave: "equipos_clientes_agregar_cliente", label: "Agregar cliente", Icono: IconPlus },
-  { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
-  // "Bitácora movimientos en órdenes" (27-sep-2026, pedido explícito) --
-  // antes era Titular-only a la fuerza, ahora es un permiso granular más,
-  // igual que los 4 de arriba.
-  { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos", Icono: IconBook },
-  // 3 columnas nuevas (ronda grande de feedback, 27-sep-2026, pedido
-  // explícito): Historial y Reportes dejan de ser Titular-only/siempre
-  // visibles y pasan a este mismo patrón; "Actualizar estado de orden"
-  // (el botón/atajo de seguimiento) ahora también se puede ocultar.
-  { clave: "equipos_clientes_historial", label: "Historial", Icono: IconHistory },
-  { clave: "equipos_clientes_reportes", label: "Reportes", Icono: IconReport },
-  { clave: "equipos_clientes_actualizar_estado", label: "Actualizar estado de orden", Icono: IconRefresh },
-  // Item 36, nueva feature (mockup Informe.dc.html): pantalla propia,
-  // separada de "Actualizar estado de orden", para el informe de
-  // mantenimiento de un Regulador.
-  { clave: "equipos_clientes_informe_mantenimiento", label: "Informe de mantenimiento", Icono: IconWrench },
+// Reorganizado en tablas apiladas por grupo (feedback sobre v40, pedido
+// explícito: "pon los accesos más como están en app interno, que se ven
+// mejor distribuido" -- fotos de referencia: app/admin/usuarios/
+// lista-client.js) -- antes era una sola tabla ancha de 9 columnas que se
+// cortaba en pantallas angostas. Mismo patrón que GRUPOS de esa pantalla:
+// "General" para accesos de solo consulta/gestión, "Registrar" para
+// acciones de creación/actualización. Los íconos se alinearon con los
+// que usa App Interno para el mismo concepto (Historial, Reportes,
+// Catálogo/Base de datos).
+const GRUPOS = [
+  {
+    titulo: "General",
+    columnas: [
+      { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
+      { clave: "equipos_clientes_historial", label: "Historial", Icono: IconHistory },
+      { clave: "equipos_clientes_reportes", label: "Reportes", Icono: IconReport },
+      { clave: "equipos_clientes_informe_mantenimiento", label: "Informe de mantenimiento", Icono: IconWrench },
+    ],
+  },
+  {
+    titulo: "Registrar",
+    columnas: [
+      { clave: "equipos_clientes_registrar", label: "Registrar orden", Icono: IconEdit },
+      { clave: "equipos_clientes_agregar_equipo", label: "Agregar equipo", Icono: IconTank },
+      { clave: "equipos_clientes_agregar_cliente", label: "Agregar cliente", Icono: IconPlus },
+      { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos", Icono: IconBook },
+      { clave: "equipos_clientes_actualizar_estado", label: "Actualizar estado de orden", Icono: IconRefresh },
+    ],
+  },
 ];
 
-// Tabla "Administradores" (solo para quienes ya tienen ese rol) -- acciones
-// más sensibles, que además de venir con el permiso puntual requieren que
-// el usuario sea Administrador. "Editar cliente", "Editar orden" y "Editar
-// mantenimiento de compresor" se suman acá (ronda grande de feedback,
-// 27-sep-2026, pedido explícito: el de mantenimiento de compresor es un
-// permiso APARTE de "Editar orden", no un caso especial de ese mismo --
-// "si" a la pregunta directa "una permiso nuevo para eso, no meterlo con
-// editar orden").
+// Tabla "Administradores" (solo para quienes ya tienen ese rol) --
+// acciones más sensibles, que además de venir con el permiso puntual
+// requieren que el usuario sea Administrador. "Editar hold" se suma acá
+// (feedback sobre v40, pedido explícito).
 const COLUMNAS_ADMIN = [
   { clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit },
   { clave: "equipos_clientes_editar_cliente", label: "Editar cliente", Icono: IconUsers },
   { clave: "equipos_clientes_editar_orden", label: "Editar orden", Icono: IconEdit },
   { clave: "equipos_clientes_editar_mantenimiento_compresor", label: "Editar mantenimiento de compresor", Icono: IconCompressor },
+  { clave: "equipos_clientes_editar_hold", label: "Editar Hold", Icono: IconBook },
 ];
 
-// Columna "Rol" (pedido de seguimiento, 23-sep-2026: "creemos algo
-// similar como está en app interno. que puedo darle rol y accesos
-// dependiendo del rol" -- confirmado que es la misma estructura visual
-// de App Interno, no un paquete de permisos automático por rol: dropdown
-// Rol + casillas de permisos, ambos independientes). Reusa el mismo
-// profiles.is_admin de toda la cuenta -- no uno aparte de App Clientes
-// (confirmado: "recuerda agregar en adminsitracion para yo poder acceso
-// de administrador a los demas"), mismo patrón que cambiarRol en
-// app/admin/usuarios/lista-client.js.
 export default function PermisosClientes({ perfiles, miId }) {
   const router = useRouter();
   const supabase = createClient();
@@ -118,99 +90,22 @@ export default function PermisosClientes({ perfiles, miId }) {
     router.refresh();
   }
 
-  // Ítem 2 del backlog (26-sep-2026, pedido explícito: "creale una
-  // seccion separada en administracion, para yo darle accesos a quien
-  // tenga ese rol, asi como está en el app interno") -- mismo patrón que
-  // la sección "Administradores" de app/admin/usuarios/lista-client.js:
-  // filtra y muestra a quienes YA tienen el rol Administrador hoy (sin la
-  // columna Rol, que aquí no aplica -- ya se sabe que son administradores).
-  // Desde el 27-sep-2026 (pedido explícito) esta tabla quedó reducida a
-  // solo "Editar equipo" (COLUMNAS_ADMIN) -- ya no repite las otras 4
-  // columnas de la tabla de arriba.
   const administradores = perfiles.filter((p) => p.is_admin && !p.es_titular);
 
   return (
     <div>
-      <div style={{ overflowX: "auto" }}>
-        <table className="perm-table">
-          <thead>
-            <tr>
-              <th>Usuario</th>
-              <th>Rol</th>
-              {COLUMNAS.map((c) => (
-                <th key={c.clave} title={c.label}>
-                  <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
-                  {c.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {perfiles.map((p) => {
-              if (p.es_titular) {
-                return (
-                  <tr key={p.id}>
-                    <td>
-                      {p.full_name}
-                      <span className="role-tag role-tag-titular">Titular</span>
-                    </td>
-                    <td>
-                      <span className="role-tag role-tag-titular">Titular</span>
-                    </td>
-                    {COLUMNAS.map((c) => (
-                      <td key={c.clave}>—</td>
-                    ))}
-                  </tr>
-                );
-              }
-
-              const permisos = { ...PERMISOS_DEFAULT, ...(p.permisos || {}) };
-              return (
-                <tr key={p.id}>
-                  <td>
-                    {p.full_name}
-                    {p.id === miId && <span className="tag-tu">Tú</span>}
-                  </td>
-                  <td>
-                    <select
-                      value={p.is_admin ? "admin" : "usuario"}
-                      disabled={loadingId === p.id}
-                      onChange={(e) => cambiarRol(p, e.target.value === "admin")}
-                    >
-                      <option value="admin">Administrador</option>
-                      <option value="usuario">Usuario</option>
-                    </select>
-                  </td>
-                  {COLUMNAS.map((c) => (
-                    <td key={c.clave}>
-                      <input
-                        type="checkbox"
-                        checked={!!permisos[c.clave]}
-                        disabled={loadingId === p.id}
-                        onChange={(e) => togglePermiso(p, c.clave, e.target.checked)}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div style={{ marginTop: 24 }}>
-        <div className="section-title" style={{ marginTop: 0 }}>
-          Administradores
-        </div>
-        {administradores.length === 0 ? (
-          <div className="empty">Todavía no hay nadie con el rol Administrador.</div>
-        ) : (
+      {GRUPOS.map((grupo, i) => (
+        <div key={grupo.titulo} style={{ marginTop: i === 0 ? 0 : 24 }}>
+          <div className="section-title" style={{ marginTop: 0 }}>
+            {grupo.titulo}
+          </div>
           <div style={{ overflowX: "auto" }}>
             <table className="perm-table">
               <thead>
                 <tr>
                   <th>Usuario</th>
-                  {COLUMNAS_ADMIN.map((c) => (
+                  {i === 0 && <th>Rol</th>}
+                  {grupo.columnas.map((c) => (
                     <th key={c.clave} title={c.label}>
                       <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
                       {c.label}
@@ -219,7 +114,26 @@ export default function PermisosClientes({ perfiles, miId }) {
                 </tr>
               </thead>
               <tbody>
-                {administradores.map((p) => {
+                {perfiles.map((p) => {
+                  if (p.es_titular) {
+                    return (
+                      <tr key={p.id}>
+                        <td>
+                          {p.full_name}
+                          <span className="role-tag role-tag-titular">Titular</span>
+                        </td>
+                        {i === 0 && (
+                          <td>
+                            <span className="role-tag role-tag-titular">Titular</span>
+                          </td>
+                        )}
+                        {grupo.columnas.map((c) => (
+                          <td key={c.clave}>—</td>
+                        ))}
+                      </tr>
+                    );
+                  }
+
                   const permisos = { ...PERMISOS_DEFAULT, ...(p.permisos || {}) };
                   return (
                     <tr key={p.id}>
@@ -227,7 +141,19 @@ export default function PermisosClientes({ perfiles, miId }) {
                         {p.full_name}
                         {p.id === miId && <span className="tag-tu">Tú</span>}
                       </td>
-                      {COLUMNAS_ADMIN.map((c) => (
+                      {i === 0 && (
+                        <td>
+                          <select
+                            value={p.is_admin ? "admin" : "usuario"}
+                            disabled={loadingId === p.id}
+                            onChange={(e) => cambiarRol(p, e.target.value === "admin")}
+                          >
+                            <option value="admin">Administrador</option>
+                            <option value="usuario">Usuario</option>
+                          </select>
+                        </td>
+                      )}
+                      {grupo.columnas.map((c) => (
                         <td key={c.clave}>
                           <input
                             type="checkbox"
@@ -243,6 +169,105 @@ export default function PermisosClientes({ perfiles, miId }) {
               </tbody>
             </table>
           </div>
+        </div>
+      ))}
+
+      <div style={{ marginTop: 24 }}>
+        <div className="section-title" style={{ marginTop: 0 }}>
+          Administradores
+        </div>
+        {administradores.length === 0 ? (
+          <div className="empty">Todavía no hay nadie con el rol Administrador.</div>
+        ) : (
+          <>
+            {GRUPOS.map((grupo) => (
+              <div key={grupo.titulo} style={{ marginTop: 10 }}>
+                <div style={{ overflowX: "auto" }}>
+                  <table className="perm-table">
+                    <thead>
+                      <tr>
+                        <th>{grupo.titulo}</th>
+                        {grupo.columnas.map((c) => (
+                          <th key={c.clave} title={c.label}>
+                            <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+                            {c.label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {administradores.map((p) => {
+                        const permisos = { ...PERMISOS_DEFAULT, ...(p.permisos || {}) };
+                        return (
+                          <tr key={p.id}>
+                            <td>
+                              {p.full_name}
+                              {p.id === miId && <span className="tag-tu">Tú</span>}
+                            </td>
+                            {grupo.columnas.map((c) => (
+                              <td key={c.clave}>
+                                <input
+                                  type="checkbox"
+                                  checked={!!permisos[c.clave]}
+                                  disabled={loadingId === p.id}
+                                  onChange={(e) => togglePermiso(p, c.clave, e.target.checked)}
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+
+            {/* Tabla exclusiva de Administradores (Editar equipo/cliente/
+                orden/mantenimiento de compresor/Hold) -- estas acciones no
+                se pueden dar a un Usuario normal, solo a quien ya tenga el
+                rol Administrador. */}
+            <div style={{ marginTop: 10 }}>
+              <div style={{ overflowX: "auto" }}>
+                <table className="perm-table">
+                  <thead>
+                    <tr>
+                      <th>Administradores</th>
+                      {COLUMNAS_ADMIN.map((c) => (
+                        <th key={c.clave} title={c.label}>
+                          <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+                          {c.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {administradores.map((p) => {
+                      const permisos = { ...PERMISOS_DEFAULT, ...(p.permisos || {}) };
+                      return (
+                        <tr key={p.id}>
+                          <td>
+                            {p.full_name}
+                            {p.id === miId && <span className="tag-tu">Tú</span>}
+                          </td>
+                          {COLUMNAS_ADMIN.map((c) => (
+                            <td key={c.clave}>
+                              <input
+                                type="checkbox"
+                                checked={!!permisos[c.clave]}
+                                disabled={loadingId === p.id}
+                                onChange={(e) => togglePermiso(p, c.clave, e.target.checked)}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
