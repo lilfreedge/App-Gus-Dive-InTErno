@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconEdit, IconTank, IconPlus, IconCatalog } from "@/components/icons";
+import { IconEdit, IconTank, IconPlus, IconCatalog, IconBook } from "@/components/icons";
 
 const PERMISOS_DEFAULT = {
   equipos_clientes: false,
@@ -42,6 +42,10 @@ const COLUMNAS = [
   { clave: "equipos_clientes_agregar_equipo", label: "Agregar equipo", Icono: IconTank },
   { clave: "equipos_clientes_agregar_cliente", label: "Agregar cliente", Icono: IconPlus },
   { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
+  // "Bitácora movimientos en órdenes" (27-sep-2026, pedido explícito) --
+  // antes era Titular-only a la fuerza, ahora es un permiso granular más,
+  // igual que los 4 de arriba.
+  { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos", Icono: IconBook },
 ];
 
 const COLUMNAS_ADMIN = [{ clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit }];

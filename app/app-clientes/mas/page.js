@@ -74,14 +74,17 @@ const OPCIONES = [
   // 27-sep-2026: "un registro de todas las veces que cualquier orden es
   // editada. para enterarme quien cambio que en cada orden") -- solo
   // ediciones de órdenes (sin anulados, sin equipos), en su propio botón
-  // para no tener que entrar a "Historial" a buscarlas. Mismo criterio de
-  // acceso (Titular) que el resto de estos dos historiales.
+  // para no tener que entrar a "Historial" a buscarlas. Arrancó Titular-only
+  // como "Historial", pero el mismo día el Titular pidió poder dársela a
+  // alguien más sin hacerlo Titular/Administrador -- ahora es un permiso
+  // granular (equipos_clientes_bitacora_movimientos, editable en Permisos),
+  // el Titular la sigue viendo siempre.
   {
     href: "/app-clientes/administracion/bitacora-movimientos",
     titulo: "Bitácora movimientos en órdenes",
     descripcion: "Quién editó qué, en cualquier orden.",
     Icono: IconBook,
-    soloTitular: true,
+    permiso: "equipos_clientes_bitacora_movimientos",
   },
 ];
 

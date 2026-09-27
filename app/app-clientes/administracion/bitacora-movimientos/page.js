@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requireTitular } from "@/lib/roles";
+import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import HistorialDeleteButton from "@/components/HistorialDeleteButton";
@@ -13,13 +13,17 @@ import { filasOrden } from "@/lib/historial-ordenes";
 // propio en "Más", distinto de "Historial" (que mezcla ediciones Y
 // movimientos anulados de órdenes Y equipos). Este solo trae ediciones de
 // ordenes_equipos, sin filtrar por una orden en particular -- para ver de
-// un vistazo quién cambió qué en cualquier orden. Mismo criterio de
-// acceso que "Historial" (solo Titular) y misma fuente (historial_con_
-// nombre), reutilizando filasOrden (lib/historial-ordenes.js) para no
-// desincronizar la lista de campos entre las dos pantallas.
+// un vistazo quién cambió qué en cualquier orden. Misma fuente
+// (historial_con_nombre), reutilizando filasOrden (lib/historial-ordenes.js)
+// para no desincronizar la lista de campos entre las dos pantallas.
+// Arrancó Titular-only como "Historial", pero el mismo día (pedido
+// explícito: "pon para yo dar acceso... en administracion") pasó a
+// gatearse con un permiso granular propio (equipos_clientes_bitacora_
+// movimientos) -- el Titular sigue viendo esto siempre, sin importar el
+// valor guardado (ver tieneAcceso en lib/roles.js).
 export default async function BitacoraMovimientosPage() {
   const supabase = createClient();
-  await requireTitular(supabase);
+  await requirePermisoClientes(supabase, "equipos_clientes_bitacora_movimientos");
 
   const { data: cambios } = await supabase
     .from("historial_con_nombre")

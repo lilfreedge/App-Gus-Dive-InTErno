@@ -99,8 +99,11 @@ export default function RegistroClient({ ordenes }) {
                   <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
                 </div>
                 <div className="list-item-bottom">
+                  {/* Folio quitado de aquí (pedido explícito, 27-sep-2026:
+                      "borra el folio de aqui, ponlo invisible") -- en esta
+                      lista ya no se muestra, solo el No. de orden del
+                      talonario (arriba) y la fecha. */}
                   <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
-                  <div className="folio-discreto">folio #{o.folio}</div>
                 </div>
               </Link>
               {/* Shortcut a "Actualizar estado de orden" (item 11, pedido

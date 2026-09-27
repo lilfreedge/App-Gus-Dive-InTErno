@@ -80,9 +80,6 @@ export default async function ReporteOrdenPage({ params }) {
             </div>
           </div>
           <div style={{ padding: 16 }}>
-            <div className="folio-discreto" style={{ marginBottom: 10 }}>
-              folio #{o.folio}
-            </div>
             <div style={{ overflow: "auto" }}>
               <table className="reporte-preview-tabla">
                 <thead>
@@ -100,6 +97,14 @@ export default async function ReporteOrdenPage({ params }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+            {/* Folio movido abajo a la derecha, chico (pedido explícito,
+                27-sep-2026: "pon el folio abajo a la derecha pequeño") --
+                mismo lugar/estilo que ya usa la ficha de la orden
+                (app/app-clientes/ordenes/[id]/page.js), antes iba arriba
+                de la tabla. */}
+            <div className="folio-discreto" style={{ marginTop: 10, textAlign: "right" }}>
+              folio #{o.folio}
             </div>
           </div>
         </div>
