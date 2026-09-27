@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconEdit, IconTank, IconPlus, IconCatalog, IconBook } from "@/components/icons";
+import { IconEdit, IconTank, IconPlus, IconCatalog, IconBook, IconHistory, IconReport, IconRefresh, IconUsers, IconCompressor, IconWrench } from "@/components/icons";
 
 const PERMISOS_DEFAULT = {
   equipos_clientes: false,
@@ -12,6 +12,21 @@ const PERMISOS_DEFAULT = {
   equipos_clientes_agregar_cliente: false,
   equipos_clientes_catalogo: false,
   equipos_clientes_editar_equipo: false,
+  // 6 permisos nuevos de la ronda grande de feedback (27-sep-2026, pedido
+  // explícito): Historial y Reportes pasan a ser permisos granulares
+  // (antes Titular-only / siempre visibles); Actualizar estado de orden
+  // se puede ocultar por permiso; y 3 permisos nuevos exclusivos de
+  // Administradores (ver COLUMNAS_ADMIN más abajo).
+  equipos_clientes_historial: false,
+  equipos_clientes_reportes: false,
+  equipos_clientes_actualizar_estado: false,
+  equipos_clientes_editar_cliente: false,
+  equipos_clientes_editar_orden: false,
+  equipos_clientes_editar_mantenimiento_compresor: false,
+  // Item 36, nueva feature (mockup Informe.dc.html): informe de
+  // mantenimiento de un Regulador, permiso propio igual que Actualizar
+  // estado de orden (no exclusivo de Administradores).
+  equipos_clientes_informe_mantenimiento: false,
 };
 
 // Tabla de permisos propia de App Clientes -- mismo patrón que
@@ -46,9 +61,33 @@ const COLUMNAS = [
   // antes era Titular-only a la fuerza, ahora es un permiso granular más,
   // igual que los 4 de arriba.
   { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos", Icono: IconBook },
+  // 3 columnas nuevas (ronda grande de feedback, 27-sep-2026, pedido
+  // explícito): Historial y Reportes dejan de ser Titular-only/siempre
+  // visibles y pasan a este mismo patrón; "Actualizar estado de orden"
+  // (el botón/atajo de seguimiento) ahora también se puede ocultar.
+  { clave: "equipos_clientes_historial", label: "Historial", Icono: IconHistory },
+  { clave: "equipos_clientes_reportes", label: "Reportes", Icono: IconReport },
+  { clave: "equipos_clientes_actualizar_estado", label: "Actualizar estado de orden", Icono: IconRefresh },
+  // Item 36, nueva feature (mockup Informe.dc.html): pantalla propia,
+  // separada de "Actualizar estado de orden", para el informe de
+  // mantenimiento de un Regulador.
+  { clave: "equipos_clientes_informe_mantenimiento", label: "Informe de mantenimiento", Icono: IconWrench },
 ];
 
-const COLUMNAS_ADMIN = [{ clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit }];
+// Tabla "Administradores" (solo para quienes ya tienen ese rol) -- acciones
+// más sensibles, que además de venir con el permiso puntual requieren que
+// el usuario sea Administrador. "Editar cliente", "Editar orden" y "Editar
+// mantenimiento de compresor" se suman acá (ronda grande de feedback,
+// 27-sep-2026, pedido explícito: el de mantenimiento de compresor es un
+// permiso APARTE de "Editar orden", no un caso especial de ese mismo --
+// "si" a la pregunta directa "una permiso nuevo para eso, no meterlo con
+// editar orden").
+const COLUMNAS_ADMIN = [
+  { clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit },
+  { clave: "equipos_clientes_editar_cliente", label: "Editar cliente", Icono: IconUsers },
+  { clave: "equipos_clientes_editar_orden", label: "Editar orden", Icono: IconEdit },
+  { clave: "equipos_clientes_editar_mantenimiento_compresor", label: "Editar mantenimiento de compresor", Icono: IconCompressor },
+];
 
 // Columna "Rol" (pedido de seguimiento, 23-sep-2026: "creemos algo
 // similar como está en app interno. que puedo darle rol y accesos

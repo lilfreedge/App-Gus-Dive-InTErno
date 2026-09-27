@@ -5,7 +5,9 @@ import { createClient } from "@/lib/supabase/client";
 
 // Tipos de equipo a los que puede aplicar un servicio (item 21) --
 // mismos valores que en nuevo/form-client.js.
-const TIPOS_EQUIPO = ["Tanques", "Reguladores", "BC", "Computadora"];
+// "Compresor" agregado (pedido explícito, ronda grande de feedback,
+// 27-sep-2026) -- mismo criterio que en nuevo/form-client.js.
+const TIPOS_EQUIPO = ["Tanques", "Reguladores", "BC", "Computadora", "Compresor"];
 const TIPO_EQUIPO_DISPLAY = { Tanques: "Tanque", Reguladores: "Regulador" };
 
 // Editar/activar-desactivar un servicio del catálogo. No hay borrado --

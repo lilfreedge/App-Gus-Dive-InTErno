@@ -4,8 +4,10 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { tipoEquipoDisplay } from "@/lib/tipo-equipo";
 
-const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Otro"];
-const CON_SERIE = ["Reguladores", "Tanques", "Computadora"];
+// "Compresor" agregado (pedido explícito, ronda grande de feedback,
+// 27-sep-2026) -- mismo patrón que los demás tipos, lleva serie.
+const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Compresor", "Otro"];
+const CON_SERIE = ["Reguladores", "Tanques", "Computadora", "Compresor"];
 
 let siguienteId = 1;
 function filaVacia() {

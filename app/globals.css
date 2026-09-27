@@ -1600,6 +1600,38 @@ label .req {
   }
 }
 
+/* "Click denegado" (pedido explícito, ronda grande de feedback,
+   27-sep-2026: "cuando un boton que no funcione, si alguien le da click...
+   que se vea como el click denegado... pero que no se quede sin hacer
+   nada porque uno cree que es un error del app") -- feedback visual corto
+   para un control bloqueado que igual recibe un click (no se usa el
+   atributo disabled nativo en esos casos -- ese ni deja disparar el
+   evento -- así que el control queda clickeable y muestra este efecto en
+   vez de no hacer nada. Ver lib/useDenegado.js. */
+.denegado-shake {
+  animation: denegado-shake 0.35s ease-in-out;
+  border-color: var(--rojo) !important;
+}
+
+@keyframes denegado-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
 /* Estado del sistema: métricas de uso con explicación simple. */
 .metric-card {
   background: var(--tarjeta);

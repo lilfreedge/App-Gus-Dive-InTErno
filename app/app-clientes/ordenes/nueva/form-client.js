@@ -11,6 +11,7 @@ import { subirFoto } from "@/lib/storage-client";
 import { hoyISO } from "@/lib/fechas";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { COMPONENTES_REGULADOR_DEFS } from "@/lib/informe-mantenimiento";
 
 // Registrar orden (App Equipos Clientes, rediseñado 23-sep-2026 tras
 // definir "Equipo del cliente"): No. de orden, cliente, equipo de ese
@@ -66,6 +67,11 @@ export default function NuevaOrdenForm({
   // vez que aparece algo así).
   const [autorizacionCliente, setAutorizacionCliente] = useState("");
   const [autorizacionNotas, setAutorizacionNotas] = useState("");
+  // Item 36 (Informe de mantenimiento) -- estado inicial del regulador,
+  // solo se anota aquí, en el registro.
+  const [componentesRecibidos, setComponentesRecibidos] = useState({});
+  const [danosVisibles, setDanosVisibles] = useState("");
+  const [problemasReportados, setProblemasReportados] = useState("");
   const [notas, setNotas] = useState("");
   const [foto, setFoto] = useState(null);
 
@@ -129,6 +135,10 @@ export default function NuevaOrdenForm({
   // "quita la seccion de autorizacion del cliente, para todo. solo dejalo
   // para regulador") -- antes se mostraba siempre.
   const esRegulador = tipoEquipoActual === "Reguladores";
+
+  function toggleComponenteRecibido(id) {
+    setComponentesRecibidos((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
 
   function onEquipoChange(id) {
     setEquipoId(id);
@@ -209,6 +219,11 @@ export default function NuevaOrdenForm({
         // anterior de equipo.
         autorizacion_cliente: esRegulador ? autorizacionCliente || null : null,
         autorizacion_notas: esRegulador ? autorizacionNotas.trim() || null : null,
+        // Estado inicial del regulador (item 36, Informe de mantenimiento)
+        // -- solo aplica a Reguladores, igual que Autorización del cliente.
+        regulador_componentes: esRegulador ? componentesRecibidos : {},
+        regulador_danos_visibles: esRegulador ? danosVisibles.trim() || null : null,
+        regulador_problemas_reportados: esRegulador ? problemasReportados.trim() || null : null,
         notas: notas.trim() || null,
         foto_url: fotoUrl,
         fecha,
@@ -338,6 +353,43 @@ export default function NuevaOrdenForm({
             onChange={(e) => setAutorizacionNotas(e.target.value)}
             placeholder="Detalles o excepciones (opcional) — ej: puede cambiar manguera pero no O-rings"
             style={{ marginTop: 6 }}
+          />
+
+          {/* Item 36, nueva feature "Informe de mantenimiento" (mockup
+              Informe.dc.html) -- estado inicial del regulador, se anota
+              SOLO aquí, al registrar la orden (el Informe lo muestra de
+              solo lectura). */}
+          <label style={{ marginTop: 14 }}>Componentes recibidos</label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+            {COMPONENTES_REGULADOR_DEFS.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={componentesRecibidos[c.id] ? "btn btn-primary" : "btn secondary"}
+                onClick={() => toggleComponenteRecibido(c.id)}
+                style={{ marginTop: 0, width: "auto", padding: "7px 12px", fontSize: 12.5 }}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          <label htmlFor="danos_visibles" style={{ marginTop: 12 }}>Daños visibles</label>
+          <textarea
+            id="danos_visibles"
+            rows={2}
+            value={danosVisibles}
+            onChange={(e) => setDanosVisibles(e.target.value)}
+            placeholder="Opcional -- daños que ya traía el equipo al recibirlo"
+          />
+
+          <label htmlFor="problemas_reportados">Problemas reportados</label>
+          <textarea
+            id="problemas_reportados"
+            rows={2}
+            value={problemasReportados}
+            onChange={(e) => setProblemasReportados(e.target.value)}
+            placeholder="Opcional -- lo que el cliente reporta que le pasa al equipo"
           />
         </>
       )}

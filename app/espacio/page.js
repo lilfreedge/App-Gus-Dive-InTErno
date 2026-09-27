@@ -57,8 +57,10 @@ export default async function EspacioPage() {
     );
   }
   if (ordenesEnEspera > 0) {
+    // "en Hold" (pedido explícito, ronda grande de feedback, 27-sep-2026:
+    // renombrar "En espera" a "En Hold" en toda la app).
     lineasClientes.push(
-      `${ordenesEnEspera} orden${ordenesEnEspera === 1 ? "" : "es"} en espera`
+      `${ordenesEnEspera} orden${ordenesEnEspera === 1 ? "" : "es"} en Hold`
     );
   }
   if (ordenesEnHidrostatica > 0) {

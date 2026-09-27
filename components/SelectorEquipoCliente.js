@@ -4,11 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { tipoEquipoDisplay, tipoEquipoLabel } from "@/lib/tipo-equipo";
 
-const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Otro"];
+// "Compresor" agregado (pedido explícito, ronda grande de feedback,
+// 27-sep-2026: "agregar Compresor al listado de tipo_equipo") -- mismo
+// patrón que los demás, sin catálogo ni tabla aparte.
+const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Compresor", "Otro"];
 
-// Reguladores, Tanques y Computadora llevan número de serie (pedido
-// explícito, 23-sep-2026) -- BC y Otro no lo piden.
-const CON_SERIE = ["Reguladores", "Tanques", "Computadora"];
+// Reguladores, Tanques, Computadora y Compresor llevan número de serie
+// (Compresor agregado por el mismo criterio -- lleva serie igual que en
+// el catálogo de Compresores de App Interno) -- BC y Otro no lo piden.
+const CON_SERIE = ["Reguladores", "Tanques", "Computadora", "Compresor"];
 
 // Selector del equipo de un cliente (23-sep-2026, pedido explícito: "me
 // interesa tener un historial de que se le ha hecho cada vez que ha ido

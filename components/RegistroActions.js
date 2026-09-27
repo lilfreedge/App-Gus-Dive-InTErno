@@ -14,7 +14,13 @@ import { IconEdit, IconTrash } from "./icons";
 // borrar el registro que esa ficha muestra rompe (notFound()) -- así que
 // si se pasa una ruta, navega ahí en vez de refrescar. Sin este prop, el
 // comportamiento no cambia para los usos existentes (listados).
-export default function RegistroActions({ tabla, registro, editHref, afterDelete }) {
+// `mostrarEditar`/`mostrarAnular` (ronda grande de feedback, 27-sep-2026,
+// pedido explícito: permiso nuevo y separado para "editar orden"/"editar
+// mantenimiento de compresor", distinto del permiso de anular -- que
+// sigue siendo Titular/Administrador, según la política de borrado en la
+// base de datos) -- ambos por default true, así que los demás usos de
+// este componente (App Interno) no cambian.
+export default function RegistroActions({ tabla, registro, editHref, afterDelete, mostrarEditar = true, mostrarAnular = true }) {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -69,18 +75,22 @@ export default function RegistroActions({ tabla, registro, editHref, afterDelete
 
   return (
     <div className="row-actions">
-      <Link href={editHref} className="icon-btn" aria-label="Editar" title="Editar">
-        <IconEdit size={15} />
-      </Link>
-      <button
-        className="icon-btn icon-btn-danger"
-        onClick={abrirModal}
-        disabled={loading}
-        aria-label="Borrar"
-        title="Borrar"
-      >
-        <IconTrash size={15} />
-      </button>
+      {mostrarEditar && (
+        <Link href={editHref} className="icon-btn" aria-label="Editar" title="Editar">
+          <IconEdit size={15} />
+        </Link>
+      )}
+      {mostrarAnular && (
+        <button
+          className="icon-btn icon-btn-danger"
+          onClick={abrirModal}
+          disabled={loading}
+          aria-label="Borrar"
+          title="Borrar"
+        >
+          <IconTrash size={15} />
+        </button>
+      )}
 
       {modalAbierto && (
         <div

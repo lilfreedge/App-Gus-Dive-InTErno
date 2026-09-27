@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermiso, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
-import { holdActivo, diasEnHold, labelTipoHold } from "@/lib/holds";
+import { holdActivo, diasEnHold, labelTipoHold, detalleHold } from "@/lib/holds";
 import FotoLightbox from "@/components/FotoLightbox";
 
 const BADGE_ESTADO = {
@@ -35,7 +35,16 @@ export default async function FichaOrdenPage({ params }) {
   // el borrado ya está restringido a Titular/Admin en la base de datos
   // (migration_16.sql), así que los botones se muestran con el mismo
   // criterio para no ofrecer algo que el servidor va a rechazar.
-  const puedeEditarAnular = esTitular || !!profile?.is_admin;
+  // Permisos granulares nuevos (ronda grande de feedback, 27-sep-2026,
+  // pedido explícito): "Actualizar estado de orden" se puede ocultar por
+  // permiso (antes cualquiera con acceso a la app veía el botón), y "Ver
+  // historial de ediciones de esta orden" pasó de Titular-only al mismo
+  // permiso que gatea la pantalla completa de Historial.
+  const puedeActualizarEstado = tieneAcceso(profile, "equipos_clientes_actualizar_estado");
+  const puedeVerHistorial = tieneAcceso(profile, "equipos_clientes_historial");
+  // Item 36, nueva feature (mockup Informe.dc.html) -- permiso propio,
+  // separado de "Actualizar estado de orden".
+  const puedeVerInforme = tieneAcceso(profile, "equipos_clientes_informe_mantenimiento");
 
   const { data: o } = await supabase
     .from("ordenes_equipos_con_nombre")
@@ -57,6 +66,16 @@ export default async function FichaOrdenPage({ params }) {
   // "Hold" (27-sep-2026, reemplaza el check "En espera" -- ver lib/holds.js).
   const hold = holdActivo(o.holds);
   const bitacora = o.bitacora_orden || [];
+  // Editar y Anular ahora se deciden por separado (ronda grande de
+  // feedback, 27-sep-2026, pedido explícito: permiso nuevo y propio para
+  // "editar orden"/"editar mantenimiento de compresor", sin tocar quién
+  // puede anular -- eso sigue siendo Titular/Administrador, según la
+  // política de borrado en la base de datos, migration_16.sql).
+  const puedeEditar = tieneAcceso(
+    profile,
+    o.tipo_equipo === "Compresor" ? "equipos_clientes_editar_mantenimiento_compresor" : "equipos_clientes_editar_orden"
+  );
+  const puedeAnular = esTitular || !!profile?.is_admin;
 
   return (
     <div>
@@ -87,13 +106,17 @@ export default async function FichaOrdenPage({ params }) {
           </h1>
           {/* Editar/anular la orden (item 7, pedido explícito, 26-sep-2026:
               "más allá del seguimiento" -- cliente/equipo/servicio/No. de
-              orden). Mismo componente que ya usa el resto de la app. */}
-          {puedeEditarAnular && (
+              orden). Mismo componente que ya usa el resto de la app.
+              Editar y Anular se muestran por separado según corresponda
+              (ver puedeEditar/puedeAnular arriba). */}
+          {(puedeEditar || puedeAnular) && (
             <RegistroActions
               tabla="ordenes_equipos"
               registro={o}
               editHref={`/app-clientes/ordenes/${o.id}/editar-datos`}
               afterDelete="/app-clientes/historial"
+              mostrarEditar={puedeEditar}
+              mostrarAnular={puedeAnular}
             />
           )}
         </div>
@@ -117,7 +140,10 @@ export default async function FichaOrdenPage({ params }) {
               </span>
               {o.en_espera && (
                 <span className="badge badge-rojo" style={{ marginLeft: 6 }}>
-                  En espera{o.motivo_espera ? ` — ${o.motivo_espera}` : ""}
+                  {/* "En Hold" (pedido explícito, ronda grande de feedback,
+                      27-sep-2026: renombrar también este badge, no solo el
+                      título de la sección en Inicio). */}
+                  En Hold{o.motivo_espera ? ` — ${o.motivo_espera}` : ""}
                 </span>
               )}
             </Campo>
@@ -164,18 +190,9 @@ export default async function FichaOrdenPage({ params }) {
               }}
             >
               <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--rojo)" }}>
-                EN HOLD — {labelTipoHold(hold.tipo)}
+                EN HOLD — {labelTipoHold(hold)}
               </div>
-              <div style={{ fontSize: 14.5, marginTop: 4 }}>
-                {hold.tipo === "cambio_componente" ? (
-                  <>
-                    Cambiar: <strong>{hold.componente}</strong>
-                    {hold.motivo && ` — ${hold.motivo}`}
-                  </>
-                ) : (
-                  hold.motivo
-                )}
-              </div>
+              <div style={{ fontSize: 14.5, marginTop: 4 }}>{detalleHold(hold)}</div>
               <div className="hint-text" style={{ marginTop: 4 }}>
                 Desde el {formatFechaDDMMAAAADeDate(hold.fecha_inicio)} ({diasEnHold(hold)} día{diasEnHold(hold) === 1 ? "" : "s"} en Hold) — resuélvelo desde &quot;Actualizar estado de orden&quot;.
               </div>
@@ -199,7 +216,7 @@ export default async function FichaOrdenPage({ params }) {
               vivía fuera de esta tarjeta, después de "Registrado por"). Por
               ahora solo Reguladores, mismo alcance que ya tenía Reportes. */}
           {esRegulador && (
-            <div style={{ marginTop: 16 }}>
+            <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
               <Link
                 href={`/app-clientes/reportes/${o.id}`}
                 className="btn secondary"
@@ -207,15 +224,30 @@ export default async function FichaOrdenPage({ params }) {
               >
                 Ver, descargar o enviar el reporte de esta orden
               </Link>
+              {/* Informe de mantenimiento (item 36, nueva feature, mockup
+                  Informe.dc.html) -- distinto del Reporte de arriba: un
+                  formulario estructurado que llena el técnico y se
+                  convierte en el documento que se entrega al cliente. */}
+              {puedeVerInforme && (
+                <Link
+                  href={`/app-clientes/ordenes/${o.id}/informe`}
+                  className="btn secondary"
+                  style={{ width: "100%", display: "flex", justifyContent: "center", textDecoration: "none" }}
+                >
+                  Informe de mantenimiento
+                </Link>
+              )}
             </div>
           )}
 
           <div className="section-title">Seguimiento</div>
-          <Link href={`/app-clientes/ordenes/${o.id}/editar`}>
-            <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 14 }}>
-              Actualizar estado de orden
-            </button>
-          </Link>
+          {puedeActualizarEstado && (
+            <Link href={`/app-clientes/ordenes/${o.id}/editar`}>
+              <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 14 }}>
+                Actualizar estado de orden
+              </button>
+            </Link>
+          )}
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {esReparacion && (
               <Campo etiqueta="Fecha de envío a taller o proveedor" valor={o.fecha_envio ? formatFechaDDMMAAAADeDate(o.fecha_envio) : "—"} />
@@ -312,7 +344,7 @@ export default async function FichaOrdenPage({ params }) {
           </div>
         </div>
 
-        {esTitular && (
+        {puedeVerHistorial && (
           <div style={{ marginTop: 10 }}>
             <Link
               href={`/app-clientes/administracion/historial?orden=${o.id}`}

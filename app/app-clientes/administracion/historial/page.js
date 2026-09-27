@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requireTitular } from "@/lib/roles";
+import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import HistorialDeleteButton from "@/components/HistorialDeleteButton";
 import { formatFecha } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { filasOrden } from "@/lib/historial-ordenes";
+import { filasOrden, filasCliente } from "@/lib/historial-ordenes";
 
 // "Historial" consolidado de App Equipos de clientes (item 31, pedido
 // explícito, 27-sep-2026: "en mas, crea un boton de historial y ahi
@@ -33,14 +33,21 @@ import { filasOrden } from "@/lib/historial-ordenes";
 // columna, porque esa información nunca se guardó.
 export default async function HistorialAdministracionPage({ searchParams }) {
   const supabase = createClient();
-  await requireTitular(supabase);
+  // Permiso granular nuevo (ronda grande de feedback, 27-sep-2026, pedido
+  // explícito) -- antes esta pantalla era exclusiva del Titular. La
+  // política RLS de cambios_historial se actualizó en migration_35.sql
+  // para que quien tenga este permiso también pueda VER las filas (antes
+  // solo is_titular() podía, ni Administradores).
+  await requirePermisoClientes(supabase, "equipos_clientes_historial", "/app-clientes/mas");
 
   const ordenId = searchParams?.orden || "";
 
+  // "clientes_equipos" sumada (feature nueva "Editar cliente" de esta
+  // misma entrega) -- ver filasCliente() más abajo.
   let query = supabase
     .from("historial_con_nombre")
     .select("*")
-    .in("tabla", ["ordenes_equipos", "equipos_del_cliente"])
+    .in("tabla", ["ordenes_equipos", "equipos_del_cliente", "clientes_equipos"])
     .order("created_at", { ascending: false })
     .limit(300);
 
@@ -92,7 +99,9 @@ export default async function HistorialAdministracionPage({ searchParams }) {
 }
 
 function tituloTabla(tabla) {
-  return tabla === "equipos_del_cliente" ? "Equipo" : "Orden";
+  if (tabla === "equipos_del_cliente") return "Equipo";
+  if (tabla === "clientes_equipos") return "Cliente";
+  return "Orden";
 }
 
 function TarjetaAnulado({ cambio }) {
@@ -181,8 +190,13 @@ function TarjetaEdicion({ cambio }) {
   const d = cambio.datos_anteriores || {};
   const dn = cambio.datos_nuevos || null;
   const esOrden = cambio.tabla === "ordenes_equipos";
-  const filas = esOrden ? filasOrden(d, dn) : filasEquipo(d, dn);
-  const titulo = esOrden ? `Orden No. ${d.no_orden_fisico ?? d.folio ?? "?"} editada` : `${tipoEquipoLabel(d.tipo_equipo, d.tipo_equipo_otro) || "Equipo"} editado`;
+  const esCliente = cambio.tabla === "clientes_equipos";
+  const filas = esOrden ? filasOrden(d, dn) : esCliente ? filasCliente(d, dn) : filasEquipo(d, dn);
+  const titulo = esOrden
+    ? `Orden No. ${d.no_orden_fisico ?? d.folio ?? "?"} editada`
+    : esCliente
+      ? `Cliente ${dn?.nombre || d.nombre || ""} editado`
+      : `${tipoEquipoLabel(d.tipo_equipo, d.tipo_equipo_otro) || "Equipo"} editado`;
 
   return (
     <div className="card edicion">
@@ -217,10 +231,16 @@ function TarjetaEdicion({ cambio }) {
         </tbody>
       </table>
       <Link
-        href={esOrden ? `/app-clientes/ordenes/${cambio.registro_id}` : `/app-clientes/equipos/${cambio.registro_id}`}
+        href={
+          esOrden
+            ? `/app-clientes/ordenes/${cambio.registro_id}`
+            : esCliente
+              ? `/app-clientes/clientes/${cambio.registro_id}`
+              : `/app-clientes/equipos/${cambio.registro_id}`
+        }
         style={{ display: "inline-block", marginTop: 8, fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
       >
-        {esOrden ? "Ver orden actual →" : "Ver equipo actual →"}
+        {esOrden ? "Ver orden actual →" : esCliente ? "Ver cliente actual →" : "Ver equipo actual →"}
       </Link>
     </div>
   );

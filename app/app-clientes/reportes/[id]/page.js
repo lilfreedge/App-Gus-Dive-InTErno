@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import BotonImprimir from "@/components/BotonImprimir";
@@ -18,7 +18,10 @@ import EnviarReporteClient from "./enviar-client";
 // Reguladores, mismo alcance de siempre.
 export default async function ReporteOrdenPage({ params }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  // Permiso granular nuevo (ronda grande de feedback, 27-sep-2026, pedido
+  // explícito) -- mismo permiso que la lista (app-clientes/reportes),
+  // para que no se pueda entrar directo a la URL de un reporte sin él.
+  await requirePermisoClientes(supabase, "equipos_clientes_reportes", "/app-clientes/mas");
 
   const { data: o } = await supabase
     .from("ordenes_equipos_con_nombre")

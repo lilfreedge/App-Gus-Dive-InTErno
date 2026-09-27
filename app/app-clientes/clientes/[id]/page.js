@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermiso, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { IconEdit } from "@/components/icons";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -25,6 +26,10 @@ export default async function FichaClientePage({ params }) {
   // todo igual, solo se ocultan los botones de crear.
   const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
   const puedeAgregarEquipo = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_agregar_equipo;
+  // "Editar cliente" (feature nueva, ronda grande de feedback, 27-sep-2026,
+  // pedido explícito) -- permiso granular propio, exclusivo de
+  // Administradores (ver COLUMNAS_ADMIN en permisos-client.js).
+  const puedeEditarCliente = tieneAcceso(profile, "equipos_clientes_editar_cliente");
 
   const { data: cliente } = await supabase
     .from("clientes_equipos")
@@ -73,7 +78,16 @@ export default async function FichaClientePage({ params }) {
             { label: cliente.nombre },
           ]}
         />
-        <h1 className="page-title">{cliente.nombre}</h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+          <h1 className="page-title" style={{ marginBottom: 2 }}>{cliente.nombre}</h1>
+          {/* "Editar cliente" (feature nueva, ronda grande de feedback,
+              27-sep-2026, pedido explícito) -- corrige nombre/teléfono. */}
+          {puedeEditarCliente && (
+            <Link href={`/app-clientes/clientes/${cliente.id}/editar`} className="icon-btn" aria-label="Editar cliente" title="Editar cliente">
+              <IconEdit size={15} />
+            </Link>
+          )}
+        </div>
 
         <div className="card">
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

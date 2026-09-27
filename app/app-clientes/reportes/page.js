@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import ReportesClient from "./reportes-client";
@@ -16,7 +16,9 @@ import ReportesClient from "./reportes-client";
 // -- por ahora esta lista solo trae órdenes de Reguladores.
 export default async function ReportesPage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "equipos_clientes");
+  // Permiso granular nuevo (ronda grande de feedback, 27-sep-2026, pedido
+  // explícito) -- antes cualquiera con acceso a la app podía ver Reportes.
+  await requirePermisoClientes(supabase, "equipos_clientes_reportes", "/app-clientes/mas");
 
   const { data: ordenes } = await supabase
     .from("ordenes_equipos")

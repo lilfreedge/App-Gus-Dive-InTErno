@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
@@ -17,7 +17,13 @@ import EditarSeguimientoForm from "./form-client";
 // lib/ordenes-estado.js.
 export default async function EditarSeguimientoPage({ params, searchParams }) {
   const supabase = createClient();
-  const { profile } = await requirePermiso(supabase, "equipos_clientes");
+  // Permiso granular nuevo (ronda grande de feedback, 27-sep-2026, pedido
+  // explícito) -- antes cualquiera con acceso a la app podía entrar acá.
+  const { profile } = await requirePermisoClientes(
+    supabase,
+    "equipos_clientes_actualizar_estado",
+    `/app-clientes/ordenes/${params.id}`
+  );
   // "Verificado por" solo lo puede llenar el Titular o un Administrador
   // (pedido explícito, 23-sep-2026: "por el momento, el 'verificado por'
   // solamente lo podré llenar yo y a quien yo le de acceso como
@@ -69,7 +75,16 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
           ]}
         />
         <h1 className="page-title">Actualizar estado de orden</h1>
-        <p className="page-subtitle">Todos estos campos son opcionales -- llénalos a medida que vaya avanzando la orden. El cambio queda anotado en el historial.</p>
+
+        {/* Item 37 (pedido explícito, texto EXACTO recuperado del
+            transcript tras una compactación ambigua: "ah no quita to esa
+            vaina" sobre mi propia propuesta de quitar títulos/subtítulos
+            redundantes app-wide) -- el único caso real era el subtítulo
+            largo de esta pantalla ("Todos estos campos son opcionales...")
+            duplicando lo que ya queda claro en el wizard de abajo. No se
+            tocó ningún otro subtítulo de la app: todos los demás agregan
+            información real y distinta, y el patrón breadcrumb+h1 es una
+            convención intencional en toda la app. */}
 
         {/* Resumen de la orden que se está actualizando (item 26, pedido
             explícito, 26-sep-2026: "agregar aqui en la parte de arriba
@@ -80,6 +95,15 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
         <div className="card" style={{ padding: "12px 16px", marginBottom: 16, fontSize: 14 }}>
           <strong>No. {orden.no_orden_fisico ?? orden.folio}</strong> — {orden.cliente_nombre_snapshot || "—"} —{" "}
           {tipoEquipoLabel(orden.tipo_equipo, orden.tipo_equipo_otro)} — {formatFechaDDMMAAAADeDate(orden.fecha)}
+          {/* Servicio a realizar agregado al resumen (pedido explícito,
+              mid-flow, con captura de pantalla: "en los datos del cliente,
+              agregar el servicio que se va a realizar"). */}
+          {orden.que_se_hara && (
+            <>
+              <br />
+              {orden.que_se_hara}
+            </>
+          )}
         </div>
 
         <EditarSeguimientoForm orden={orden} puedeVerificar={puedeVerificar} piezas={piezas || []} />

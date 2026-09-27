@@ -5,8 +5,10 @@ import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import { tipoEquipoDisplay } from "@/lib/tipo-equipo";
 
-const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Otro"];
-const CON_SERIE = ["Reguladores", "Tanques", "Computadora"];
+// "Compresor" agregado (pedido explícito, ronda grande de feedback,
+// 27-sep-2026) -- mismo patrón que los demás tipos, lleva serie.
+const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Compresor", "Otro"];
+const CON_SERIE = ["Reguladores", "Tanques", "Computadora", "Compresor"];
 
 // Mismo patrón que "Editar compresor" (app/equipos/compresores/[id]/editar):
 // formulario precargado, registrarCambio con los datos de ANTES justo

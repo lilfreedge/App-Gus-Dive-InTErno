@@ -75,13 +75,13 @@ export default async function PerfilClientesPage() {
           <PreferenciasApariencia />
         </div>
 
+        {/* Texto de instrucción del drag quitado (item 14, pedido explícito,
+            ronda grande de feedback, 27-sep-2026: "quitalo en ambos") --
+            App Interno nunca tuvo este texto exacto (tiene el suyo propio,
+            distinto, en PersonalizarMenu.js), así que este cambio solo
+            aplicaba acá. */}
         <div className="section-title" style={{ marginTop: 26 }}>
           Personalizar mi menú
-        </div>
-        <div className="card" style={{ marginBottom: 14 }}>
-          <p style={{ fontSize: 13, color: "var(--texto-suave)", margin: 0 }}>
-            Mantén presionado y arrastra los botones del menú de arriba para ordenarlos a tu gusto. Inicio y Más siempre quedan fijos en su lugar.
-          </p>
         </div>
         <div className="card">
           <PersonalizarMenuClientes

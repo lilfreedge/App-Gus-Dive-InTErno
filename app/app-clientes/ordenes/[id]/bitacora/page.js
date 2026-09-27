@@ -59,6 +59,17 @@ export default async function BitacoraOrdenPage({ params }) {
                 <span className="list-item-title">{e.texto}</span>
               </div>
               {e.detalle && <div style={{ fontSize: 14, marginTop: 4 }}>{e.detalle}</div>}
+              {/* Duración del Hold agregada (pedido explícito, mid-flow,
+                  con captura de pantalla: "que aparezca todo el detalle")
+                  -- solo se puede calcular en las entradas guardadas desde
+                  este cambio en adelante (fecha_inicio_hold nuevo). */}
+              {e.fecha_inicio_hold && (
+                <div className="hint-text" style={{ marginTop: 4 }}>
+                  Desde el {formatFechaDDMMAAAADeDate(e.fecha_inicio_hold)} hasta el {formatFechaDDMMAAAADeDate(e.fecha)} (
+                  {Math.floor((new Date(e.fecha).getTime() - new Date(e.fecha_inicio_hold).getTime()) / (1000 * 60 * 60 * 24))} día
+                  {Math.floor((new Date(e.fecha).getTime() - new Date(e.fecha_inicio_hold).getTime()) / (1000 * 60 * 60 * 24)) === 1 ? "" : "s"} en Hold)
+                </div>
+              )}
               <div className="hint-text" style={{ marginTop: 6 }}>{formatFechaDDMMAAAADeDate(e.fecha)}</div>
             </div>
           ))

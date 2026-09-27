@@ -11,7 +11,9 @@ import { createClient } from "@/lib/supabase/client";
 // equipo" simplemente se marca en los 4). Si no se marca ninguno, el
 // servicio no aparece en ningún desplegable -- por eso se pide al menos
 // uno al guardar.
-const TIPOS_EQUIPO = ["Tanques", "Reguladores", "BC", "Computadora"];
+// "Compresor" agregado (pedido explícito, ronda grande de feedback,
+// 27-sep-2026) -- mismo criterio: "Otro" no aplica acá tampoco.
+const TIPOS_EQUIPO = ["Tanques", "Reguladores", "BC", "Computadora", "Compresor"];
 const TIPO_EQUIPO_DISPLAY = { Tanques: "Tanque", Reguladores: "Regulador" };
 
 export default function NuevoServicioForm() {

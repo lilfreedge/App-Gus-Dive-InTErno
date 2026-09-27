@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermiso, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import EditarDatosOrdenForm from "./form-client";
@@ -17,7 +17,6 @@ import EditarDatosOrdenForm from "./form-client";
 export default async function EditarDatosOrdenPage({ params }) {
   const supabase = createClient();
   const { profile } = await requirePermiso(supabase, "equipos_clientes");
-  if (!profile?.es_titular && !profile?.is_admin) notFound();
 
   const { data: orden } = await supabase
     .from("ordenes_equipos")
@@ -26,6 +25,16 @@ export default async function EditarDatosOrdenPage({ params }) {
     .single();
 
   if (!orden) notFound();
+
+  // Permisos granulares nuevos (ronda grande de feedback, 27-sep-2026,
+  // pedido explícito: "una permiso nuevo para eso, no meterlo con editar
+  // orden") -- reemplaza el check anterior, fijo a Titular/Administrador.
+  // Una orden de Compresor pide su propio permiso, separado de "Editar
+  // orden" -- ambos exclusivos de la tabla "Administradores" en Permisos
+  // (COLUMNAS_ADMIN), el Titular los tiene siempre vía tieneAcceso().
+  const permisoNecesario =
+    orden.tipo_equipo === "Compresor" ? "equipos_clientes_editar_mantenimiento_compresor" : "equipos_clientes_editar_orden";
+  if (!tieneAcceso(profile, permisoNecesario)) notFound();
 
   const [{ data: clientes }, { data: equipos }, { data: servicios }] = await Promise.all([
     supabase.from("clientes_equipos").select("id, nombre, telefono").order("nombre"),

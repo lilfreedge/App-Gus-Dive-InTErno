@@ -167,10 +167,13 @@ export default async function AppClientesPage() {
             ninguna orden en ese estado ("en caso de que no haya ninguna
             orden pues que no salga en inicio esto", pedido de v28), pero
             tras probar en vivo el usuario prefirió verlas siempre. */}
-        <div className="section-title">Órdenes en espera ({(enEspera || []).length})</div>
+        {/* "En Hold" (pedido explícito, ronda grande de feedback,
+            27-sep-2026: renombrar "Órdenes en espera" en Inicio y también
+            el badge "En espera" en todos lados). */}
+        <div className="section-title">Órdenes en Hold ({(enEspera || []).length})</div>
         <ListaOrdenes
           ordenes={enEsperaConHold}
-          vacio="No hay órdenes en espera."
+          vacio="No hay órdenes en Hold."
           fechaCampo="fecha"
           fechaLabel="Fecha de ingreso a tienda"
           mostrarMotivoEspera
@@ -273,7 +276,7 @@ function ListaOrdenes({
                 </span>
                 <span style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                   {BADGE_ESTADO[o.estado] && <span className={`badge ${BADGE_ESTADO[o.estado]}`}>{o.estado}</span>}
-                  {o.en_espera && <span className="badge badge-rojo">En espera</span>}
+                  {o.en_espera && <span className="badge badge-rojo">En Hold</span>}
                 </span>
                 <span className="list-item-qty" style={{ textAlign: "right", flexShrink: 0 }}>
                   <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--texto-suave)" }}>{fechaLabel}</div>
@@ -287,7 +290,7 @@ function ListaOrdenes({
               )}
               {atrasada && (
                 <div className="hint-text" style={{ marginTop: 4, color: "var(--rojo)", fontWeight: 600 }}>
-                  Atrasada — lleva {diasTranscurridos} día{diasTranscurridos === 1 ? "" : "s"} sin trabajar
+                  Atrasada — lleva {diasTranscurridos} día{diasTranscurridos === 1 ? "" : "s"} en tienda
                 </div>
               )}
               {enHoldHaceDias !== null && (

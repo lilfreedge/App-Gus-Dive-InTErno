@@ -12,10 +12,23 @@ const BADGE_ESTADO = {
   "Pendiente por despachar": "badge-azul",
 };
 
+// Pestañas (pedido explícito, mid-flow: "agrega aqui junto a abiertas,
+// pendientes por trabajar, pendientes por entregar. agrega todo lo demas
+// que hay en inicio y que sea clickeable asi") -- las 3 últimas replican
+// las secciones que ya existían en Inicio (Órdenes en espera/Hold, En
+// prueba hidrostática, Enviadas a reparación), con el mismo criterio de
+// filtro que usa esa pantalla. "Abiertas" se renombró a "Órdenes
+// abiertas" (pedido explícito). No se agregó una pestaña de "Cerradas":
+// esta pantalla es la cola de trabajo de lo que sigue abierto a propósito
+// (las Entregado viven en Historial de órdenes, no acá) -- agregarla
+// duplicaría esa otra pantalla.
 const TABS = [
-  { clave: "abiertas", label: "Abiertas" },
+  { clave: "abiertas", label: "Órdenes abiertas" },
   { clave: "por_trabajar", label: "Pendientes por trabajar" },
   { clave: "por_entregar", label: "Pendientes por entregar" },
+  { clave: "en_hold", label: "En Hold" },
+  { clave: "hidrostatica", label: "En prueba hidrostática" },
+  { clave: "reparacion", label: "Enviadas a reparación" },
 ];
 
 const SORTS = [
@@ -27,7 +40,7 @@ const SORTS = [
 // probar v24 en vivo): ordenes ya viene sin las Entregado (filtradas en
 // el server). Acá solo se reparten entre las 3 pestañas + el buscador de
 // cliente, todo combinado (tab Y búsqueda a la vez).
-export default function RegistroClient({ ordenes }) {
+export default function RegistroClient({ ordenes, puedeActualizarEstado = true }) {
   const [tab, setTab] = useState("abiertas");
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("fecha_asc");
@@ -35,9 +48,20 @@ export default function RegistroClient({ ordenes }) {
   const filtrados = useMemo(() => {
     let base = ordenes;
     if (tab === "por_trabajar") {
-      base = base.filter((o) => o.estado === "Pendiente por trabajar" || o.estado === "En proceso");
+      // Mismo criterio que Inicio: excluye las que ya salieron a
+      // hidrostática/reparación y no han vuelto -- esas se ven en su
+      // propia pestaña, no acá también.
+      base = base
+        .filter((o) => o.estado === "Pendiente por trabajar" || o.estado === "En proceso")
+        .filter((o) => !((o.fecha_envio || o.fecha_envio_hidrostatica) && !o.fecha_retorno_tienda));
     } else if (tab === "por_entregar") {
       base = base.filter((o) => o.estado === "Pendiente por despachar");
+    } else if (tab === "en_hold") {
+      base = base.filter((o) => o.en_espera);
+    } else if (tab === "hidrostatica") {
+      base = base.filter((o) => o.fecha_envio_hidrostatica && !o.fecha_retorno_tienda);
+    } else if (tab === "reparacion") {
+      base = base.filter((o) => o.fecha_envio && !o.fecha_retorno_tienda);
     }
     const query = q.trim().toLowerCase();
     if (query) {
@@ -51,13 +75,18 @@ export default function RegistroClient({ ordenes }) {
 
   return (
     <div>
-      <div className="period-toggle" style={{ marginBottom: 14 }}>
+      {/* flexWrap (pedido explícito, mid-flow: "que se vea cuadrado todo")
+          -- con 6 pestañas ya no caben en una sola fila; envuelven de a 3
+          por fila (flex-basis ~30%) para que las dos filas queden parejas,
+          en vez de una fila larga apretada o una pestaña sola y suelta. */}
+      <div className="period-toggle" style={{ marginBottom: 14, flexWrap: "wrap", rowGap: 8 }}>
         {TABS.map((t) => (
           <button
             key={t.clave}
             type="button"
             className={`period-btn ${tab === t.clave ? "period-btn-active" : ""}`}
             onClick={() => setTab(t.clave)}
+            style={{ flex: "1 1 30%" }}
           >
             {t.label}
           </button>
@@ -117,16 +146,20 @@ export default function RegistroClient({ ordenes }) {
                   ordenes... quiero algo relacionado con 'actualizar
                   estado'") -- antes era un check (26-sep-2026, para
                   diferenciarlo del lápiz de "Editar/anular la orden"), pero
-                  el usuario pidió algo más asociado a "actualizar estado". */}
-              <Link
-                href={`/app-clientes/ordenes/${o.id}/editar?from=registro`}
-                className="icon-btn"
-                aria-label="Actualizar estado de orden"
-                title="Actualizar estado de orden"
-                style={{ flexShrink: 0 }}
-              >
-                <IconRefresh size={15} />
-              </Link>
+                  el usuario pidió algo más asociado a "actualizar estado".
+                  Oculto sin el permiso equipos_clientes_actualizar_estado
+                  (ronda grande de feedback, 27-sep-2026, pedido explícito). */}
+              {puedeActualizarEstado && (
+                <Link
+                  href={`/app-clientes/ordenes/${o.id}/editar?from=registro`}
+                  className="icon-btn"
+                  aria-label="Actualizar estado de orden"
+                  title="Actualizar estado de orden"
+                  style={{ flexShrink: 0 }}
+                >
+                  <IconRefresh size={15} />
+                </Link>
+              )}
             </div>
           ))
         )}

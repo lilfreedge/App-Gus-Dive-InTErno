@@ -53,22 +53,26 @@ const OPCIONES = [
     descripcion: "Reporte de seguimiento por orden -- por ahora, solo para Reguladores.",
     // Mismo ícono que usa "Reportes" en App Interno (item 15, pedido
     // explícito, 27-sep-2026: "ponle a reportes el mismo icono que tiene
-    // el de app interno") -- antes usaba IconReceipt.
+    // el de app interno") -- antes usaba IconReceipt. Permiso granular
+    // nuevo (ronda grande de feedback, 27-sep-2026) -- antes se veía con
+    // solo tener acceso a la app.
     Icono: IconReport,
+    permiso: "equipos_clientes_reportes",
   },
   // "Historial" (item 31, pedido explícito, 27-sep-2026: "en mas, crea un
   // boton de historial y ahi dentro pone los historiales que te dije
   // anteriormente. tambien pon movimientos anulados") -- reemplaza los dos
-  // botones que antes vivían sueltos dentro de Administración. Solo
-  // Titular (mismo criterio de siempre para estos dos historiales) -- se
-  // filtra acá para que la tarjeta ni se muestre a los demás, aunque la
-  // página también se protege sola del lado del servidor.
+  // botones que antes vivían sueltos dentro de Administración. Pasó de
+  // Titular-only a permiso granular (ronda grande de feedback, 27-sep-2026,
+  // pedido explícito) -- se filtra acá para que la tarjeta ni se muestre
+  // sin el permiso, aunque la página también se protege sola del lado del
+  // servidor (y su política RLS, ver migration_35.sql).
   {
     href: "/app-clientes/administracion/historial",
     titulo: "Historial",
     descripcion: "Ediciones y movimientos anulados de órdenes y equipos.",
     Icono: IconHistory,
-    soloTitular: true,
+    permiso: "equipos_clientes_historial",
   },
   // "Bitácora movimientos en órdenes" (item nuevo, pedido explícito,
   // 27-sep-2026: "un registro de todas las veces que cualquier orden es
