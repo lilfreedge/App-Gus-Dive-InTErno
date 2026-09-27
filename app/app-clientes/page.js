@@ -6,6 +6,7 @@ import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { ATAJOS_INICIO_CLIENTES } from "@/lib/nav-clientes";
+import { holdActivo } from "@/lib/holds";
 
 const BADGE_ESTADO = {
   "En proceso": "badge-amarillo",
@@ -48,7 +49,7 @@ export default async function AppClientesPage() {
   const atajosInicio = ATAJOS_INICIO_CLIENTES.filter((a) => !!profile?.atajos_inicio_clientes?.[a.id]);
 
   const CAMPOS =
-    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, en_espera, motivo_espera";
+    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, en_espera, motivo_espera, holds";
 
   const [{ data: porTrabajarRaw }, { data: porEntregar }, { data: enEspera }, { data: enHidrostatica }, { data: enReparacion }] =
     await Promise.all([
@@ -109,6 +110,14 @@ export default async function AppClientesPage() {
     (o) => !((o.fecha_envio || o.fecha_envio_hidrostatica) && !o.fecha_retorno_tienda)
   );
 
+  // Aviso rojo de Hold activo hace más de 3 días (feature Hold,
+  // 27-sep-2026, pedido explícito: "si, 3 dias") -- se cuenta desde que
+  // empezó el Hold (hold.fecha_inicio), no desde el ingreso de la orden.
+  const enEsperaConHold = (enEspera || []).map((o) => ({
+    ...o,
+    hold_fecha_inicio: holdActivo(o.holds)?.fecha_inicio || null,
+  }));
+
   return (
     <div>
       <AppHeaderClientes />
@@ -160,10 +169,13 @@ export default async function AppClientesPage() {
             tras probar en vivo el usuario prefirió verlas siempre. */}
         <div className="section-title">Órdenes en espera ({(enEspera || []).length})</div>
         <ListaOrdenes
-          ordenes={enEspera}
+          ordenes={enEsperaConHold}
           vacio="No hay órdenes en espera."
           fechaCampo="fecha"
           fechaLabel="Fecha de ingreso a tienda"
+          mostrarMotivoEspera
+          diasDesdeCampo="hold_fecha_inicio"
+          avisoHoldDias={3}
         />
 
         <div className="section-title">Órdenes en prueba hidrostáticas ({(enHidrostatica || []).length})</div>
@@ -213,6 +225,16 @@ function ListaOrdenes({
   mostrarDiasAfuera = false,
   diasAfueraMinimo = null,
   avisoAtrasadaDias = null,
+  // Feature Hold (27-sep-2026): `diasDesdeCampo` permite contar los días
+  // desde OTRO campo del row (ej. el inicio del Hold activo) en vez del
+  // `fechaCampo` que se muestra a la derecha -- por defecto usa el mismo
+  // fechaCampo, así que las demás secciones no cambian de comportamiento.
+  // `avisoHoldDias` (pedido explícito: "si, 3 dias") agrega un aviso rojo
+  // aparte cuando ya lleva más de ese umbral. `mostrarMotivoEspera` muestra
+  // el resumen del Hold activo (motivo_espera, ya se deriva solo).
+  diasDesdeCampo = null,
+  avisoHoldDias = null,
+  mostrarMotivoEspera = false,
 }) {
   return (
     <div className="card">
@@ -221,8 +243,9 @@ function ListaOrdenes({
       ) : (
         ordenes.map((o) => {
           const fechaValor = o[fechaCampo];
-          const diasTranscurridos = fechaValor
-            ? Math.floor((Date.now() - new Date(fechaValor).getTime()) / (1000 * 60 * 60 * 24))
+          const valorParaDias = o[diasDesdeCampo || fechaCampo];
+          const diasTranscurridos = valorParaDias
+            ? Math.floor((Date.now() - new Date(valorParaDias).getTime()) / (1000 * 60 * 60 * 24))
             : null;
           // `diasAfueraMinimo` (item 7, pedido explícito, 27-sep-2026: "a
           // cada tanque que tenga mas de 15 dias fuera, ponle la cantidad
@@ -234,6 +257,8 @@ function ListaOrdenes({
               ? diasTranscurridos
               : null;
           const atrasada = avisoAtrasadaDias !== null && diasTranscurridos !== null && diasTranscurridos > avisoAtrasadaDias;
+          const enHoldHaceDias =
+            avisoHoldDias !== null && diasTranscurridos !== null && diasTranscurridos > avisoHoldDias ? diasTranscurridos : null;
           return (
             <Link
               key={o.id}
@@ -264,6 +289,14 @@ function ListaOrdenes({
                 <div className="hint-text" style={{ marginTop: 4, color: "var(--rojo)", fontWeight: 600 }}>
                   Atrasada — lleva {diasTranscurridos} día{diasTranscurridos === 1 ? "" : "s"} sin trabajar
                 </div>
+              )}
+              {enHoldHaceDias !== null && (
+                <div className="hint-text" style={{ marginTop: 4, color: "var(--rojo)", fontWeight: 600 }}>
+                  En Hold hace {enHoldHaceDias} día{enHoldHaceDias === 1 ? "" : "s"} — contactar al cliente
+                </div>
+              )}
+              {mostrarMotivoEspera && o.motivo_espera && (
+                <div className="hint-text" style={{ marginTop: 4 }}>{o.motivo_espera}</div>
               )}
             </Link>
           );

@@ -3,7 +3,7 @@ import { requirePermiso } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
-import { IconCatalog, IconReport, IconReceipt, IconHistory } from "@/components/icons";
+import { IconCatalog, IconReport, IconHistory, IconBook } from "@/components/icons";
 
 // Hub "Más" de App Clientes (23-sep-2026, pedido explícito: "agregar un
 // botón de 'mas' al lado de historial de ordenes... igual como que en
@@ -51,7 +51,10 @@ const OPCIONES = [
     href: "/app-clientes/reportes",
     titulo: "Reportes",
     descripcion: "Reporte de seguimiento por orden -- por ahora, solo para Reguladores.",
-    Icono: IconReceipt,
+    // Mismo ícono que usa "Reportes" en App Interno (item 15, pedido
+    // explícito, 27-sep-2026: "ponle a reportes el mismo icono que tiene
+    // el de app interno") -- antes usaba IconReceipt.
+    Icono: IconReport,
   },
   // "Historial" (item 31, pedido explícito, 27-sep-2026: "en mas, crea un
   // boton de historial y ahi dentro pone los historiales que te dije
@@ -65,6 +68,19 @@ const OPCIONES = [
     titulo: "Historial",
     descripcion: "Ediciones y movimientos anulados de órdenes y equipos.",
     Icono: IconHistory,
+    soloTitular: true,
+  },
+  // "Bitácora movimientos en órdenes" (item nuevo, pedido explícito,
+  // 27-sep-2026: "un registro de todas las veces que cualquier orden es
+  // editada. para enterarme quien cambio que en cada orden") -- solo
+  // ediciones de órdenes (sin anulados, sin equipos), en su propio botón
+  // para no tener que entrar a "Historial" a buscarlas. Mismo criterio de
+  // acceso (Titular) que el resto de estos dos historiales.
+  {
+    href: "/app-clientes/administracion/bitacora-movimientos",
+    titulo: "Bitácora movimientos en órdenes",
+    descripcion: "Quién editó qué, en cualquier orden.",
+    Icono: IconBook,
     soloTitular: true,
   },
 ];

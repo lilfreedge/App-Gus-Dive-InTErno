@@ -30,13 +30,21 @@ const PERMISOS_DEFAULT = {
 // nueva pantalla del Titular donde se decide quién entra a cada app).
 // El campo real (profiles.permisos.equipos_clientes) sigue siendo el
 // mismo -- solo cambió DESDE DÓNDE se edita.
+// "Editar equipo" salió de esta tabla general (27-sep-2026, pedido
+// explícito: "quitar editar equipo de aqui") -- se quedó exclusivo de la
+// tabla "Administradores" de abajo (ver COLUMNAS_ADMIN), que a su vez
+// perdió las otras 4 columnas (pedido explícito, mismo día: "quitar todo
+// aqui, dejar solo editar equipo"). El campo real
+// (profiles.permisos.equipos_clientes_editar_equipo) es el mismo de
+// siempre -- solo cambió desde qué tabla se activa.
 const COLUMNAS = [
   { clave: "equipos_clientes_registrar", label: "Registrar orden", Icono: IconEdit },
   { clave: "equipos_clientes_agregar_equipo", label: "Agregar equipo", Icono: IconTank },
   { clave: "equipos_clientes_agregar_cliente", label: "Agregar cliente", Icono: IconPlus },
-  { clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit },
   { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
 ];
+
+const COLUMNAS_ADMIN = [{ clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit }];
 
 // Columna "Rol" (pedido de seguimiento, 23-sep-2026: "creemos algo
 // similar como está en app interno. que puedo darle rol y accesos
@@ -71,9 +79,11 @@ export default function PermisosClientes({ perfiles, miId }) {
   // seccion separada en administracion, para yo darle accesos a quien
   // tenga ese rol, asi como está en el app interno") -- mismo patrón que
   // la sección "Administradores" de app/admin/usuarios/lista-client.js:
-  // filtra y muestra a quienes YA tienen el rol Administrador hoy, con
-  // las mismas casillas de la tabla de arriba (sin la columna Rol, que
-  // aquí no aplica -- ya se sabe que son administradores).
+  // filtra y muestra a quienes YA tienen el rol Administrador hoy (sin la
+  // columna Rol, que aquí no aplica -- ya se sabe que son administradores).
+  // Desde el 27-sep-2026 (pedido explícito) esta tabla quedó reducida a
+  // solo "Editar equipo" (COLUMNAS_ADMIN) -- ya no repite las otras 4
+  // columnas de la tabla de arriba.
   const administradores = perfiles.filter((p) => p.is_admin && !p.es_titular);
 
   return (
@@ -157,7 +167,7 @@ export default function PermisosClientes({ perfiles, miId }) {
               <thead>
                 <tr>
                   <th>Usuario</th>
-                  {COLUMNAS.map((c) => (
+                  {COLUMNAS_ADMIN.map((c) => (
                     <th key={c.clave} title={c.label}>
                       <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
                       {c.label}
@@ -174,7 +184,7 @@ export default function PermisosClientes({ perfiles, miId }) {
                         {p.full_name}
                         {p.id === miId && <span className="tag-tu">Tú</span>}
                       </td>
-                      {COLUMNAS.map((c) => (
+                      {COLUMNAS_ADMIN.map((c) => (
                         <td key={c.clave}>
                           <input
                             type="checkbox"

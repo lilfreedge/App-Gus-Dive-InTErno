@@ -8,6 +8,7 @@ import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
+import { holdActivo, diasEnHold, labelTipoHold } from "@/lib/holds";
 import FotoLightbox from "@/components/FotoLightbox";
 
 const BADGE_ESTADO = {
@@ -53,6 +54,9 @@ export default async function FichaOrdenPage({ params }) {
   const esReparacion = esServicioReparacion(o.que_se_hara);
   const muestraRetorno = esReparacion || esHidrostatica;
   const esRegulador = o.tipo_equipo === "Reguladores";
+  // "Hold" (27-sep-2026, reemplaza el check "En espera" -- ver lib/holds.js).
+  const hold = holdActivo(o.holds);
+  const bitacora = o.bitacora_orden || [];
 
   return (
     <div>
@@ -146,6 +150,38 @@ export default async function FichaOrdenPage({ params }) {
             {o.notas && <Campo etiqueta="Notas" valor={o.notas} full />}
           </div>
 
+          {/* Banner de Hold activo (27-sep-2026, pedido explícito: "visible
+              banner on ficha... showing the motivo" -- se resuelve desde
+              "Actualizar estado de orden", con la Decisión del cliente). */}
+          {hold && (
+            <div
+              style={{
+                marginTop: 16,
+                background: "var(--error-fondo)",
+                border: "2px solid var(--rojo)",
+                borderRadius: 10,
+                padding: 14,
+              }}
+            >
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--rojo)" }}>
+                EN HOLD — {labelTipoHold(hold.tipo)}
+              </div>
+              <div style={{ fontSize: 14.5, marginTop: 4 }}>
+                {hold.tipo === "cambio_componente" ? (
+                  <>
+                    Cambiar: <strong>{hold.componente}</strong>
+                    {hold.motivo && ` — ${hold.motivo}`}
+                  </>
+                ) : (
+                  hold.motivo
+                )}
+              </div>
+              <div className="hint-text" style={{ marginTop: 4 }}>
+                Desde el {formatFechaDDMMAAAADeDate(hold.fecha_inicio)} ({diasEnHold(hold)} día{diasEnHold(hold) === 1 ? "" : "s"} en Hold) — resuélvelo desde &quot;Actualizar estado de orden&quot;.
+              </div>
+            </div>
+          )}
+
           {o.foto_url && (
             <>
               <div className="section-title">Foto</div>
@@ -231,6 +267,20 @@ export default async function FichaOrdenPage({ params }) {
               REPUESTOS UTILIZADOS {!o.repuestos_usados && o.estado !== "Entregado" && "(obligatorio antes de entregar)"}
             </div>
             <div style={{ fontSize: 14.5 }}>{o.repuestos_usados || "—"}</div>
+          </div>
+
+          {/* Bitácora de la orden (27-sep-2026, pedido explícito: "si, que
+              la pueda ver quien sea por ahora") -- historial de Holds
+              resueltos y repuestos autorizados eliminados. Visible a
+              cualquiera con acceso a la app, no solo Titular (a diferencia
+              de "Ver historial de ediciones" más abajo). */}
+          <div style={{ marginTop: 10 }}>
+            <Link
+              href={`/app-clientes/ordenes/${o.id}/bitacora`}
+              style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
+            >
+              Ver bitácora de la orden ({bitacora.length}) →
+            </Link>
           </div>
 
           {/* Notas del técnico sobre el regulador (item 12, pedido

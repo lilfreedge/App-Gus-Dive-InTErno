@@ -6,6 +6,7 @@ import { registrarCambio } from "@/lib/audit-client";
 import { calcularEstadoOrden, esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
 import { hoyISO } from "@/lib/fechas";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { TIPOS_HOLD, holdActivo, diasEnHold, resumenHold, crearHold, resolverHold, labelTipoHold } from "@/lib/holds";
 
 const VERIFICADO_POR = ["Pipe", "Gugi"];
 const MEDIOS_NOTIFICACION = ["Llamada", "WhatsApp", "Correo", "Otro"];
@@ -53,13 +54,30 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   const esReparacion = esServicioReparacion(orden.que_se_hara);
   const muestraRetorno = esReparacion || esHidrostatica;
 
-  // "En espera" vuelve a ser un check independiente, separado de
-  // Reparación (26-sep-2026, pedido explícito, tras quitar "Status": "con
-  // relacion a lo que me dijiste de 'en espera' ok si ponle el check otra
-  // vez") -- mismas columnas de siempre (en_espera/motivo_espera), antes
-  // de que "Status" las uniera con Reparación en un solo control.
-  const [enEspera, setEnEspera] = useState(!!orden.en_espera);
-  const [motivoEspera, setMotivoEspera] = useState(orden.motivo_espera || "");
+  // "Hold" (27-sep-2026, reemplaza el check "En espera" -- ver
+  // lib/holds.js para el diseño completo). `holds` guarda el historial
+  // completo (activo + resueltos) en un solo jsonb array, igual que
+  // notificaciones_cliente -- se muta en memoria y se guarda todo junto
+  // al hacer "Guardar seguimiento", como ya hacen Notificaciones y
+  // Repuestos.
+  const [holds, setHolds] = useState(orden.holds || []);
+  const hold = holdActivo(holds);
+
+  const [holdModalAbierto, setHoldModalAbierto] = useState(false);
+  const [holdTipo, setHoldTipo] = useState("cambio_componente");
+  const [holdComponente, setHoldComponente] = useState("");
+  const [holdMotivo, setHoldMotivo] = useState("");
+  const [holdError, setHoldError] = useState("");
+
+  const [decisionSel, setDecisionSel] = useState("");
+  const [decisionNota, setDecisionNota] = useState("");
+
+  // Bitácora de la orden (visible a cualquiera con acceso a la app, no
+  // solo Titular -- pedido explícito: "si, que la pueda ver quien sea por
+  // ahora") -- un renglón por cada Hold resuelto y por cada repuesto
+  // "autorizado" que se elimina.
+  const [bitacora, setBitacora] = useState(orden.bitacora_orden || []);
+
   // Fecha de envío a taller o proveedor (26-sep-2026, renombrado de
   // "Fecha de envío" -- pedido explícito: "cambiar fecha de envio por
   // 'fecha de envio a taller o proveedor'" -- mismo campo de siempre,
@@ -82,17 +100,32 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   // gusta [el selector del catálogo]. Ponlo que sea una seccion para
   // escribir los repuestos y que se vayan enlistando" -- mismo patrón que
   // "Notificaciones al cliente": se escribe uno, se agrega, y se va
-  // enlistando con un "Quitar" por ítem. Se sigue guardando como el mismo
-  // texto separado por comas de siempre (repuestos_usados), para no
-  // necesitar una migración ni perder nada de lo ya guardado -- solo
-  // cambia cómo se arma ese texto en pantalla.
-  const [repuestos, setRepuestos] = useState(() =>
-    (orden.repuestos_usados || "")
+  // enlistando con un "Quitar" por ítem. Cada repuesto ahora es un objeto
+  // { nombre, origen } (27-sep-2026, feature Hold) -- "origen" distingue
+  // los que se escribieron a mano ("manual") de los que llegaron
+  // autorizados por el cliente desde un Hold ("autorizado", ver
+  // resolverHoldActivo más abajo). Si la orden ya trae repuestos_usados_
+  // detalle (columna nueva) se usa eso; si no, se reconstruye desde el
+  // texto de siempre (repuestos_usados) asumiendo que todo lo ya guardado
+  // se escribió a mano -- no hay manera de saber su origen retroactivo.
+  const [repuestos, setRepuestos] = useState(() => {
+    if (Array.isArray(orden.repuestos_usados_detalle) && orden.repuestos_usados_detalle.length > 0) {
+      return orden.repuestos_usados_detalle;
+    }
+    return (orden.repuestos_usados || "")
       .split(",")
       .map((r) => r.trim())
       .filter(Boolean)
-  );
+      .map((nombre) => ({ nombre, origen: "manual" }));
+  });
   const [nuevoRepuesto, setNuevoRepuesto] = useState("");
+  // Quitar un repuesto "autorizado" pide motivo (pedido explícito: "el
+  // motivo es cuando es algo que se puso con autorizacion del cliente.
+  // porque hay todo un proceso detras de eso") -- se queda anotado en la
+  // Bitácora. Uno "manual" se quita libre, como siempre.
+  const [repuestoAEliminar, setRepuestoAEliminar] = useState(null); // índice, o null si no hay modal abierto
+  const [motivoEliminarRepuesto, setMotivoEliminarRepuesto] = useState("");
+  const [motivoEliminarError, setMotivoEliminarError] = useState(false);
   // Notas del técnico sobre el regulador (item 12, pedido explícito:
   // "abajo de lo repuestos, agrega una seccion para que el tecnico ponga
   // notas del regulador, asi el tecnico puede poner alguna recomendacion
@@ -113,18 +146,103 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   const puedeEditarEntrega = notificaciones.length > 0;
   const puedeEditarRecibe = !!fechaEntrega;
 
+  function abrirHoldModal() {
+    setHoldTipo("cambio_componente");
+    setHoldComponente("");
+    setHoldMotivo("");
+    setHoldError("");
+    setHoldModalAbierto(true);
+  }
+
+  function cerrarHoldModal() {
+    setHoldModalAbierto(false);
+  }
+
+  function confirmarHold() {
+    if (holdTipo === "cambio_componente" && !holdComponente.trim()) {
+      setHoldError("Indica qué hay que cambiar.");
+      return;
+    }
+    if (holdTipo === "otro" && !holdMotivo.trim()) {
+      setHoldError("Indica el motivo.");
+      return;
+    }
+    const nuevo = crearHold({ tipo: holdTipo, componente: holdComponente, motivo: holdMotivo });
+    setHolds((prev) => [...prev, nuevo]);
+    setHoldModalAbierto(false);
+  }
+
+  // "Decisión del cliente" (Sí/No + nota opcional) resuelve el Hold --
+  // no hay un botón aparte de "Quitar de Hold" (pedido explícito: llenar
+  // la decisión ya lo saca de espera solo, y la orden vuelve a figurar
+  // como pendiente por trabajar según calcularEstadoOrden, como siempre).
+  function resolverHoldActivo() {
+    if (!hold || !decisionSel) return;
+
+    const resuelto = resolverHold(hold, { decision: decisionSel, decisionNota });
+    setHolds((prev) => prev.map((h) => (h.id === hold.id ? resuelto : h)));
+
+    // Autorización de cambio de componente -> se agrega solo a Repuestos
+    // utilizados, marcado como "autorizado" (pedido explícito: "siii,
+    // buenisimo").
+    if (hold.tipo === "cambio_componente" && decisionSel === "si" && hold.componente) {
+      setRepuestos((prev) => [...prev, { nombre: hold.componente, origen: "autorizado", holdId: hold.id }]);
+    }
+
+    setBitacora((prev) => [
+      {
+        fecha: hoyISO(),
+        tipo: "hold_resuelto",
+        texto: `${labelTipoHold(hold.tipo)} — ${resumenHold(hold)}`,
+        detalle: `Decisión del cliente: ${decisionSel === "si" ? "Sí" : "No"}${
+          decisionNota.trim() ? ` — ${decisionNota.trim()}` : ""
+        }`,
+      },
+      ...prev,
+    ]);
+
+    setDecisionSel("");
+    setDecisionNota("");
+  }
+
   function agregarRepuesto() {
     const valor = nuevoRepuesto.trim();
     if (!valor) return;
-    setRepuestos((prev) => [...prev, valor]);
+    setRepuestos((prev) => [...prev, { nombre: valor, origen: "manual" }]);
     setNuevoRepuesto("");
   }
 
   function quitarRepuesto(i) {
+    const item = repuestos[i];
+    if (item?.origen === "autorizado") {
+      setRepuestoAEliminar(i);
+      setMotivoEliminarRepuesto("");
+      setMotivoEliminarError(false);
+      return;
+    }
     setRepuestos((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  const repuestosUsadosFinal = repuestos.join(", ");
+  function cancelarEliminarRepuesto() {
+    setRepuestoAEliminar(null);
+  }
+
+  function confirmarEliminarRepuestoAutorizado() {
+    const motivoLimpio = motivoEliminarRepuesto.trim();
+    if (!motivoLimpio) {
+      setMotivoEliminarError(true);
+      return;
+    }
+    const nombre = repuestos[repuestoAEliminar]?.nombre;
+    setRepuestos((prev) => prev.filter((_, idx) => idx !== repuestoAEliminar));
+    setBitacora((prev) => [
+      { fecha: hoyISO(), tipo: "repuesto_eliminado", texto: `Repuesto autorizado eliminado: ${nombre}`, detalle: motivoLimpio },
+      ...prev,
+    ]);
+    setRepuestoAEliminar(null);
+  }
+
+  const repuestosUsadosFinal = repuestos.map((r) => r.nombre).join(", ");
 
   function agregarNotificacion() {
     if (!notifFecha) return;
@@ -170,9 +288,16 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
 
     setLoading(true);
 
+    const activo = holdActivo(holds);
+
     const cambios = {
-      en_espera: enEspera,
-      motivo_espera: enEspera ? motivoEspera.trim() || null : null,
+      // "En espera" ya no es un check de siempre -- se deriva del Hold
+      // activo (ver lib/holds.js), pero se sigue guardando en las mismas
+      // columnas de siempre para que nada de lo que ya las lee (Inicio,
+      // lib/notificaciones.js, la ficha) necesite cambiar.
+      en_espera: !!activo,
+      motivo_espera: activo ? resumenHold(activo) : null,
+      holds,
       envio_a: esReparacion ? "Reparación" : null,
       fecha_envio: esReparacion ? fechaEnvio || null : null,
       fecha_envio_hidrostatica: esHidrostatica ? fechaEnvioHidrostatica || null : null,
@@ -186,6 +311,8 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
       nombre_recibe: puedeEditarRecibe ? nombreRecibe.trim() || null : orden.nombre_recibe || null,
       factura: factura.trim() || null,
       repuestos_usados: repuestosUsadosFinal || null,
+      repuestos_usados_detalle: repuestos,
+      bitacora_orden: bitacora,
       notas_tecnico_regulador: notasTecnico.trim() || null,
     };
 
@@ -222,23 +349,155 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      <label className="check-label" style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
-        <input
-          type="checkbox"
-          checked={enEspera}
-          onChange={(e) => setEnEspera(e.target.checked)}
-          style={{ width: "auto" }}
-        />
-        En espera
-      </label>
-      {enEspera && (
-        <input
-          type="text"
-          value={motivoEspera}
-          onChange={(e) => setMotivoEspera(e.target.value)}
-          placeholder="Motivo -- ej: esperando que lleguen piezas"
-          style={{ marginTop: 6 }}
-        />
+      {/* "Hold" (27-sep-2026, reemplaza el check "En espera" -- ver
+          lib/holds.js). Sin hold activo: solo el botón para abrir uno.
+          Con hold activo: caja destacada con el detalle y la "Decisión
+          del cliente" que lo resuelve. */}
+      {!hold ? (
+        <button type="button" className="btn secondary" onClick={abrirHoldModal} style={{ marginTop: 0, width: "auto" }}>
+          Poner en Hold
+        </button>
+      ) : (
+        <div
+          style={{
+            background: "var(--error-fondo)",
+            border: "2px solid var(--rojo)",
+            borderRadius: 10,
+            padding: 14,
+          }}
+        >
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--rojo)" }}>
+            EN HOLD — {labelTipoHold(hold.tipo)}
+          </div>
+          <div style={{ fontSize: 14.5, marginTop: 4 }}>
+            {hold.tipo === "cambio_componente" ? (
+              <>
+                Cambiar: <strong>{hold.componente}</strong>
+                {hold.motivo && ` — ${hold.motivo}`}
+              </>
+            ) : (
+              hold.motivo
+            )}
+          </div>
+          <div className="hint-text" style={{ marginTop: 4 }}>
+            Desde el {formatFechaDDMMAAAADeDate(hold.fecha_inicio)} ({diasEnHold(hold)} día{diasEnHold(hold) === 1 ? "" : "s"} en Hold)
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            <label style={{ marginTop: 0 }}>
+              {hold.tipo === "cambio_componente" ? "¿El cliente autoriza el cambio?" : "Decisión del cliente"}
+            </label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                className={decisionSel === "si" ? "btn btn-primary" : "btn secondary"}
+                onClick={() => setDecisionSel("si")}
+                style={{ marginTop: 0, width: "auto" }}
+              >
+                Sí
+              </button>
+              <button
+                type="button"
+                className={decisionSel === "no" ? "btn btn-primary" : "btn secondary"}
+                onClick={() => setDecisionSel("no")}
+                style={{ marginTop: 0, width: "auto" }}
+              >
+                No
+              </button>
+            </div>
+            <input
+              type="text"
+              value={decisionNota}
+              onChange={(e) => setDecisionNota(e.target.value)}
+              placeholder="Nota (opcional)"
+              style={{ marginTop: 8 }}
+            />
+            <button
+              type="button"
+              className="btn secondary"
+              disabled={!decisionSel}
+              onClick={resolverHoldActivo}
+              style={{ marginTop: 8, width: "auto" }}
+            >
+              Guardar decisión y salir de Hold
+            </button>
+          </div>
+        </div>
+      )}
+
+      {holdModalAbierto && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) cerrarHoldModal();
+          }}
+        >
+          <div className="modal-panel">
+            <div className="modal-title">Poner en Hold</div>
+
+            <label style={{ marginTop: 14 }}>Motivo</label>
+            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+              {TIPOS_HOLD.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={holdTipo === t.id ? "btn btn-primary" : "btn secondary"}
+                  onClick={() => setHoldTipo(t.id)}
+                  style={{ marginTop: 0, width: "auto", flex: 1, fontSize: 12.5 }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {holdTipo === "cambio_componente" ? (
+              <>
+                <label style={{ marginTop: 12 }}>
+                  ¿Qué hay que cambiar? <span className="req">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={holdComponente}
+                  onChange={(e) => setHoldComponente(e.target.value)}
+                  placeholder="Ej: Kit de segunda etapa"
+                  list="piezas-catalogo"
+                  autoFocus
+                />
+                <label style={{ marginTop: 10 }}>¿Por qué? (opcional)</label>
+                <textarea
+                  rows={2}
+                  value={holdMotivo}
+                  onChange={(e) => setHoldMotivo(e.target.value)}
+                  placeholder="Qué se encontró al revisar el equipo (opcional)"
+                />
+              </>
+            ) : (
+              <>
+                <label style={{ marginTop: 12 }}>
+                  Motivo <span className="req">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={holdMotivo}
+                  onChange={(e) => setHoldMotivo(e.target.value)}
+                  placeholder="Explica por qué queda en espera"
+                  autoFocus
+                />
+              </>
+            )}
+
+            {holdError && <div className="error-msg">⚠ {holdError}</div>}
+
+            <div className="modal-actions">
+              <button className="btn secondary" type="button" onClick={cerrarHoldModal}>
+                Cancelar
+              </button>
+              <button className="btn btn-primary" type="button" onClick={confirmarHold}>
+                Poner en Hold
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {esReparacion && (
@@ -407,7 +666,8 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
           vivo: "No me gusta. Ponlo que sea una seccion para escribir los
           repuestos y que se vayan enlistando" -- mismo patrón que
           Notificaciones al cliente: se escribe uno, se agrega, se enlista
-          con "Quitar" por ítem). */}
+          con "Quitar" por ítem. Los "autorizado" (llegaron de un Hold, ver
+          arriba) muestran una etiqueta aparte y piden motivo al quitarlos). */}
       <div
         style={{
           marginTop: 20,
@@ -424,7 +684,12 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8, marginBottom: 10 }}>
             {repuestos.map((r, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5 }}>
-                <span>{r}</span>
+                <span>
+                  {r.nombre}
+                  {r.origen === "autorizado" && (
+                    <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--azul-claro)" }}>(autorizado)</span>
+                  )}
+                </span>
                 <button
                   type="button"
                   onClick={() => quitarRepuesto(i)}
@@ -471,6 +736,43 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
           </div>
         )}
       </div>
+
+      {repuestoAEliminar !== null && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) cancelarEliminarRepuesto();
+          }}
+        >
+          <div className="modal-panel">
+            <div className="modal-title">Quitar repuesto autorizado</div>
+            <div className={motivoEliminarError ? "field-error" : ""}>
+              <label style={{ marginTop: 14 }}>
+                Motivo <span className="req">*</span>
+              </label>
+              <textarea
+                rows={3}
+                placeholder="Por qué se quita este repuesto autorizado"
+                value={motivoEliminarRepuesto}
+                onChange={(e) => {
+                  setMotivoEliminarRepuesto(e.target.value);
+                  if (motivoEliminarError && e.target.value.trim()) setMotivoEliminarError(false);
+                }}
+                autoFocus
+              />
+              {motivoEliminarError && <div className="error-msg">⚠ Este campo es obligatorio</div>}
+            </div>
+            <div className="modal-actions">
+              <button className="btn secondary" onClick={cancelarEliminarRepuesto} type="button">
+                Cancelar
+              </button>
+              <button className="btn danger" onClick={confirmarEliminarRepuestoAutorizado} type="button">
+                Quitar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Notas del técnico sobre el regulador (item 12, pedido explícito
           25-sep-2026): recomendación o pendiente para el buzo, visible en

@@ -48,7 +48,7 @@ export default async function FichaClientePage({ params }) {
       .order("created_at", { ascending: false }),
     supabase
       .from("equipos_del_cliente")
-      .select("id, tipo_equipo, tipo_equipo_otro, marca, modelo")
+      .select("id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie")
       .eq("cliente_id", params.id)
       .order("created_at", { ascending: false }),
   ]);
@@ -123,6 +123,11 @@ export default async function FichaClientePage({ params }) {
                     <span className="list-item-title">
                       {tipoLabel}
                       {marcaModelo && ` — ${marcaModelo}`}
+                      {/* No. de serie al lado del equipo (item 14, pedido
+                          explícito, 27-sep-2026: "pon que los tanques y
+                          reguladores aparezcan con su numero de serie al
+                          lado"). */}
+                      {e.serie && ` — No. Serie ${e.serie}`}
                     </span>
                   </div>
                   <div className="list-item-meta">

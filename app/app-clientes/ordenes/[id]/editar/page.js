@@ -5,6 +5,7 @@ import { requirePermiso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import EditarSeguimientoForm from "./form-client";
 
 // Actualizar seguimiento (renombrado de "Editar seguimiento", 23-sep-2026,
@@ -73,10 +74,12 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
         {/* Resumen de la orden que se está actualizando (item 26, pedido
             explícito, 26-sep-2026: "agregar aqui en la parte de arriba
             datos sobre la orden que se esta actualizando, numero de orden,
-            cliente y el equipo"). */}
+            cliente y el equipo"). Fecha de ingreso agregada (item 13,
+            pedido explícito, 27-sep-2026: "agregar fecha de ingreso a los
+            datos de la orden"). */}
         <div className="card" style={{ padding: "12px 16px", marginBottom: 16, fontSize: 14 }}>
           <strong>No. {orden.no_orden_fisico ?? orden.folio}</strong> — {orden.cliente_nombre_snapshot || "—"} —{" "}
-          {tipoEquipoLabel(orden.tipo_equipo, orden.tipo_equipo_otro)}
+          {tipoEquipoLabel(orden.tipo_equipo, orden.tipo_equipo_otro)} — {formatFechaDDMMAAAADeDate(orden.fecha)}
         </div>
 
         <EditarSeguimientoForm orden={orden} puedeVerificar={puedeVerificar} piezas={piezas || []} />

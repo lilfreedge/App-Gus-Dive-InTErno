@@ -1322,6 +1322,39 @@ textarea {
   overflow: auto;
 }
 
+/* Membrete navy + logo del reporte en pantalla (item 2, pedido explícito,
+   27-sep-2026: "el formato no se ve como queremos" -- necesita verse
+   igual que el PDF/correo, que ya tienen esta banda navy con el logo
+   arriba). Mismo azul que .reporte-preview-tabla th (var(--azul) =
+   #0a3d62 = NAVY del PDF, lib/reportes-clientes.js), solo que aquí es una
+   banda propia en vez del encabezado de la tabla. */
+.reporte-membrete {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--azul);
+  border-radius: 14px 14px 0 0;
+  padding: 18px 20px;
+}
+
+.reporte-membrete-logo {
+  height: 40px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.reporte-membrete-titulo {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.reporte-membrete-subtitulo {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+
 .reporte-preview-tabla {
   width: 100%;
   border-collapse: collapse;

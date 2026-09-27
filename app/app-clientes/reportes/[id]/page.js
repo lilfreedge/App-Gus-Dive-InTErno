@@ -58,13 +58,6 @@ export default async function ReporteOrdenPage({ params }) {
             ]}
           />
         </div>
-        <h1 className="page-title" style={{ marginBottom: 2 }}>
-          Reporte — #{o.no_orden_fisico ?? o.folio}
-        </h1>
-        <div className="folio-discreto" style={{ marginBottom: 14 }}>
-          folio #{o.folio}
-        </div>
-
         <div style={{ marginBottom: 14, display: "flex", gap: 10, flexWrap: "wrap" }} className="no-print">
           <BotonImprimir />
           <a href={`/api/reportes-clientes/${o.id}/pdf`} className="btn secondary" style={{ marginTop: 0, textDecoration: "none" }}>
@@ -73,24 +66,41 @@ export default async function ReporteOrdenPage({ params }) {
           <EnviarReporteClient ordenId={o.id} />
         </div>
 
-        <div className="card">
-          <div style={{ overflow: "auto" }}>
-            <table className="reporte-preview-tabla">
-              <thead>
-                <tr>
-                  <th>Campo</th>
-                  <th>Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filas.map((f) => (
-                  <tr key={f.label}>
-                    <td style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{f.label}</td>
-                    <td>{f.value}</td>
+        {/* Membrete navy + logo (item 2, pedido explícito, 27-sep-2026:
+            "necesito que el reporte tenga el mismo formato que tienen los
+            reportes del app interno") -- mismo estilo que el PDF y el
+            correo, para que las tres versiones se vean igual. */}
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          <div className="reporte-membrete">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-gus-icon.png" alt="Gus Dive" className="reporte-membrete-logo" />
+            <div>
+              <div className="reporte-membrete-titulo">Reporte — #{o.no_orden_fisico ?? o.folio}</div>
+              {o.cliente_nombre_snapshot && <div className="reporte-membrete-subtitulo">{o.cliente_nombre_snapshot}</div>}
+            </div>
+          </div>
+          <div style={{ padding: 16 }}>
+            <div className="folio-discreto" style={{ marginBottom: 10 }}>
+              folio #{o.folio}
+            </div>
+            <div style={{ overflow: "auto" }}>
+              <table className="reporte-preview-tabla">
+                <thead>
+                  <tr>
+                    <th>Campo</th>
+                    <th>Valor</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filas.map((f) => (
+                    <tr key={f.label}>
+                      <td style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{f.label}</td>
+                      <td>{f.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

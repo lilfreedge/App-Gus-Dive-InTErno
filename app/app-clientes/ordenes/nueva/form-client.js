@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import SelectorCliente from "@/components/SelectorCliente";
@@ -70,6 +71,10 @@ export default function NuevaOrdenForm({
 
   const [historialCliente, setHistorialCliente] = useState([]);
   const [error, setError] = useState("");
+  // Aviso de "orden abierta" con link a esa orden (item 6, pedido
+  // explícito, 27-sep-2026: "que sea un boton que te lleve a la orden y
+  // cambia el mensaje" -- antes era un texto plano dentro de error-box).
+  const [ordenAbierta, setOrdenAbierta] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -134,6 +139,7 @@ export default function NuevaOrdenForm({
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setOrdenAbierta(null);
 
     if (!noOrdenFisico.trim()) return setError("Escribe el No. de orden del talonario.");
     if (!clienteId) return setError("Selecciona o crea un cliente.");
@@ -161,9 +167,10 @@ export default function NuevaOrdenForm({
 
     if (abierta) {
       setLoading(false);
-      setError(
-        `Este equipo ya tiene una orden abierta (No. ${abierta.no_orden_fisico ?? abierta.folio}) -- primero hay que cerrarla o anularla.`
-      );
+      // Aviso clicable en vez de solo texto (item 6, pedido explícito,
+      // 27-sep-2026: "que sea un boton que te lleve a la orden y cambia
+      // el mensaje a 'Este equipo ya tiene una orden abierta (No. X)'").
+      setOrdenAbierta({ id: abierta.id, numero: abierta.no_orden_fisico ?? abierta.folio });
       return;
     }
 
@@ -348,6 +355,14 @@ export default function NuevaOrdenForm({
       </div>
 
       {error && <div className="error-box">{error}</div>}
+      {ordenAbierta && (
+        <div className="error-box" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+          <span>Este equipo ya tiene una orden abierta (No. {ordenAbierta.numero})</span>
+          <Link href={`/app-clientes/ordenes/${ordenAbierta.id}`} className="btn secondary" style={{ marginTop: 0, width: "auto" }}>
+            Ver orden
+          </Link>
+        </div>
+      )}
 
       <button className="btn btn-primary" type="submit" disabled={loading} style={{ marginTop: 20 }}>
         {loading ? "Guardando..." : "Registrar orden"}
