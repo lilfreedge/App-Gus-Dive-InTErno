@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V17",
+    fecha: "27 de septiembre, 2026",
+    titulo: "Ajuste visual: \"Órdenes abiertas\" pasó a ser un botón, igualado en forma y color a las demás pestañas",
+    descripcion:
+      "Feedback en vivo sobre V16: la píldora roja \"Órdenes abiertas\" del encabezado de Registro de Órdenes (entre el título y \"+ Registrar orden\") desentonaba con el resto de los botones de esa pantalla. Pasó de un texto en forma de píldora a un botón, con las mismas esquinas redondeadas y la misma paleta azul marino que ya usan las pestañas de abajo (Pendientes por trabajar, En Hold, etc.) cuando están activas -- sin cambiar el número que muestra ni su comportamiento.",
+  },
+  {
     version: "V16",
     fecha: "27 de septiembre, 2026",
     titulo: "Ficha de la orden reordenada, Hold editable con confirmación, \"Códigos a cobrar\" sin bloqueo, Historial por categorías y arreglo de impresión del Informe",

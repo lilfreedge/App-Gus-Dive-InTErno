@@ -51,30 +51,39 @@ export default async function RegistroPage() {
         <NavArrowsClientesServer />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
           <h1 className="page-title" style={{ margin: 0 }}>Registro de Órdenes</h1>
-          {/* Píldora "Órdenes abiertas", destacada (feedback sobre v40,
-              pedido explícito: "ordenes abiertas ponlo entre registro de
-              ordenes y registrar orden") -- reemplaza la pestaña "Abiertas"
-              que había en RegistroClient, para que este número no se pierda
-              entre las demás pestañas. Es el total de `ordenes` (todo lo
-              que no está Entregado), el mismo criterio que ya usaba esa
-              pestaña. Por ahora es informativa (no hay una pestaña propia
-              a la que llevar: el listado completo sin filtro no existe
-              como pestaña) -- si hace falta un atajo, RegistroClient sigue
-              mostrando "Pendientes por trabajar" por defecto.
+          {/* "Órdenes abiertas", destacada (feedback sobre v40, pedido
+              explícito: "ordenes abiertas ponlo entre registro de ordenes y
+              registrar orden") -- reemplaza la pestaña "Abiertas" que había
+              en RegistroClient, para que este número no se pierda entre las
+              demás pestañas. Es el total de `ordenes` (todo lo que no está
+              Entregado), el mismo criterio que ya usaba esa pestaña. Por
+              ahora es informativa (no hay una pestaña propia a la que
+              llevar: el listado completo sin filtro no existe como pestaña)
+              -- si hace falta un atajo, RegistroClient sigue mostrando
+              "Pendientes por trabajar" por defecto.
+              Nota (v41, feedback sobre esta misma píldora): pasó de ser un
+              <span> en forma de píldora roja (fuera de tono con el resto) a
+              un <button>, con la misma forma (borderRadius 9px, sin pill) y
+              la misma paleta azul marino que ya usan las pestañas activas
+              de RegistroClient (clase `.period-btn-active`), para que se
+              vea parte de la misma familia de botones en vez de destacar
+              con un color ajeno.
               */}
-          <span
+          <button
+            type="button"
             style={{
-              background: "var(--rojo)",
+              background: "var(--azul)",
               color: "#fff",
-              fontWeight: 700,
-              fontSize: 13,
-              padding: "6px 14px",
-              borderRadius: 999,
+              fontWeight: 600,
+              fontSize: 13.5,
+              padding: "9px 16px",
+              borderRadius: 9,
               whiteSpace: "nowrap",
+              cursor: "default",
             }}
           >
             Órdenes abiertas ({(ordenes || []).length})
-          </span>
+          </button>
           {puedeRegistrar && (
             <Link href="/app-clientes/ordenes/nueva">
               <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
