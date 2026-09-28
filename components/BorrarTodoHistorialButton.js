@@ -20,7 +20,16 @@ import { IconTrash } from "./icons";
 // datos de cada pantalla (columna -> valor, o columna -> [valores] para
 // un .in()) -- cambios_historial es una tabla compartida con App Interno,
 // así que nunca se borra "todo" sin acotar por tabla/acción.
-export default function BorrarTodoHistorialButton({ filtro, etiqueta }) {
+//
+// `excluir` (opcional, columna -> valor) agrega un .neq() -- para el caso
+// de Historial de App Interno (28-sep-2026, pedido explícito: "en app
+// interno, agregame boton para borrar todo aqui, separado. uno para
+// anulaciones y otro para ediciones"), que trae todo `cambios_historial`
+// EXCEPTO `tabla = "ordenes_equipos"` (esas son de App Clientes, con su
+// propio botón ya construido) -- una lista fija de tablas se habría
+// quedado desactualizada cada vez que se agregue una tabla nueva a App
+// Interno, así que se excluye en vez de enumerar.
+export default function BorrarTodoHistorialButton({ filtro, excluir, etiqueta }) {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -35,6 +44,9 @@ export default function BorrarTodoHistorialButton({ filtro, etiqueta }) {
     let query = supabase.from("cambios_historial").delete();
     for (const [columna, valor] of Object.entries(filtro || {})) {
       query = Array.isArray(valor) ? query.in(columna, valor) : query.eq(columna, valor);
+    }
+    for (const [columna, valor] of Object.entries(excluir || {})) {
+      query = query.neq(columna, valor);
     }
     const { error } = await query;
     setLoading(false);

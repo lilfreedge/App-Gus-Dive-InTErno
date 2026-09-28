@@ -58,6 +58,26 @@ export default async function HistorialAdministracionPage({ searchParams }) {
 
   const { data: cambios } = await query;
 
+  // Nombre del cliente para las tarjetas de "Equipo editado" (28-sep-2026,
+  // pedido explícito: "que en la parte de afuera del boton, aparezca el
+  // modelo y cliente tambien") -- el snapshot de datos_anteriores/nuevos
+  // de equipos_del_cliente solo trae cliente_id (equipos_del_cliente no
+  // guarda un nombre de cliente aparte), así que se resuelve acá con una
+  // consulta chica a clientes_equipos en vez de tocar la vista.
+  const clienteIds = Array.from(
+    new Set(
+      (cambios || [])
+        .filter((c) => c.tabla === "equipos_del_cliente")
+        .flatMap((c) => [c.datos_anteriores?.cliente_id, c.datos_nuevos?.cliente_id])
+        .filter(Boolean)
+    )
+  );
+  let clientesPorId = {};
+  if (clienteIds.length > 0) {
+    const { data: clientesData } = await supabase.from("clientes_equipos").select("id, nombre").in("id", clienteIds);
+    clientesPorId = Object.fromEntries((clientesData || []).map((c) => [c.id, c.nombre]));
+  }
+
   return (
     <div>
       <AppHeaderClientes />
@@ -74,7 +94,7 @@ export default async function HistorialAdministracionPage({ searchParams }) {
         />
         <h1 className="page-title">Historial de anulaciones y ediciones</h1>
 
-        <HistorialClient ordenId={ordenId} cambios={cambios || []} esTitular={!!profile?.es_titular} />
+        <HistorialClient ordenId={ordenId} cambios={cambios || []} esTitular={!!profile?.es_titular} clientesPorId={clientesPorId} />
       </div>
     </div>
   );

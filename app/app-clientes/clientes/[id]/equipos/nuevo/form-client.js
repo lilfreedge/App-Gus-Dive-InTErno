@@ -203,6 +203,8 @@ export default function AgregarEquiposForm({ clienteId }) {
               detalle={f.detalle_componentes}
               onChange={(nuevo) => actualizarFila(f.key, "detalle_componentes", nuevo)}
               idPrefix={`detalle_${f.key}`}
+              marca={f.marca}
+              modelo={f.modelo}
             />
           )}
         </div>

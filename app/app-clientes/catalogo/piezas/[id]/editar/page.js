@@ -13,7 +13,7 @@ export default async function EditarPiezaPage({ params }) {
 
   const { data: pieza } = await supabase
     .from("piezas_catalogo")
-    .select("id, nombre, activo")
+    .select("id, nombre, codigo, descripcion, activo")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -31,7 +31,7 @@ export default async function EditarPiezaPage({ params }) {
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
             { label: "Base de datos", href: "/app-clientes/catalogo" },
-            { label: "Piezas", href: "/app-clientes/catalogo/piezas" },
+            { label: "Códigos a cobrar", href: "/app-clientes/catalogo/piezas" },
             { label: pieza.nombre },
           ]}
         />

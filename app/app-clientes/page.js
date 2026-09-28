@@ -6,6 +6,7 @@ import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { holdActivo } from "@/lib/holds";
+import { requiereVerificacion } from "@/lib/procesos-ordenes";
 
 const BADGE_ESTADO = {
   "En proceso": "badge-amarillo",
@@ -53,12 +54,13 @@ export default async function AppClientesPage() {
   // esconde para quien lo apague explícitamente.
   const puedeRegistrar = tieneAcceso(profile, "equipos_clientes_registrar");
   const muestraBotonRegistrarInicio = profile?.atajos_inicio_clientes?.registrar_orden !== false;
-
   const CAMPOS =
-    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, en_espera, motivo_espera, holds";
+    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, verificado_por, en_espera, motivo_espera, holds";
 
-  const [{ data: porTrabajarRaw }, { data: porEntregar }, { data: enEspera }, { data: enHidrostatica }, { data: enReparacion }] =
+  const [{ data: ajustes }, { data: porTrabajarRaw }, { data: porEntregar }, { data: enEspera }, { data: enHidrostatica }, { data: enReparacion }] =
     await Promise.all([
+      // "Procesos órdenes" (ver más abajo, porEntregarConVerificacion).
+      supabase.from("ajustes_app_clientes").select("*").eq("id", true).maybeSingle(),
       supabase
         .from("ordenes_equipos")
         .select(CAMPOS)
@@ -124,6 +126,22 @@ export default async function AppClientesPage() {
     hold_fecha_inicio: holdActivo(o.holds)?.fecha_inicio || null,
   }));
 
+  // "Pendiente verificar para despachar" (28-sep-2026, pedidos explícitos:
+  // "que me aparezca una notificacion a mi en inicio... para orden que
+  // esten en este paso yo ir a verificarlo" / "si lo que hace falta es
+  // verificar la orden por pipe o Gugi, pues que en pendiente por
+  // despacahr diga 'Pendiente verificar para despachar'") -- dentro de
+  // "Pendientes por entregar", marca las que todavía no tienen
+  // "Verificado por" puesto Y a las que ese paso de verdad les aplica
+  // (Procesos órdenes puede haberlo desmarcado para ese tipo de equipo --
+  // ver lib/procesos-ordenes.js). Solo en Inicio, a propósito ("y no se
+  // donde mas") -- Registro de Órdenes y la ficha siguen mostrando el
+  // badge genérico "Pendiente por despachar".
+  const porEntregarConVerificacion = (porEntregar || []).map((o) => ({
+    ...o,
+    necesita_verificar: !o.verificado_por && requiereVerificacion(ajustes, o.tipo_equipo),
+  }));
+
   return (
     <div>
       <AppHeaderClientes />
@@ -157,11 +175,18 @@ export default async function AppClientesPage() {
         />
 
         <div className="section-title">Órdenes pendientes por entregar ({(porEntregar || []).length})</div>
+        {/* Aviso de "pendiente verificar" (28-sep-2026, pedido explícito: "que
+            me aparezca una notificacion a mi en inicio y no se donde mas, para
+            orden que esten en este paso yo ir a verificarlo"). Ampliado a todos
+            los usuarios (28-sep-2026, feedback en vivo: "esto quizas sea bueno
+            que lo vean todos los usuarios, para saber en que estado realmente
+            esta la orden") -- antes solo lo veían Titular/Administrador. */}
         <ListaOrdenes
-          ordenes={porEntregar}
+          ordenes={porEntregarConVerificacion}
           vacio="No hay órdenes pendientes por entregar."
           fechaCampo="fecha_listo_entrega"
           fechaLabel="Fecha listo para entrega"
+          mostrarSinVerificar
         />
 
         {/* Estas 3 secciones ahora siempre se muestran, aunque estén en 0
@@ -242,6 +267,11 @@ function ListaOrdenes({
   diasDesdeCampo = null,
   avisoHoldDias = null,
   mostrarMotivoEspera = false,
+  // "Pendiente verificar para despachar" (28-sep-2026, pedido explícito,
+  // ver comentario sobre porEntregarConVerificacion más arriba) -- solo
+  // lo pasa la sección de "Pendientes por entregar", y solo si quien
+  // mira Inicio puede verificar (Titular/Administrador).
+  mostrarSinVerificar = false,
 }) {
   return (
     <div className="card">
@@ -279,7 +309,11 @@ function ListaOrdenes({
                   {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                 </span>
                 <span style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-                  {BADGE_ESTADO[o.estado] && <span className={`badge ${BADGE_ESTADO[o.estado]}`}>{o.estado}</span>}
+                  {mostrarSinVerificar && o.necesita_verificar ? (
+                    <span className="badge badge-rojo">Pendiente verificar para despachar</span>
+                  ) : (
+                    BADGE_ESTADO[o.estado] && <span className={`badge ${BADGE_ESTADO[o.estado]}`}>{o.estado}</span>
+                  )}
                   {o.en_espera && <span className="badge badge-rojo">En Hold</span>}
                 </span>
                 <span className="list-item-qty" style={{ textAlign: "right", flexShrink: 0 }}>

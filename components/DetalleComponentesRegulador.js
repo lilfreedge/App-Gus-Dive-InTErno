@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { REGULADOR_DETALLE_CAMPOS } from "@/lib/regulador-detalle";
 
 // Detalle de componentes de un Regulador (28-sep-2026, pedido explícito).
@@ -9,8 +10,24 @@ import { REGULADOR_DETALLE_CAMPOS } from "@/lib/regulador-detalle";
 //
 // detalle: { primera, segunda, octopus, manometro, manguera_bc } (todos
 // opcionales, ver lib/regulador-detalle.js). onChange(detalleNuevo).
-export default function DetalleComponentesRegulador({ detalle, onChange, idPrefix = "detalle" }) {
+//
+// marca/modelo (28-sep-2026, pedido explícito: "agrega que en la 1ra
+// etapa se ponga por default la marca y modelo del regulador") -- el
+// regulador en sí normalmente ES la 1ra etapa, así que ese campo se
+// prellena solo con "Marca Modelo" mientras siga vacío -- totalmente
+// editable después, mismo espíritu que las fechas del Seguimiento con la
+// fecha de hoy por default. En cuanto "1ra etapa" tiene algo escrito
+// (aunque sea a mano), deja de seguir los cambios de Marca/Modelo.
+export default function DetalleComponentesRegulador({ detalle, onChange, idPrefix = "detalle", marca = "", modelo = "" }) {
   const d = detalle || {};
+
+  useEffect(() => {
+    if (d.primera) return;
+    const marcaModelo = [marca, modelo].map((v) => (v || "").trim()).filter(Boolean).join(" ");
+    if (!marcaModelo) return;
+    onChange({ ...d, primera: marcaModelo });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [marca, modelo]);
 
   function set(campo, valor) {
     onChange({ ...d, [campo]: valor });

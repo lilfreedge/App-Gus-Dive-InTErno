@@ -136,7 +136,13 @@ export default function EditarEquipoForm({ equipo }) {
       )}
 
       {tipoEquipo === "Reguladores" && (
-        <DetalleComponentesRegulador detalle={detalleComponentes} onChange={setDetalleComponentes} idPrefix="editar" />
+        <DetalleComponentesRegulador
+          detalle={detalleComponentes}
+          onChange={setDetalleComponentes}
+          idPrefix="editar"
+          marca={marca}
+          modelo={modelo}
+        />
       )}
 
       {error && <div className="error-box">{error}</div>}

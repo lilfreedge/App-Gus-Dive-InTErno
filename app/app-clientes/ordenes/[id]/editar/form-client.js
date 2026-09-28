@@ -50,7 +50,19 @@ const MEDIOS_NOTIFICACION = ["Llamada", "WhatsApp", "Correo", "Otro"];
 //     nativo -- son clickeables, y el click muestra el motivo + una
 //     sacudida ("click denegado", ver lib/useDenegado.js) en vez de no
 //     hacer nada.
-export default function EditarSeguimientoForm({ orden, puedeVerificar = true, piezas = [], puedeEditarHold = false }) {
+export default function EditarSeguimientoForm({
+  orden,
+  puedeVerificar = true,
+  // "Procesos órdenes" (28-sep-2026, pedido explícito: "agrega una
+  // seccion de 'procesos ordenes' para quitar el paso de 'verificado
+  // por' en los equipos que le quite el check") -- por tipo de equipo,
+  // ver lib/procesos-ordenes.js. `true` por default para que un valor
+  // faltante (llamada vieja, prop olvidada) nunca cambie el
+  // comportamiento de siempre sin querer.
+  requiereVerificacion = true,
+  piezas = [],
+  puedeEditarHold = false,
+}) {
   const supabase = createClient();
   const router = useRouter();
   const denegado = useDenegado();
@@ -99,6 +111,14 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   function draftDe(id, actual) {
     return drafts[id] !== undefined ? drafts[id] : actual ?? "";
   }
+  // Fechas del Seguimiento con la fecha de hoy puesta por default
+  // (28-sep-2026, pedido explícito: "al actualizar alguna fecha del
+  // seguimiento, que por default se ponga la fecha de hoy, y que se
+  // pueda cambiar en caso de ser necesario") -- se resuelve pasándole a
+  // `draftDe`/`useState` `actual || hoyISO()` en cada campo de fecha en
+  // vez de acá adentro, para no afectar "Verificado por" (que también
+  // usa `draftDe` pero no es una fecha). Sigue totalmente editable, esto
+  // solo cambia el valor con el que arranca el campo la primera vez.
   function setDraft(id, valor) {
     setDrafts((d) => ({ ...d, [id]: valor }));
   }
@@ -381,7 +401,10 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   const verificadoDesbloqueado = listoHecho;
   const verificadoHecho = !!ordenLocal.verificado_por;
 
-  const notifCierreDesbloqueado = verificadoHecho;
+  // Sin "Verificado por" requerido para este tipo de equipo (Procesos
+  // órdenes), Notificaciones/Cierre dependen directo de "listo para
+  // entrega" en vez de esperar la verificación.
+  const notifCierreDesbloqueado = requiereVerificacion ? verificadoHecho : listoHecho;
 
   const cierreHecho = !!ordenLocal.fecha_entrega_cliente;
 
@@ -478,6 +501,16 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
 
   async function agregarNotificacion() {
     if (!notifFecha) return;
+    // No tiene sentido notificar al cliente antes de que el equipo esté
+    // listo para entrega (28-sep-2026, pedido explícito: "que no permita
+    // poner fecha de notificacion anterior a la fecha de listo de
+    // entrega, no hace sentido") -- mismo patrón que la validación de
+    // fecha de entrega vs. fecha de ingreso, más arriba. Notificaciones ya
+    // guardadas de antes de esta validación no se tocan.
+    if (ordenLocal.fecha_listo_entrega && notifFecha < ordenLocal.fecha_listo_entrega) {
+      setErrorNotif("No puede ser anterior a la fecha de listo para entrega.");
+      return;
+    }
     const listaNueva = [...notificaciones, { fecha: notifFecha, medio: notifMedio, notas: notifNotas.trim() || null }];
     setGuardandoNotif(true);
     setErrorNotif("");
@@ -517,7 +550,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   // llenar" -- no se puede cerrar la orden sin los tres datos, ni sin
   // Repuestos utilizados ya puestos, aunque sea "Ninguno").
   // ---------------------------------------------------------------
-  const [draftEntrega, setDraftEntrega] = useState(ordenLocal.fecha_entrega_cliente || "");
+  const [draftEntrega, setDraftEntrega] = useState(ordenLocal.fecha_entrega_cliente || hoyISO());
   const [draftRecibe, setDraftRecibe] = useState(ordenLocal.nombre_recibe || "");
   const [draftFactura, setDraftFactura] = useState(ordenLocal.factura || "");
   const [cierreEditando, setCierreEditando] = useState(false);
@@ -545,6 +578,18 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   async function guardarCierre() {
     const errores = {};
     if (!draftEntrega) errores.entrega = "Indica la fecha de entrega al cliente.";
+    // No tiene sentido entregar antes de que la orden haya ingresado, ni
+    // antes de que el equipo estuviera listo, ni antes de haber avisado
+    // al cliente (28-sep-2026, pedidos explícitos seguidos: "que no
+    // permita poner fecha de entrega anterior a la fecha de ingreso, no
+    // hace sentido" / "no permitir poner fecha de cierre anterior a
+    // fecha de notificacion o fecha de lista para entrega") -- mismo
+    // patrón que ya usan envío a reparación/hidrostática más arriba.
+    else if (draftEntrega < orden.fecha) errores.entrega = "No puede ser anterior a la fecha de ingreso de la orden.";
+    else if (ordenLocal.fecha_listo_entrega && draftEntrega < ordenLocal.fecha_listo_entrega)
+      errores.entrega = "No puede ser anterior a la fecha de listo para entrega.";
+    else if (ordenLocal.fecha_notificacion_cliente && draftEntrega < ordenLocal.fecha_notificacion_cliente)
+      errores.entrega = "No puede ser anterior a la fecha de notificación al cliente.";
     if (!draftRecibe.trim()) errores.recibe = "Indica el nombre de quien recibe.";
     if (!draftFactura.trim()) errores.factura = "Indica la factura de repuesto o servicio.";
     if (Object.keys(errores).length > 0) {
@@ -585,12 +630,23 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   // ---------------------------------------------------------------
   const [notasTecnico, setNotasTecnico] = useState(orden.notas_tecnico_regulador || "");
   const [guardandoNotas, setGuardandoNotas] = useState(false);
+  const [errorNotas, setErrorNotas] = useState("");
   const notasSinGuardar = notasTecnico.trim() !== (ordenLocal.notas_tecnico_regulador || "");
 
+  // Al guardar, vuelve a la ficha de la orden (28-sep-2026, pedido
+  // explícito: "no se supone que debe de llevarme para atras?" -- antes
+  // se quedaba en este mismo wizard sin ninguna confirmación visible,
+  // lo que se sentía igual que si el botón no hiciera nada; se prefirió
+  // esto en vez de un simple mensaje de "Guardado" en el mismo lugar).
+  // Mismo patrón ya usado al cerrar la orden (guardarCierre, arriba).
   async function guardarNotasTecnico() {
     setGuardandoNotas(true);
+    setErrorNotas("");
     try {
       await guardarCampos({ notas_tecnico_regulador: notasTecnico.trim() || null });
+      router.push(`/app-clientes/ordenes/${orden.id}`);
+    } catch (e) {
+      setErrorNotas("No se pudo guardar. Intenta de nuevo.");
     } finally {
       setGuardandoNotas(false);
     }
@@ -614,7 +670,11 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
       : null;
   const pasoAnteriorListo = muestraRetorno ? { label: "la fecha de retorno a tienda", onVolver: editarRetorno } : null;
   const pasoAnteriorVerificado = { label: "la fecha de listo para entrega", onVolver: editarListo };
-  const pasoAnteriorCierre = puedeVerificar ? { label: "verificado por", onVolver: editarVerificado } : null;
+  const pasoAnteriorCierre = !requiereVerificacion
+    ? { label: "la fecha de listo para entrega", onVolver: editarListo }
+    : puedeVerificar
+      ? { label: "verificado por", onVolver: editarVerificado }
+      : null;
 
   return (
     <div className="card">
@@ -934,7 +994,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             >
               <input
                 type="date"
-                value={draftDe("envio_reparacion", ordenLocal.fecha_envio)}
+                value={draftDe("envio_reparacion", ordenLocal.fecha_envio || hoyISO())}
                 onChange={(e) => setDraft("envio_reparacion", e.target.value)}
                 style={{ marginTop: 6 }}
               />
@@ -958,7 +1018,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             >
               <input
                 type="date"
-                value={draftDe("envio_hidrostatica", ordenLocal.fecha_envio_hidrostatica)}
+                value={draftDe("envio_hidrostatica", ordenLocal.fecha_envio_hidrostatica || hoyISO())}
                 onChange={(e) => setDraft("envio_hidrostatica", e.target.value)}
                 style={{ marginTop: 6 }}
               />
@@ -990,7 +1050,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             >
               <input
                 type="date"
-                value={draftDe("retorno", ordenLocal.fecha_retorno_tienda)}
+                value={draftDe("retorno", ordenLocal.fecha_retorno_tienda || hoyISO())}
                 onChange={(e) => setDraft("retorno", e.target.value)}
                 style={{ marginTop: 6 }}
               />
@@ -1027,45 +1087,52 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
           >
             <input
               type="date"
-              value={draftDe("listo", ordenLocal.fecha_listo_entrega)}
+              value={draftDe("listo", ordenLocal.fecha_listo_entrega || hoyISO())}
               onChange={(e) => setDraft("listo", e.target.value)}
               style={{ marginTop: 6 }}
             />
           </PasoWizard>
 
-          <PasoWizard
-            id="verificado"
-            label="Verificado por"
-            locked={!verificadoHecho && (!verificadoDesbloqueado || !puedeVerificar)}
-            mensajeBloqueo={
-              !verificadoDesbloqueado
-                ? "Aún no puedes verificar porque falta la fecha de listo para entrega."
-                : "Solo el Titular o un Administrador puede llenar esto."
-            }
-            hecho={verificadoHecho}
-            // Sin permiso, el que ya está verificado se ve pero no se puede reabrir.
-            onEditar={puedeVerificar ? editarVerificado : null}
-            editando={editando === "verificado"}
-            preview={ordenLocal.verificado_por}
-            guardando={guardandoPaso === "verificado"}
-            error={erroresPaso.verificado}
-            onGuardar={guardarVerificado}
-            denegado={denegado}
-            explicado={explicado}
-            onClickBloqueado={clickBloqueado}
-            pasoAnterior={pasoAnteriorVerificado}
-          >
-            <select
-              value={draftDe("verificado", ordenLocal.verificado_por)}
-              onChange={(e) => setDraft("verificado", e.target.value)}
-              style={{ marginTop: 6 }}
+          {/* "Verificado por" -- se salta por completo si "Procesos
+              órdenes" desmarcó este tipo de equipo (28-sep-2026, pedido
+              explícito). Con requiereVerificacion=false, el paso ni se
+              muestra -- Notificaciones/Cierre pasan a depender de "listo"
+              directamente (ver notifCierreDesbloqueado arriba). */}
+          {requiereVerificacion && (
+            <PasoWizard
+              id="verificado"
+              label="Verificado por"
+              locked={!verificadoHecho && (!verificadoDesbloqueado || !puedeVerificar)}
+              mensajeBloqueo={
+                !verificadoDesbloqueado
+                  ? "Aún no puedes verificar porque falta la fecha de listo para entrega."
+                  : "Solo el Titular o un Administrador puede llenar esto."
+              }
+              hecho={verificadoHecho}
+              // Sin permiso, el que ya está verificado se ve pero no se puede reabrir.
+              onEditar={puedeVerificar ? editarVerificado : null}
+              editando={editando === "verificado"}
+              preview={ordenLocal.verificado_por}
+              guardando={guardandoPaso === "verificado"}
+              error={erroresPaso.verificado}
+              onGuardar={guardarVerificado}
+              denegado={denegado}
+              explicado={explicado}
+              onClickBloqueado={clickBloqueado}
+              pasoAnterior={pasoAnteriorVerificado}
             >
-              <option value="">Sin verificar</option>
-              {VERIFICADO_POR.map((v) => (
-                <option key={v} value={v}>{v}</option>
-              ))}
-            </select>
-          </PasoWizard>
+              <select
+                value={draftDe("verificado", ordenLocal.verificado_por)}
+                onChange={(e) => setDraft("verificado", e.target.value)}
+                style={{ marginTop: 6 }}
+              >
+                <option value="">Sin verificar</option>
+                {VERIFICADO_POR.map((v) => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+            </PasoWizard>
+          )}
 
           {/* Notificaciones al cliente -- ya no gatea "Fecha de entrega"
               (item 32); queda en paralelo con el Cierre de la orden, las
@@ -1076,7 +1143,11 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             <PasoBloqueado
               id="notif"
               label="Notificaciones al cliente"
-              mensaje="Aún no puedes agregar una notificación porque falta verificar la orden."
+              mensaje={
+                requiereVerificacion
+                  ? "Aún no puedes agregar una notificación porque falta verificar la orden."
+                  : "Aún no puedes agregar una notificación porque falta la fecha de listo para entrega."
+              }
               denegado={denegado}
               explicado={explicado}
               onClick={clickBloqueado}
@@ -1148,7 +1219,11 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             id="cierre"
             label="Cierre de la orden"
             locked={!cierreHecho && !notifCierreDesbloqueado}
-            mensajeBloqueo="Aún no puedes cerrar la orden porque falta verificarla."
+            mensajeBloqueo={
+              requiereVerificacion
+                ? "Aún no puedes cerrar la orden porque falta verificarla."
+                : "Aún no puedes cerrar la orden porque falta la fecha de listo para entrega."
+            }
             hecho={cierreHecho}
             editando={cierreEditando}
             onEditar={abrirEdicionCierre}
@@ -1236,6 +1311,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             >
               {guardandoNotas ? "Guardando..." : "Guardar nota"}
             </button>
+            {errorNotas && <div className="error-box" style={{ marginTop: 8 }}>{errorNotas}</div>}
           </div>
             </>
           )}

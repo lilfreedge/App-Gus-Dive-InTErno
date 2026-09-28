@@ -102,7 +102,15 @@ export default async function FichaOrdenPage({ params }) {
             { label: `No. ${o.no_orden_fisico ?? o.folio}` },
           ]}
         />
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+        {/* marginBottom (28-sep-2026, pedido explícito: "levantar un poco
+            el boton de 'actualizar estado de orden', esta muy pegado del
+            cuadro de abajo") -- se dejó el botón donde está (arriba,
+            junto al título) en vez de moverlo dentro de la tarjeta, para
+            no deshacer el rediseño anterior (item 6.5: "poner el
+            actualizar estado de orden arriba" era justamente para que la
+            acción principal se viera de una vez, sin tener que buscarla
+            entre los datos de solo lectura). Solo le faltaba aire abajo. */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
           <h1 className="page-title" style={{ marginBottom: 2 }}>
             No. {o.no_orden_fisico ?? o.folio} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
           </h1>

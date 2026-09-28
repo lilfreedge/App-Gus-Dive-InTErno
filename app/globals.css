@@ -614,6 +614,27 @@ textarea {
   color: var(--rojo);
 }
 
+/* Atajo directo a "Actualizar estado de orden" en Registro de Órdenes,
+   más llamativo (28-sep-2026, pedido explícito: "quiero hacer el boton
+   de 'actualizar orden' un poco mas llamativo. lo ponemos quizas mas
+   grande y con color azul?") -- mismo ícono/lugar de siempre, ahora
+   relleno de azul en vez del outline gris discreto que compartía con el
+   resto de los .icon-btn, y un poco más grande para que salte a la vista
+   en la lista. */
+.icon-btn-azul {
+  background: var(--azul);
+  border-color: var(--azul);
+  color: #fff;
+  width: 38px;
+  height: 38px;
+}
+
+.icon-btn-azul:hover {
+  background: var(--azul-claro);
+  border-color: var(--azul-claro);
+  color: #fff;
+}
+
 .row-actions {
   display: flex;
   gap: 6px;
@@ -1275,16 +1296,26 @@ textarea {
   padding: 8px;
 }
 
-/* Tabla de permisos (Administración) */
+/* Tabla de permisos (Administración) -- esta pantalla siempre se ve en
+   computadora (28-sep-2026, pedido explícito: "ponlo que se vea bien en
+   computadora, parece hecho parece celular, esa parte siempre se verá en
+   computadora"), así que no hace falta comprimir los encabezados en
+   varias líneas para caber en poco ancho -- se dejan en una sola línea
+   (white-space: nowrap) y la tabla puede ser más ancha que su
+   contenedor; el div que la envuelve (overflowX: auto, ver
+   permisos-client.js) ya deja hacer scroll horizontal si hiciera falta
+   en una ventana angosta.
+*/
 .perm-table {
   width: 100%;
+  min-width: 620px;
   border-collapse: collapse;
   font-size: 12.5px;
 }
 
 .perm-table th,
 .perm-table td {
-  padding: 10px 8px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--borde);
   text-align: center;
 }
@@ -1292,6 +1323,7 @@ textarea {
 .perm-table th {
   color: var(--texto-suave);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .perm-table td:first-child,

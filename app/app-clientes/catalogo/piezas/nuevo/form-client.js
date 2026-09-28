@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 export default function NuevaPiezaForm() {
   const supabase = createClient();
   const [nombre, setNombre] = useState("");
+  const [codigo, setCodigo] = useState("");
+  const [descripcion, setDescripcion] = useState("");
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
 
@@ -24,6 +26,8 @@ export default function NuevaPiezaForm() {
 
     const { error: err } = await supabase.from("piezas_catalogo").insert({
       nombre: nombre.trim(),
+      codigo: codigo.trim() || null,
+      descripcion: descripcion.trim() || null,
       user_id: user?.id || null,
       nombre_usuario_snapshot: perfil?.full_name || null,
     });
@@ -45,6 +49,12 @@ export default function NuevaPiezaForm() {
         Nombre de la pieza <span className="req">*</span>
       </label>
       <input id="nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: O-ring 2ra etapa" />
+
+      <label htmlFor="codigo" style={{ marginTop: 12 }}>Código</label>
+      <input id="codigo" type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="Ej: OR-2E-014 (opcional)" />
+
+      <label htmlFor="descripcion" style={{ marginTop: 12 }}>Descripción</label>
+      <textarea id="descripcion" rows={2} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Opcional" />
 
       {error && <div className="error-box">{error}</div>}
 

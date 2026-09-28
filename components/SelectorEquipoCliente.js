@@ -210,7 +210,13 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
           </>
         )}
         {tipoNuevo === "Reguladores" && (
-          <DetalleComponentesRegulador detalle={detalleNuevo} onChange={setDetalleNuevo} idPrefix="equipo_nuevo_detalle" />
+          <DetalleComponentesRegulador
+            detalle={detalleNuevo}
+            onChange={setDetalleNuevo}
+            idPrefix="equipo_nuevo_detalle"
+            marca={marcaNueva}
+            modelo={modeloNuevo}
+          />
         )}
         {error && <div className="error-box">{error}</div>}
         <div style={{ display: "flex", gap: 8, marginTop: 12 }}>

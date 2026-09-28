@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/client";
 export default function EditarPiezaForm({ pieza }) {
   const supabase = createClient();
   const [nombre, setNombre] = useState(pieza.nombre);
+  const [codigo, setCodigo] = useState(pieza.codigo || "");
+  const [descripcion, setDescripcion] = useState(pieza.descripcion || "");
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
 
@@ -20,7 +22,11 @@ export default function EditarPiezaForm({ pieza }) {
     setGuardando(true);
     const { error: err } = await supabase
       .from("piezas_catalogo")
-      .update({ nombre: nombre.trim() })
+      .update({
+        nombre: nombre.trim(),
+        codigo: codigo.trim() || null,
+        descripcion: descripcion.trim() || null,
+      })
       .eq("id", pieza.id);
     setGuardando(false);
 
@@ -54,6 +60,12 @@ export default function EditarPiezaForm({ pieza }) {
         Nombre de la pieza <span className="req">*</span>
       </label>
       <input id="nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+
+      <label htmlFor="codigo" style={{ marginTop: 12 }}>Código</label>
+      <input id="codigo" type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="Opcional" />
+
+      <label htmlFor="descripcion" style={{ marginTop: 12 }}>Descripción</label>
+      <textarea id="descripcion" rows={2} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Opcional" />
 
       {error && <div className="error-box">{error}</div>}
 

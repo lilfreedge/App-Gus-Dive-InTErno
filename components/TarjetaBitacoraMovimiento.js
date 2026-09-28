@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import HistorialDeleteButton from "@/components/HistorialDeleteButton";
 import { formatFecha } from "@/lib/format";
+import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { filasOrden } from "@/lib/historial-ordenes";
 
 // Tarjeta de "Bitácora movimientos en órdenes" con el detalle de campos
@@ -22,6 +23,13 @@ export default function TarjetaBitacoraMovimiento({ cambio }) {
   const dn = cambio.datos_nuevos || null;
   const filas = filasOrden(d, dn);
   const titulo = `Orden No. ${d.no_orden_fisico ?? d.folio ?? "?"} editada`;
+  // Cliente y equipo, visibles sin tener que abrir "Ver cambios"
+  // (28-sep-2026, pedido explícito: "al igual en la bitacora de
+  // movimientos, cliente y equipo" -- mismo pedido ya hecho para las
+  // tarjetas de Equipo editado en Historial). Snapshot de la propia
+  // orden (datos_anteriores), no hace falta ningún join aparte.
+  const cliente = d.cliente_nombre_snapshot || "";
+  const equipo = tipoEquipoLabel(d.tipo_equipo, d.tipo_equipo_otro) || "";
 
   return (
     <div className="card edicion">
@@ -29,6 +37,11 @@ export default function TarjetaBitacoraMovimiento({ cambio }) {
         <div className="list-item-title">{titulo}</div>
         <HistorialDeleteButton cambioId={cambio.id} />
       </div>
+      {(cliente || equipo) && (
+        <div className="hint-text" style={{ marginTop: 2 }}>
+          {[cliente, equipo].filter(Boolean).join(" · ")}
+        </div>
+      )}
       <div className="hint-text" style={{ marginTop: 2 }}>
         {cambio.full_name} · {formatFecha(cambio.created_at)}
       </div>

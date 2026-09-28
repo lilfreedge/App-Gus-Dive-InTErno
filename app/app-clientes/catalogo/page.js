@@ -19,7 +19,11 @@ const OPCIONES = [
   },
   {
     href: "/app-clientes/catalogo/piezas",
-    titulo: "Piezas y repuestos",
+    // Renombrado de "Piezas y repuestos" (28-sep-2026, pedido explícito:
+    // "cambiar boton de 'piezas y servicios' a Códigos a cobrar") -- para
+    // que coincida con el nombre que ya usa el campo que alimenta en toda
+    // la app (antes "Repuestos utilizados").
+    titulo: "Códigos a cobrar",
     descripcion: "Piezas y repuestos usados al dar servicio a un equipo.",
     Icono: IconPackage,
   },

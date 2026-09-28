@@ -6,6 +6,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import SeccionColapsable from "@/components/SeccionColapsable";
 import PermisosClientes from "./permisos-client";
 import FormatearRegistrosClientes from "./formatear-registros-client";
+import ProcesosOrdenesClientes from "./procesos-ordenes-client";
 
 // Administración de App Clientes (23-sep-2026, pedido explícito del
 // usuario: "creame sen settings una seccion similar a la de app interno
@@ -25,6 +26,14 @@ export default async function AdministracionClientesPage() {
     .select("id, full_name, is_admin, es_titular, permisos")
     .order("full_name");
 
+  // "Procesos órdenes" (28-sep-2026, pedido explícito) -- fila única de
+  // ajustes_app_clientes (migration_40.sql), sembrada por la propia
+  // migración. Si por algún motivo todavía no existe (migración sin
+  // correr), ProcesosOrdenesClientes/requiereVerificacion tratan la
+  // ausencia igual que si estuviera vacía -- todo sigue requiriendo
+  // verificación, el comportamiento de siempre.
+  const { data: ajustes } = await supabase.from("ajustes_app_clientes").select("*").eq("id", true).maybeSingle();
+
   return (
     <div>
       <AppHeaderClientes />
@@ -38,6 +47,9 @@ export default async function AdministracionClientesPage() {
           Permisos
         </div>
         <PermisosClientes perfiles={perfiles || []} miId={user.id} />
+
+        <div className="section-title">Procesos órdenes</div>
+        <ProcesosOrdenesClientes ajustes={ajustes} />
 
         {/* El Historial se movió a un solo botón dentro de "Más" (item 31,
             pedido explícito, 27-sep-2026: "en mas, crea un boton de

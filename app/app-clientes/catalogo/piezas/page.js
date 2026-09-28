@@ -21,7 +21,7 @@ export default async function CatalogoPiezasPage() {
 
   const { data: piezas } = await supabase
     .from("piezas_catalogo")
-    .select("id, nombre, activo")
+    .select("id, nombre, codigo, descripcion, activo")
     .order("nombre");
 
   return (
@@ -36,10 +36,10 @@ export default async function CatalogoPiezasPage() {
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
             { label: "Base de datos", href: "/app-clientes/catalogo" },
-            { label: "Piezas" },
+            { label: "Códigos a cobrar" },
           ]}
         />
-        <h1 className="page-title">Catálogo de piezas y repuestos</h1>
+        <h1 className="page-title">Catálogo de códigos a cobrar</h1>
         <p className="page-subtitle">Piezas y repuestos usados al dar servicio a un equipo.</p>
 
         {puedeEditarCatalogo && (
@@ -58,9 +58,15 @@ export default async function CatalogoPiezasPage() {
           ) : (
             piezas.map((p) => {
               const fila = (
-                <div className="list-item-top">
-                  <span className="list-item-title">{p.nombre}</span>
-                  {!p.activo && <span className="badge">Inactivo</span>}
+                <div>
+                  <div className="list-item-top">
+                    <span className="list-item-title">
+                      {p.nombre}
+                      {p.codigo && <span style={{ color: "var(--texto-suave)", fontWeight: 400 }}> · {p.codigo}</span>}
+                    </span>
+                    {!p.activo && <span className="badge">Inactivo</span>}
+                  </div>
+                  {p.descripcion && <div className="hint-text" style={{ marginTop: 2 }}>{p.descripcion}</div>}
                 </div>
               );
               return puedeEditarCatalogo ? (

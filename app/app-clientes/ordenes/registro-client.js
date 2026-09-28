@@ -228,16 +228,20 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
                   diferenciarlo del lápiz de "Editar/anular la orden"), pero
                   el usuario pidió algo más asociado a "actualizar estado".
                   Oculto sin el permiso equipos_clientes_actualizar_estado
-                  (ronda grande de feedback, 27-sep-2026, pedido explícito). */}
+                  (ronda grande de feedback, 27-sep-2026, pedido explícito).
+                  Más grande y azul (28-sep-2026, pedido explícito: "quiero
+                  hacer el boton de 'actualizar orden' un poco mas
+                  llamativo... mas grande y con color azul?") -- ver
+                  .icon-btn-azul en globals.css. */}
               {puedeActualizarEstado && (
                 <Link
                   href={`/app-clientes/ordenes/${o.id}/editar?from=registro`}
-                  className="icon-btn"
+                  className="icon-btn icon-btn-azul"
                   aria-label="Actualizar estado de orden"
                   title="Actualizar estado de orden"
                   style={{ flexShrink: 0 }}
                 >
-                  <IconRefresh size={15} />
+                  <IconRefresh size={17} />
                 </Link>
               )}
             </div>

@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import SelectorCliente from "@/components/SelectorCliente";
 import SelectorEquipoCliente from "@/components/SelectorEquipoCliente";
+import { COMPONENTES_REGULADOR_DEFS, componentePresente, componenteDetalle } from "@/lib/informe-mantenimiento";
+import { prefillComponentesRecibidos, detalleComponentesTexto, detalleEquipoActualizadoDesdeOrden } from "@/lib/regulador-detalle";
 
 const AUTORIZACION_OPCIONES = ["Autoriza cualquier cambio necesario", "Solo lo indicado, nada más"];
 
@@ -14,6 +16,14 @@ const AUTORIZACION_OPCIONES = ["Autoriza cualquier cambio necesario", "Solo lo i
 // creada (item 7, 26-sep-2026) -- por eso arranca con los valores ya
 // guardados, y guarda con `update` en vez de `insert`. La foto y el
 // resto del seguimiento no se tocan aquí.
+//
+// "Componentes recibidos" se sumó aquí el 28-sep-2026 (pedido explícito:
+// "pon que en la edicion de la orden, se pueda editar eso, en caso de
+// ser necesario") -- antes solo se podía anotar/corregir al registrar la
+// orden. Mismo checklist, mismo comportamiento que Registrar orden,
+// incluyendo la sincronización automática con el detalle permanente del
+// equipo si el técnico deja algo distinto de lo ya guardado (ver
+// sincronizarDetalleEquipoSiCambio más abajo).
 export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciales, equipos: equiposIniciales, servicios }) {
   const router = useRouter();
   const supabase = createClient();
@@ -31,6 +41,19 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
 
   const [autorizacionCliente, setAutorizacionCliente] = useState(orden.autorizacion_cliente || "");
   const [autorizacionNotas, setAutorizacionNotas] = useState(orden.autorizacion_notas || "");
+  // Normaliza lo ya guardado en la orden (compatible con la forma vieja,
+  // booleano plano, y la nueva, { presente, detalle } -- mismo patrón que
+  // ya usa el Informe de mantenimiento) al shape editable del checklist.
+  const [componentesRecibidos, setComponentesRecibidos] = useState(() => {
+    const guardado = orden.regulador_componentes || {};
+    const out = {};
+    for (const c of COMPONENTES_REGULADOR_DEFS) {
+      if (componentePresente(guardado[c.id])) {
+        out[c.id] = { presente: true, detalle: componenteDetalle(guardado[c.id]) };
+      }
+    }
+    return out;
+  });
   const [notas, setNotas] = useState(orden.notas || "");
 
   const [error, setError] = useState("");
@@ -42,6 +65,23 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
 
   function onEquipoCreado(nuevo) {
     setEquipos((prev) => [...prev, nuevo]);
+    if (nuevo.tipo_equipo === "Reguladores") {
+      setComponentesRecibidos(prefillComponentesRecibidos(nuevo.regulador_componentes_detalle));
+    }
+  }
+
+  function toggleComponenteRecibido(id) {
+    setComponentesRecibidos((prev) => {
+      const actual = prev[id] || { presente: false, detalle: "" };
+      return { ...prev, [id]: { ...actual, presente: !actual.presente } };
+    });
+  }
+
+  function setDetalleComponenteRecibido(id, texto) {
+    setComponentesRecibidos((prev) => {
+      const actual = prev[id] || { presente: true, detalle: "" };
+      return { ...prev, [id]: { ...actual, detalle: texto } };
+    });
   }
 
   // Servicio a realizar, filtrado por tipo de Equipo (item 21) y
@@ -62,10 +102,44 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
       ? [...serviciosFiltrados, { id: "__actual", nombre: servicio }]
       : serviciosFiltrados;
 
+  // Sincroniza el detalle permanente del EQUIPO con lo que quedó en el
+  // checklist de esta orden, si es que hay un cambio real -- mismo
+  // comportamiento y misma función que Registrar orden (28-sep-2026,
+  // pedido explícito, ver nota arriba). No bloquea el guardado de la
+  // orden si falla.
+  async function sincronizarDetalleEquipoSiCambio() {
+    if (!esRegulador || !equipoSeleccionado) return;
+    const nuevoDetalle = detalleEquipoActualizadoDesdeOrden(equipoSeleccionado.regulador_componentes_detalle, componentesRecibidos);
+    if (!nuevoDetalle) return;
+    try {
+      await registrarCambio(supabase, {
+        tabla: "equipos_del_cliente",
+        registroId: equipoSeleccionado.id,
+        accion: "editar",
+        datosAnteriores: equipoSeleccionado,
+        datosNuevos: { ...equipoSeleccionado, regulador_componentes_detalle: nuevoDetalle },
+      });
+      await supabase.from("equipos_del_cliente").update({ regulador_componentes_detalle: nuevoDetalle }).eq("id", equipoSeleccionado.id);
+    } catch (e) {
+      // Ignorado a propósito -- ver comentario arriba.
+    }
+  }
+
   function onEquipoChange(id) {
     setEquipoId(id);
     setServicio("");
     setServicioOtro("");
+    // Mismo comportamiento que Registrar orden: cambiar de equipo
+    // reprellena el checklist con el detalle del equipo recién elegido
+    // (o lo limpia si ya no es Regulador).
+    if (!id) {
+      setComponentesRecibidos({});
+      return;
+    }
+    const nuevo = equipos.find((e) => e.id === id);
+    if (nuevo) {
+      setComponentesRecibidos(nuevo.tipo_equipo === "Reguladores" ? prefillComponentesRecibidos(nuevo.regulador_componentes_detalle) : {});
+    }
   }
 
   async function handleSubmit(e) {
@@ -97,6 +171,7 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
       que_se_hara: servicioFinal,
       autorizacion_cliente: esRegulador ? autorizacionCliente || null : null,
       autorizacion_notas: esRegulador ? autorizacionNotas.trim() || null : null,
+      regulador_componentes: esRegulador ? componentesRecibidos : {},
       notas: notas.trim() || null,
       fecha,
     };
@@ -122,6 +197,8 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
       setError("No se pudo guardar. Intenta de nuevo.");
       return;
     }
+
+    await sincronizarDetalleEquipoSiCambio();
 
     router.push(`/app-clientes/ordenes/${orden.id}`);
     router.refresh();
@@ -208,6 +285,40 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
             placeholder="Detalles o excepciones (opcional)"
             style={{ marginTop: 6 }}
           />
+
+          <label style={{ marginTop: 14 }}>Componentes recibidos</label>
+          {equipoSeleccionado && (
+            <div className="hint-text" style={{ marginBottom: 6 }}>
+              Según el equipo: {detalleComponentesTexto(equipoSeleccionado.regulador_componentes_detalle)}
+            </div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+            {COMPONENTES_REGULADOR_DEFS.map((c) => {
+              const valorComponente = componentesRecibidos[c.id];
+              const presente = !!valorComponente?.presente;
+              return (
+                <div key={c.id}>
+                  <button
+                    type="button"
+                    className={presente ? "btn btn-primary" : "btn secondary"}
+                    onClick={() => toggleComponenteRecibido(c.id)}
+                    style={{ marginTop: 0, width: "auto", padding: "7px 12px", fontSize: 12.5 }}
+                  >
+                    {c.label}
+                  </button>
+                  {presente && !c.soloCheck && (
+                    <input
+                      type="text"
+                      value={valorComponente?.detalle || ""}
+                      onChange={(e) => setDetalleComponenteRecibido(c.id, e.target.value)}
+                      placeholder={c.placeholderDetalle}
+                      style={{ marginTop: 6 }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </>
       )}
 

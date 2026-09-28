@@ -6,6 +6,7 @@ import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { requiereVerificacion as calcularRequiereVerificacion } from "@/lib/procesos-ordenes";
 import EditarSeguimientoForm from "./form-client";
 
 // Actualizar seguimiento (renombrado de "Editar seguimiento", 23-sep-2026,
@@ -41,6 +42,14 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
     .single();
 
   if (!orden) notFound();
+
+  // "Procesos órdenes" (28-sep-2026, pedido explícito, ver
+  // administracion/procesos-ordenes-client.js) -- por tipo de equipo, si
+  // el paso "Verificado por" es obligatorio antes de Notificaciones/
+  // Cierre de la orden. Sin fila configurada, requiereVerificacion trata
+  // todo como que sí lo requiere (comportamiento de siempre).
+  const { data: ajustes } = await supabase.from("ajustes_app_clientes").select("*").eq("id", true).maybeSingle();
+  const requiereVerificacion = calcularRequiereVerificacion(ajustes, orden.tipo_equipo);
 
   // Catálogo de Piezas y repuestos (item 4, pedido explícito, 27-sep-2026:
   // "que ayude a escribir lo que tenemos en base de datos. Asi como texto
@@ -113,6 +122,7 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
         <EditarSeguimientoForm
           orden={orden}
           puedeVerificar={puedeVerificar}
+          requiereVerificacion={requiereVerificacion}
           piezas={piezas || []}
           puedeEditarHold={puedeEditarHold}
         />

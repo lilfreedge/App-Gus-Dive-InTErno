@@ -8,13 +8,16 @@ import { registrarCambio } from "@/lib/audit-client";
 import SelectorCliente from "@/components/SelectorCliente";
 import SelectorEquipoCliente from "@/components/SelectorEquipoCliente";
 import CampoFoto from "@/components/CampoFoto";
-import DetalleComponentesRegulador from "@/components/DetalleComponentesRegulador";
 import { subirFoto } from "@/lib/storage-client";
 import { hoyISO } from "@/lib/fechas";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { COMPONENTES_REGULADOR_DEFS } from "@/lib/informe-mantenimiento";
-import { prefillComponentesRecibidos, detalleComponentesTexto } from "@/lib/regulador-detalle";
+import {
+  prefillComponentesRecibidos,
+  detalleComponentesTexto,
+  detalleEquipoActualizadoDesdeOrden,
+} from "@/lib/regulador-detalle";
 import { IconLock, IconCheck } from "@/components/icons";
 
 // Registrar orden (App Equipos Clientes, rediseñado 23-sep-2026 tras
@@ -98,17 +101,6 @@ export default function NuevaOrdenForm({
   const [componentesRecibidos, setComponentesRecibidos] = useState({});
   const [danosVisibles, setDanosVisibles] = useState("");
   const [problemasReportados, setProblemasReportados] = useState("");
-  // Detalle de componentes del equipo -- prefill del checklist de arriba
-  // + panel para corregirlo si el cliente cambió algo (28-sep-2026,
-  // pedido explícito: "al momento de reigstrar una orden, recuerdas que
-  // estas cosas la piden [al registrar el regulador]? pues ya aparecera
-  // ahi por default y en caso de hacer algun cambio de componente... que
-  // esto quede registrado en el historial del cliente" -- ver
-  // lib/regulador-detalle.js).
-  const [editandoDetalleEquipo, setEditandoDetalleEquipo] = useState(false);
-  const [detalleEquipoDraft, setDetalleEquipoDraft] = useState({});
-  const [guardandoDetalleEquipo, setGuardandoDetalleEquipo] = useState(false);
-  const [errorDetalleEquipo, setErrorDetalleEquipo] = useState("");
   const [notas, setNotas] = useState("");
   const [foto, setFoto] = useState(null);
 
@@ -213,8 +205,6 @@ export default function NuevaOrdenForm({
     setEquipoId(id);
     setServicio("");
     setServicioOtro("");
-    setEditandoDetalleEquipo(false);
-    setErrorDetalleEquipo("");
     // Precarga el checklist "Componentes recibidos" con lo que ya está
     // guardado en el detalle del equipo (28-sep-2026, pedido explícito:
     // "ya aparecera ahi por default") -- el técnico lo puede desmarcar si
@@ -234,46 +224,31 @@ export default function NuevaOrdenForm({
     // pisarlo con un `{}` de resultado vacío.
   }
 
-  function abrirEditarDetalleEquipo() {
-    setDetalleEquipoDraft(equipoSeleccionado?.regulador_componentes_detalle || {});
-    setErrorDetalleEquipo("");
-    setEditandoDetalleEquipo(true);
-  }
-
-  // Actualiza el detalle de componentes del EQUIPO (no de esta orden) --
-  // para cuando el cliente de verdad cambió algo permanente (ej. le
-  // pusieron un octopus distinto), no solo "no lo trajo hoy". Se guarda
-  // de inmediato (no espera al submit de la orden) con registrarCambio,
-  // igual que "Editar equipo" -- por eso queda anotado en Historial de
-  // ediciones de Equipos (pedido explícito: "que esto quede registrado
-  // en el historial del cliente").
-  async function guardarDetalleEquipo() {
-    setGuardandoDetalleEquipo(true);
-    setErrorDetalleEquipo("");
+  // Sincroniza el detalle permanente del EQUIPO con lo que quedó en el
+  // checklist de esta orden, si es que hay un cambio real (28-sep-2026,
+  // pedido explícito: "quita boton de 'actualizar detalle del equipo'...
+  // que se actualice a segun uno llene en la info que viene ya escrita
+  // por default" -- reemplaza el botón manual "✎ Actualizar detalle del
+  // equipo" que existía antes de este cambio). Se llama al registrar la
+  // orden (ver handleSubmit); si no hay cambio, no hace nada -- no anota
+  // una edición vacía en Historial de Equipos por cada orden registrada.
+  async function sincronizarDetalleEquipoSiCambio() {
+    if (!esRegulador || !equipoSeleccionado) return;
+    const nuevoDetalle = detalleEquipoActualizadoDesdeOrden(equipoSeleccionado.regulador_componentes_detalle, componentesRecibidos);
+    if (!nuevoDetalle) return;
     try {
       await registrarCambio(supabase, {
         tabla: "equipos_del_cliente",
-        registroId: equipoId,
+        registroId: equipoSeleccionado.id,
         accion: "editar",
         datosAnteriores: equipoSeleccionado,
-        datosNuevos: { ...equipoSeleccionado, regulador_componentes_detalle: detalleEquipoDraft },
+        datosNuevos: { ...equipoSeleccionado, regulador_componentes_detalle: nuevoDetalle },
       });
-      const { error: err } = await supabase
-        .from("equipos_del_cliente")
-        .update({ regulador_componentes_detalle: detalleEquipoDraft })
-        .eq("id", equipoId);
-      if (err) throw err;
-
-      setEquipos((prev) =>
-        prev.map((e) => (e.id === equipoId ? { ...e, regulador_componentes_detalle: detalleEquipoDraft } : e))
-      );
-      // El checklist de esta orden se actualiza para reflejar el cambio.
-      setComponentesRecibidos(prefillComponentesRecibidos(detalleEquipoDraft));
-      setEditandoDetalleEquipo(false);
+      await supabase.from("equipos_del_cliente").update({ regulador_componentes_detalle: nuevoDetalle }).eq("id", equipoSeleccionado.id);
     } catch (e) {
-      setErrorDetalleEquipo("No se pudo guardar. Intenta de nuevo.");
-    } finally {
-      setGuardandoDetalleEquipo(false);
+      // No bloquea el registro de la orden si esto falla -- la orden ya
+      // se guardó bien, esto es solo la sincronización del detalle
+      // permanente del equipo.
     }
   }
 
@@ -439,6 +414,8 @@ export default function NuevaOrdenForm({
       setError("No se pudo guardar la orden. Intenta de nuevo.");
       return;
     }
+
+    await sincronizarDetalleEquipoSiCambio();
 
     router.push(`/app-clientes/ordenes/${data.id}`);
     router.refresh();
@@ -621,8 +598,14 @@ export default function NuevaOrdenForm({
                   </button>
                   {/* Detalle de este componente en esta orden (28-sep-2026,
                       pedido explícito) -- solo se ve si el componente está
-                      marcado como recibido. */}
-                  {presente && (
+                      marcado como recibido, y si el componente lleva
+                      detalle (Manguera de BC es solo check, sin marca/
+                      modelo -- ver soloCheck en COMPONENTES_REGULADOR_DEFS).
+                      Al registrar la orden, si este texto quedó distinto de
+                      lo ya guardado en el equipo, se sincroniza solo (ver
+                      sincronizarDetalleEquipoSiCambio más arriba) -- ya no
+                      hace falta un botón aparte para actualizarlo. */}
+                  {presente && !c.soloCheck && (
                     <input
                       type="text"
                       value={valorComponente?.detalle || ""}
@@ -635,52 +618,6 @@ export default function NuevaOrdenForm({
               );
             })}
           </div>
-
-          {/* Actualizar el detalle de componentes del EQUIPO (no de esta
-              orden) -- para cuando el cliente de verdad le cambió algo
-              permanente (28-sep-2026, pedido explícito: "en caso de hacer
-              algun cambio de componente... que esto quede registrado en el
-              historial del cliente"). Se guarda de inmediato con
-              registrarCambio -- ver guardarDetalleEquipo más arriba. */}
-          {!editandoDetalleEquipo ? (
-            <button
-              type="button"
-              className="btn secondary"
-              onClick={abrirEditarDetalleEquipo}
-              style={{ marginTop: 8, width: "auto", padding: "6px 12px", fontSize: 12.5 }}
-            >
-              ✎ Actualizar detalle del equipo
-            </button>
-          ) : (
-            <div style={{ marginTop: 8 }}>
-              <DetalleComponentesRegulador
-                detalle={detalleEquipoDraft}
-                onChange={setDetalleEquipoDraft}
-                idPrefix="orden_detalle_equipo"
-              />
-              {errorDetalleEquipo && <div className="error-box" style={{ marginTop: 8 }}>{errorDetalleEquipo}</div>}
-              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  disabled={guardandoDetalleEquipo}
-                  onClick={guardarDetalleEquipo}
-                  style={{ marginTop: 0, width: "auto" }}
-                >
-                  {guardandoDetalleEquipo ? "Guardando..." : "Guardar detalle"}
-                </button>
-                <button
-                  type="button"
-                  className="btn secondary"
-                  disabled={guardandoDetalleEquipo}
-                  onClick={() => setEditandoDetalleEquipo(false)}
-                  style={{ marginTop: 0, width: "auto" }}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          )}
 
           <label htmlFor="problemas_reportados" style={{ marginTop: 12 }}>Problemas reportados por cliente</label>
           <textarea

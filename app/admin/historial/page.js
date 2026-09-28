@@ -5,6 +5,7 @@ import NavArrowsServer from "@/components/NavArrowsServer";
 import Breadcrumb from "@/components/Breadcrumb";
 import HistorialDeleteButton from "@/components/HistorialDeleteButton";
 import HistorialRestoreButton from "@/components/HistorialRestoreButton";
+import BorrarTodoHistorialButton from "@/components/BorrarTodoHistorialButton";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 
 export default async function HistorialCambiosPage() {
@@ -35,6 +36,22 @@ export default async function HistorialCambiosPage() {
         <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Historial" }]} />
 
         <div className="section-title">Movimientos anulados</div>
+        {/* Botones separados de "Borrar todo" (28-sep-2026, pedido
+            explícito: "en app interno, agregame boton para borrar todo
+            aqui, separado. uno para anulaciones y otro para ediciones")
+            -- mismo componente ya usado en App Equipos de clientes
+            (Bitácora e Historial), acotado con `excluir` en vez de una
+            lista de tablas para no quedar desactualizado si se agrega una
+            tabla nueva a App Interno más adelante. */}
+        {esTitular && (
+          <div style={{ marginBottom: 14 }}>
+            <BorrarTodoHistorialButton
+              filtro={{ accion: "borrar" }}
+              excluir={{ tabla: "ordenes_equipos" }}
+              etiqueta="todos los movimientos anulados"
+            />
+          </div>
+        )}
         {anulados.length > 0 ? (
           anulados.map((c) => <TarjetaAnulado key={c.id} cambio={c} esTitular={esTitular} esAdmin={esAdmin} />)
         ) : (
@@ -42,6 +59,15 @@ export default async function HistorialCambiosPage() {
         )}
 
         <div className="section-title">Ediciones</div>
+        {esTitular && (
+          <div style={{ marginBottom: 14 }}>
+            <BorrarTodoHistorialButton
+              filtro={{ accion: "editar" }}
+              excluir={{ tabla: "ordenes_equipos" }}
+              etiqueta="todas las ediciones"
+            />
+          </div>
+        )}
         {ediciones.length > 0 ? (
           ediciones.map((c) => <TarjetaEdicion key={c.id} cambio={c} esTitular={esTitular} />)
         ) : (

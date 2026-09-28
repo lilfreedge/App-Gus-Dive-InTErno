@@ -22,7 +22,7 @@ export default async function NuevaPiezaPage() {
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
             { label: "Base de datos", href: "/app-clientes/catalogo" },
-            { label: "Piezas", href: "/app-clientes/catalogo/piezas" },
+            { label: "Códigos a cobrar", href: "/app-clientes/catalogo/piezas" },
             { label: "Agregar pieza" },
           ]}
         />

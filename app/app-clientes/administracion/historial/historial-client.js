@@ -7,7 +7,7 @@ import BorrarTodoHistorialButton from "@/components/BorrarTodoHistorialButton";
 import { formatFecha } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { filasOrden, filasCliente } from "@/lib/historial-ordenes";
-import { detalleComponentesTexto } from "@/lib/regulador-detalle";
+import { filasDetalleComponentes } from "@/lib/regulador-detalle";
 
 // Pestañas por categoría (item 21, feedback sobre v40, pedido explícito:
 // "reorganiza historial en botones por categoria, ejemplo ordenes,
@@ -24,7 +24,7 @@ const TABS = [
   { clave: "anulados", label: "Anulados" },
 ];
 
-export default function HistorialClient({ ordenId, cambios, esTitular = false }) {
+export default function HistorialClient({ ordenId, cambios, esTitular = false, clientesPorId = {} }) {
   const [tab, setTab] = useState("ordenes");
 
   // Vista filtrada de una sola orden (desde "Ver historial de ediciones
@@ -37,7 +37,7 @@ export default function HistorialClient({ ordenId, cambios, esTitular = false })
       <div>
         <div className="section-title" style={{ marginTop: 0 }}>Ediciones</div>
         {ediciones.length > 0 ? (
-          ediciones.map((c) => <TarjetaEdicion key={c.id} cambio={c} />)
+          ediciones.map((c) => <TarjetaEdicion key={c.id} cambio={c} clientesPorId={clientesPorId} />)
         ) : (
           <div className="empty">Esta orden todavía no tiene ediciones registradas.</div>
         )}
@@ -83,7 +83,13 @@ export default function HistorialClient({ ordenId, cambios, esTitular = false })
       </div>
 
       {activos.length > 0 ? (
-        activos.map((c) => (tab === "anulados" ? <TarjetaAnulado key={c.id} cambio={c} /> : <TarjetaEdicion key={c.id} cambio={c} />))
+        activos.map((c) =>
+          tab === "anulados" ? (
+            <TarjetaAnulado key={c.id} cambio={c} />
+          ) : (
+            <TarjetaEdicion key={c.id} cambio={c} clientesPorId={clientesPorId} />
+          )
+        )
       ) : (
         <div className="empty">
           {tab === "anulados" ? "No hay movimientos anulados." : "Todavía no hay ediciones registradas en esta categoría."}
@@ -182,13 +188,13 @@ function filasEquipo(d, dn) {
   // Detalle de componentes -- solo Reguladores (28-sep-2026, pedido
   // explícito: "que esto quede registrado en el historial del cliente").
   // Sin esto, una edición que solo cambia el detalle del regulador se veía
-  // como un diff vacío (las 4 filas de arriba salen idénticas).
+  // como un diff vacío (las 4 filas de arriba salen idénticas). Una fila
+  // por componente (28-sep-2026, pedido explícito: "pon las ediciones de
+  // equipos mas detallado, que aparezcan todos los componentes before
+  // and after") -- antes era una sola fila combinada con los 5 juntos en
+  // un solo texto.
   if (tipo === "Reguladores") {
-    filas.push({
-      label: "Detalle de componentes",
-      antes: detalleComponentesTexto(d.regulador_componentes_detalle),
-      despues: dn ? detalleComponentesTexto(dn.regulador_componentes_detalle) : "—",
-    });
+    filas.push(...filasDetalleComponentes(d.regulador_componentes_detalle, dn ? dn.regulador_componentes_detalle : null));
   }
   return filas;
 }
@@ -204,18 +210,26 @@ function filasEquipo(d, dn) {
 // que sí cambiaron se marcan con .cambio-resaltado (pedido explícito,
 // mismo día: "que dentro de cada ficha se vea resaltado el cambio
 // realizado, hoy en dia se ven todos los datos iguales").
-function TarjetaEdicion({ cambio }) {
+function TarjetaEdicion({ cambio, clientesPorId = {} }) {
   const [abierto, setAbierto] = useState(false);
   const d = cambio.datos_anteriores || {};
   const dn = cambio.datos_nuevos || null;
   const esOrden = cambio.tabla === "ordenes_equipos";
   const esCliente = cambio.tabla === "clientes_equipos";
+  const esEquipo = !esOrden && !esCliente;
   const filas = esOrden ? filasOrden(d, dn) : esCliente ? filasCliente(d, dn) : filasEquipo(d, dn);
+  // Marca/modelo y cliente, visibles sin abrir "Ver cambios" (28-sep-2026,
+  // pedido explícito: "que en la parte de afuera del boton, aparezca el
+  // modelo y cliente tambien") -- antes el título de un equipo editado
+  // solo decía el tipo ("Regulador editado"), sin distinguir cuál de los
+  // equipos del cliente era si tenía más de uno.
+  const marcaModelo = esEquipo ? [dn?.marca ?? d.marca, dn?.modelo ?? d.modelo].filter(Boolean).join(" ") : "";
+  const clienteNombre = esEquipo ? clientesPorId[dn?.cliente_id ?? d.cliente_id] || "" : "";
   const titulo = esOrden
     ? `Orden No. ${d.no_orden_fisico ?? d.folio ?? "?"} editada`
     : esCliente
       ? `Cliente ${dn?.nombre || d.nombre || ""} editado`
-      : `${tipoEquipoLabel(d.tipo_equipo, d.tipo_equipo_otro) || "Equipo"} editado`;
+      : `${tipoEquipoLabel(d.tipo_equipo, d.tipo_equipo_otro) || "Equipo"} editado${marcaModelo ? ` — ${marcaModelo}` : ""}`;
 
   return (
     <div className="card edicion">
@@ -223,6 +237,11 @@ function TarjetaEdicion({ cambio }) {
         <div className="list-item-title">{titulo}</div>
         <HistorialDeleteButton cambioId={cambio.id} />
       </div>
+      {esEquipo && clienteNombre && (
+        <div className="hint-text" style={{ marginTop: 2 }}>
+          Cliente: {clienteNombre}
+        </div>
+      )}
       <div className="hint-text" style={{ marginTop: 2 }}>
         {cambio.full_name} · {formatFecha(cambio.created_at)}
       </div>
