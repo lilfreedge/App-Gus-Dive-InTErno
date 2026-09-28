@@ -63,7 +63,7 @@ export default async function ReporteOrdenPage({ params }) {
             items={[
               { label: "App Equipos de clientes", href: "/app-clientes" },
               { label: "Más", href: "/app-clientes/mas" },
-              { label: "Reportes", href: "/app-clientes/reportes" },
+              { label: "Reportes e Informes", href: "/app-clientes/reportes" },
               { label: `No. ${o.no_orden_fisico ?? o.folio}` },
             ]}
           />

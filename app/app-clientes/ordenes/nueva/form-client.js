@@ -191,7 +191,22 @@ export default function NuevaOrdenForm({
   const esRegulador = tipoEquipoActual === "Reguladores";
 
   function toggleComponenteRecibido(id) {
-    setComponentesRecibidos((prev) => ({ ...prev, [id]: !prev[id] }));
+    setComponentesRecibidos((prev) => {
+      const actual = prev[id] || { presente: false, detalle: "" };
+      return { ...prev, [id]: { ...actual, presente: !actual.presente } };
+    });
+  }
+
+  // Detalle de texto por componente, propio de ESTA orden (28-sep-2026,
+  // pedido explícito: "en cada componente pon para que se pueda poner el
+  // detalle, 1ra etapa marca tal, 2da etapa marca tal modelo tal, etc") --
+  // distinto del detalle permanente del equipo (guardarDetalleEquipo más
+  // abajo); este solo queda en `regulador_componentes` de esta orden.
+  function setDetalleComponenteRecibido(id, texto) {
+    setComponentesRecibidos((prev) => {
+      const actual = prev[id] || { presente: true, detalle: "" };
+      return { ...prev, [id]: { ...actual, detalle: texto } };
+    });
   }
 
   function onEquipoChange(id) {
@@ -590,18 +605,35 @@ export default function NuevaOrdenForm({
               Según el equipo: {detalleComponentesTexto(equipoSeleccionado.regulador_componentes_detalle)}
             </div>
           )}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-            {COMPONENTES_REGULADOR_DEFS.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                className={componentesRecibidos[c.id] ? "btn btn-primary" : "btn secondary"}
-                onClick={() => toggleComponenteRecibido(c.id)}
-                style={{ marginTop: 0, width: "auto", padding: "7px 12px", fontSize: 12.5 }}
-              >
-                {c.label}
-              </button>
-            ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+            {COMPONENTES_REGULADOR_DEFS.map((c) => {
+              const valorComponente = componentesRecibidos[c.id];
+              const presente = !!valorComponente?.presente;
+              return (
+                <div key={c.id}>
+                  <button
+                    type="button"
+                    className={presente ? "btn btn-primary" : "btn secondary"}
+                    onClick={() => toggleComponenteRecibido(c.id)}
+                    style={{ marginTop: 0, width: "auto", padding: "7px 12px", fontSize: 12.5 }}
+                  >
+                    {c.label}
+                  </button>
+                  {/* Detalle de este componente en esta orden (28-sep-2026,
+                      pedido explícito) -- solo se ve si el componente está
+                      marcado como recibido. */}
+                  {presente && (
+                    <input
+                      type="text"
+                      value={valorComponente?.detalle || ""}
+                      onChange={(e) => setDetalleComponenteRecibido(c.id, e.target.value)}
+                      placeholder={c.placeholderDetalle}
+                      style={{ marginTop: 6 }}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Actualizar el detalle de componentes del EQUIPO (no de esta

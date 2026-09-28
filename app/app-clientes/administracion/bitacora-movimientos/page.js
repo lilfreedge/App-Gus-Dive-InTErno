@@ -4,6 +4,7 @@ import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import TarjetaBitacoraMovimiento from "@/components/TarjetaBitacoraMovimiento";
+import BorrarTodoHistorialButton from "@/components/BorrarTodoHistorialButton";
 
 // "Bitácora movimientos en órdenes" (27-sep-2026, pedido explícito: "un
 // boton en 'mas'... un registro de todas las veces que cualquier orden es
@@ -21,7 +22,7 @@ import TarjetaBitacoraMovimiento from "@/components/TarjetaBitacoraMovimiento";
 // valor guardado (ver tieneAcceso en lib/roles.js).
 export default async function BitacoraMovimientosPage() {
   const supabase = createClient();
-  await requirePermisoClientes(supabase, "equipos_clientes_bitacora_movimientos");
+  const { profile } = await requirePermisoClientes(supabase, "equipos_clientes_bitacora_movimientos");
 
   const { data: cambios } = await supabase
     .from("historial_con_nombre")
@@ -47,6 +48,19 @@ export default async function BitacoraMovimientosPage() {
         />
         <h1 className="page-title">Bitácora movimientos en órdenes</h1>
         <p className="page-subtitle">Quién editó qué, en cualquier orden -- las más recientes primero.</p>
+
+        {/* Borrar toda la bitácora (28-sep-2026, pedido explícito: "ponme
+            un boton aqui para borrar toda la bitacora de movimientos, eso
+            solo tendre acceso yo") -- solo Titular, ver
+            BorrarTodoHistorialButton. */}
+        {profile?.es_titular && (
+          <div style={{ marginBottom: 14 }}>
+            <BorrarTodoHistorialButton
+              filtro={{ tabla: "ordenes_equipos", accion: "editar" }}
+              etiqueta="toda la bitácora de movimientos"
+            />
+          </div>
+        )}
 
         {!cambios || cambios.length === 0 ? (
           <div className="empty">Todavía no hay ediciones registradas.</div>

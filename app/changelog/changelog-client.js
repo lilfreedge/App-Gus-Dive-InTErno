@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V19",
+    fecha: "28 de septiembre, 2026",
+    titulo: "Botones de borrar todo el Historial/Bitácora (solo Titular), cambios resaltados, y 2 permisos nuevos (Listado de clientes/órdenes)",
+    descripcion:
+      "El wizard de \"Actualizar estado de orden\" volvió a arrancar con \"Seguimiento\" abierto por default (se probó colapsado y se prefirió como estaba). Cada componente de \"Componentes recibidos\", al registrar una orden de Regulador, ahora tiene su propio campo de texto para el detalle (marca/modelo) y sale prellenado con lo que ya esté guardado en el equipo, para solo confirmar o corregir en vez de volver a escribir todo. \"Bitácora movimientos en órdenes\" e \"Historial\" (renombrado a \"Historial de anulaciones y ediciones\") tienen un botón nuevo para borrar TODO su contenido de una vez, visible solo para el Titular; en Historial, además, las ediciones de Órdenes/Equipos/Clientes ahora se ven colapsadas detrás de un botón \"Ver cambios\" (mostrando solo quién y cuándo por default), y dentro de la tabla de cambios los campos que sí cambiaron se resaltan en ámbar para no tener que leer fila por fila buscando qué es distinto. \"Reportes\" se renombró a \"Reportes e Informes\", y ahora cada orden de la lista también da acceso directo a su Informe de mantenimiento, no solo al Reporte de seguimiento. Se agregaron 2 permisos granulares nuevos en Administración > Permisos (\"Listado de clientes\" y \"Listado de órdenes\", antes visibles para cualquiera con acceso a la app), \"Bitácora movimientos\" se movió de \"Registrar\" a \"General\" en esa misma tabla, y se quitaron las tablas que se repetían de más en la sección \"Administradores\" de Permisos.",
+  },
+  {
     version: "V18",
     fecha: "28 de septiembre, 2026",
     titulo: "Registrar orden convertido a wizard, detalle de componentes del regulador, cantidades en las pestañas y ajustes al Informe de mantenimiento",

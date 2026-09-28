@@ -133,7 +133,9 @@ export default function TopbarClientes({
       </div>
       <div className="topbar-appname">App Equipos de clientes</div>
       <nav className="topnav" onClickCapture={onNavClickCapture}>
-        {links.map((l) => {
+        {links
+          .filter((l) => !l.permiso || esTitular || !!permisos?.[l.permiso])
+          .map((l) => {
           const fijo = SECCIONES_FIJAS_CLIENTES.includes(l.href);
           // Accesos directos opcionales (26-sep-2026, pedido explícito:
           // "haz que estos shortcuts opcionales se vean diferentes a los

@@ -25,6 +25,11 @@ const PERMISOS_DEFAULT = {
   // necesario. pon el permiso en administración") -- exclusivo de
   // Administradores, mismo patrón que editar orden/cliente/equipo.
   equipos_clientes_editar_hold: false,
+  // "Listado de clientes" y "Listado de órdenes" (28-sep-2026, pedido
+  // explícito: "AGREGAR AQUI: Listado de clientes, listado de ordenes")
+  // -- antes se veían con solo tener acceso base a la app.
+  equipos_clientes_listado_clientes: false,
+  equipos_clientes_listado_ordenes: false,
 };
 
 // Reorganizado en tablas apiladas por grupo (feedback sobre v40, pedido
@@ -36,13 +41,26 @@ const PERMISOS_DEFAULT = {
 // acciones de creación/actualización. Los íconos se alinearon con los
 // que usa App Interno para el mismo concepto (Historial, Reportes,
 // Catálogo/Base de datos).
+// Reorganizado de nuevo (28-sep-2026, pedido explícito): "Bitácora
+// movimientos en órdenes" se mudó de "Registrar" a "General" (no es una
+// acción de registrar nada, es de solo consulta como el resto de
+// General), y se agregaron "Listado de clientes"/"Listado de órdenes"
+// (antes sin permiso propio). Orden exacto pedido: "Listado de ordenes,
+// Base de datos, Reportes, Historial de anulaciones y ediciones,
+// Bitacora de movimientos en ordenes, informe de mantenimiento" --
+// "Listado de clientes" se agregó justo antes de "Listado de órdenes"
+// (los dos se pidieron juntos: "AGREGAR AQUI: Listado de clientes,
+// listado de ordenes").
 const GRUPOS = [
   {
     titulo: "General",
     columnas: [
+      { clave: "equipos_clientes_listado_clientes", label: "Listado de clientes", Icono: IconUsers },
+      { clave: "equipos_clientes_listado_ordenes", label: "Listado de órdenes", Icono: IconReport },
       { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
-      { clave: "equipos_clientes_historial", label: "Historial", Icono: IconHistory },
-      { clave: "equipos_clientes_reportes", label: "Reportes", Icono: IconReport },
+      { clave: "equipos_clientes_reportes", label: "Reportes e Informes", Icono: IconReport },
+      { clave: "equipos_clientes_historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory },
+      { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos en órdenes", Icono: IconBook },
       { clave: "equipos_clientes_informe_mantenimiento", label: "Informe de mantenimiento", Icono: IconWrench },
     ],
   },
@@ -52,7 +70,6 @@ const GRUPOS = [
       { clave: "equipos_clientes_registrar", label: "Registrar orden", Icono: IconEdit },
       { clave: "equipos_clientes_agregar_equipo", label: "Agregar equipo", Icono: IconTank },
       { clave: "equipos_clientes_agregar_cliente", label: "Agregar cliente", Icono: IconPlus },
-      { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos", Icono: IconBook },
       { clave: "equipos_clientes_actualizar_estado", label: "Actualizar estado de orden", Icono: IconRefresh },
     ],
   },
@@ -180,53 +197,15 @@ export default function PermisosClientes({ perfiles, miId }) {
           <div className="empty">Todavía no hay nadie con el rol Administrador.</div>
         ) : (
           <>
-            {GRUPOS.map((grupo) => (
-              <div key={grupo.titulo} style={{ marginTop: 10 }}>
-                <div style={{ overflowX: "auto" }}>
-                  <table className="perm-table">
-                    <thead>
-                      <tr>
-                        <th>{grupo.titulo}</th>
-                        {grupo.columnas.map((c) => (
-                          <th key={c.clave} title={c.label}>
-                            <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
-                            {c.label}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {administradores.map((p) => {
-                        const permisos = { ...PERMISOS_DEFAULT, ...(p.permisos || {}) };
-                        return (
-                          <tr key={p.id}>
-                            <td>
-                              {p.full_name}
-                              {p.id === miId && <span className="tag-tu">Tú</span>}
-                            </td>
-                            {grupo.columnas.map((c) => (
-                              <td key={c.clave}>
-                                <input
-                                  type="checkbox"
-                                  checked={!!permisos[c.clave]}
-                                  disabled={loadingId === p.id}
-                                  onChange={(e) => togglePermiso(p, c.clave, e.target.checked)}
-                                />
-                              </td>
-                            ))}
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
-
-            {/* Tabla exclusiva de Administradores (Editar equipo/cliente/
-                orden/mantenimiento de compresor/Hold) -- estas acciones no
-                se pueden dar a un Usuario normal, solo a quien ya tenga el
-                rol Administrador. */}
+            {/* Las tablas General/Registrar de arriba ya incluyen a los
+                Administradores (perfiles.map trae a todos, no solo a
+                Usuarios) -- repetirlas acá abajo era mostrar dos veces lo
+                mismo (28-sep-2026, pedido explícito: "en administradores,
+                quitar lo que ya se repite anteriormente"). Esta sección
+                se queda solo con la tabla exclusiva de Administradores
+                (Editar equipo/cliente/orden/mantenimiento de compresor/
+                Hold) -- acciones que de verdad no existen arriba, porque
+                solo un Administrador las puede tener. */}
             <div style={{ marginTop: 10 }}>
               <div style={{ overflowX: "auto" }}>
                 <table className="perm-table">

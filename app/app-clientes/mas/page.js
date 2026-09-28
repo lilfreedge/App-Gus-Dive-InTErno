@@ -32,6 +32,10 @@ const OPCIONES = [
     titulo: "Listado de órdenes",
     descripcion: "Todas las órdenes registradas, incluidas las ya entregadas.",
     Icono: IconReport,
+    // Permiso granular propio (28-sep-2026, pedido explícito) -- antes se
+    // veía con solo tener acceso base a la app, igual que "Listado de
+    // clientes" (top nav, ver lib/nav-clientes.js).
+    permiso: "equipos_clientes_listado_ordenes",
   },
   {
     href: "/app-clientes/catalogo",
@@ -49,8 +53,15 @@ const OPCIONES = [
   // eso" -- por ahora solo cubre órdenes de Reguladores.
   {
     href: "/app-clientes/reportes",
-    titulo: "Reportes",
-    descripcion: "Reporte de seguimiento por orden -- por ahora, solo para Reguladores.",
+    // Renombrado a "Reportes e Informes" (28-sep-2026, pedido explícito:
+    // "transformar boton de reportes a 'reportes e Informes'" + "y que
+    // figuren los informes de los reguladores ahi") -- esta pantalla ya
+    // listaba las órdenes de Reguladores para su Reporte de seguimiento;
+    // ahora desde ahí también se llega al Informe de mantenimiento
+    // (item 36) de cada una, así que el nombre corto "Reportes" se
+    // quedaba corto.
+    titulo: "Reportes e Informes",
+    descripcion: "Reporte de seguimiento e informes de mantenimiento por orden -- por ahora, solo para Reguladores.",
     // Mismo ícono que usa "Reportes" en App Interno (item 15, pedido
     // explícito, 27-sep-2026: "ponle a reportes el mismo icono que tiene
     // el de app interno") -- antes usaba IconReceipt. Permiso granular
@@ -69,7 +80,11 @@ const OPCIONES = [
   // servidor (y su política RLS, ver migration_35.sql).
   {
     href: "/app-clientes/administracion/historial",
-    titulo: "Historial",
+    // Renombrado a "Historial de anulaciones y ediciones" (28-sep-2026,
+    // pedido explícito: "cambiar historial a 'historial de anulaciones y
+    // ediciones'") -- el nombre corto no dejaba claro que mezcla dos
+    // cosas distintas (ediciones Y anulaciones); ver nota en page.js.
+    titulo: "Historial de anulaciones y ediciones",
     descripcion: "Ediciones y movimientos anulados de órdenes y equipos.",
     Icono: IconHistory,
     permiso: "equipos_clientes_historial",

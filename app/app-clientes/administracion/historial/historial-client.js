@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import HistorialDeleteButton from "@/components/HistorialDeleteButton";
+import BorrarTodoHistorialButton from "@/components/BorrarTodoHistorialButton";
 import { formatFecha } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { filasOrden, filasCliente } from "@/lib/historial-ordenes";
@@ -23,7 +24,7 @@ const TABS = [
   { clave: "anulados", label: "Anulados" },
 ];
 
-export default function HistorialClient({ ordenId, cambios }) {
+export default function HistorialClient({ ordenId, cambios, esTitular = false }) {
   const [tab, setTab] = useState("ordenes");
 
   // Vista filtrada de una sola orden (desde "Ver historial de ediciones
@@ -54,6 +55,19 @@ export default function HistorialClient({ ordenId, cambios }) {
 
   return (
     <div>
+      {/* Borrar todo el historial (28-sep-2026, pedido explícito: "ponme un
+          boton para borrar aqui también, acceso para mi nada mas") -- solo
+          Titular, cubre las 4 categorías (Órdenes/Equipos/Clientes/Anulados
+          comparten la misma tabla cambios_historial, acotada a estas 3
+          `tabla` -- igual que la consulta del servidor en page.js). */}
+      {esTitular && (
+        <div style={{ marginBottom: 14 }}>
+          <BorrarTodoHistorialButton
+            filtro={{ tabla: ["ordenes_equipos", "equipos_del_cliente", "clientes_equipos"] }}
+            etiqueta="todo el historial (Órdenes, Equipos, Clientes y Anulados)"
+          />
+        </div>
+      )}
       <div className="period-toggle" style={{ marginBottom: 14, flexWrap: "wrap", rowGap: 8 }}>
         {TABS.map((t) => (
           <button
@@ -179,7 +193,19 @@ function filasEquipo(d, dn) {
   return filas;
 }
 
+// Detalle colapsado por default (28-sep-2026, pedido explícito: mismo
+// pedido que ya se había hecho para Bitácora -- "pon las ediciones que
+// figuren en la bitacora que esten en un boton" -- se replica aquí:
+// "y pon as ediciones recogidas en boton, que solamente se vea 'orden tal
+// editada' y la fecha y hora de la edicion"). Arranca cerrada, "Editado
+// por"/"Fecha de edición" salen de la tabla y se dejan siempre visibles
+// como en Bitácora (TarjetaBitacoraMovimiento.js), mismo patrón de
+// acordeón. Las filas donde antes == después se dejan sin resaltar; las
+// que sí cambiaron se marcan con .cambio-resaltado (pedido explícito,
+// mismo día: "que dentro de cada ficha se vea resaltado el cambio
+// realizado, hoy en dia se ven todos los datos iguales").
 function TarjetaEdicion({ cambio }) {
+  const [abierto, setAbierto] = useState(false);
   const d = cambio.datos_anteriores || {};
   const dn = cambio.datos_nuevos || null;
   const esOrden = cambio.tabla === "ordenes_equipos";
@@ -197,32 +223,41 @@ function TarjetaEdicion({ cambio }) {
         <div className="list-item-title">{titulo}</div>
         <HistorialDeleteButton cambioId={cambio.id} />
       </div>
-      <table className="table-mini" style={{ marginTop: 8 }}>
-        <thead>
-          <tr>
-            <th>Campo</th>
-            <th>Antes</th>
-            <th>Después</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filas.map((f) => (
-            <tr key={f.label}>
-              <td>{f.label}</td>
-              <td>{f.antes}</td>
-              <td>{f.despues}</td>
+      <div className="hint-text" style={{ marginTop: 2 }}>
+        {cambio.full_name} · {formatFecha(cambio.created_at)}
+      </div>
+
+      <button
+        type="button"
+        className="btn secondary"
+        style={{ width: "100%", justifyContent: "space-between", display: "flex", marginTop: 10 }}
+        onClick={() => setAbierto((v) => !v)}
+      >
+        <span>{abierto ? "Ocultar cambios" : "Ver cambios"}</span>
+        <span style={{ transform: abierto ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>▾</span>
+      </button>
+
+      {abierto && (
+        <table className="table-mini" style={{ marginTop: 8 }}>
+          <thead>
+            <tr>
+              <th>Campo</th>
+              <th>Antes</th>
+              <th>Después</th>
             </tr>
-          ))}
-          <tr>
-            <td>Editado por</td>
-            <td colSpan={2}>{cambio.full_name}</td>
-          </tr>
-          <tr>
-            <td>Fecha de edición</td>
-            <td colSpan={2}>{formatFecha(cambio.created_at)}</td>
-          </tr>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filas.map((f) => (
+              <tr key={f.label} className={f.antes !== f.despues ? "cambio-resaltado" : ""}>
+                <td>{f.label}</td>
+                <td>{f.antes}</td>
+                <td>{f.despues}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
       <Link
         href={
           esOrden

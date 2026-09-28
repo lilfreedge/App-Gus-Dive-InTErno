@@ -88,10 +88,13 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   const [explicado, setExplicado] = useState(null); // id del paso bloqueado cuya explicación está visible
   const [guardandoPaso, setGuardandoPaso] = useState(null);
   const [erroresPaso, setErroresPaso] = useState({});
-  // Seguimiento colapsado por default (28-sep-2026, pedido explícito: "pon
-  // que por default no se vea la parte de llenar el seguimiento, que uno
-  // tenga que darle click").
-  const [seguimientoAbierto, setSeguimientoAbierto] = useState(false);
+  // Seguimiento abierto por default (28-sep-2026: primero se pidió
+  // colapsado por default -- "pon que por default no se vea la parte de
+  // llenar el seguimiento, que uno tenga que darle click" -- y el mismo
+  // día se revirtió: "pon que seguimiento este abierto, no colapsado
+  // asi"). El botón para colapsarlo/expandirlo se deja tal cual, solo
+  // cambia el estado inicial.
+  const [seguimientoAbierto, setSeguimientoAbierto] = useState(true);
 
   function draftDe(id, actual) {
     return drafts[id] !== undefined ? drafts[id] : actual ?? "";

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermisoClientes } from "@/lib/roles";
+import { requirePermisoClientes, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import ReportesClient from "./reportes-client";
@@ -14,11 +14,23 @@ import ReportesClient from "./reportes-client";
 // su tanque) queda para más adelante -- pedido explícito de no tocarlo
 // todavía ("me interesa para mucho mas par alante, no trabajes en eso")
 // -- por ahora esta lista solo trae órdenes de Reguladores.
+//
+// Renombrado a "Reportes e Informes" (28-sep-2026, pedido explícito) --
+// desde acá también se llega al Informe de mantenimiento (item 36) de
+// cada orden, no solo al Reporte de seguimiento; ver segundo link por
+// fila en reportes-client.js.
 export default async function ReportesPage() {
   const supabase = createClient();
   // Permiso granular nuevo (ronda grande de feedback, 27-sep-2026, pedido
   // explícito) -- antes cualquiera con acceso a la app podía ver Reportes.
-  await requirePermisoClientes(supabase, "equipos_clientes_reportes", "/app-clientes/mas");
+  const { profile } = await requirePermisoClientes(supabase, "equipos_clientes_reportes", "/app-clientes/mas");
+
+  // Informe de mantenimiento (item 36) tiene su propio permiso granular
+  // -- se usa aquí solo para decidir si se muestra el link "Ver informe de
+  // mantenimiento" en cada fila (28-sep-2026, pedido explícito: "y que
+  // figuren los informes de los reguladores ahi"); sin este permiso, el
+  // link ni se muestra (la pantalla del informe también se protege sola).
+  const puedeVerInforme = tieneAcceso(profile, "equipos_clientes_informe_mantenimiento");
 
   const { data: ordenes } = await supabase
     .from("ordenes_equipos")
@@ -37,15 +49,16 @@ export default async function ReportesPage() {
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
-            { label: "Reportes" },
+            { label: "Reportes e Informes" },
           ]}
         />
-        <h1 className="page-title">Reportes</h1>
+        <h1 className="page-title">Reportes e Informes</h1>
         <p className="page-subtitle">
-          Reporte de seguimiento por orden, armado solo con lo que ya se fue registrando -- por ahora, solo para Reguladores.
+          Reporte de seguimiento e informe de mantenimiento por orden, armados con lo que ya se fue registrando -- por ahora, solo para
+          Reguladores.
         </p>
 
-        <ReportesClient ordenes={ordenes || []} />
+        <ReportesClient ordenes={ordenes || []} puedeVerInforme={puedeVerInforme} />
       </div>
     </div>
   );

@@ -1095,6 +1095,23 @@ textarea {
   letter-spacing: 0.02em;
 }
 
+/* Fila con cambio real (antes != después) resaltada dentro de la tabla
+   Campo/Antes/Después de una edición (28-sep-2026, pedido explícito: "que
+   dentro de cada ficha se vea resaltado el cambio realizado, hoy en dia se
+   ven todos los datos iguales") -- mismo tono ámbar que .badge-amarillo,
+   para no inventar un color nuevo. Las filas sin cambio real (antes ==
+   después) se quedan sin resaltar, para que salte a la vista solo lo que
+   de verdad cambió.  Usada en Historial (historial-client.js) y en
+   Bitácora movimientos en órdenes (TarjetaBitacoraMovimiento.js), mismo
+   patrón de tabla en las dos pantallas. */
+.table-mini tr.cambio-resaltado td {
+  background: rgba(196, 130, 33, 0.1);
+}
+.table-mini tr.cambio-resaltado td:last-child {
+  color: #b5691f;
+  font-weight: 700;
+}
+
 .anulado {
   background: var(--anulado-fondo);
   border-color: var(--anulado-borde);

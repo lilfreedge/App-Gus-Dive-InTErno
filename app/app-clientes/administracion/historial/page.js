@@ -27,6 +27,13 @@ import HistorialClient from "./historial-client";
 // ?orden=<id> (opcional, desde la ficha de una orden) sigue filtrando
 // solo lo de esa orden -- ahí historial-client.js muestra sus ediciones
 // directo, sin pestañas.
+//
+// Título renombrado a "Historial de anulaciones y ediciones" (28-sep-2026,
+// pedido explícito) -- el nombre corto "Historial" no dejaba claro que
+// mezcla dos cosas distintas (órdenes/equipos/clientes editados Y órdenes/
+// equipos anulados). El botón en "Más" y este título se renombraron
+// juntos; la URL y el permiso granular (equipos_clientes_historial) se
+// dejaron igual para no romper accesos ya dados.
 export default async function HistorialAdministracionPage({ searchParams }) {
   const supabase = createClient();
   // Permiso granular nuevo (ronda grande de feedback, 27-sep-2026, pedido
@@ -34,7 +41,7 @@ export default async function HistorialAdministracionPage({ searchParams }) {
   // política RLS de cambios_historial se actualizó en migration_35.sql
   // para que quien tenga este permiso también pueda VER las filas (antes
   // solo is_titular() podía, ni Administradores).
-  await requirePermisoClientes(supabase, "equipos_clientes_historial", "/app-clientes/mas");
+  const { profile } = await requirePermisoClientes(supabase, "equipos_clientes_historial", "/app-clientes/mas");
 
   const ordenId = searchParams?.orden || "";
 
@@ -62,12 +69,12 @@ export default async function HistorialAdministracionPage({ searchParams }) {
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
-            { label: "Historial" },
+            { label: "Historial de anulaciones y ediciones" },
           ]}
         />
-        <h1 className="page-title">Historial</h1>
+        <h1 className="page-title">Historial de anulaciones y ediciones</h1>
 
-        <HistorialClient ordenId={ordenId} cambios={cambios || []} />
+        <HistorialClient ordenId={ordenId} cambios={cambios || []} esTitular={!!profile?.es_titular} />
       </div>
     </div>
   );
