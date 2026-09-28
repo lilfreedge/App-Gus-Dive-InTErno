@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import { tipoEquipoDisplay } from "@/lib/tipo-equipo";
+import DetalleComponentesRegulador from "@/components/DetalleComponentesRegulador";
 
 // "Compresor" agregado (pedido explícito, ronda grande de feedback,
 // 27-sep-2026) -- mismo patrón que los demás tipos, lleva serie.
@@ -26,6 +27,11 @@ export default function EditarEquipoForm({ equipo }) {
   const [marca, setMarca] = useState(equipo.marca || "");
   const [modelo, setModelo] = useState(equipo.modelo || "");
   const [serie, setSerie] = useState(equipo.serie || "");
+  // Detalle de componentes -- solo Reguladores (28-sep-2026, pedido
+  // explícito: "al momento de registar regulador, que pida para llenar
+  // los componenstes: 1ra etapa/2da etapa/Octopus/Manómetro/Manguera de
+  // BC"). Ver lib/regulador-detalle.js.
+  const [detalleComponentes, setDetalleComponentes] = useState(equipo.regulador_componentes_detalle || {});
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
 
@@ -50,6 +56,7 @@ export default function EditarEquipoForm({ equipo }) {
       marca: marca.trim() || null,
       modelo: tipoEquipo === "Tanques" ? null : modelo.trim() || null,
       serie: CON_SERIE.includes(tipoEquipo) ? serie.trim() || null : null,
+      regulador_componentes_detalle: tipoEquipo === "Reguladores" ? detalleComponentes : null,
     };
 
     // Queda en Administración > Historial de ediciones de Equipos, con los
@@ -126,6 +133,10 @@ export default function EditarEquipoForm({ equipo }) {
             )}
           </>
         )
+      )}
+
+      {tipoEquipo === "Reguladores" && (
+        <DetalleComponentesRegulador detalle={detalleComponentes} onChange={setDetalleComponentes} idPrefix="editar" />
       )}
 
       {error && <div className="error-box">{error}</div>}

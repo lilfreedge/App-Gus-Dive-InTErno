@@ -6,6 +6,7 @@ import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { detalleComponentesTexto } from "@/lib/regulador-detalle";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -27,7 +28,7 @@ export default async function FichaEquipoPage({ params }) {
 
   const { data: equipo } = await supabase
     .from("equipos_del_cliente")
-    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, created_at")
+    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, regulador_componentes_detalle, created_at")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -74,6 +75,9 @@ export default async function FichaEquipoPage({ params }) {
             {equipo.tipo_equipo !== "Tanques" && <Campo etiqueta="Modelo" valor={equipo.modelo || "—"} />}
             {["Reguladores", "Tanques", "Computadora"].includes(equipo.tipo_equipo) && (
               <Campo etiqueta="No. Serie" valor={equipo.serie || "—"} />
+            )}
+            {equipo.tipo_equipo === "Reguladores" && (
+              <Campo etiqueta="Detalle de componentes" valor={detalleComponentesTexto(equipo.regulador_componentes_detalle)} />
             )}
             <Campo etiqueta="Registrado" valor={formatFecha(equipo.created_at)} />
           </div>

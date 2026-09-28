@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V18",
+    fecha: "28 de septiembre, 2026",
+    titulo: "Registrar orden convertido a wizard, detalle de componentes del regulador, cantidades en las pestañas y ajustes al Informe de mantenimiento",
+    descripcion:
+      "\"Registrar orden\" se rediseñó por completo como un asistente paso a paso, con el mismo estilo del wizard de \"Actualizar estado de orden\": No. de orden, Cliente, Equipo, Fecha de ingreso y servicio, Detalles del regulador (solo si aplica) y Notas y foto, uno a la vez -- los pasos ya llenados se ven colapsados con un botón \"Editar\", los que faltan se ven bloqueados con candado, y cada paso activo tiene un botón \"← Volver\" para corregir el anterior sin perder lo demás. El registro real en la base de datos sigue pasando solo al final, con \"Registrar orden\". Se agregó también el detalle de componentes de un Regulador (1ra etapa, 2da etapa, Octopus, Manómetro, Manguera de BC) al equipo del cliente -- se llena al crear o editar un Regulador desde cualquiera de los lugares donde eso pasa, y al registrar una orden para ese equipo, el checklist \"Componentes recibidos\" ya sale prellenado según lo guardado (se puede desmarcar si ese día no se trajo, o actualizar el detalle del equipo ahí mismo si el cliente cambió algo -- eso queda anotado en el historial del equipo). Cada pestaña de Registro de Órdenes ahora muestra su cantidad entre paréntesis, y \"Órdenes abiertas\" pasó a ser una pestaña más, clickeable, con un color neutral en vez del azul marino fijo que tenía. La Bitácora de movimientos en órdenes ahora esconde el detalle de cada edición detrás de un botón \"Ver cambios\", para no ver todo de una vez. El botón \"+ Registrar orden\" de Inicio se alineó a la derecha y ahora se puede ocultar desde \"Personalizar mi menú\". Y varios ajustes al Informe de mantenimiento: los datos del regulador (marca, modelo, serie) pasaron a ser obligatorios; \"Revisión completa de piezas\" se renombró a \"Revisión interna\"; se quitó una línea de ayuda redundante; la pestaña \"Informe (cliente)\" se ve bloqueada con candado hasta generar el informe; las secciones de solo lectura se ven más sutiles para que resalte lo que hay que llenar; y se corrigió un bug que imprimía el menú de navegación completo arriba del informe (y del Reporte de la orden).",
+  },
+  {
     version: "V17",
     fecha: "27 de septiembre, 2026",
     titulo: "Ajuste visual: \"Órdenes abiertas\" pasó a ser un botón, igualado en forma y color a las demás pestañas",

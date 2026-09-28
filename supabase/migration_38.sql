@@ -1,0 +1,24 @@
+-- Detalle de componentes de un Regulador (28-sep-2026, pedido explícito:
+-- "al momento de registar regulador, que pida para llenar los
+-- componenstes: 1ra etapa___ 2da etapa___ Octopus___ Manómetro___
+-- Manguera de BC: si o no. y que al momento de reigstar una orden...
+-- pues ya aparecera ahi por default y en caso de hacer algun cambio de
+-- componente... que esto quede registrado en el historial del cliente").
+--
+-- Vive en equipos_del_cliente (el registro maestro del equipo, no la
+-- orden) porque es información permanente del regulador del cliente, no
+-- de una visita en particular -- eso ya existe aparte, como
+-- ordenes_equipos.regulador_componentes (qué trajo el cliente EN ESA
+-- orden, ver migration_36.sql). Este detalle sirve de default para ese
+-- checklist al registrar una orden nueva (ver lib/regulador-detalle.js).
+--
+-- Shape: { primera: "", segunda: "", octopus: "", manometro: "" (texto
+-- libre, opcional cada uno -- ej. para anotar marca/modelo si aplica),
+-- manguera_bc: true/false/null }.
+--
+-- No hace falta política RLS nueva: es una columna más de
+-- equipos_del_cliente, ya cubierta por las políticas existentes de esa
+-- tabla (mismo criterio ya documentado en migration_03.sql -- quién
+-- puede editar qué se controla en el código de la app, no acá).
+alter table public.equipos_del_cliente
+  add column if not exists regulador_componentes_detalle jsonb;

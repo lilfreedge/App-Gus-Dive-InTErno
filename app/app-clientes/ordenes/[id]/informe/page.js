@@ -42,7 +42,16 @@ export default async function InformeMantenimientoPage({ params }) {
 
   return (
     <div>
-      <AppHeaderClientes />
+      {/* Arreglo de impresión (28-sep-2026, pedido explícito: "el informe
+          sigue saliendo con formato extrano, no el deseado") -- el fix
+          anterior (no-print en "← Volver"/miga de pan/título) no incluía
+          el encabezado de navegación (AppHeaderClientes: logo, "Hola,
+          Pipe", pestañas Inicio/Registro de Órdenes/etc.), así que seguía
+          imprimiéndose completo arriba del informe. Mismo problema existía
+          en Reportes (reportes/[id]/page.js), se corrigió ahí también. */}
+      <div className="no-print">
+        <AppHeaderClientes />
+      </div>
       <div className="page" style={{ paddingTop: 24 }}>
         {/* Arreglo de impresión (feedback sobre v40, pedido explícito:
             "el pdf del informe sale mal, en 2 paginas") -- a esta pantalla

@@ -46,7 +46,14 @@ export default async function ReporteOrdenPage({ params }) {
 
   return (
     <div>
-      <AppHeaderClientes />
+      {/* Arreglo de impresión (28-sep-2026, pedido explícito sobre el
+          Informe de mantenimiento, mismo bug acá: "el informe sigue
+          saliendo con formato extrano, no el deseado") -- le faltaba
+          "no-print" al encabezado de navegación (AppHeaderClientes), así
+          que se imprimía completo arriba del reporte. */}
+      <div className="no-print">
+        <AppHeaderClientes />
+      </div>
       <div className="page" style={{ paddingTop: 24 }}>
         <Link href="/app-clientes/reportes" className="back-link no-print">
           ← Volver

@@ -102,30 +102,57 @@ export default async function FichaOrdenPage({ params }) {
             { label: `No. ${o.no_orden_fisico ?? o.folio}` },
           ]}
         />
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
           <h1 className="page-title" style={{ marginBottom: 2 }}>
             No. {o.no_orden_fisico ?? o.folio} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
           </h1>
-          {/* "Actualizar estado de orden" subió junto al título (item
-              6.5, feedback sobre v40, pedido explícito: "poner el editar
-              y anular al final de la ficha y poner el actualizar estado
-              de orden arriba") -- antes vivía más abajo, junto a
-              "Seguimiento". Mismo ícono que su atajo en Registro de
-              Órdenes (item 6.4, pedido explícito). Ya no se muestra una
-              vez Entregada (item 7.3, pedido explícito) -- no hay nada
-              más que actualizar. */}
-          {puedeActualizarEstado && o.estado !== "Entregado" && (
-            <Link href={`/app-clientes/ordenes/${o.id}/editar`} style={{ flexShrink: 0 }}>
-              <button
-                className="btn btn-primary"
-                type="button"
-                style={{ marginTop: 0, width: "auto", display: "inline-flex", alignItems: "center", gap: 6 }}
-              >
-                <IconRefresh size={15} />
-                Actualizar estado de orden
-              </button>
-            </Link>
-          )}
+          {/* Acciones de la orden, todas juntas arriba (28-sep-2026, pedido
+              explícito: "quiero mover de lugar y de forma los botones de
+              reporte de la orden e informe de mantenimiento") --
+              "Reporte de la orden" e "Informe de mantenimiento" vivían
+              como texto suelto más abajo, encajados entre "Holds
+              resueltos" y "Seguimiento" (ver item 244 más abajo, ahora
+              quitado de ahí). Propuesta: agruparlas aquí junto a
+              "Actualizar estado de orden" -- mismo lugar donde ya se
+              buscan las acciones de la orden -- como botones secundarios
+              chicos (mismo tamaño de botón que el resto de la app, no el
+              texto plano de antes, pero sin competir con el primario). */}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexShrink: 0 }}>
+            {esRegulador && (
+              <Link href={`/app-clientes/reportes/${o.id}`}>
+                <button className="btn secondary" type="button" style={{ marginTop: 0, width: "auto", padding: "9px 14px", fontSize: 13 }}>
+                  Reporte de la orden
+                </button>
+              </Link>
+            )}
+            {esRegulador && puedeVerInforme && (
+              <Link href={`/app-clientes/ordenes/${o.id}/informe`}>
+                <button className="btn secondary" type="button" style={{ marginTop: 0, width: "auto", padding: "9px 14px", fontSize: 13 }}>
+                  Informe de mantenimiento
+                </button>
+              </Link>
+            )}
+            {/* "Actualizar estado de orden" subió junto al título (item
+                6.5, feedback sobre v40, pedido explícito: "poner el editar
+                y anular al final de la ficha y poner el actualizar estado
+                de orden arriba") -- antes vivía más abajo, junto a
+                "Seguimiento". Mismo ícono que su atajo en Registro de
+                Órdenes (item 6.4, pedido explícito). Ya no se muestra una
+                vez Entregada (item 7.3, pedido explícito) -- no hay nada
+                más que actualizar. */}
+            {puedeActualizarEstado && o.estado !== "Entregado" && (
+              <Link href={`/app-clientes/ordenes/${o.id}/editar`}>
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  style={{ marginTop: 0, width: "auto", display: "inline-flex", alignItems: "center", gap: 6 }}
+                >
+                  <IconRefresh size={15} />
+                  Actualizar estado de orden
+                </button>
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="card">
@@ -239,40 +266,6 @@ export default async function FichaOrdenPage({ params }) {
                   una pestaña nueva. */}
               <FotoLightbox src={o.foto_url} alt="Foto del equipo" />
             </>
-          )}
-
-          {/* "Ver informe de orden" (items 5/14/15/36; reubicado arriba de
-              Seguimiento -- pedido explícito, 26-sep-2026: "ponlo en la
-              seccion de la orden. arriba de seguimiento"). Fusiona lo que
-              antes eran 2 botones grandes ("Ver, descargar o enviar el
-              reporte de esta orden" + "Informe de mantenimiento") en un
-              solo bloque más chico y discreto (feedback sobre v40, pedido
-              explícito: "junta esos 2 botones en 1, ponle 'ver informe de
-              orden'") -- ninguno de los 2 destinos se perdió, solo dejaron
-              de ser 2 botones anchos y prominentes. Por ahora solo
-              Reguladores, mismo alcance que ya tenía Reportes. */}
-          {esRegulador && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--texto-suave)", marginBottom: 4 }}>
-                Ver informe de orden
-              </div>
-              <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                <Link
-                  href={`/app-clientes/reportes/${o.id}`}
-                  style={{ fontSize: 13, fontWeight: 600, color: "var(--azul-claro)", textDecoration: "none" }}
-                >
-                  Reporte de la orden →
-                </Link>
-                {puedeVerInforme && (
-                  <Link
-                    href={`/app-clientes/ordenes/${o.id}/informe`}
-                    style={{ fontSize: 13, fontWeight: 600, color: "var(--azul-claro)", textDecoration: "none" }}
-                  >
-                    Informe de mantenimiento →
-                  </Link>
-                )}
-              </div>
-            </div>
           )}
 
           <div className="section-title">Seguimiento</div>

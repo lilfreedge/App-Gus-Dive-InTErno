@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { tipoEquipoDisplay, tipoEquipoLabel } from "@/lib/tipo-equipo";
+import DetalleComponentesRegulador from "@/components/DetalleComponentesRegulador";
 
 // "Compresor" agregado (pedido explícito, ronda grande de feedback,
 // 27-sep-2026: "agregar Compresor al listado de tipo_equipo") -- mismo
@@ -54,6 +55,9 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
   const [marcaNueva, setMarcaNueva] = useState("");
   const [modeloNuevo, setModeloNuevo] = useState("");
   const [serieNueva, setSerieNueva] = useState("");
+  // Detalle de componentes -- solo Reguladores (28-sep-2026, pedido
+  // explícito, ver lib/regulador-detalle.js).
+  const [detalleNuevo, setDetalleNuevo] = useState({});
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const wrapRef = useRef(null);
@@ -103,6 +107,7 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
     setMarcaNueva("");
     setModeloNuevo("");
     setSerieNueva("");
+    setDetalleNuevo({});
     setError("");
     setCreando(true);
     setAbierto(false);
@@ -131,10 +136,11 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
         marca: marcaNueva.trim() || null,
         modelo: tipoNuevo === "Tanques" ? null : modeloNuevo.trim() || null,
         serie: CON_SERIE.includes(tipoNuevo) ? serieNueva.trim() || null : null,
+        regulador_componentes_detalle: tipoNuevo === "Reguladores" ? detalleNuevo : null,
         user_id: user?.id || null,
         nombre_usuario_snapshot: perfil?.full_name || null,
       })
-      .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie")
+      .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, regulador_componentes_detalle")
       .single();
 
     setGuardando(false);
@@ -202,6 +208,9 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
               </>
             )}
           </>
+        )}
+        {tipoNuevo === "Reguladores" && (
+          <DetalleComponentesRegulador detalle={detalleNuevo} onChange={setDetalleNuevo} idPrefix="equipo_nuevo_detalle" />
         )}
         {error && <div className="error-box">{error}</div>}
         <div style={{ display: "flex", gap: 8, marginTop: 12 }}>

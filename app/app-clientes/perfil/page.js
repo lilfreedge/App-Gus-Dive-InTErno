@@ -84,7 +84,10 @@ export default async function PerfilClientesPage() {
           Personalizar mi menú
         </div>
         <div className="card">
-          <PersonalizarMenuClientes menuInicial={profile?.menu_personalizado_clientes} />
+          <PersonalizarMenuClientes
+            menuInicial={profile?.menu_personalizado_clientes}
+            atajosInicioInicial={profile?.atajos_inicio_clientes}
+          />
         </div>
       </div>
     </div>

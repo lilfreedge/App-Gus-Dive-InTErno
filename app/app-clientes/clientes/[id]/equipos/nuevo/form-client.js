@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { tipoEquipoDisplay } from "@/lib/tipo-equipo";
+import DetalleComponentesRegulador from "@/components/DetalleComponentesRegulador";
 
 // "Compresor" agregado (pedido explícito, ronda grande de feedback,
 // 27-sep-2026) -- mismo patrón que los demás tipos, lleva serie.
@@ -11,7 +12,7 @@ const CON_SERIE = ["Reguladores", "Tanques", "Computadora", "Compresor"];
 
 let siguienteId = 1;
 function filaVacia() {
-  return { key: siguienteId++, tipo_equipo: "", tipo_equipo_otro: "", marca: "", modelo: "", serie: "" };
+  return { key: siguienteId++, tipo_equipo: "", tipo_equipo_otro: "", marca: "", modelo: "", serie: "", detalle_componentes: {} };
 }
 
 // Carga varios equipos de una sola vez para un cliente ya existente
@@ -65,6 +66,7 @@ export default function AgregarEquiposForm({ clienteId }) {
       marca: f.marca.trim() || null,
       modelo: f.tipo_equipo === "Tanques" ? null : f.modelo.trim() || null,
       serie: CON_SERIE.includes(f.tipo_equipo) ? f.serie.trim() || null : null,
+      regulador_componentes_detalle: f.tipo_equipo === "Reguladores" ? f.detalle_componentes : null,
       user_id: user?.id || null,
       nombre_usuario_snapshot: perfil?.full_name || null,
     }));
@@ -194,6 +196,14 @@ export default function AgregarEquiposForm({ clienteId }) {
                 )}
               </>
             )
+          )}
+
+          {f.tipo_equipo === "Reguladores" && (
+            <DetalleComponentesRegulador
+              detalle={f.detalle_componentes}
+              onChange={(nuevo) => actualizarFila(f.key, "detalle_componentes", nuevo)}
+              idPrefix={`detalle_${f.key}`}
+            />
           )}
         </div>
       ))}

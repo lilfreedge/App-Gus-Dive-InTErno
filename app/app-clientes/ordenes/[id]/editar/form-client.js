@@ -88,6 +88,10 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   const [explicado, setExplicado] = useState(null); // id del paso bloqueado cuya explicación está visible
   const [guardandoPaso, setGuardandoPaso] = useState(null);
   const [erroresPaso, setErroresPaso] = useState({});
+  // Seguimiento colapsado por default (28-sep-2026, pedido explícito: "pon
+  // que por default no se vea la parte de llenar el seguimiento, que uno
+  // tenga que darle click").
+  const [seguimientoAbierto, setSeguimientoAbierto] = useState(false);
 
   function draftDe(id, actual) {
     return drafts[id] !== undefined ? drafts[id] : actual ?? "";
@@ -430,6 +434,34 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
   }
 
   // ---------------------------------------------------------------
+  // Handlers de "Editar" con nombre propio (antes eran arrow functions
+  // inline en cada PasoWizard) -- se necesitaban con nombre para poder
+  // reutilizarlos también desde el botón "volver" (ver más abajo),
+  // pedido explícito, 28-sep-2026: "quiero agregar un boton de regresar
+  // aqui en alguna parte, para cuando se ponga algun seguimiento. hoy en
+  // dia uno le da a guardar en un paso del seguimiento y se abre el otro
+  // y se queda ahi" -- cada paso se desbloquea y se abre solo al guardar
+  // el anterior, sin manera rápida de regresar a corregirlo salvo el link
+  // chiquito de "Editar" del paso ya hecho, más arriba en la pantalla.
+  // ---------------------------------------------------------------
+  function editarEnvioReparacion() {
+    abrirEdicion("envio_reparacion", ordenLocal.fecha_envio);
+  }
+  function editarEnvioHidrostatica() {
+    abrirEdicion("envio_hidrostatica", ordenLocal.fecha_envio_hidrostatica);
+  }
+  function editarRetorno() {
+    abrirEdicion("retorno", ordenLocal.fecha_retorno_tienda);
+    setDraft("inspeccion", !!ordenLocal.inspeccion_visual_realizada);
+  }
+  function editarListo() {
+    abrirEdicion("listo", ordenLocal.fecha_listo_entrega);
+  }
+  function editarVerificado() {
+    abrirEdicion("verificado", ordenLocal.verificado_por);
+  }
+
+  // ---------------------------------------------------------------
   // Notificaciones al cliente -- lista que se sigue llenando de a una,
   // ya no gatea "Fecha de entrega al cliente" (item 32).
   // ---------------------------------------------------------------
@@ -560,6 +592,26 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
       setGuardandoNotas(false);
     }
   }
+
+  // ---------------------------------------------------------------
+  // A qué paso "volver" desde cada paso de la cadena (28-sep-2026, pedido
+  // explícito, ver los handlers editarXxx más arriba) -- solo se ofrece
+  // cuando de verdad hay un paso anterior que causó el auto-avance:
+  // "Fecha de envío" no cuenta (nunca está bloqueado, es un punto de
+  // partida, no algo que se abra solo). Si el servicio es reparación Y
+  // prueba hidrostática a la vez, se ofrece volver al de hidrostática
+  // (el que aparece justo arriba de "Fecha de retorno" en la pantalla).
+  // "Verificado por" respeta el mismo permiso que ya gatea su "Editar"
+  // (puedeVerificar) -- si no, no se ofrece el atajo desde "Cierre".
+  // ---------------------------------------------------------------
+  const pasoAnteriorRetorno = esHidrostatica
+    ? { label: "la fecha de envío a prueba hidrostática", onVolver: editarEnvioHidrostatica }
+    : esReparacion
+      ? { label: "la fecha de envío a taller o proveedor", onVolver: editarEnvioReparacion }
+      : null;
+  const pasoAnteriorListo = muestraRetorno ? { label: "la fecha de retorno a tienda", onVolver: editarRetorno } : null;
+  const pasoAnteriorVerificado = { label: "la fecha de listo para entrega", onVolver: editarListo };
+  const pasoAnteriorCierre = puedeVerificar ? { label: "verificado por", onVolver: editarVerificado } : null;
 
   return (
     <div className="card">
@@ -845,8 +897,23 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
         </div>
       ) : (
         <>
-          <div className="section-title" style={{ marginTop: 16 }}>Seguimiento</div>
+          {/* Seguimiento colapsado por default (28-sep-2026, pedido
+              explícito: "pon que por default no se vea la parte de llenar
+              el seguimiento, que uno tenga que darle click") -- antes se
+              veía siempre expandido de una vez al entrar a la pantalla;
+              mismo patrón de acordeón que "Ver mi actividad" (Mi Perfil). */}
+          <button
+            type="button"
+            className="btn secondary"
+            style={{ width: "100%", justifyContent: "space-between", display: "flex", marginTop: 16 }}
+            onClick={() => setSeguimientoAbierto((v) => !v)}
+          >
+            <span>Seguimiento</span>
+            <span style={{ transform: seguimientoAbierto ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>▾</span>
+          </button>
 
+          {seguimientoAbierto && (
+            <>
           {esReparacion && (
             <PasoWizard
               id="envio_reparacion"
@@ -854,7 +921,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
               locked={false}
               hecho={envioReparacionHecho}
               editando={editando === "envio_reparacion"}
-              onEditar={() => abrirEdicion("envio_reparacion", ordenLocal.fecha_envio)}
+              onEditar={editarEnvioReparacion}
               preview={formatFechaDDMMAAAADeDate(ordenLocal.fecha_envio)}
               guardando={guardandoPaso === "envio_reparacion"}
               error={erroresPaso.envio_reparacion}
@@ -878,7 +945,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
               locked={false}
               hecho={envioHidrostaticaHecho}
               editando={editando === "envio_hidrostatica"}
-              onEditar={() => abrirEdicion("envio_hidrostatica", ordenLocal.fecha_envio_hidrostatica)}
+              onEditar={editarEnvioHidrostatica}
               preview={formatFechaDDMMAAAADeDate(ordenLocal.fecha_envio_hidrostatica)}
               guardando={guardandoPaso === "envio_hidrostatica"}
               error={erroresPaso.envio_hidrostatica}
@@ -903,10 +970,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
               mensajeBloqueo="Aún no puedes poner la fecha de retorno porque falta la fecha de envío."
               hecho={retornoHecho}
               editando={editando === "retorno"}
-              onEditar={() => {
-                abrirEdicion("retorno", ordenLocal.fecha_retorno_tienda);
-                setDraft("inspeccion", !!ordenLocal.inspeccion_visual_realizada);
-              }}
+              onEditar={editarRetorno}
               preview={
                 <>
                   {formatFechaDDMMAAAADeDate(ordenLocal.fecha_retorno_tienda)}
@@ -919,6 +983,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
               denegado={denegado}
               explicado={explicado}
               onClickBloqueado={clickBloqueado}
+              pasoAnterior={pasoAnteriorRetorno}
             >
               <input
                 type="date"
@@ -947,7 +1012,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             mensajeBloqueo="Aún no puedes poner la fecha de listo porque falta la fecha de retorno a tienda."
             hecho={listoHecho}
             editando={editando === "listo"}
-            onEditar={() => abrirEdicion("listo", ordenLocal.fecha_listo_entrega)}
+            onEditar={editarListo}
             preview={formatFechaDDMMAAAADeDate(ordenLocal.fecha_listo_entrega)}
             guardando={guardandoPaso === "listo"}
             error={erroresPaso.listo}
@@ -955,6 +1020,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             denegado={denegado}
             explicado={explicado}
             onClickBloqueado={clickBloqueado}
+            pasoAnterior={pasoAnteriorListo}
           >
             <input
               type="date"
@@ -975,7 +1041,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             }
             hecho={verificadoHecho}
             // Sin permiso, el que ya está verificado se ve pero no se puede reabrir.
-            onEditar={puedeVerificar ? () => abrirEdicion("verificado", ordenLocal.verificado_por) : null}
+            onEditar={puedeVerificar ? editarVerificado : null}
             editando={editando === "verificado"}
             preview={ordenLocal.verificado_por}
             guardando={guardandoPaso === "verificado"}
@@ -984,6 +1050,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             denegado={denegado}
             explicado={explicado}
             onClickBloqueado={clickBloqueado}
+            pasoAnterior={pasoAnteriorVerificado}
           >
             <select
               value={draftDe("verificado", ordenLocal.verificado_por)}
@@ -1096,6 +1163,7 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
             denegado={denegado}
             explicado={explicado}
             onClickBloqueado={clickBloqueado}
+            pasoAnterior={pasoAnteriorCierre}
           >
             <label style={{ marginTop: 6 }}>
               Fecha de entrega al cliente <span className="req">*</span>
@@ -1166,6 +1234,8 @@ export default function EditarSeguimientoForm({ orden, puedeVerificar = true, pi
               {guardandoNotas ? "Guardando..." : "Guardar nota"}
             </button>
           </div>
+            </>
+          )}
         </>
       )}
     </div>
@@ -1192,6 +1262,7 @@ function PasoWizard({
   denegado,
   explicado,
   onClickBloqueado,
+  pasoAnterior,
   children,
 }) {
   if (locked) {
@@ -1248,6 +1319,17 @@ function PasoWizard({
       <button type="button" className="btn btn-primary" onClick={onGuardar} disabled={guardando} style={{ marginTop: 10, width: "100%" }}>
         {guardando ? "Guardando..." : labelGuardar || "Guardar y continuar"}
       </button>
+      {/* Botón "volver" (28-sep-2026, pedido explícito: "quiero agregar un
+          boton de regresar aqui en alguna parte... uno le da a guardar en
+          un paso del seguimiento y se abre el otro y se queda ahi") --
+          solo aparece en un paso recién desbloqueado (no en uno que se
+          reabrió a propósito con "Editar", ahí ya se llegó adonde se
+          quería) y solo si de verdad hay un paso anterior al que volver. */}
+      {pasoAnterior && !hecho && (
+        <button type="button" className="btn secondary" onClick={pasoAnterior.onVolver} style={{ marginTop: 8, width: "100%" }}>
+          ← Volver a {pasoAnterior.label}
+        </button>
+      )}
     </div>
   );
 }

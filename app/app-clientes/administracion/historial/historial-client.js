@@ -6,6 +6,7 @@ import HistorialDeleteButton from "@/components/HistorialDeleteButton";
 import { formatFecha } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { filasOrden, filasCliente } from "@/lib/historial-ordenes";
+import { detalleComponentesTexto } from "@/lib/regulador-detalle";
 
 // Pestañas por categoría (item 21, feedback sobre v40, pedido explícito:
 // "reorganiza historial en botones por categoria, ejemplo ordenes,
@@ -154,7 +155,7 @@ function TarjetaAnulado({ cambio }) {
 // vacío en ediciones de antes de migration_29.sql.
 function filasEquipo(d, dn) {
   const tipo = dn?.tipo_equipo || d.tipo_equipo;
-  return [
+  const filas = [
     {
       label: "Tipo de equipo",
       antes: tipoEquipoLabel(d.tipo_equipo, d.tipo_equipo_otro) || "—",
@@ -164,6 +165,18 @@ function filasEquipo(d, dn) {
     { label: "Modelo", antes: d.modelo || "—", despues: dn?.modelo || "—" },
     { label: "No. Serie", antes: d.serie || "—", despues: dn?.serie || "—" },
   ];
+  // Detalle de componentes -- solo Reguladores (28-sep-2026, pedido
+  // explícito: "que esto quede registrado en el historial del cliente").
+  // Sin esto, una edición que solo cambia el detalle del regulador se veía
+  // como un diff vacío (las 4 filas de arriba salen idénticas).
+  if (tipo === "Reguladores") {
+    filas.push({
+      label: "Detalle de componentes",
+      antes: detalleComponentesTexto(d.regulador_componentes_detalle),
+      despues: dn ? detalleComponentesTexto(dn.regulador_componentes_detalle) : "—",
+    });
+  }
+  return filas;
 }
 
 function TarjetaEdicion({ cambio }) {

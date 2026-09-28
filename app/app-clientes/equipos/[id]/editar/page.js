@@ -23,7 +23,7 @@ export default async function EditarEquipoPage({ params }) {
 
   const { data: equipo } = await supabase
     .from("equipos_del_cliente")
-    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, created_at")
+    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, regulador_componentes_detalle, created_at")
     .eq("id", params.id)
     .maybeSingle();
 

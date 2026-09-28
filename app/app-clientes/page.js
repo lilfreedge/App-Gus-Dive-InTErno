@@ -42,13 +42,17 @@ const BADGE_ESTADO = {
 export default async function AppClientesPage() {
   const supabase = createClient();
   const { profile } = await requirePermiso(supabase, "equipos_clientes");
-  // Botón fijo "+ Registrar orden" (item 14, feedback sobre v40, pedido
-  // explícito: "quita el toggle de Registro de Órdenes de Personalizar mi
-  // menú, pon un botón fijo de Registrar orden en Inicio") -- reemplaza
-  // el atajo opcional que antes vivía en "Personalizar mi menú" (Mi
-  // Perfil): dejó de ser opcional, ahora siempre está si el usuario tiene
-  // el permiso, igual que ya pasa en Registro de Órdenes.
+  // Botón "+ Registrar orden" -- había pasado a ser fijo (item 14,
+  // feedback sobre v40: "quita el toggle... pon un botón fijo de
+  // Registrar orden en Inicio"), pero volvió a ser opcional además del
+  // permiso (28-sep-2026, pedido explícito: "pon en personalizar mi menu,
+  // el acceso a que puedan poner el boton de registro orden en inicio") --
+  // ver ATAJOS_INICIO_CLIENTES en lib/nav-clientes.js y
+  // PersonalizarMenuClientes.js. Sin valor guardado todavía (nadie lo ha
+  // tocado en "Personalizar mi menú"), se sigue mostrando -- solo se
+  // esconde para quien lo apague explícitamente.
   const puedeRegistrar = tieneAcceso(profile, "equipos_clientes_registrar");
+  const muestraBotonRegistrarInicio = profile?.atajos_inicio_clientes?.registrar_orden !== false;
 
   const CAMPOS =
     "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, en_espera, motivo_espera, holds";
@@ -126,13 +130,13 @@ export default async function AppClientesPage() {
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsClientesServer />
 
-        {/* Botón "+ Registrar orden" (item 18, pedido explícito,
-            26-sep-2026, quitado de aquí; reintroducido item 14, feedback
-            sobre v40, pedido explícito -- esta vez fijo, no un atajo
-            opcional) -- mismo destino y estilo que el de Registro de
-            Órdenes. */}
-        {puedeRegistrar && (
-          <div style={{ marginBottom: 16 }}>
+        {/* Botón "+ Registrar orden" -- alineado a la derecha (28-sep-2026,
+            pedido explícito: "el boton que sale en inicio de 'registar
+            orden', ponlo para la derecha, igual que como esta en registro
+            de ordenes"), mismo lugar donde vive ese botón en el encabezado
+            de Registro de Órdenes (ver registro-client.js). */}
+        {puedeRegistrar && muestraBotonRegistrarInicio && (
+          <div style={{ marginBottom: 16, display: "flex", justifyContent: "flex-end" }}>
             <Link href="/app-clientes/ordenes/nueva">
               <button className="btn btn-primary" type="button" style={{ marginTop: 0, width: "auto" }}>
                 + Registrar orden

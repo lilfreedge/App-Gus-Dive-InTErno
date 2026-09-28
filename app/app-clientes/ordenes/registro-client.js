@@ -23,9 +23,12 @@ const BADGE_ESTADO = {
 //
 // "Abiertas" se sacó de esta fila de pestañas (feedback sobre v40, pedido
 // explícito: "ordenes abiertas ponlo entre registro de ordenes y
-// registrar orden") -- ahora vive como una píldora roja destacada en el
-// encabezado de la página (ver ordenes/page.js), entre el título y el
-// botón "+ Registrar orden", en vez de ser una pestaña más entre seis.
+// registrar orden") -- vive en el encabezado de arriba, entre el título y
+// el botón "+ Registrar orden", en vez de ser una pestaña más entre seis.
+// (Nota v42/28-sep: ese encabezado, junto con el título y "+ Registrar
+// orden", se movió de ordenes/page.js a este componente -- ver más abajo,
+// "Órdenes abiertas" necesitaba compartir el estado `tab` para poder ser
+// clickeable, y page.js es un server component, no puede tener ese estado.)
 //
 // "Órdenes cerradas" se agregó al final (feedback sobre v40, pedido
 // explícito: "agrega boton de ordenes cerradas despues de Enviadas a
@@ -47,32 +50,60 @@ const SORTS = [
   { clave: "fecha_desc", label: "Más recientes primero" },
 ];
 
+// Criterio de cada pestaña (menos "cerradas", que ya es su propia lista, y
+// "todas"/Órdenes abiertas, que es `ordenes` sin filtrar) -- centralizado
+// acá para que el conteo que se muestra en cada botón (pedido explícito,
+// 28-sep-2026: "pon que aparezcan las cantidades en cada filtro, asi como
+// estan en Ordenes abiertas") use exactamente el mismo criterio que ya usa
+// el filtro de la lista de abajo, en vez de mantener la misma lógica
+// escrita dos veces y arriesgar que se desincronicen.
+const CRITERIOS = {
+  // Mismo criterio que Inicio: excluye las que ya salieron a
+  // hidrostática/reparación y no han vuelto -- esas se cuentan en su
+  // propia pestaña, no acá también.
+  por_trabajar: (o) =>
+    (o.estado === "Pendiente por trabajar" || o.estado === "En proceso") &&
+    !((o.fecha_envio || o.fecha_envio_hidrostatica) && !o.fecha_retorno_tienda),
+  por_entregar: (o) => o.estado === "Pendiente por despachar",
+  en_hold: (o) => o.en_espera,
+  hidrostatica: (o) => o.fecha_envio_hidrostatica && !o.fecha_retorno_tienda,
+  reparacion: (o) => o.fecha_envio && !o.fecha_retorno_tienda,
+};
+
 // Cola de trabajo de "Registro" (23-sep-2026, pedido explícito tras
 // probar v24 en vivo): ordenes ya viene sin las Entregado (filtradas en
-// el server). Acá solo se reparten entre las 3 pestañas + el buscador de
-// cliente, todo combinado (tab Y búsqueda a la vez).
-export default function RegistroClient({ ordenes, cerradas = [], puedeActualizarEstado = true }) {
+// el server). Acá solo se reparten entre las pestañas + el buscador de
+// cliente, todo combinado (tab Y búsqueda a la vez). `puedeRegistrar`
+// nueva (v42/28-sep, ver nota arriba) -- antes vivía solo en page.js, para
+// el botón "+ Registrar orden" que ahora también se arma acá.
+export default function RegistroClient({ ordenes, cerradas = [], puedeActualizarEstado = true, puedeRegistrar = false }) {
   const [tab, setTab] = useState("por_trabajar");
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("fecha_asc");
 
+  // Cuenta de cada pestaña, sin importar cuál esté activa ni el buscador
+  // de cliente (mismo criterio que ya usaba la píldora "Órdenes abiertas":
+  // un total sin filtrar por texto) -- así cada botón muestra su propio
+  // número todo el tiempo, no solo el de la pestaña seleccionada.
+  const conteos = useMemo(
+    () => ({
+      todas: ordenes.length,
+      por_trabajar: ordenes.filter(CRITERIOS.por_trabajar).length,
+      por_entregar: ordenes.filter(CRITERIOS.por_entregar).length,
+      en_hold: ordenes.filter(CRITERIOS.en_hold).length,
+      hidrostatica: ordenes.filter(CRITERIOS.hidrostatica).length,
+      reparacion: ordenes.filter(CRITERIOS.reparacion).length,
+      cerradas: cerradas.length,
+    }),
+    [ordenes, cerradas]
+  );
+
   const filtrados = useMemo(() => {
     let base = tab === "cerradas" ? cerradas : ordenes;
-    if (tab === "por_trabajar") {
-      // Mismo criterio que Inicio: excluye las que ya salieron a
-      // hidrostática/reparación y no han vuelto -- esas se ven en su
-      // propia pestaña, no acá también.
-      base = base
-        .filter((o) => o.estado === "Pendiente por trabajar" || o.estado === "En proceso")
-        .filter((o) => !((o.fecha_envio || o.fecha_envio_hidrostatica) && !o.fecha_retorno_tienda));
-    } else if (tab === "por_entregar") {
-      base = base.filter((o) => o.estado === "Pendiente por despachar");
-    } else if (tab === "en_hold") {
-      base = base.filter((o) => o.en_espera);
-    } else if (tab === "hidrostatica") {
-      base = base.filter((o) => o.fecha_envio_hidrostatica && !o.fecha_retorno_tienda);
-    } else if (tab === "reparacion") {
-      base = base.filter((o) => o.fecha_envio && !o.fecha_retorno_tienda);
+    // tab === "todas" (Órdenes abiertas, ver más abajo) no filtra nada más
+    // -- muestra todo lo que no está Entregado, sin dividir por categoría.
+    if (tab !== "cerradas" && tab !== "todas" && CRITERIOS[tab]) {
+      base = base.filter(CRITERIOS[tab]);
     }
     const query = q.trim().toLowerCase();
     if (query) {
@@ -82,10 +113,44 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
       sort === "fecha_desc" ? b.fecha.localeCompare(a.fecha) : a.fecha.localeCompare(b.fecha)
     );
     return base;
-  }, [ordenes, tab, q, sort]);
+  }, [ordenes, cerradas, tab, q, sort]);
 
   return (
     <div>
+      {/* Título + "Órdenes abiertas" + "+ Registrar orden" -- movidos acá
+          desde ordenes/page.js (v42/28-sep) para que "Órdenes abiertas"
+          pueda ser clickeable y compartir el estado `tab` de abajo. */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
+        <h1 className="page-title" style={{ margin: 0 }}>Registro de Órdenes</h1>
+        {/* "Órdenes abiertas" (feedback sobre v40, pedido explícito:
+            "ordenes abiertas ponlo entre registro de ordenes y registrar
+            orden") -- total de `ordenes` (todo lo que no está Entregado),
+            mismo criterio de siempre. Pasó de texto/botón fijo a un botón
+            clickeable de verdad (v42/28-sep, pedido explícito: "Ponemos
+            ordenes abiertas que sea clickeable?... me gustaria cambiarle
+            el color y ponerle algo mas neutral") -- ahora es una pestaña
+            más (clave "todas", fuera de la grilla de abajo por su
+            posición), con el mismo estilo neutral que las demás pestañas
+            cuando no está seleccionada, y el mismo azul activo cuando sí
+            (en vez de quedar siempre en azul fijo). Al hacer click muestra
+            TODAS las órdenes abiertas sin dividir por categoría. */}
+        <button
+          type="button"
+          className={`period-btn ${tab === "todas" ? "period-btn-active" : ""}`}
+          onClick={() => setTab("todas")}
+          style={{ flex: "0 0 auto", padding: "9px 16px", whiteSpace: "nowrap" }}
+        >
+          Órdenes abiertas ({conteos.todas})
+        </button>
+        {puedeRegistrar && (
+          <Link href="/app-clientes/ordenes/nueva">
+            <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
+              + Registrar orden
+            </button>
+          </Link>
+        )}
+      </div>
+
       {/* flexWrap (pedido explícito, mid-flow: "que se vea cuadrado todo")
           -- con 6 pestañas ya no caben en una sola fila; envuelven de a 3
           por fila (flex-basis ~30%) para que las dos filas queden parejas,
@@ -99,7 +164,7 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
             onClick={() => setTab(t.clave)}
             style={{ flex: "1 1 30%" }}
           >
-            {t.label}
+            {t.label} ({conteos[t.clave]})
           </button>
         ))}
       </div>

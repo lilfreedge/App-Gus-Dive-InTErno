@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ATAJOS_MENU_CLIENTES } from "@/lib/nav-clientes";
+import { ATAJOS_MENU_CLIENTES, ATAJOS_INICIO_CLIENTES } from "@/lib/nav-clientes";
 
 // Accesos directos opcionales de App Equipos de clientes (23-sep-2026,
 // pedido explícito: "agrega boton opcional (asi como esta en app
@@ -14,19 +14,26 @@ import { ATAJOS_MENU_CLIENTES } from "@/lib/nav-clientes";
 // la de allá.
 //
 // La sección de "Accesos directos en Inicio" (item 4, 27-sep-2026) se
-// quitó de aquí (feedback sobre v40, pedido explícito: "quita el toggle
-// de Registro de Órdenes de Personalizar mi menú, pon un botón fijo de
-// Registrar orden en Inicio") -- su único atajo, "Registro de Órdenes",
-// pasó a ser un botón fijo en el Hub de Inicio, ya no opcional (ver
-// app/app-clientes/page.js). No se tocó la columna profiles.
-// atajos_inicio_clientes en la base de datos, solo este control -- si
-// hiciera falta un atajo opcional distinto ahí más adelante, se puede
-// reintroducir la sección.
-export default function PersonalizarMenuClientes({ menuInicial }) {
+// había quitado de aquí (feedback sobre v40, pedido explícito: "quita el
+// toggle de Registro de Órdenes de Personalizar mi menú, pon un botón
+// fijo de Registrar orden en Inicio") -- su único atajo pasó a ser un
+// botón fijo en el Hub de Inicio, ya no opcional.
+//
+// Reintroducida (28-sep-2026, pedido explícito: "pon en personalizar mi
+// menu, el acceso a que puedan poner el boton de registro orden en
+// inicio") -- ahora "+ Registrar orden" en Inicio vuelve a depender de
+// este toggle además del permiso equipos_clientes_registrar (ver
+// app/app-clientes/page.js). Decisión de Claude sin pedirse explícito:
+// arranca ACTIVADO para todo el mundo (no hay valor guardado todavía en
+// profiles.atajos_inicio_clientes para nadie) para no hacer desaparecer
+// el botón de golpe de Inicio -- se puede reconsiderar si se prefería
+// que arrancara apagado, como hacía este mismo mecanismo antes de v40.
+export default function PersonalizarMenuClientes({ menuInicial, atajosInicioInicial }) {
   const router = useRouter();
   const supabase = createClient();
 
   const [menu, setMenu] = useState(menuInicial || {});
+  const [atajosInicio, setAtajosInicio] = useState(atajosInicioInicial || {});
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState(null);
 
@@ -34,6 +41,12 @@ export default function PersonalizarMenuClientes({ menuInicial }) {
     const menuNuevo = { ...menu, [clave]: valor };
     setMenu(menuNuevo);
     await guardar({ menu_personalizado_clientes: menuNuevo });
+  }
+
+  async function toggleAtajoInicio(clave, valor) {
+    const atajosNuevo = { ...atajosInicio, [clave]: valor };
+    setAtajosInicio(atajosNuevo);
+    await guardar({ atajos_inicio_clientes: atajosNuevo });
   }
 
   async function guardar(cambios) {
@@ -72,6 +85,26 @@ export default function PersonalizarMenuClientes({ menuInicial }) {
                 checked={!!menu[op.id]}
                 disabled={loading}
                 onChange={(e) => toggleOpcion(op.id, e.target.checked)}
+              />
+              <span className="slider" />
+            </label>
+          </div>
+        ))}
+      </div>
+
+      <p className="hint-text" style={{ marginTop: 20, marginBottom: 14 }}>
+        Actívalos para que aparezcan como botón de acceso directo dentro de Inicio.
+      </p>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {ATAJOS_INICIO_CLIENTES.map((op, i) => (
+          <div key={op.id} className="switch-row" style={i === 0 ? { marginTop: 0 } : undefined}>
+            <span className="switch-label">{op.label}</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={atajosInicio[op.id] !== false}
+                disabled={loading}
+                onChange={(e) => toggleAtajoInicio(op.id, e.target.checked)}
               />
               <span className="slider" />
             </label>

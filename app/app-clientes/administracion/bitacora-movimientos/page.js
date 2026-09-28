@@ -3,9 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
-import HistorialDeleteButton from "@/components/HistorialDeleteButton";
-import { formatFecha } from "@/lib/format";
-import { filasOrden } from "@/lib/historial-ordenes";
+import TarjetaBitacoraMovimiento from "@/components/TarjetaBitacoraMovimiento";
 
 // "Bitácora movimientos en órdenes" (27-sep-2026, pedido explícito: "un
 // boton en 'mas'... un registro de todas las veces que cualquier orden es
@@ -53,57 +51,9 @@ export default async function BitacoraMovimientosPage() {
         {!cambios || cambios.length === 0 ? (
           <div className="empty">Todavía no hay ediciones registradas.</div>
         ) : (
-          cambios.map((c) => <TarjetaMovimiento key={c.id} cambio={c} />)
+          cambios.map((c) => <TarjetaBitacoraMovimiento key={c.id} cambio={c} />)
         )}
       </div>
-    </div>
-  );
-}
-
-function TarjetaMovimiento({ cambio }) {
-  const d = cambio.datos_anteriores || {};
-  const dn = cambio.datos_nuevos || null;
-  const filas = filasOrden(d, dn);
-  const titulo = `Orden No. ${d.no_orden_fisico ?? d.folio ?? "?"} editada`;
-
-  return (
-    <div className="card edicion">
-      <div className="list-item-top">
-        <div className="list-item-title">{titulo}</div>
-        <HistorialDeleteButton cambioId={cambio.id} />
-      </div>
-      <table className="table-mini" style={{ marginTop: 8 }}>
-        <thead>
-          <tr>
-            <th>Campo</th>
-            <th>Antes</th>
-            <th>Después</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filas.map((f) => (
-            <tr key={f.label}>
-              <td>{f.label}</td>
-              <td>{f.antes}</td>
-              <td>{f.despues}</td>
-            </tr>
-          ))}
-          <tr>
-            <td>Editado por</td>
-            <td colSpan={2}>{cambio.full_name}</td>
-          </tr>
-          <tr>
-            <td>Fecha de edición</td>
-            <td colSpan={2}>{formatFecha(cambio.created_at)}</td>
-          </tr>
-        </tbody>
-      </table>
-      <Link
-        href={`/app-clientes/ordenes/${cambio.registro_id}`}
-        style={{ display: "inline-block", marginTop: 8, fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
-      >
-        Ver orden actual →
-      </Link>
     </div>
   );
 }

@@ -14,9 +14,22 @@ import {
 } from "@/lib/informe-mantenimiento";
 import BotonImprimir from "@/components/BotonImprimir";
 import EnviarInformeClient from "./enviar-client";
+import { IconLock } from "@/components/icons";
 
 const SECCION_ESTILO = { background: "var(--fondo)", border: "1px solid var(--borde)", borderRadius: 10, padding: 14, marginBottom: 12 };
 const SECCION_LABEL_ESTILO = { fontSize: 11, fontWeight: 700, color: "var(--texto-suave)", textTransform: "uppercase", letterSpacing: 0.3 };
+
+// Secciones "informativas" más sutiles (28-sep-2026, pedido explícito:
+// "poner la info que esta puesta por default para que se vea mas sutil,
+// que lo que llame la atencion sea lo que hay que llenar, de 'trabajo
+// realizado' hacia abajo") -- Datos del cliente / Detalles del regulador
+// (la parte de solo lectura) / Componentes recibidos / Estado inicial ya
+// vienen resueltos de la orden, no hace falta que compitan visualmente
+// con lo que sí hay que llenar (Trabajo realizado en adelante), que se
+// deja con la caja con borde de siempre (SECCION_ESTILO).
+const SECCION_ESTILO_SUTIL = { padding: "8px 2px 14px", marginBottom: 2, borderBottom: "1px solid var(--borde)" };
+const SECCION_LABEL_ESTILO_SUTIL = { ...SECCION_LABEL_ESTILO, fontWeight: 600 };
+const TEXTO_SUTIL_ESTILO = { fontSize: 13, color: "var(--texto-suave)" };
 
 // Formulario del "Informe de mantenimiento" (item 36, mockup aprobado
 // Informe.dc.html) -- dos vistas, igual que en el mockup: "Formulario
@@ -47,8 +60,21 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
 
   async function generarInforme() {
     setError("");
-    if (!informe.marca.trim() && !informe.modelo.trim()) {
-      setError("Indica al menos la marca o el modelo del regulador.");
+    // Detalles del regulador ahora obligatorios (28-sep-2026, pedido
+    // explícito: "que los detalles del regulador sean inevitables") --
+    // antes bastaba con marca O modelo (cualquiera de los dos) y el No.
+    // de serie era opcional del todo; ahora los 3 campos son obligatorios
+    // para poder generar el informe.
+    if (!informe.marca.trim()) {
+      setError("Indica la marca del regulador.");
+      return;
+    }
+    if (!informe.modelo.trim()) {
+      setError("Indica el modelo del regulador.");
+      return;
+    }
+    if (!informe.serie.trim()) {
+      setError("Indica el número de serie del regulador.");
       return;
     }
     if (informe.aprobado !== true && informe.aprobado !== false) {
@@ -115,46 +141,68 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
           onClick={() => yaGenerado && setVista("preview")}
           disabled={!yaGenerado}
           title={!yaGenerado ? "Primero genera el informe" : undefined}
-          style={{ marginTop: 0, width: "auto", padding: "6px 14px", fontSize: 12.5 }}
+          style={{
+            marginTop: 0,
+            width: "auto",
+            padding: "6px 14px",
+            fontSize: 12.5,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            // Se ve bloqueado de verdad (28-sep-2026, pedido explícito:
+            // "pon que informe (cliente) aparezca como bloqueado, porque
+            // no se le puede hacer click hasta que se alimenta el
+            // formulario") -- antes solo tenía el atributo `disabled`
+            // (gris apagado por defecto del navegador), sin nada que
+            // dejara claro de un vistazo por qué no reacciona al click.
+            ...(!yaGenerado ? { opacity: 0.6, cursor: "not-allowed" } : null),
+          }}
         >
+          {!yaGenerado && <IconLock size={12} />}
           Informe (cliente)
         </button>
       </div>
 
       {vista === "formulario" ? (
         <>
-          <div style={SECCION_ESTILO}>
-            <div style={SECCION_LABEL_ESTILO}>Datos del cliente</div>
-            <div style={{ marginTop: 8, fontSize: 13.5 }}><b>Nombre:</b> {orden.cliente_nombre_snapshot || "—"}</div>
-            {orden.cliente_telefono && <div style={{ marginTop: 4, fontSize: 13.5 }}><b>Teléfono:</b> {orden.cliente_telefono}</div>}
+          <div style={SECCION_ESTILO_SUTIL}>
+            <div style={SECCION_LABEL_ESTILO_SUTIL}>Datos del cliente</div>
+            <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}><b>Nombre:</b> {orden.cliente_nombre_snapshot || "—"}</div>
+            {orden.cliente_telefono && <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Teléfono:</b> {orden.cliente_telefono}</div>}
             <div className="hint-text" style={{ marginTop: 6 }}>Se completa automático con los datos de la orden.</div>
           </div>
 
-          <div style={SECCION_ESTILO}>
-            <div style={SECCION_LABEL_ESTILO}>Detalles del regulador</div>
-            <div style={{ marginTop: 8, fontSize: 13.5 }}><b>No. de orden:</b> {orden.no_orden_fisico ?? orden.folio}</div>
-            <div style={{ marginTop: 4, fontSize: 13.5 }}><b>Fecha de ingreso:</b> {formatFechaDDMMAAAADeDate(orden.fecha)}</div>
+          <div style={SECCION_ESTILO_SUTIL}>
+            <div style={SECCION_LABEL_ESTILO_SUTIL}>Detalles del regulador</div>
+            <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}><b>No. de orden:</b> {orden.no_orden_fisico ?? orden.folio}</div>
+            <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Fecha de ingreso:</b> {formatFechaDDMMAAAADeDate(orden.fecha)}</div>
 
-            <label style={{ marginTop: 10 }}>Marca</label>
+            <label style={{ marginTop: 10 }}>
+              Marca <span className="req">*</span>
+            </label>
             <input type="text" value={informe.marca} onChange={(e) => set("marca", e.target.value)} placeholder="Ej. Scubapro" />
 
-            <label style={{ marginTop: 10 }}>Modelo</label>
+            <label style={{ marginTop: 10 }}>
+              Modelo <span className="req">*</span>
+            </label>
             <input type="text" value={informe.modelo} onChange={(e) => set("modelo", e.target.value)} placeholder="Ej. MK25 EVO" />
 
-            <label style={{ marginTop: 10 }}>No. de serie</label>
-            <input type="text" value={informe.serie} onChange={(e) => set("serie", e.target.value)} placeholder={serie || "Opcional"} />
+            <label style={{ marginTop: 10 }}>
+              No. de serie <span className="req">*</span>
+            </label>
+            <input type="text" value={informe.serie} onChange={(e) => set("serie", e.target.value)} placeholder={serie || "Ej. 123456"} />
           </div>
 
-          <div style={SECCION_ESTILO}>
-            <div style={SECCION_LABEL_ESTILO}>Componentes recibidos</div>
-            <div style={{ marginTop: 8, fontSize: 13.5 }}>{componentesTexto}</div>
+          <div style={SECCION_ESTILO_SUTIL}>
+            <div style={SECCION_LABEL_ESTILO_SUTIL}>Componentes recibidos</div>
+            <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}>{componentesTexto}</div>
             <div className="hint-text" style={{ marginTop: 6 }}>Se anota al registrar la orden -- no se edita aquí.</div>
           </div>
 
-          <div style={SECCION_ESTILO}>
-            <div style={SECCION_LABEL_ESTILO}>Estado inicial del regulador</div>
-            <div style={{ marginTop: 8, fontSize: 13.5 }}><b>Daños visibles:</b> {orden.regulador_danos_visibles || "Ninguno"}</div>
-            <div style={{ marginTop: 4, fontSize: 13.5 }}><b>Problemas reportados:</b> {orden.regulador_problemas_reportados || "Ninguno reportado"}</div>
+          <div style={SECCION_ESTILO_SUTIL}>
+            <div style={SECCION_LABEL_ESTILO_SUTIL}>Estado inicial del regulador</div>
+            <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}><b>Daños visibles:</b> {orden.regulador_danos_visibles || "Ninguno"}</div>
+            <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Problemas reportados:</b> {orden.regulador_problemas_reportados || "Ninguno reportado"}</div>
             <div className="hint-text" style={{ marginTop: 6 }}>Se anota al registrar la orden -- no se edita aquí.</div>
           </div>
 
@@ -175,9 +223,6 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
             </div>
             <label style={{ marginTop: 12 }}>Presión intermedia ajustada (PSI)</label>
             <input type="text" value={informe.presion} onChange={(e) => set("presion", e.target.value)} placeholder="Ej. 140 PSI" />
-            <div className="hint-text" style={{ marginTop: 10 }}>
-              Las piezas reemplazadas ya se ven en «Códigos a cobrar» de la orden -- no se repiten aquí.
-            </div>
           </div>
 
           <div style={SECCION_ESTILO}>

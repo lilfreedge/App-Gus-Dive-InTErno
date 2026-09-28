@@ -21,7 +21,7 @@ export default async function NuevaOrdenPage({ searchParams }) {
     supabase.from("clientes_equipos").select("id, nombre, telefono").order("nombre"),
     supabase
       .from("equipos_del_cliente")
-      .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie"),
+      .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, regulador_componentes_detalle"),
     // Catálogo de servicios (23-sep-2026) -- reemplaza la lista fija que
     // antes estaba en form-client.js, ver migration_21.sql. `tipos_equipo`
     // (item 21, migration_29.sql) filtra qué servicios se ofrecen según el
