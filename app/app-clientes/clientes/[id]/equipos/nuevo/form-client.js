@@ -10,9 +10,14 @@ import DetalleComponentesRegulador from "@/components/DetalleComponentesRegulado
 const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Compresor", "Otro"];
 const CON_SERIE = ["Reguladores", "Tanques", "Computadora", "Compresor"];
 
+// Tamaño y Material -- solo Tanques, solo al crear (ver el mismo
+// comentario en components/SelectorEquipoCliente.js).
+const TAMANOS_TANQUE = ["60 cf", "80 cf", "100 cf", "120 cf"];
+const MATERIALES_TANQUE = ["Aluminio", "Acero"];
+
 let siguienteId = 1;
 function filaVacia() {
-  return { key: siguienteId++, tipo_equipo: "", tipo_equipo_otro: "", marca: "", modelo: "", serie: "", detalle_componentes: {} };
+  return { key: siguienteId++, tipo_equipo: "", tipo_equipo_otro: "", marca: "", modelo: "", serie: "", tamano: "", material: "", detalle_componentes: {} };
 }
 
 // Carga varios equipos de una sola vez para un cliente ya existente
@@ -66,6 +71,8 @@ export default function AgregarEquiposForm({ clienteId }) {
       marca: f.marca.trim() || null,
       modelo: f.tipo_equipo === "Tanques" ? null : f.modelo.trim() || null,
       serie: CON_SERIE.includes(f.tipo_equipo) ? f.serie.trim() || null : null,
+      tamano: f.tipo_equipo === "Tanques" ? f.tamano || null : null,
+      material: f.tipo_equipo === "Tanques" ? f.material || null : null,
       regulador_componentes_detalle: f.tipo_equipo === "Reguladores" ? f.detalle_componentes : null,
       user_id: user?.id || null,
       nombre_usuario_snapshot: perfil?.full_name || null,
@@ -162,6 +169,28 @@ export default function AgregarEquiposForm({ clienteId }) {
                 onChange={(e) => actualizarFila(f.key, "serie", e.target.value)}
                 placeholder="Opcional"
               />
+              <label htmlFor={`tamano_${f.key}`}>Tamaño</label>
+              <select
+                id={`tamano_${f.key}`}
+                value={f.tamano}
+                onChange={(e) => actualizarFila(f.key, "tamano", e.target.value)}
+              >
+                <option value="">Selecciona...</option>
+                {TAMANOS_TANQUE.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              <label htmlFor={`material_${f.key}`}>Material</label>
+              <select
+                id={`material_${f.key}`}
+                value={f.material}
+                onChange={(e) => actualizarFila(f.key, "material", e.target.value)}
+              >
+                <option value="">Selecciona...</option>
+                {MATERIALES_TANQUE.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
             </>
           ) : (
             f.tipo_equipo && (

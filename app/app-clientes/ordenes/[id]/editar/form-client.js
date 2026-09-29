@@ -24,6 +24,20 @@ import { IconLock, IconCheck } from "@/components/icons";
 const VERIFICADO_POR = ["Pipe", "Gugi"];
 const MEDIOS_NOTIFICACION = ["Llamada", "WhatsApp", "Correo", "Otro"];
 
+// Antes, todo error al guardar en este wizard (cualquier paso, Hold
+// incluido) mostraba el mismo "No se pudo guardar. Intenta de nuevo." sin
+// más detalle -- feedback en vivo, 29-sep-2026: "trate de guardar este
+// hold desde otro usuario que no es el mio y me dio este error. en mi
+// usuario (titular) tambien me esta dando ese error" (el mismo mensaje
+// genérico para cualquier usuario, incluido el Titular, hace pensar en un
+// error real de guardado -- no de permisos -- que sin el mensaje real de
+// Supabase no se puede diagnosticar a ciegas). Ahora se muestra el
+// `.message` real del error cuando está disponible, igual que ya hace
+// "Editar equipo".
+function mensajeError(e) {
+  return e?.message ? `No se pudo guardar: ${e.message}` : "No se pudo guardar. Intenta de nuevo.";
+}
+
 // Rediseño completo de "Actualizar estado de orden" (wizard, ronda grande
 // de feedback, 27-sep-2026) -- mockup aprobado ("nítido") en
 // Main.dc.html. Reemplaza el formulario de un solo bloque con un botón
@@ -167,7 +181,7 @@ export default function EditarSeguimientoForm({
         return nuevo;
       });
     } catch (e) {
-      setErroresPaso((er) => ({ ...er, [id]: "No se pudo guardar. Intenta de nuevo." }));
+      setErroresPaso((er) => ({ ...er, [id]: mensajeError(e) }));
     } finally {
       setGuardandoPaso(null);
     }
@@ -256,7 +270,7 @@ export default function EditarSeguimientoForm({
       setConfirmandoHold(false);
       setHoldEditando(false);
     } catch (e) {
-      setHoldError("No se pudo guardar. Intenta de nuevo.");
+      setHoldError(mensajeError(e));
     } finally {
       setGuardandoHold(false);
     }
@@ -313,7 +327,7 @@ export default function EditarSeguimientoForm({
       setDecisionSel("");
       setDecisionNota("");
     } catch (e) {
-      setHoldError("No se pudo guardar. Intenta de nuevo.");
+      setHoldError(mensajeError(e));
     } finally {
       setGuardandoHold(false);
     }
@@ -326,18 +340,25 @@ export default function EditarSeguimientoForm({
   const repuestos = ordenLocal.repuestos_usados_detalle;
   const [nuevoRepuesto, setNuevoRepuesto] = useState("");
   const [guardandoRepuestos, setGuardandoRepuestos] = useState(false);
+  const [errorRepuestos, setErrorRepuestos] = useState("");
   const [repuestoAEliminar, setRepuestoAEliminar] = useState(null);
   const [motivoEliminarRepuesto, setMotivoEliminarRepuesto] = useState("");
   const [motivoEliminarError, setMotivoEliminarError] = useState(false);
 
+  // No tenía try/catch antes -- un error acá (guardarCampos lanza el error
+  // real de Supabase) se quedaba sin ningún mensaje visible. Mismo arreglo
+  // que el resto del wizard (ver mensajeError arriba).
   async function guardarRepuestos(listaNueva, cambiosExtra = {}) {
     setGuardandoRepuestos(true);
+    setErrorRepuestos("");
     try {
       await guardarCampos({
         repuestos_usados_detalle: listaNueva,
         repuestos_usados: listaNueva.map((r) => r.nombre).join(", ") || null,
         ...cambiosExtra,
       });
+    } catch (e) {
+      setErrorRepuestos(mensajeError(e));
     } finally {
       setGuardandoRepuestos(false);
     }
@@ -470,6 +491,14 @@ export default function EditarSeguimientoForm({
       setErroresPaso((e) => ({ ...e, listo: "Indica la fecha de listo para entrega." }));
       return;
     }
+    // No tiene sentido que el equipo quede "listo para entrega" antes de
+    // haber vuelto a la tienda (feedback en vivo, 29-sep-2026, pedido
+    // explícito, con captura mostrando justo ese caso) -- mismo patrón que
+    // las demás validaciones de fecha de este wizard.
+    if (ordenLocal.fecha_retorno_tienda && valor < ordenLocal.fecha_retorno_tienda) {
+      setErroresPaso((e) => ({ ...e, listo: "No puede ser anterior a la fecha de retorno a tienda." }));
+      return;
+    }
     guardarPasoSimple("listo", { fecha_listo_entrega: valor });
   }
 
@@ -485,6 +514,25 @@ export default function EditarSeguimientoForm({
   // historial de la orden sin que haga falta nada extra acá.
   function borrarFechaListo() {
     guardarPasoSimple("listo", { fecha_listo_entrega: null });
+  }
+
+  // Mismo botón "Borrar fecha" de arriba, extendido a los demás pasos de
+  // fecha del Seguimiento (feedback en vivo, 29-sep-2026, pedido
+  // explícito: "permite poder borrar la fecha, por si acaso es necesario
+  // echar para atras un paso") -- cada uno usa `guardarPasoSimple`
+  // directo, igual que `borrarFechaListo`, para poder guardar `null` sin
+  // pasar por la validación normal del paso (que exige una fecha).
+  function borrarEnvioReparacion() {
+    guardarPasoSimple("envio_reparacion", { fecha_envio: null, envio_a: null });
+  }
+  function borrarEnvioHidrostatica() {
+    guardarPasoSimple("envio_hidrostatica", { fecha_envio_hidrostatica: null });
+  }
+  function borrarRetorno() {
+    guardarPasoSimple("retorno", { fecha_retorno_tienda: null, inspeccion_visual_realizada: false });
+  }
+  function borrarVerificado() {
+    guardarPasoSimple("verificado", { verificado_por: null });
   }
 
   function guardarVerificado() {
@@ -559,7 +607,7 @@ export default function EditarSeguimientoForm({
       setNotifMedio(MEDIOS_NOTIFICACION[0]);
       setNotifNotas("");
     } catch (e) {
-      setErrorNotif("No se pudo guardar. Intenta de nuevo.");
+      setErrorNotif(mensajeError(e));
     } finally {
       setGuardandoNotif(false);
     }
@@ -575,7 +623,7 @@ export default function EditarSeguimientoForm({
         fecha_notificacion_cliente: listaNueva.length > 0 ? listaNueva[listaNueva.length - 1].fecha : null,
       });
     } catch (e) {
-      setErrorNotif("No se pudo guardar. Intenta de nuevo.");
+      setErrorNotif(mensajeError(e));
     } finally {
       setGuardandoNotif(false);
     }
@@ -654,7 +702,7 @@ export default function EditarSeguimientoForm({
       // tiene nada más que hacer con la orden Entregada.
       router.push(`/app-clientes/ordenes/${orden.id}`);
     } catch (e) {
-      setErroresCierre({ general: "No se pudo guardar. Intenta de nuevo." });
+      setErroresCierre({ general: mensajeError(e) });
       setConfirmandoCierreSinCodigos(false);
     } finally {
       setGuardandoCierre(false);
@@ -693,7 +741,7 @@ export default function EditarSeguimientoForm({
       await guardarCampos({ notas_tecnico_regulador: notasTecnico.trim() || null });
       router.push(`/app-clientes/ordenes/${orden.id}`);
     } catch (e) {
-      setErrorNotas("No se pudo guardar. Intenta de nuevo.");
+      setErrorNotas(mensajeError(e));
     } finally {
       setGuardandoNotas(false);
     }
@@ -715,17 +763,20 @@ export default function EditarSeguimientoForm({
     : esReparacion
       ? { label: "la fecha de envío a taller o proveedor", onVolver: editarEnvioReparacion }
       : null;
-  const pasoAnteriorListo = muestraRetorno ? { label: "la fecha de retorno a tienda", onVolver: editarRetorno } : null;
+  // "← Volver a la fecha de retorno a tienda" en el paso de "Listo para
+  // entrega" -- quitado (feedback en vivo, 29-sep-2026, pedido explícito
+  // con captura: "borrar 'volver a la fecha de retorno a tienda'"). El
+  // paso "Retorno" sigue teniendo su propio "Editar" arriba si hace falta
+  // corregirlo.
+  const pasoAnteriorListo = null;
   const pasoAnteriorVerificado = { label: "la fecha de listo para entrega", onVolver: editarListo };
-  // Antes ofrecía también "← Volver a verificado por" cuando el equipo sí
-  // requiere verificación -- quitado (28-sep-2026, feedback en vivo, item
-  // 12: "quita el 'volver a verificado por' no hace sentido"): a diferencia
-  // de los demás pasos, "Verificado por" no es algo que normalmente haga
-  // falta corregir justo al llegar a Cierre, y ya tiene su propio "Editar"
-  // arriba en la pantalla si de verdad hace falta.
-  const pasoAnteriorCierre = !requiereVerificacion
-    ? { label: "la fecha de listo para entrega", onVolver: editarListo }
-    : null;
+  // "← Volver a verificado por" ya se había quitado antes (28-sep-2026,
+  // item 12). "← Volver a la fecha de listo para entrega" en Cierre de la
+  // orden -- quitado también ahora (feedback en vivo, 29-sep-2026, pedido
+  // explícito con captura: "borrar 'volver a la fecha de listo para
+  // entrega'"). El paso "Listo para entrega" sigue teniendo su propio
+  // "Editar" arriba si hace falta corregirlo.
+  const pasoAnteriorCierre = null;
 
   return (
     <div className="card">
@@ -970,6 +1021,7 @@ export default function EditarSeguimientoForm({
             Si no se usó ninguno, puedes dejarlo vacío -- se pedirá confirmar al cerrar la orden.
           </div>
         )}
+        {errorRepuestos && <div className="error-msg">⚠ {errorRepuestos}</div>}
       </div>
 
       {repuestoAEliminar !== null && (
@@ -1042,6 +1094,7 @@ export default function EditarSeguimientoForm({
               onGuardar={guardarEnvioReparacion}
               denegado={denegado}
               explicado={explicado}
+              suprimido={!envioReparacionHecho && !!editando}
             >
               <input
                 type="date"
@@ -1049,6 +1102,17 @@ export default function EditarSeguimientoForm({
                 onChange={(e) => setDraft("envio_reparacion", e.target.value)}
                 style={{ marginTop: 6 }}
               />
+              {ordenLocal.fecha_envio && (
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={borrarEnvioReparacion}
+                  disabled={guardandoPaso === "envio_reparacion"}
+                  style={{ marginTop: 8, width: "100%" }}
+                >
+                  Borrar fecha
+                </button>
+              )}
             </PasoWizard>
           )}
 
@@ -1066,6 +1130,7 @@ export default function EditarSeguimientoForm({
               onGuardar={guardarEnvioHidrostatica}
               denegado={denegado}
               explicado={explicado}
+              suprimido={!envioHidrostaticaHecho && !!editando}
             >
               <input
                 type="date"
@@ -1073,6 +1138,17 @@ export default function EditarSeguimientoForm({
                 onChange={(e) => setDraft("envio_hidrostatica", e.target.value)}
                 style={{ marginTop: 6 }}
               />
+              {ordenLocal.fecha_envio_hidrostatica && (
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={borrarEnvioHidrostatica}
+                  disabled={guardandoPaso === "envio_hidrostatica"}
+                  style={{ marginTop: 8, width: "100%" }}
+                >
+                  Borrar fecha
+                </button>
+              )}
             </PasoWizard>
           )}
 
@@ -1098,6 +1174,7 @@ export default function EditarSeguimientoForm({
               explicado={explicado}
               onClickBloqueado={clickBloqueado}
               pasoAnterior={pasoAnteriorRetorno}
+              suprimido={!retornoHecho && !!editando}
             >
               <input
                 type="date"
@@ -1115,6 +1192,17 @@ export default function EditarSeguimientoForm({
                   />
                   Inspección visual realizada
                 </label>
+              )}
+              {ordenLocal.fecha_retorno_tienda && (
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={borrarRetorno}
+                  disabled={guardandoPaso === "retorno"}
+                  style={{ marginTop: 8, width: "100%" }}
+                >
+                  Borrar fecha
+                </button>
               )}
             </PasoWizard>
           )}
@@ -1135,6 +1223,7 @@ export default function EditarSeguimientoForm({
             explicado={explicado}
             onClickBloqueado={clickBloqueado}
             pasoAnterior={pasoAnteriorListo}
+            suprimido={!listoHecho && !!editando}
           >
             <input
               type="date"
@@ -1185,6 +1274,7 @@ export default function EditarSeguimientoForm({
               explicado={explicado}
               onClickBloqueado={clickBloqueado}
               pasoAnterior={pasoAnteriorVerificado}
+              suprimido={!verificadoHecho && !!editando}
             >
               <select
                 value={draftDe("verificado", ordenLocal.verificado_por)}
@@ -1196,6 +1286,17 @@ export default function EditarSeguimientoForm({
                   <option key={v} value={v}>{v}</option>
                 ))}
               </select>
+              {ordenLocal.verificado_por && (
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={borrarVerificado}
+                  disabled={guardandoPaso === "verificado"}
+                  style={{ marginTop: 8, width: "100%" }}
+                >
+                  Borrar verificación
+                </button>
+              )}
             </PasoWizard>
           )}
 
@@ -1213,6 +1314,19 @@ export default function EditarSeguimientoForm({
                   ? "Aún no puedes agregar una notificación porque falta verificar la orden."
                   : "Aún no puedes agregar una notificación porque falta la fecha de listo para entrega."
               }
+              denegado={denegado}
+              explicado={explicado}
+              onClick={clickBloqueado}
+            />
+          ) : editando ? (
+            // Suprimida mientras se reabrió otro paso con "Editar" (item 6,
+            // solo 1 paso abierto a la vez) -- Notificaciones no tiene su
+            // propio "hecho" (es una lista), así que se resuelve aparte del
+            // resto de PasoWizard.
+            <PasoBloqueado
+              id="notif"
+              label="Notificaciones al cliente"
+              mensaje="Termina de editar el paso de arriba para continuar aquí."
               denegado={denegado}
               explicado={explicado}
               onClick={clickBloqueado}
@@ -1307,6 +1421,7 @@ export default function EditarSeguimientoForm({
             explicado={explicado}
             onClickBloqueado={clickBloqueado}
             pasoAnterior={pasoAnteriorCierre}
+            suprimido={!cierreHecho && !!editando}
           >
             <label style={{ marginTop: 6 }}>
               Fecha de entrega al cliente <span className="req">*</span>
@@ -1415,6 +1530,18 @@ function PasoWizard({
   explicado,
   onClickBloqueado,
   pasoAnterior,
+  // Paso reabierto con "Editar" en algún otro lugar de la cadena (item 6,
+  // feedback en vivo, 29-sep-2026, pedido explícito con captura mostrando
+  // 2 pasos abiertos a la vez: "si abro un paso anterior, deberia de
+  // cerrarse el otro. Solo debe de estar 1 paso abierto a la vez") -- un
+  // paso todavía no hecho normalmente se muestra siempre abierto (es el
+  // siguiente de la cadena), pero mientras alguien tenga otro paso
+  // reabierto con "Editar" (ver `editando` en el componente de arriba),
+  // este se "suprime" -- se ve como pendiente en vez de como una segunda
+  // tarjeta abierta al mismo tiempo. Se resuelve solo al guardar o
+  // cancelar el paso que se estaba reabriendo.
+  suprimido,
+  mensajeSuprimido,
   children,
 }) {
   if (locked) {
@@ -1460,6 +1587,19 @@ function PasoWizard({
           </button>
         )}
       </div>
+    );
+  }
+
+  if (suprimido) {
+    return (
+      <PasoBloqueado
+        id={id}
+        label={label}
+        mensaje={mensajeSuprimido || "Termina de editar el paso de arriba para continuar aquí."}
+        denegado={denegado}
+        explicado={explicado}
+        onClick={onClickBloqueado || ((pid) => denegado.denegar(pid))}
+      />
     );
   }
 

@@ -18,7 +18,13 @@ import { createClient } from "@/lib/supabase/client";
 // puedeCrear: si es false (permiso granular equipos_clientes_agregar_cliente
 // faltante, item 15), no se muestra la opción de crear -- solo se puede
 // elegir entre los clientes ya existentes.
-export default function SelectorCliente({ clientes, valor, onChange, onClienteCreado, puedeCrear = true }) {
+// puedeEditar: si es true (permiso equipos_clientes_editar_cliente, feedback
+// en vivo 29-sep-2026, item 8: "agregame en registrar una opcion de editar
+// cliente justo al lado de 'agregar cliente'"), con un cliente ya elegido
+// se muestra un link "Editar cliente" que abre su ficha de edición en una
+// pestaña nueva -- así no se pierde el resto del formulario que se esté
+// llenando (por ejemplo, Registrar orden).
+export default function SelectorCliente({ clientes, valor, onChange, onClienteCreado, puedeCrear = true, puedeEditar = false }) {
   const supabase = createClient();
   const seleccionado = clientes.find((c) => c.id === valor);
   const [texto, setTexto] = useState(seleccionado?.nombre || "");
@@ -158,6 +164,17 @@ export default function SelectorCliente({ clientes, valor, onChange, onClienteCr
         onFocus={() => setAbierto(true)}
         autoComplete="off"
       />
+      {puedeEditar && seleccionado && (
+        <a
+          href={`/app-clientes/clientes/${seleccionado.id}/editar`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hint-text"
+          style={{ display: "inline-block", marginTop: 4, fontWeight: 600, color: "var(--azul-claro)" }}
+        >
+          Editar cliente
+        </a>
+      )}
       {abierto && (
         <div className="autocomplete-list">
           {filtrados.map((c) => (

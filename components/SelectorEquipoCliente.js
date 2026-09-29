@@ -15,6 +15,15 @@ const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Compresor", "Otro
 // el catálogo de Compresores de App Interno) -- BC y Otro no lo piden.
 const CON_SERIE = ["Reguladores", "Tanques", "Computadora", "Compresor"];
 
+// Tamaño y Material -- solo al crear un Tanque (feedback en vivo,
+// 29-sep-2026, pedido explícito: "que al momento de crear un tanque,
+// pregunte tambien ponga secciones para: Tamaño... y material (aluminio o
+// acero). Esto si que no sea editable... es imposible que cambie") -- por
+// eso estos 2 campos solo existen en los formularios de CREAR equipo (acá
+// y en la carga desde la ficha del cliente), nunca en "Editar equipo".
+const TAMANOS_TANQUE = ["60 cf", "80 cf", "100 cf", "120 cf"];
+const MATERIALES_TANQUE = ["Aluminio", "Acero"];
+
 // Selector del equipo de un cliente (23-sep-2026, pedido explícito: "me
 // interesa tener un historial de que se le ha hecho cada vez que ha ido
 // un mismo equipo a la tienda"). Mismo patrón que SelectorCliente
@@ -55,6 +64,8 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
   const [marcaNueva, setMarcaNueva] = useState("");
   const [modeloNuevo, setModeloNuevo] = useState("");
   const [serieNueva, setSerieNueva] = useState("");
+  const [tamanoNuevo, setTamanoNuevo] = useState("");
+  const [materialNuevo, setMaterialNuevo] = useState("");
   // Detalle de componentes -- solo Reguladores (28-sep-2026, pedido
   // explícito, ver lib/regulador-detalle.js).
   const [detalleNuevo, setDetalleNuevo] = useState({});
@@ -107,6 +118,8 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
     setMarcaNueva("");
     setModeloNuevo("");
     setSerieNueva("");
+    setTamanoNuevo("");
+    setMaterialNuevo("");
     setDetalleNuevo({});
     setError("");
     setCreando(true);
@@ -136,11 +149,13 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
         marca: marcaNueva.trim() || null,
         modelo: tipoNuevo === "Tanques" ? null : modeloNuevo.trim() || null,
         serie: CON_SERIE.includes(tipoNuevo) ? serieNueva.trim() || null : null,
+        tamano: tipoNuevo === "Tanques" ? tamanoNuevo || null : null,
+        material: tipoNuevo === "Tanques" ? materialNuevo || null : null,
         regulador_componentes_detalle: tipoNuevo === "Reguladores" ? detalleNuevo : null,
         user_id: user?.id || null,
         nombre_usuario_snapshot: perfil?.full_name || null,
       })
-      .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, regulador_componentes_detalle")
+      .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, tamano, material, regulador_componentes_detalle")
       .single();
 
     setGuardando(false);
@@ -194,6 +209,20 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
             <input id="equipo_nuevo_marca" type="text" value={marcaNueva} onChange={(e) => setMarcaNueva(e.target.value)} placeholder="Opcional" />
             <label htmlFor="equipo_nuevo_serie">No. Serie</label>
             <input id="equipo_nuevo_serie" type="text" value={serieNueva} onChange={(e) => setSerieNueva(e.target.value)} placeholder="Opcional" />
+            <label htmlFor="equipo_nuevo_tamano">Tamaño</label>
+            <select id="equipo_nuevo_tamano" value={tamanoNuevo} onChange={(e) => setTamanoNuevo(e.target.value)}>
+              <option value="">Selecciona...</option>
+              {TAMANOS_TANQUE.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+            <label htmlFor="equipo_nuevo_material">Material</label>
+            <select id="equipo_nuevo_material" value={materialNuevo} onChange={(e) => setMaterialNuevo(e.target.value)}>
+              <option value="">Selecciona...</option>
+              {MATERIALES_TANQUE.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
           </>
         ) : (
           <>

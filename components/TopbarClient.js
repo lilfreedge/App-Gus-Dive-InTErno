@@ -16,7 +16,6 @@ export default function TopbarClient({
   isAdmin,
   esTitular,
   permisos,
-  menuPersonalizado,
   ordenMenu,
 }) {
   const router = useRouter();
@@ -31,8 +30,8 @@ export default function TopbarClient({
   // usuario en profiles.orden_menu, o el orden normal si nunca lo
   // cambió.
   const linksBase = useMemo(
-    () => seccionesVisibles({ esTitular, permisos, menuPersonalizado }),
-    [esTitular, permisos, menuPersonalizado]
+    () => seccionesVisibles({ esTitular, permisos }),
+    [esTitular, permisos]
   );
   const [links, setLinks] = useState(() => ordenarSecciones(linksBase, ordenMenu));
 
@@ -163,7 +162,7 @@ export default function TopbarClient({
               }
               title={
                 esAtajo
-                  ? "Acceso directo que activaste en Mi Perfil"
+                  ? "Acceso directo según tus permisos"
                   : !fijo
                   ? "Arrastra para reordenar"
                   : undefined

@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { getProfileYUser } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import PreferenciasApariencia from "@/components/PreferenciasApariencia";
-import PersonalizarMenu from "@/components/PersonalizarMenu";
 import MiActividad from "@/components/MiActividad";
 import PerfilForm from "./form-client";
 
@@ -54,14 +53,6 @@ export default async function PerfilPage() {
         <div style={{ marginTop: 26 }}>
           <PreferenciasApariencia />
         </div>
-
-        <div className="section-title" style={{ marginTop: 26 }}>
-          Personalizar mi menú
-        </div>
-        <PersonalizarMenu
-          menuInicial={profile?.menu_personalizado}
-          puedeCompresores={tieneAcceso(profile, "compresores")}
-        />
       </div>
     </div>
   );

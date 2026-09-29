@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermisoClientes } from "@/lib/roles";
+import { requirePermisoClientes, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevaOrdenForm from "./form-client";
@@ -16,6 +16,11 @@ export default async function NuevaOrdenPage({ searchParams }) {
   const permisos = profile?.permisos || {};
   const puedeAgregarCliente = esTitular || !!permisos.equipos_clientes_agregar_cliente;
   const puedeAgregarEquipo = esTitular || !!permisos.equipos_clientes_agregar_equipo;
+  // "Editar cliente" justo al lado de "Agregar cliente" (feedback en vivo,
+  // 29-sep-2026, pedido explícito, item 8) -- mismo permiso que ya usa la
+  // ficha del cliente (equipos_clientes_editar_cliente, exclusivo de
+  // Administradores/Titular).
+  const puedeEditarCliente = tieneAcceso(profile, "equipos_clientes_editar_cliente");
 
   const [{ data: clientes }, { data: equipos }, { data: servicios }, { data: ultimaOrden }] = await Promise.all([
     supabase.from("clientes_equipos").select("id, nombre, telefono").order("nombre"),
@@ -65,6 +70,7 @@ export default async function NuevaOrdenPage({ searchParams }) {
           servicios={servicios || []}
           clientePreseleccionado={searchParams?.cliente || ""}
           puedeAgregarCliente={puedeAgregarCliente}
+          puedeEditarCliente={puedeEditarCliente}
           puedeAgregarEquipo={puedeAgregarEquipo}
           noOrdenSugerido={noOrdenSugerido}
         />

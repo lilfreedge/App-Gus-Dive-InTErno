@@ -76,6 +76,15 @@ export default async function FichaEquipoPage({ params }) {
             {["Reguladores", "Tanques", "Computadora"].includes(equipo.tipo_equipo) && (
               <Campo etiqueta="No. Serie" valor={equipo.serie || "—"} />
             )}
+            {/* Tamaño y Material -- solo Tanques, se piden al crear el
+                equipo y no se pueden editar después (feedback en vivo,
+                29-sep-2026, pedido explícito: "es imposible que cambie"). */}
+            {equipo.tipo_equipo === "Tanques" && (
+              <>
+                <Campo etiqueta="Tamaño" valor={equipo.tamano || "—"} />
+                <Campo etiqueta="Material" valor={equipo.material || "—"} />
+              </>
+            )}
             {equipo.tipo_equipo === "Reguladores" && (
               <Campo etiqueta="Detalle de componentes" valor={detalleComponentesTexto(equipo.regulador_componentes_detalle)} />
             )}

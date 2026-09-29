@@ -69,6 +69,7 @@ export default function NuevaOrdenForm({
   servicios,
   clientePreseleccionado,
   puedeAgregarCliente = true,
+  puedeEditarCliente = false,
   puedeAgregarEquipo = true,
   noOrdenSugerido = "",
 }) {
@@ -476,6 +477,7 @@ export default function NuevaOrdenForm({
             onChange={onClienteChange}
             onClienteCreado={onClienteCreado}
             puedeCrear={puedeAgregarCliente}
+            puedeEditar={puedeEditarCliente}
           />
         </div>
         {historialCliente.length > 0 && (

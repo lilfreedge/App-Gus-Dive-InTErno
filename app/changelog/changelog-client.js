@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V22",
+    fecha: "29 de septiembre, 2026",
+    titulo: "Tamaño y Material al crear Tanques, validaciones y \"Borrar fecha\" adicionales en el Seguimiento, un solo paso abierto a la vez, \"Editar cliente\" en Registrar orden, y menú por permisos",
+    descripcion:
+      "Al crear un Tanque (Registrar orden, alta rápida desde el Equipo, o \"Agregar equipos\" desde la ficha del cliente) ahora se pide también Tamaño (60, 80, 100 o 120 cf) y Material (Aluminio o Acero) -- igual que el detalle de componentes del regulador, quedan fijos una vez creado el equipo y se ven en su ficha; trae una migración nueva (`migration_42.sql`). En el wizard de \"Actualizar estado de orden\": ya no se puede poner la fecha de \"Listo para entrega\" anterior a la de \"Retorno a tienda\" (antes solo se validaba al revés); se quitaron los atajos \"← Volver a la fecha de listo para entrega\" y \"← Volver a la fecha de retorno a tienda\"; se agregó \"Borrar fecha\" (o \"Borrar verificación\") también en Envío a reparación, Envío a hidrostática, Retorno a tienda y Verificado por, mismo patrón que ya tenía Listo para entrega; y ahora solo puede haber un paso abierto a la vez -- si reabres uno anterior con \"Editar\", los demás pasos pendientes se ven bloqueados hasta que termines. Los mensajes de error al guardar (incluido \"Códigos a cobrar\", que además ganó manejo de errores que no tenía) ahora muestran el motivo real en vez de un texto genérico. En Registrar orden, con un cliente ya elegido aparece un link \"Editar cliente\" (solo para quien tiene el permiso, Administradores/Titular) que abre su ficha de edición en una pestaña nueva, sin perder lo llenado en la orden. Y en Mi Perfil de App Interno se quitó \"Personalizar mi menú\" -- los accesos directos del menú superior (Llenados, Inspección visual, Mantenimiento de reguladores, Compresores) ahora aparecen solos según los permisos que ya tenga cada usuario en Administración, sin necesidad de activarlos aparte.",
+  },
+  {
     version: "V21",
     fecha: "29 de septiembre, 2026",
     titulo: "Bug de fechas del Seguimiento corregido, Códigos a cobrar con borrado, y varios ajustes de orden/permisos de feedback en vivo",
