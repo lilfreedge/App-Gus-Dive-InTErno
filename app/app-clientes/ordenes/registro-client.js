@@ -195,18 +195,25 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
           </div>
         ) : (
           filtrados.map((o) => (
-            <div key={o.id} className="list-item" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div key={o.id} className="list-item" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              {/* Primer intento (sin flex: 1 en el link) no se notó en la
+                  pantalla real (28-sep-2026, feedback en vivo: "está
+                  exactamente igual") -- el cambio de verdad que pidió el
+                  usuario fue reordenar la fila entera: "Pon que el sello(En
+                  proceso) esté de ultimo. y el boton como al lado del
+                  equipo". El sello salió de junto al título (ya no compite
+                  por espacio ahí) y ahora es el último elemento de la fila,
+                  después del botón; el link de los datos tampoco lleva
+                  flex: 1, así que el botón queda pegado al texto en vez de
+                  en la otra punta. */}
               <Link
                 href={`/app-clientes/ordenes/${o.id}`}
-                style={{ display: "block", flex: 1, minWidth: 0, textDecoration: "none", color: "inherit" }}
+                style={{ display: "block", minWidth: 0, textDecoration: "none", color: "inherit" }}
               >
-                <div className="list-item-top">
-                  <span className="list-item-title">
-                    <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
-                    {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
-                  </span>
-                  <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
-                </div>
+                <span className="list-item-title">
+                  <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
+                  {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
+                </span>
                 <div className="list-item-bottom">
                   {/* Folio quitado de aquí (pedido explícito, 27-sep-2026:
                       "borra el folio de aqui, ponlo invisible") -- en esta
@@ -244,6 +251,13 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
                   <IconRefresh size={17} />
                 </Link>
               )}
+              {/* Sello de estado, ahora de último en la fila (28-sep-2026,
+                  feedback en vivo: "Pon que el sello(En proceso) esté de
+                  ultimo") -- antes vivía pegado al título, arriba a la
+                  derecha del link. */}
+              <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ flexShrink: 0 }}>
+                {o.estado}
+              </span>
             </div>
           ))
         )}

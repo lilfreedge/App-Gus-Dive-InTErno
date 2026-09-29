@@ -126,13 +126,12 @@ export default async function FichaOrdenPage({ params }) {
               chicos (mismo tamaño de botón que el resto de la app, no el
               texto plano de antes, pero sin competir con el primario). */}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexShrink: 0 }}>
-            {esRegulador && (
-              <Link href={`/app-clientes/reportes/${o.id}`}>
-                <button className="btn secondary" type="button" style={{ marginTop: 0, width: "auto", padding: "9px 14px", fontSize: 13 }}>
-                  Reporte de la orden
-                </button>
-              </Link>
-            )}
+            {/* "Reporte de la orden" se movió de acá para abajo, junto a
+                "Ver bitácora de la orden" (28-sep-2026, feedback en vivo,
+                item 18: "vamos a renombrar el boton de 'reporte de la
+                orden' y vamos a ponerlo abajo, Debajo de ver bitacora de la
+                orden") -- pendiente confirmar con Pipe el nuevo nombre del
+                botón, por ahora se dejó el texto igual. */}
             {esRegulador && puedeVerInforme && (
               <Link href={`/app-clientes/ordenes/${o.id}/informe`}>
                 <button className="btn secondary" type="button" style={{ marginTop: 0, width: "auto", padding: "9px 14px", fontSize: 13 }}>
@@ -347,6 +346,27 @@ export default async function FichaOrdenPage({ params }) {
               Ver bitácora de la orden ({bitacora.length}) →
             </Link>
           </div>
+
+          {/* "Reporte de la orden" (28-sep-2026, feedback en vivo, item 18)
+              -- se movió de junto a "Actualizar estado de orden" a acá
+              debajo de "Ver bitácora de la orden", y se renombró a "Ver
+              reporte de la orden" (pedido explícito: "sugiereme, dame
+              opciones y razon de por que esa opcion" -- entre "Ver
+              reporte"/"Ver reporte de la orden"/"Reporte para el cliente",
+              se eligió esta: mismo estilo de link que su vecino de arriba,
+              mismo patrón "Ver ___ de la orden" que ya usa Bitácora, y dice
+              exactamente qué es sin confundirse con "Informe de
+              mantenimiento" -- que es otro documento aparte). */}
+          {esRegulador && (
+            <div style={{ marginTop: 10 }}>
+              <Link
+                href={`/app-clientes/reportes/${o.id}`}
+                style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
+              >
+                Ver reporte de la orden →
+              </Link>
+            </div>
+          )}
 
           {/* Notas del técnico sobre el regulador (item 12, pedido
               explícito, 25-sep-2026) -- visible al cliente, aquí y en el

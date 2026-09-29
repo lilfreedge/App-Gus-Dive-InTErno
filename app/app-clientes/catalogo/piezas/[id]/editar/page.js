@@ -35,7 +35,7 @@ export default async function EditarPiezaPage({ params }) {
             { label: pieza.nombre },
           ]}
         />
-        <h1 className="page-title">Editar pieza</h1>
+        <h1 className="page-title">Editar código</h1>
 
         <EditarPiezaForm pieza={pieza} />
       </div>

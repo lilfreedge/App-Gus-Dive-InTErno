@@ -46,7 +46,7 @@ export default async function CatalogoPiezasPage() {
           <div style={{ marginBottom: 16 }}>
             <Link href="/app-clientes/catalogo/piezas/nuevo">
               <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
-                + Agregar pieza
+                + Agregar código
               </button>
             </Link>
           </div>
@@ -54,19 +54,23 @@ export default async function CatalogoPiezasPage() {
 
         <div className="card">
           {!piezas || piezas.length === 0 ? (
-            <div className="empty">Todavía no hay piezas en el catálogo.</div>
+            <div className="empty">Todavía no hay códigos en el catálogo.</div>
           ) : (
             piezas.map((p) => {
+              // Código antes que la descripción (28-sep-2026, feedback en
+              // vivo, item 1: "Poner que el codigo salga antes que el
+              // nombre") -- códigos viejos, guardados antes de que el campo
+              // fuera obligatorio, pueden no tener uno; ahí solo se ve la
+              // descripción.
               const fila = (
                 <div>
                   <div className="list-item-top">
                     <span className="list-item-title">
+                      {p.codigo && <span style={{ color: "var(--texto-suave)", fontWeight: 400 }}>{p.codigo} · </span>}
                       {p.nombre}
-                      {p.codigo && <span style={{ color: "var(--texto-suave)", fontWeight: 400 }}> · {p.codigo}</span>}
                     </span>
                     {!p.activo && <span className="badge">Inactivo</span>}
                   </div>
-                  {p.descripcion && <div className="hint-text" style={{ marginTop: 2 }}>{p.descripcion}</div>}
                 </div>
               );
               return puedeEditarCatalogo ? (

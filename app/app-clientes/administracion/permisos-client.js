@@ -41,16 +41,12 @@ const PERMISOS_DEFAULT = {
 // acciones de creación/actualización. Los íconos se alinearon con los
 // que usa App Interno para el mismo concepto (Historial, Reportes,
 // Catálogo/Base de datos).
-// Reorganizado de nuevo (28-sep-2026, pedido explícito): "Bitácora
-// movimientos en órdenes" se mudó de "Registrar" a "General" (no es una
-// acción de registrar nada, es de solo consulta como el resto de
-// General), y se agregaron "Listado de clientes"/"Listado de órdenes"
-// (antes sin permiso propio). Orden exacto pedido: "Listado de ordenes,
-// Base de datos, Reportes, Historial de anulaciones y ediciones,
-// Bitacora de movimientos en ordenes, informe de mantenimiento" --
-// "Listado de clientes" se agregó justo antes de "Listado de órdenes"
-// (los dos se pidieron juntos: "AGREGAR AQUI: Listado de clientes,
-// listado de ordenes").
+// Reorganizado de nuevo (28-sep-2026, feedback en vivo, item 17: "mover
+// Historial de anulaciones y ediciones y Bitácora movimientos en órdenes a
+// la seccion de 'administradores'") -- las dos se mudaron de "General" a
+// la tabla exclusiva de Administradores (ver COLUMNAS_ADMIN más abajo):
+// ambas dejan ver el detalle de ediciones/movimientos de TODAS las
+// órdenes y equipos, más sensible que el resto de "General".
 const GRUPOS = [
   {
     titulo: "General",
@@ -59,8 +55,6 @@ const GRUPOS = [
       { clave: "equipos_clientes_listado_ordenes", label: "Listado de órdenes", Icono: IconReport },
       { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
       { clave: "equipos_clientes_reportes", label: "Reportes e Informes", Icono: IconReport },
-      { clave: "equipos_clientes_historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory },
-      { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos en órdenes", Icono: IconBook },
       { clave: "equipos_clientes_informe_mantenimiento", label: "Informe de mantenimiento", Icono: IconWrench },
     ],
   },
@@ -77,14 +71,18 @@ const GRUPOS = [
 
 // Tabla "Administradores" (solo para quienes ya tienen ese rol) --
 // acciones más sensibles, que además de venir con el permiso puntual
-// requieren que el usuario sea Administrador. "Editar hold" se suma acá
-// (feedback sobre v40, pedido explícito).
+// requieren que el usuario sea Administrador. "Editar hold" se sumó antes
+// (feedback sobre v40); "Historial de anulaciones y ediciones" y
+// "Bitácora movimientos en órdenes" se sumaron acá el 28-sep-2026 (item 17,
+// ver nota arriba).
 const COLUMNAS_ADMIN = [
   { clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit },
   { clave: "equipos_clientes_editar_cliente", label: "Editar cliente", Icono: IconUsers },
   { clave: "equipos_clientes_editar_orden", label: "Editar orden", Icono: IconEdit },
   { clave: "equipos_clientes_editar_mantenimiento_compresor", label: "Editar mantenimiento de compresor", Icono: IconCompressor },
   { clave: "equipos_clientes_editar_hold", label: "Editar Hold", Icono: IconBook },
+  { clave: "equipos_clientes_historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory },
+  { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos en órdenes", Icono: IconBook },
 ];
 
 export default function PermisosClientes({ perfiles, miId }) {

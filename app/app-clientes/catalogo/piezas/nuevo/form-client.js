@@ -3,18 +3,22 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+// Rediseñado (28-sep-2026, feedback en vivo, item 1): código antes que
+// descripción (antes "nombre de la pieza"), sin la sección de
+// "Descripción" (la renombrada cubre ese propósito), y ambos campos ahora
+// obligatorios -- antes solo el nombre lo era y el código era opcional.
 export default function NuevaPiezaForm() {
   const supabase = createClient();
   const [nombre, setNombre] = useState("");
   const [codigo, setCodigo] = useState("");
-  const [descripcion, setDescripcion] = useState("");
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
-    if (!nombre.trim()) return setError("Escribe el nombre de la pieza.");
+    if (!codigo.trim()) return setError("Escribe el código.");
+    if (!nombre.trim()) return setError("Escribe la descripción del código.");
 
     setGuardando(true);
     const {
@@ -26,8 +30,7 @@ export default function NuevaPiezaForm() {
 
     const { error: err } = await supabase.from("piezas_catalogo").insert({
       nombre: nombre.trim(),
-      codigo: codigo.trim() || null,
-      descripcion: descripcion.trim() || null,
+      codigo: codigo.trim(),
       user_id: user?.id || null,
       nombre_usuario_snapshot: perfil?.full_name || null,
     });
@@ -35,8 +38,8 @@ export default function NuevaPiezaForm() {
     setGuardando(false);
 
     if (err) {
-      console.error("Error creando pieza:", err);
-      setError(err?.message ? `No se pudo guardar la pieza: ${err.message}` : "No se pudo guardar la pieza. Intenta de nuevo.");
+      console.error("Error creando código:", err);
+      setError(err?.message ? `No se pudo guardar el código: ${err.message}` : "No se pudo guardar el código. Intenta de nuevo.");
       return;
     }
 
@@ -45,21 +48,20 @@ export default function NuevaPiezaForm() {
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      <label htmlFor="nombre">
-        Nombre de la pieza <span className="req">*</span>
+      <label htmlFor="codigo">
+        Código <span className="req">*</span>
       </label>
-      <input id="nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: O-ring 2ra etapa" />
+      <input id="codigo" type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="Ej: OR-2E-014" />
 
-      <label htmlFor="codigo" style={{ marginTop: 12 }}>Código</label>
-      <input id="codigo" type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="Ej: OR-2E-014 (opcional)" />
-
-      <label htmlFor="descripcion" style={{ marginTop: 12 }}>Descripción</label>
-      <textarea id="descripcion" rows={2} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Opcional" />
+      <label htmlFor="nombre" style={{ marginTop: 12 }}>
+        Descripción de código <span className="req">*</span>
+      </label>
+      <input id="nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: O-ring 2da etapa" />
 
       {error && <div className="error-box">{error}</div>}
 
       <button className="btn btn-primary" type="submit" disabled={guardando} style={{ marginTop: 20 }}>
-        {guardando ? "Guardando..." : "Guardar pieza"}
+        {guardando ? "Guardando..." : "Guardar código"}
       </button>
     </form>
   );

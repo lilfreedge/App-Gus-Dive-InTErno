@@ -23,10 +23,10 @@ export default async function NuevaPiezaPage() {
             { label: "Más", href: "/app-clientes/mas" },
             { label: "Base de datos", href: "/app-clientes/catalogo" },
             { label: "Códigos a cobrar", href: "/app-clientes/catalogo/piezas" },
-            { label: "Agregar pieza" },
+            { label: "Agregar código" },
           ]}
         />
-        <h1 className="page-title">Agregar pieza</h1>
+        <h1 className="page-title">Agregar código</h1>
 
         <NuevaPiezaForm />
       </div>

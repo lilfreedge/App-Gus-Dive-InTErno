@@ -398,7 +398,16 @@ export default function EditarSeguimientoForm({
   const listoDesbloqueado = muestraRetorno ? retornoHecho : true;
   const listoHecho = !!ordenLocal.fecha_listo_entrega;
 
-  const verificadoDesbloqueado = listoHecho;
+  // `editando !== "listo"` agregado (28-sep-2026, feedback en vivo, item 13:
+  // "que no permita poner 'verificado por' si aun no tiene 'fecha de listo
+  // para entrega'") -- sin esto, reabrir "Fecha de listo para entrega" con
+  // "Editar" y vaciar el campo (para corregirlo, item 14) dejaba "Verificado
+  // por" con pinta de desbloqueado aunque en pantalla ya no se viera ninguna
+  // fecha, porque el valor guardado (el que de verdad manda) no cambia hasta
+  // que se guarda. Ahora, mientras "listo" está abierto editándose, este
+  // paso se re-bloquea solo -- vuelve a desbloquearse al guardar (o al
+  // cancelar, porque ordenLocal no se tocó).
+  const verificadoDesbloqueado = listoHecho && editando !== "listo";
   const verificadoHecho = !!ordenLocal.verificado_por;
 
   // Sin "Verificado por" requerido para este tipo de equipo (Procesos
@@ -408,8 +417,17 @@ export default function EditarSeguimientoForm({
 
   const cierreHecho = !!ordenLocal.fecha_entrega_cliente;
 
+  // Los 4 `draftDe(id, ...)` de acá abajo se leen con el MISMO fallback que
+  // usa su <input> al mostrarse (`ordenLocal.campo || hoyISO()`), no con ""
+  // (28-sep-2026, feedback en vivo, item 2: "mira ahora estoy tratando de
+  // guardar eso y me sale este error 'Indica la fecha de listo para
+  // entrega.' pero ya tengo la fecha puesta"). El bug: si el campo se deja
+  // con la fecha de hoy puesta por default y nunca se toca a mano,
+  // `drafts[id]` queda `undefined` -- antes eso hacía que el guardado leyera
+  // "" (fallback viejo) y disparara el error de validación aunque en
+  // pantalla ya se viera una fecha válida.
   function guardarEnvioReparacion() {
-    const valor = draftDe("envio_reparacion", "").trim();
+    const valor = draftDe("envio_reparacion", ordenLocal.fecha_envio || hoyISO()).trim();
     if (!valor) {
       setErroresPaso((e) => ({ ...e, envio_reparacion: "Indica la fecha de envío." }));
       return;
@@ -422,7 +440,7 @@ export default function EditarSeguimientoForm({
   }
 
   function guardarEnvioHidrostatica() {
-    const valor = draftDe("envio_hidrostatica", "").trim();
+    const valor = draftDe("envio_hidrostatica", ordenLocal.fecha_envio_hidrostatica || hoyISO()).trim();
     if (!valor) {
       setErroresPaso((e) => ({ ...e, envio_hidrostatica: "Indica la fecha de envío." }));
       return;
@@ -435,7 +453,7 @@ export default function EditarSeguimientoForm({
   }
 
   function guardarRetorno() {
-    const valor = draftDe("retorno", "").trim();
+    const valor = draftDe("retorno", ordenLocal.fecha_retorno_tienda || hoyISO()).trim();
     if (!valor) {
       setErroresPaso((e) => ({ ...e, retorno: "Indica la fecha de retorno a tienda." }));
       return;
@@ -447,7 +465,7 @@ export default function EditarSeguimientoForm({
   }
 
   function guardarListo() {
-    const valor = draftDe("listo", "").trim();
+    const valor = draftDe("listo", ordenLocal.fecha_listo_entrega || hoyISO()).trim();
     if (!valor) {
       setErroresPaso((e) => ({ ...e, listo: "Indica la fecha de listo para entrega." }));
       return;
@@ -455,7 +473,27 @@ export default function EditarSeguimientoForm({
     guardarPasoSimple("listo", { fecha_listo_entrega: valor });
   }
 
+  // Permite borrar la fecha de listo ya guardada (28-sep-2026, feedback en
+  // vivo, item 14: "no me deja borrarle la fecha de listo para entrega, por
+  // si se llena por error, debe de permitir borrarse, y eso que obviamente
+  // figure en la bitacora") -- `guardarListo` de arriba sigue exigiendo una
+  // fecha (no tendría sentido "Guardar" en blanco), así que esto es un botón
+  // aparte, solo visible reabriendo el paso con "Editar". Usa
+  // `guardarPasoSimple` directo (sin pasar por la validación de
+  // `guardarListo`) para poder guardar `null`; igual que cualquier otro
+  // cambio de este wizard, `guardarCampos` ya anota el antes/después en el
+  // historial de la orden sin que haga falta nada extra acá.
+  function borrarFechaListo() {
+    guardarPasoSimple("listo", { fecha_listo_entrega: null });
+  }
+
   function guardarVerificado() {
+    // Guarda de más (28-sep-2026, item 13) -- en el flujo normal este paso
+    // ni se puede abrir sin `verificadoDesbloqueado`, pero por si acaso.
+    if (!ordenLocal.fecha_listo_entrega) {
+      setErroresPaso((e) => ({ ...e, verificado: "Falta la fecha de listo para entrega." }));
+      return;
+    }
     guardarPasoSimple("verificado", { verificado_por: draftDe("verificado", "") || null });
   }
 
@@ -639,7 +677,16 @@ export default function EditarSeguimientoForm({
   // lo que se sentía igual que si el botón no hiciera nada; se prefirió
   // esto en vez de un simple mensaje de "Guardado" en el mismo lugar).
   // Mismo patrón ya usado al cerrar la orden (guardarCierre, arriba).
+  //
+  // Ahora es el botón "Regresar a ficha de orden" (item 12): si no hay
+  // texto sin guardar, regresa directo sin llamar a guardarCampos -- así no
+  // queda una "edición" vacía anotada en el historial cada vez que alguien
+  // solo quiere volver.
   async function guardarNotasTecnico() {
+    if (!notasSinGuardar) {
+      router.push(`/app-clientes/ordenes/${orden.id}`);
+      return;
+    }
     setGuardandoNotas(true);
     setErrorNotas("");
     try {
@@ -670,11 +717,15 @@ export default function EditarSeguimientoForm({
       : null;
   const pasoAnteriorListo = muestraRetorno ? { label: "la fecha de retorno a tienda", onVolver: editarRetorno } : null;
   const pasoAnteriorVerificado = { label: "la fecha de listo para entrega", onVolver: editarListo };
+  // Antes ofrecía también "← Volver a verificado por" cuando el equipo sí
+  // requiere verificación -- quitado (28-sep-2026, feedback en vivo, item
+  // 12: "quita el 'volver a verificado por' no hace sentido"): a diferencia
+  // de los demás pasos, "Verificado por" no es algo que normalmente haga
+  // falta corregir justo al llegar a Cierre, y ya tiene su propio "Editar"
+  // arriba en la pantalla si de verdad hace falta.
   const pasoAnteriorCierre = !requiereVerificacion
     ? { label: "la fecha de listo para entrega", onVolver: editarListo }
-    : puedeVerificar
-      ? { label: "verificado por", onVolver: editarVerificado }
-      : null;
+    : null;
 
   return (
     <div className="card">
@@ -1091,6 +1142,20 @@ export default function EditarSeguimientoForm({
               onChange={(e) => setDraft("listo", e.target.value)}
               style={{ marginTop: 6 }}
             />
+            {/* Solo tiene sentido si ya hay una fecha guardada que borrar --
+                no aparece la primera vez que se está llenando este paso
+                (item 14). */}
+            {ordenLocal.fecha_listo_entrega && (
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={borrarFechaListo}
+                disabled={guardandoPaso === "listo"}
+                style={{ marginTop: 8, width: "100%" }}
+              >
+                Borrar fecha
+              </button>
+            )}
           </PasoWizard>
 
           {/* "Verificado por" -- se salta por completo si "Procesos
@@ -1302,14 +1367,22 @@ export default function EditarSeguimientoForm({
               onChange={(e) => setNotasTecnico(e.target.value)}
               placeholder="Opcional -- alguna recomendación o pendiente para que el buzo lo tenga en cuenta"
             />
+            {/* Antes se llamaba "Guardar nota" y quedaba deshabilitado sin
+                cambios pendientes en el texto -- se sentía como que "no
+                funcionaba" si uno solo quería regresar (28-sep-2026,
+                feedback en vivo, item 12: "El boton de 'guardar nota' aun no
+                me funciona. Cambia ese boton a 'regresar a ficha de
+                orden'"). Ahora es un botón de navegación siempre disponible:
+                guarda la nota si hay algo sin guardar y, haya o no cambios,
+                regresa a la ficha de la orden. */}
             <button
               type="button"
               className="btn secondary"
               onClick={guardarNotasTecnico}
-              disabled={guardandoNotas || !notasSinGuardar}
+              disabled={guardandoNotas}
               style={{ marginTop: 8, width: "auto" }}
             >
-              {guardandoNotas ? "Guardando..." : "Guardar nota"}
+              {guardandoNotas ? "Guardando..." : "Regresar a ficha de orden"}
             </button>
             {errorNotas && <div className="error-box" style={{ marginTop: 8 }}>{errorNotas}</div>}
           </div>

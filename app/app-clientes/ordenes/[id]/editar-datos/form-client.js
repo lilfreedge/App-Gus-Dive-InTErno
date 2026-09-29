@@ -66,7 +66,7 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
   function onEquipoCreado(nuevo) {
     setEquipos((prev) => [...prev, nuevo]);
     if (nuevo.tipo_equipo === "Reguladores") {
-      setComponentesRecibidos(prefillComponentesRecibidos(nuevo.regulador_componentes_detalle));
+      setComponentesRecibidos(prefillComponentesRecibidos(nuevo.regulador_componentes_detalle, nuevo.marca, nuevo.modelo));
     }
   }
 
@@ -74,6 +74,17 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
     setComponentesRecibidos((prev) => {
       const actual = prev[id] || { presente: false, detalle: "" };
       return { ...prev, [id]: { ...actual, presente: !actual.presente } };
+    });
+  }
+
+  // Para los componentes `soloCheck` (Manguera de BC), Sí/No explícitos en
+  // vez de un solo botón que se prende/apaga (28-sep-2026, feedback en
+  // vivo, item 16 -- mismo par de botones Sí/No que ya usa
+  // DetalleComponentesRegulador para el equipo).
+  function setComponenteRecibidoPresente(id, valor) {
+    setComponentesRecibidos((prev) => {
+      const actual = prev[id] || { presente: false, detalle: "" };
+      return { ...prev, [id]: { ...actual, presente: valor } };
     });
   }
 
@@ -138,7 +149,7 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
     }
     const nuevo = equipos.find((e) => e.id === id);
     if (nuevo) {
-      setComponentesRecibidos(nuevo.tipo_equipo === "Reguladores" ? prefillComponentesRecibidos(nuevo.regulador_componentes_detalle) : {});
+      setComponentesRecibidos(nuevo.tipo_equipo === "Reguladores" ? prefillComponentesRecibidos(nuevo.regulador_componentes_detalle, nuevo.marca, nuevo.modelo) : {});
     }
   }
 
@@ -296,16 +307,39 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
             {COMPONENTES_REGULADOR_DEFS.map((c) => {
               const valorComponente = componentesRecibidos[c.id];
               const presente = !!valorComponente?.presente;
+              const noExplicito = valorComponente !== undefined && !presente;
               return (
                 <div key={c.id}>
-                  <button
-                    type="button"
-                    className={presente ? "btn btn-primary" : "btn secondary"}
-                    onClick={() => toggleComponenteRecibido(c.id)}
-                    style={{ marginTop: 0, width: "auto", padding: "7px 12px", fontSize: 12.5 }}
-                  >
-                    {c.label}
-                  </button>
+                  {c.soloCheck ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 12.5, fontWeight: 600 }}>{c.label}</span>
+                      <button
+                        type="button"
+                        className={presente ? "btn btn-primary" : "btn secondary"}
+                        onClick={() => setComponenteRecibidoPresente(c.id, true)}
+                        style={{ marginTop: 0, width: "auto", padding: "7px 12px", fontSize: 12.5 }}
+                      >
+                        Sí
+                      </button>
+                      <button
+                        type="button"
+                        className={noExplicito ? "btn btn-primary" : "btn secondary"}
+                        onClick={() => setComponenteRecibidoPresente(c.id, false)}
+                        style={{ marginTop: 0, width: "auto", padding: "7px 12px", fontSize: 12.5 }}
+                      >
+                        No
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className={presente ? "btn btn-primary" : "btn secondary"}
+                      onClick={() => toggleComponenteRecibido(c.id)}
+                      style={{ marginTop: 0, width: "auto", padding: "7px 12px", fontSize: 12.5 }}
+                    >
+                      {c.label}
+                    </button>
+                  )}
                   {presente && !c.soloCheck && (
                     <input
                       type="text"
