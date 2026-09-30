@@ -4,13 +4,15 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import { tipoEquipoDisplay } from "@/lib/tipo-equipo";
-import { serieYaRegistrada, MENSAJE_SERIE_DUPLICADA } from "@/lib/equipos";
+import { serieYaRegistrada, mensajeSerieDuplicada } from "@/lib/equipos";
 import DetalleComponentesRegulador from "@/components/DetalleComponentesRegulador";
 
 // "Compresor" agregado (pedido explícito, ronda grande de feedback,
 // 27-sep-2026) -- mismo patrón que los demás tipos, lleva serie.
 const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Compresor", "Otro"];
 const CON_SERIE = ["Reguladores", "Tanques", "Computadora", "Compresor"];
+const TAMANOS_TANQUE = ["60 cf", "80 cf", "100 cf", "120 cf"];
+const MATERIALES_TANQUE = ["Aluminio", "Acero"];
 
 // Mismo patrón que "Editar compresor" (app/equipos/compresores/[id]/editar):
 // formulario precargado, registrarCambio con los datos de ANTES justo
@@ -28,6 +30,12 @@ export default function EditarEquipoForm({ equipo }) {
   const [marca, setMarca] = useState(equipo.marca || "");
   const [modelo, setModelo] = useState(equipo.modelo || "");
   const [serie, setSerie] = useState(equipo.serie || "");
+  // Tamaño/Material del Tanque, ahora editables (feedback en vivo,
+  // 30-sep-2026, pedido explícito: "ok nitido pero pon que se pueda
+  // editar") -- revierte la decisión de v48 de dejarlos fijos ("es
+  // imposible que cambie", pedido original del 29-sep-2026).
+  const [tamano, setTamano] = useState(equipo.tamano || "");
+  const [material, setMaterial] = useState(equipo.material || "");
   // Detalle de componentes -- solo Reguladores (28-sep-2026, pedido
   // explícito: "al momento de registar regulador, que pida para llenar
   // los componenstes: 1ra etapa/2da etapa/Octopus/Manómetro/Manguera de
@@ -56,11 +64,12 @@ export default function EditarEquipoForm({ equipo }) {
     if (serieLimpia) {
       setGuardando(true);
       const existente = await serieYaRegistrada(supabase, serieLimpia, { excluirId: equipo.id });
-      setGuardando(false);
       if (existente) {
-        setError(MENSAJE_SERIE_DUPLICADA);
+        setGuardando(false);
+        setError(await mensajeSerieDuplicada(supabase, existente));
         return;
       }
+      setGuardando(false);
     }
 
     setGuardando(true);
@@ -71,6 +80,8 @@ export default function EditarEquipoForm({ equipo }) {
       marca: marca.trim() || null,
       modelo: tipoEquipo === "Tanques" ? null : modelo.trim() || null,
       serie: CON_SERIE.includes(tipoEquipo) ? serie.trim() || null : null,
+      tamano: tipoEquipo === "Tanques" ? tamano || null : null,
+      material: tipoEquipo === "Tanques" ? material || null : null,
       regulador_componentes_detalle: tipoEquipo === "Reguladores" ? detalleComponentes : null,
     };
 
@@ -132,23 +143,26 @@ export default function EditarEquipoForm({ equipo }) {
           <input id="marca" type="text" value={marca} onChange={(e) => setMarca(e.target.value)} placeholder="Opcional" />
           <label htmlFor="serie">No. Serie</label>
           <input id="serie" type="text" value={serie} onChange={(e) => setSerie(e.target.value)} placeholder="Opcional" />
-          {/* Tamaño/Material de solo lectura (feedback en vivo, 29-sep-2026:
-              "no aparecen los datos del tamaño ni material del tanque...
-              afuera tampoco se ve") -- se piden solo al crear el equipo y
-              no se pueden editar después ("es imposible que cambie"), pero
-              antes no se mostraban en ningún lado de este formulario, así
-              que no había forma de confirmar que sí quedaron guardados. */}
-          <div style={{ display: "flex", gap: 16, marginTop: 10 }}>
-            <div>
-              <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--texto-suave)", marginBottom: 2 }}>Tamaño</div>
-              <div style={{ fontSize: 14.5 }}>{equipo.tamano || "—"}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--texto-suave)", marginBottom: 2 }}>Material</div>
-              <div style={{ fontSize: 14.5 }}>{equipo.material || "—"}</div>
-            </div>
-          </div>
-          <div className="hint-text" style={{ marginTop: 4 }}>Se fijan al crear el tanque y no se pueden cambiar después.</div>
+          {/* Tamaño/Material, editables (feedback en vivo, 30-sep-2026,
+              pedido explícito: "ok nitido pero pon que se pueda editar") --
+              habían quedado de solo lectura en v48 ("es imposible que
+              cambie", pedido original del 29-sep-2026), pero el usuario
+              pidió poder corregirlos después de todo. Mismas opciones fijas
+              que al crear el tanque. */}
+          <label htmlFor="tamano">Tamaño</label>
+          <select id="tamano" value={tamano} onChange={(e) => setTamano(e.target.value)}>
+            <option value="">Selecciona...</option>
+            {TAMANOS_TANQUE.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+          <label htmlFor="material">Material</label>
+          <select id="material" value={material} onChange={(e) => setMaterial(e.target.value)}>
+            <option value="">Selecciona...</option>
+            {MATERIALES_TANQUE.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
         </>
       ) : (
         tipoEquipo && (

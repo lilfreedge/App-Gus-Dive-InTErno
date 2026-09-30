@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { tipoEquipoDisplay, tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { serieYaRegistrada, MENSAJE_SERIE_DUPLICADA } from "@/lib/equipos";
+import { serieYaRegistrada, mensajeSerieDuplicada } from "@/lib/equipos";
 import DetalleComponentesRegulador from "@/components/DetalleComponentesRegulador";
 
 // "Compresor" agregado (pedido explícito, ronda grande de feedback,
@@ -138,8 +138,11 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
     if (CON_SERIE.includes(tipoNuevo) && serieNueva.trim()) {
       setGuardando(true);
       const existente = await serieYaRegistrada(supabase, serieNueva);
+      if (existente) {
+        setGuardando(false);
+        return setError(await mensajeSerieDuplicada(supabase, existente));
+      }
       setGuardando(false);
-      if (existente) return setError(MENSAJE_SERIE_DUPLICADA);
     }
 
     setGuardando(true);

@@ -45,13 +45,13 @@ const TABS = [
   { clave: "cerradas", label: "Órdenes cerradas" },
 ];
 
-// Opciones de orden ampliadas (feedback en vivo, 29-sep-2026, pedido
-// explícito: "pon que se pueda filtrar por: No. de orden, mas recientes
-// primero/ultimo, orden alfabetico") -- antes solo había fecha ascendente/
-// descendente.
+// Opciones de orden (feedback en vivo, 29-sep-2026, pedido explícito:
+// "pon que se pueda filtrar por: No. de orden, mas recientes primero/
+// ultimo, orden alfabetico") -- en un principio se agregaron las 4.
+// **Nota (30-sep-2026): se quitaron "Más recientes primero" y "Más
+// antiguas primero"** (pedido explícito: "Quitemos del filtro 'mas
+// antiguas primero' y 'mas recientes primero'"), quedando solo estas 2.
 const SORTS = [
-  { clave: "fecha_desc", label: "Más recientes primero" },
-  { clave: "fecha_asc", label: "Más antiguas primero" },
   { clave: "no_orden", label: "No. de orden" },
   { clave: "alfabetico", label: "Orden alfabético (cliente)" },
 ];
@@ -85,7 +85,9 @@ const CRITERIOS = {
 export default function RegistroClient({ ordenes, cerradas = [], puedeActualizarEstado = true, puedeRegistrar = false }) {
   const [tab, setTab] = useState("por_trabajar");
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState("fecha_asc");
+  // Default "no_orden" (30-sep-2026) -- antes "fecha_asc", pero esa opción
+  // ya no existe (ver nota en SORTS arriba).
+  const [sort, setSort] = useState("no_orden");
 
   // Cuenta de cada pestaña, sin importar cuál esté activa ni el buscador
   // de cliente (mismo criterio que ya usaba la píldora "Órdenes abiertas":
@@ -116,10 +118,8 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
       base = base.filter((o) => o.cliente_nombre_snapshot?.toLowerCase().includes(query));
     }
     base = [...base].sort((a, b) => {
-      if (sort === "fecha_desc") return b.fecha.localeCompare(a.fecha);
-      if (sort === "no_orden") return (Number(a.no_orden_fisico ?? a.folio) || 0) - (Number(b.no_orden_fisico ?? b.folio) || 0);
       if (sort === "alfabetico") return (a.cliente_nombre_snapshot || "").localeCompare(b.cliente_nombre_snapshot || "");
-      return a.fecha.localeCompare(b.fecha); // fecha_asc (default)
+      return (Number(a.no_orden_fisico ?? a.folio) || 0) - (Number(b.no_orden_fisico ?? b.folio) || 0); // no_orden (default)
     });
     return base;
   }, [ordenes, cerradas, tab, q, sort]);

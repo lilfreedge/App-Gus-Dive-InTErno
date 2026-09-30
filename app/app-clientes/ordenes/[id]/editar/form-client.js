@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
@@ -754,31 +753,6 @@ export default function EditarSeguimientoForm({
     }
   }
 
-  // "Guardar" propio, sin salir de la pantalla (feedback en vivo,
-  // 29-sep-2026, pedido explícito: "agregame boton de 'guardar' en la
-  // nota, ahora mismo no tiene nada y no tengo idea de que es lo que
-  // determina si se guarda o no") -- antes la única forma de guardar era
-  // "Regresar a ficha de orden", que además de guardar siempre navegaba
-  // afuera; alguien que quisiera seguir en este wizard (por ejemplo para
-  // usar otro paso) no tenía cómo guardar la nota sin perder su lugar. Deja
-  // un "✓ Guardado" breve como confirmación, mismo espíritu que el resto
-  // del wizard (cada paso confirma con su propio estado "Hecho").
-  const [notasGuardadoOk, setNotasGuardadoOk] = useState(false);
-  async function guardarSoloNotas() {
-    if (!notasSinGuardar) return;
-    setGuardandoNotas(true);
-    setErrorNotas("");
-    setNotasGuardadoOk(false);
-    try {
-      await guardarCampos({ notas_tecnico_regulador: notasTecnico.trim() || null });
-      setNotasGuardadoOk(true);
-    } catch (e) {
-      setErrorNotas(mensajeError(e));
-    } finally {
-      setGuardandoNotas(false);
-    }
-  }
-
   // ---------------------------------------------------------------
   // A qué paso "volver" desde cada paso de la cadena (28-sep-2026, pedido
   // explícito, ver los handlers editarXxx más arriba) -- solo se ofrece
@@ -819,13 +793,23 @@ export default function EditarSeguimientoForm({
           orden'") -- antes la única forma de volver desde este wizard era
           el "← Volver" genérico del encabezado de la página, arriba del
           todo de todo; con Seguimiento completo esto puede quedar lejos de
-          donde se está trabajando. */}
+          donde se está trabajando. **Nota (30-sep-2026):** ahora es un
+          botón (antes un Link estático) que llama a guardarNotasTecnico --
+          guarda la nota del técnico sobre el regulador si quedó algo sin
+          guardar, y siempre navega a la ficha -- mismo comportamiento que
+          tenían los botones "Guardar"/"Regresar a ficha de orden" que
+          vivían junto a esa nota, ya quitados de ahí (pedido explícito:
+          "no pintan nada ahi porque ya pusimos boton de regresar arriba"). */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-        <Link href={`/app-clientes/ordenes/${orden.id}`}>
-          <button type="button" className="btn secondary" style={{ marginTop: 0, width: "auto" }}>
-            ← Regresar a ficha de orden
-          </button>
-        </Link>
+        <button
+          type="button"
+          className="btn secondary"
+          onClick={guardarNotasTecnico}
+          disabled={guardandoNotas}
+          style={{ marginTop: 0, width: "auto" }}
+        >
+          {guardandoNotas ? "Guardando..." : "← Regresar a ficha de orden"}
+        </button>
         {!hold && (
           <button type="button" className="btn secondary" onClick={abrirHoldModal} style={{ marginTop: 0, width: "auto" }}>
             Poner en Hold
@@ -1533,47 +1517,24 @@ export default function EditarSeguimientoForm({
           </PasoWizard>
 
           {/* Notas del técnico sobre el regulador -- siempre disponible
-              dentro del Seguimiento, sin gatear nada. */}
+              dentro del Seguimiento, sin gatear nada. **Nota (30-sep-2026,
+              feedback en vivo, pedido explícito): se quitaron los botones
+              "Guardar" y "Regresar a ficha de orden" de acá abajo -- ya no
+              pintaban nada ("no pintan nada ahi porque ya pusimos boton de
+              regresar arriba") ahora que existe "← Regresar a ficha de
+              orden" arriba de todo (item 6 de v48). Ese botón de arriba es
+              ahora el que guarda esta nota si quedó algo sin guardar, antes
+              de navegar -- mismo comportamiento que tenía el botón de acá
+              abajo, ver guardarNotasTecnico más arriba. */}
           <div style={{ marginTop: 16 }}>
             <label htmlFor="notas_tecnico">Notas del técnico sobre el regulador</label>
             <textarea
               id="notas_tecnico"
               rows={2}
               value={notasTecnico}
-              onChange={(e) => {
-                setNotasTecnico(e.target.value);
-                setNotasGuardadoOk(false);
-              }}
+              onChange={(e) => setNotasTecnico(e.target.value)}
               placeholder="Opcional -- alguna recomendación o pendiente para que el buzo lo tenga en cuenta"
             />
-            {/* "Guardar" propio, sin salir de la pantalla (feedback en vivo,
-                29-sep-2026, pedido explícito, ver nota en guardarSoloNotas
-                más arriba) + "Regresar a ficha de orden" (28-sep-2026, item
-                12) para cuando sí se quiere salir -- guarda si hace falta y
-                siempre navega. */}
-            <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={guardarSoloNotas}
-                disabled={guardandoNotas || !notasSinGuardar}
-                style={{ marginTop: 0, width: "auto" }}
-              >
-                {guardandoNotas ? "Guardando..." : "Guardar"}
-              </button>
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={guardarNotasTecnico}
-                disabled={guardandoNotas}
-                style={{ marginTop: 0, width: "auto" }}
-              >
-                {guardandoNotas ? "Guardando..." : "Regresar a ficha de orden"}
-              </button>
-              {notasGuardadoOk && !notasSinGuardar && (
-                <span style={{ fontSize: 12.5, color: "var(--verde)", fontWeight: 600 }}>✓ Guardado</span>
-              )}
-            </div>
             {errorNotas && <div className="error-box" style={{ marginTop: 8 }}>{errorNotas}</div>}
           </div>
             </>

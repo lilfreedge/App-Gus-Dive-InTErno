@@ -48,6 +48,16 @@ export default async function FichaOrdenPage({ params }) {
   // Item 36, nueva feature (mockup Informe.dc.html) -- permiso propio,
   // separado de "Actualizar estado de orden".
   const puedeVerInforme = tieneAcceso(profile, "equipos_clientes_informe_mantenimiento");
+  // "Ver reporte de la orden" gateado por el permiso de Reportes
+  // (feedback en vivo, 30-sep-2026, pedido explícito: "quien no tenga
+  // acceso a 'reportes' que no le salga boton de 'ver reporte de la
+  // orden'") -- antes se veía con solo ser Regulador, sin mirar permisos.
+  const puedeVerReportes = tieneAcceso(profile, "equipos_clientes_reportes");
+  // Bitácora de la orden, restringida a Titular/Administrador (feedback
+  // en vivo, 30-sep-2026, pedido explícito: "haz que solo yo tenga ese
+  // acceso y los administradores") -- antes era visible a cualquiera con
+  // acceso a la app (ver v38, diseño original).
+  const puedeVerBitacoraOrden = esTitular || !!profile?.is_admin;
 
   const [{ data: o }, { data: ajustes }] = await Promise.all([
     supabase.from("ordenes_equipos_con_nombre").select("*").eq("id", params.id).single(),
@@ -111,16 +121,22 @@ export default async function FichaOrdenPage({ params }) {
             { label: `No. ${o.no_orden_fisico ?? o.folio}` },
           ]}
         />
-        {/* marginBottom (28-sep-2026, pedido explícito: "levantar un poco
-            el boton de 'actualizar estado de orden', esta muy pegado del
-            cuadro de abajo") -- se dejó el botón donde está (arriba,
-            junto al título) en vez de moverlo dentro de la tarjeta, para
-            no deshacer el rediseño anterior (item 6.5: "poner el
-            actualizar estado de orden arriba" era justamente para que la
-            acción principal se viera de una vez, sin tener que buscarla
-            entre los datos de solo lectura). Solo le faltaba aire abajo. */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-          <h1 className="page-title" style={{ marginBottom: 2 }}>
+        {/* Título y botones en filas separadas (feedback en vivo,
+            30-sep-2026, pedido explícito: "pon que el boton se vea en el
+            mismo lugar en todas las fichas, aunque no lleven informe. Asi
+            el boton se ve en el mismo lugar siempre") -- antes el título y
+            el grupo de botones compartían una fila con
+            justify-content:space-between, así que el grupo de botones
+            quedaba pegado al margen derecho: al ser "Informe de
+            mantenimiento" solo para Reguladores, el grupo cambiaba de
+            ancho según el tipo de equipo y "Actualizar estado de orden"
+            (el primer botón del grupo) se corría de lugar en la pantalla
+            según la ficha. Ahora los botones van en su propia fila, abajo
+            del título y alineados a la izquierda: "Actualizar estado de
+            orden" siempre arranca en el mismo punto, lleve o no lleve
+            Informe de mantenimiento al lado. */}
+        <div style={{ marginBottom: 14 }}>
+          <h1 className="page-title" style={{ marginBottom: 10 }}>
             No. {o.no_orden_fisico ?? o.folio} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
           </h1>
           {/* Acciones de la orden, todas juntas arriba (28-sep-2026, pedido
@@ -134,7 +150,7 @@ export default async function FichaOrdenPage({ params }) {
               buscan las acciones de la orden -- como botones secundarios
               chicos (mismo tamaño de botón que el resto de la app, no el
               texto plano de antes, pero sin competir con el primario). */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {/* "Reporte de la orden" se movió de acá para abajo, junto a
                 "Ver bitácora de la orden" (28-sep-2026, feedback en vivo,
                 item 18: "vamos a renombrar el boton de 'reporte de la
@@ -351,17 +367,22 @@ export default async function FichaOrdenPage({ params }) {
 
           {/* Bitácora de la orden (27-sep-2026, pedido explícito: "si, que
               la pueda ver quien sea por ahora") -- historial de Holds
-              resueltos y repuestos autorizados eliminados. Visible a
-              cualquiera con acceso a la app, no solo Titular (a diferencia
-              de "Ver historial de ediciones" más abajo). */}
-          <div style={{ marginTop: 10 }}>
-            <Link
-              href={`/app-clientes/ordenes/${o.id}/bitacora`}
-              style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
-            >
-              Ver bitácora de la orden ({bitacora.length}) →
-            </Link>
-          </div>
+              resueltos, repuestos autorizados eliminados, y (desde
+              30-sep-2026) también las ediciones de la orden. **Nota
+              (30-sep-2026): se restringió a Titular/Administrador**
+              (pedido explícito: "haz que solo yo tenga ese acceso y los
+              administradores") -- ya no es visible a cualquiera con
+              acceso a la app como en el diseño original. */}
+          {puedeVerBitacoraOrden && (
+            <div style={{ marginTop: 10 }}>
+              <Link
+                href={`/app-clientes/ordenes/${o.id}/bitacora`}
+                style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
+              >
+                Ver bitácora de la orden ({bitacora.length}) →
+              </Link>
+            </div>
+          )}
 
           {/* "Reporte de la orden" (28-sep-2026, feedback en vivo, item 18)
               -- se movió de junto a "Actualizar estado de orden" a acá
@@ -372,8 +393,11 @@ export default async function FichaOrdenPage({ params }) {
               se eligió esta: mismo estilo de link que su vecino de arriba,
               mismo patrón "Ver ___ de la orden" que ya usa Bitácora, y dice
               exactamente qué es sin confundirse con "Informe de
-              mantenimiento" -- que es otro documento aparte). */}
-          {esRegulador && (
+              mantenimiento" -- que es otro documento aparte). **Nota
+              (30-sep-2026): gateado también por el permiso de Reportes**
+              (pedido explícito: "quien no tenga acceso a 'reportes' que
+              no le salga boton de 'ver reporte de la orden'"). */}
+          {esRegulador && puedeVerReportes && (
             <div style={{ marginTop: 10 }}>
               <Link
                 href={`/app-clientes/reportes/${o.id}`}

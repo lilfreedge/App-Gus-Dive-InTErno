@@ -30,6 +30,17 @@ const PERMISOS_DEFAULT = {
   // -- antes se veían con solo tener acceso base a la app.
   equipos_clientes_listado_clientes: false,
   equipos_clientes_listado_ordenes: false,
+  // Agregar/editar Códigos a cobrar, separados (feedback en vivo,
+  // 30-sep-2026, pedido explícito: "ponme para darle acceso para agregar
+  // codigos en base de datos>codigos a cobrar" en Registrar, y "ponme
+  // acceso para poder dar acceso a editar los codigos a cobrar" en
+  // Administradores) -- antes los dos vivían atrás de un solo permiso,
+  // equipos_clientes_catalogo (que además es el que deja VER la pantalla
+  // de Base de datos). Ahora: verla sigue siendo equipos_clientes_catalogo;
+  // agregar un código nuevo es este permiso, en "Registrar"; y editar/
+  // borrar uno ya existente pasa a ser exclusivo de Administradores.
+  equipos_clientes_agregar_codigo: false,
+  equipos_clientes_editar_codigo: false,
 };
 
 // Reorganizado en tablas apiladas por grupo (feedback sobre v40, pedido
@@ -74,6 +85,7 @@ const GRUPOS = [
       { clave: "equipos_clientes_agregar_equipo", label: "Agregar equipo", Icono: IconTank },
       { clave: "equipos_clientes_agregar_cliente", label: "Agregar cliente", Icono: IconPlus },
       { clave: "equipos_clientes_actualizar_estado", label: "Actualizar estado de orden", Icono: IconRefresh },
+      { clave: "equipos_clientes_agregar_codigo", label: "Agregar código", Icono: IconCatalog },
     ],
   },
 ];
@@ -92,6 +104,7 @@ const COLUMNAS_ADMIN = [
   { clave: "equipos_clientes_editar_hold", label: "Editar Hold", Icono: IconBook },
   { clave: "equipos_clientes_historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory },
   { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos en órdenes", Icono: IconBook },
+  { clave: "equipos_clientes_editar_codigo", label: "Editar código", Icono: IconCatalog },
 ];
 
 export default function PermisosClientes({ perfiles, miId }) {

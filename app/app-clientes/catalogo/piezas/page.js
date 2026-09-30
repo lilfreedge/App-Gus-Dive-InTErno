@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermisoClientes } from "@/lib/roles";
+import { requirePermisoClientes, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 
@@ -17,7 +17,13 @@ export default async function CatalogoPiezasPage() {
   // acceso pues que no le salga") -- antes estaba abierto a cualquiera
   // con acceso a la app, solo el botón de agregar estaba gateado.
   const { profile } = await requirePermisoClientes(supabase, "equipos_clientes_catalogo");
-  const puedeEditarCatalogo = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_catalogo;
+  // Agregar y editar, separados (feedback en vivo, 30-sep-2026, pedido
+  // explícito) -- antes los dos vivían atrás del mismo permiso que deja
+  // ver esta pantalla (equipos_clientes_catalogo). Ahora "Agregar código"
+  // es un permiso propio en "Registrar", y "Editar código" uno propio en
+  // "Administradores" -- ver permisos-client.js.
+  const puedeAgregar = tieneAcceso(profile, "equipos_clientes_agregar_codigo");
+  const puedeEditar = tieneAcceso(profile, "equipos_clientes_editar_codigo");
 
   const { data: piezas } = await supabase
     .from("piezas_catalogo")
@@ -42,7 +48,7 @@ export default async function CatalogoPiezasPage() {
         <h1 className="page-title">Catálogo de códigos a cobrar</h1>
         <p className="page-subtitle">Piezas y repuestos usados al dar servicio a un equipo.</p>
 
-        {puedeEditarCatalogo && (
+        {puedeAgregar && (
           <div style={{ marginBottom: 16 }}>
             <Link href="/app-clientes/catalogo/piezas/nuevo">
               <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
@@ -73,7 +79,7 @@ export default async function CatalogoPiezasPage() {
                   </div>
                 </div>
               );
-              return puedeEditarCatalogo ? (
+              return puedeEditar ? (
                 <Link
                   key={p.id}
                   href={`/app-clientes/catalogo/piezas/${p.id}/editar`}

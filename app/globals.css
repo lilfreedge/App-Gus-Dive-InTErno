@@ -336,6 +336,15 @@ textarea {
   border-radius: 9px;
   border: 1px solid var(--borde);
   font-size: 15px;
+  /* font-family (feedback en vivo, 30-sep-2026, item 12: "se me está
+     frizando esta parte", foto del textarea de "Observación" del Informe
+     de mantenimiento) -- a los <textarea> el navegador les pone una
+     tipografía monoespaciada por defecto si nadie la corrige; el resto de
+     la app usa la fuente de siempre (ver body, arriba), así que cualquier
+     textarea (Observación, Notas del técnico, etc.) se veía como si fuera
+     otro programa aparte, pegado/fuera de lugar entre el resto de los
+     campos. */
+  font-family: inherit;
   color: var(--texto);
   background: var(--tarjeta);
 }
@@ -1083,6 +1092,21 @@ textarea {
 @media print {
   .no-print {
     display: none !important;
+  }
+
+  /* "el reporte se sigue imprimiendo mal. Recuerda que queremos que se
+     mantenga el formato" (feedback en vivo, 30-sep-2026, item 12) -- la
+     banda navy del membrete (.reporte-membrete), el banner verde/rojo de
+     "Aprobado para su uso" del Informe, los badges de estado y demás
+     colores de fondo desaparecían al imprimir (título en blanco sobre
+     fondo blanco, ilegible) porque Chrome no imprime `background-color`
+     por defecto a menos que la persona marque "Gráficos de fondo" a mano
+     en el diálogo de impresión -- nadie se acuerda de marcar esa casilla.
+     `print-color-adjust: exact` obliga a imprimir los fondos y colores tal
+     cual se ven en pantalla, sin depender de esa casilla. */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 

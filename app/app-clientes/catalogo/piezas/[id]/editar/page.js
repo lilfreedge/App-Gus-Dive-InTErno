@@ -6,10 +6,13 @@ import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import EditarPiezaForm from "./form-client";
 
-// Gateado por el permiso granular equipos_clientes_catalogo (item 15).
+// Gateado por equipos_clientes_editar_codigo (feedback en vivo,
+// 30-sep-2026, pedido explícito: permiso propio, exclusivo de
+// Administradores, para EDITAR/borrar códigos ya existentes -- separado
+// de equipos_clientes_catalogo que solo deja ver la pantalla).
 export default async function EditarPiezaPage({ params }) {
   const supabase = createClient();
-  await requirePermisoClientes(supabase, "equipos_clientes_catalogo", "/app-clientes/catalogo/piezas");
+  await requirePermisoClientes(supabase, "equipos_clientes_editar_codigo", "/app-clientes/catalogo/piezas");
 
   const { data: pieza } = await supabase
     .from("piezas_catalogo")

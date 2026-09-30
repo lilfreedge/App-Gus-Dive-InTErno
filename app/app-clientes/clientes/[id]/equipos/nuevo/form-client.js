@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { tipoEquipoDisplay } from "@/lib/tipo-equipo";
-import { serieYaRegistrada } from "@/lib/equipos";
+import { serieYaRegistrada, mensajeSerieDuplicada } from "@/lib/equipos";
 import DetalleComponentesRegulador from "@/components/DetalleComponentesRegulador";
 
 // "Compresor" agregado (pedido explícito, ronda grande de feedback,
@@ -79,7 +79,7 @@ export default function AgregarEquiposForm({ clienteId }) {
       const existente = await serieYaRegistrada(supabase, serieLimpia);
       if (existente) {
         setGuardando(false);
-        return setError(`Ya existe un equipo registrado con el No. de serie "${serieLimpia}". Revisa que no sea el mismo equipo ya cargado antes.`);
+        return setError(await mensajeSerieDuplicada(supabase, existente));
       }
     }
     const {

@@ -5,10 +5,12 @@ import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevaPiezaForm from "./form-client";
 
-// Gateado por el permiso granular equipos_clientes_catalogo (item 15).
+// Gateado por equipos_clientes_agregar_codigo (feedback en vivo,
+// 30-sep-2026, pedido explícito: permiso propio para AGREGAR códigos,
+// separado de equipos_clientes_catalogo que solo deja ver la pantalla).
 export default async function NuevaPiezaPage() {
   const supabase = createClient();
-  await requirePermisoClientes(supabase, "equipos_clientes_catalogo", "/app-clientes/catalogo/piezas");
+  await requirePermisoClientes(supabase, "equipos_clientes_agregar_codigo", "/app-clientes/catalogo/piezas");
 
   return (
     <div>

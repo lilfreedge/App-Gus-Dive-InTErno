@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V24",
+    fecha: "30 de septiembre, 2026",
+    titulo: "Botón de Actualizar estado en el mismo lugar siempre, colores y formato al imprimir, Bitácora de la orden restringida y completa, y permisos nuevos de Códigos a cobrar",
+    descripcion:
+      "En la ficha de la orden, \"Actualizar estado de orden\" ahora siempre arranca en el mismo lugar, lleve o no lleve al lado el botón de \"Informe de mantenimiento\" -- antes el grupo de botones se pegaba al margen derecho y \"Actualizar estado\" se corría de lugar según el tipo de equipo. En el wizard, se quitaron los botones \"Guardar\" y \"Regresar a ficha de orden\" que quedaban sueltos debajo de \"Notas del técnico sobre el regulador\" -- ya no pintaban nada ahí, con el botón de regresar arriba alcanza. El aviso de número de serie repetido ahora dice también de qué cliente y qué equipo es el que ya tiene esa serie, para no tener que ir a buscarlo. En Registro de Órdenes se quitaron del filtro \"Más recientes primero\" y \"Más antiguas primero\" -- quedan solo \"No. de orden\" y \"Orden alfabético (cliente)\". Se corrigieron dos problemas de impresión: el texto de un `<textarea>` (Observación del Informe, Notas del técnico, etc.) se veía con una tipografía distinta al resto de la app, y los colores de fondo (la banda navy del membrete, el banner verde/rojo de \"Aprobado para su uso\", los badges) desaparecían al imprimir o guardar como PDF -- Chrome no los imprime por default a menos que se marque \"Gráficos de fondo\" a mano en el diálogo de impresión. En \"Editar equipo\", Tamaño y Material de un Tanque volvieron a ser editables (en v23 habían quedado de solo lectura). \"Bitácora de la orden\" ahora es exclusiva de Titular y Administradores, y además de los Holds/repuestos autorizados de siempre, ahora también muestra todas las ediciones de la orden, igual que ya se veían en \"Bitácora movimientos en órdenes\". \"Ver reporte de la orden\" ya no aparece para quien no tenga el permiso de Reportes. Y en Administración > Permisos se agregaron 2 permisos nuevos para Códigos a cobrar: \"Agregar código\" (tabla Registrar) y \"Editar código\" (tabla Administradores), separados -- antes un solo permiso cubría las dos acciones.",
+  },
+  {
     version: "V23",
     fecha: "30 de septiembre, 2026",
     titulo: "Seriales repetidos prohibidos, Hold reordenado y renombrado, filtro de Registro de Órdenes rediseñado, y 18 ajustes más de feedback en vivo",
