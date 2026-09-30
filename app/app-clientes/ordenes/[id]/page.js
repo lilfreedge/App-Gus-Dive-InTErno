@@ -8,6 +8,7 @@ import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
+import { requiereVerificacion } from "@/lib/procesos-ordenes";
 import { holdActivo, diasEnHold, labelTipoHold, detalleHold } from "@/lib/holds";
 import FotoLightbox from "@/components/FotoLightbox";
 import { IconRefresh } from "@/components/icons";
@@ -48,13 +49,21 @@ export default async function FichaOrdenPage({ params }) {
   // separado de "Actualizar estado de orden".
   const puedeVerInforme = tieneAcceso(profile, "equipos_clientes_informe_mantenimiento");
 
-  const { data: o } = await supabase
-    .from("ordenes_equipos_con_nombre")
-    .select("*")
-    .eq("id", params.id)
-    .single();
+  const [{ data: o }, { data: ajustes }] = await Promise.all([
+    supabase.from("ordenes_equipos_con_nombre").select("*").eq("id", params.id).single(),
+    supabase.from("ajustes_app_clientes").select("*").eq("id", true).maybeSingle(),
+  ]);
 
   if (!o) notFound();
+
+  // "n/a" en vez de "—" para "Verificado por" cuando la orden ya se cerró
+  // y ese paso ni siquiera le aplicaba a este tipo de equipo (Procesos
+  // órdenes, feedback en vivo, 29-sep-2026, pedido explícito: "cuando una
+  // orden se cierre, si no tuvo que ser verificada por nadie, que en
+  // verificado por salga n/a") -- mientras sigue abierta se deja el "—" de
+  // siempre, por si "Procesos órdenes" cambia de opinión antes de cerrar.
+  const verificadoPorTexto =
+    o.verificado_por || (o.estado === "Entregado" && !requiereVerificacion(ajustes, o.tipo_equipo) ? "n/a" : "—");
 
   const marcaModelo = [o.equipo_marca_snapshot, o.equipo_modelo_snapshot].filter(Boolean).join(" ");
   // "Status" desapareció (item 13, pedido explícito, 26-sep-2026: "quita
@@ -132,17 +141,13 @@ export default async function FichaOrdenPage({ params }) {
                 orden' y vamos a ponerlo abajo, Debajo de ver bitacora de la
                 orden") -- pendiente confirmar con Pipe el nuevo nombre del
                 botón, por ahora se dejó el texto igual. */}
-            {esRegulador && puedeVerInforme && (
-              <Link href={`/app-clientes/ordenes/${o.id}/informe`}>
-                <button className="btn secondary" type="button" style={{ marginTop: 0, width: "auto", padding: "9px 14px", fontSize: 13 }}>
-                  Informe de mantenimiento
-                </button>
-              </Link>
-            )}
-            {/* "Actualizar estado de orden" subió junto al título (item
-                6.5, feedback sobre v40, pedido explícito: "poner el editar
-                y anular al final de la ficha y poner el actualizar estado
-                de orden arriba") -- antes vivía más abajo, junto a
+            {/* "Actualizar estado de orden" antes que "Informe de
+                mantenimiento" (feedback en vivo, 29-sep-2026, pedido
+                explícito: "intercambiar de lugar 'informe de mantenimiento'
+                y 'actualizar estado de orden'") -- subió junto al título
+                (item 6.5, feedback sobre v40, pedido explícito: "poner el
+                editar y anular al final de la ficha y poner el actualizar
+                estado de orden arriba") -- antes vivía más abajo, junto a
                 "Seguimiento". Mismo ícono que su atajo en Registro de
                 Órdenes (item 6.4, pedido explícito). Ya no se muestra una
                 vez Entregada (item 7.3, pedido explícito) -- no hay nada
@@ -156,6 +161,13 @@ export default async function FichaOrdenPage({ params }) {
                 >
                   <IconRefresh size={15} />
                   Actualizar estado de orden
+                </button>
+              </Link>
+            )}
+            {esRegulador && puedeVerInforme && (
+              <Link href={`/app-clientes/ordenes/${o.id}/informe`}>
+                <button className="btn secondary" type="button" style={{ marginTop: 0, width: "auto", padding: "9px 14px", fontSize: 13 }}>
+                  Informe de mantenimiento
                 </button>
               </Link>
             )}
@@ -226,8 +238,12 @@ export default async function FichaOrdenPage({ params }) {
                 padding: 14,
               }}
             >
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--rojo)" }}>
-                EN HOLD — {labelTipoHold(hold)}
+              {/* "Orden en hold" en vez de solo "En hold", un poco más
+                  grande (feedback en vivo, 29-sep-2026, pedido explícito:
+                  "cambiar 'en hold - consulta a cliente' por 'orden en hold
+                  - consulta a cliente' y ponlo un poco mas grande"). */}
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--rojo)" }}>
+                ORDEN EN HOLD — {labelTipoHold(hold)}
               </div>
               <div style={{ fontSize: 14.5, marginTop: 4 }}>{detalleHold(hold)}</div>
               <div className="hint-text" style={{ marginTop: 4 }}>
@@ -290,7 +306,7 @@ export default async function FichaOrdenPage({ params }) {
               <Campo etiqueta="Inspección visual realizada" valor={o.inspeccion_visual_realizada ? "Listo" : "Pendiente"} />
             )}
             <Campo etiqueta="Fecha de listo para entrega" valor={o.fecha_listo_entrega ? formatFechaDDMMAAAADeDate(o.fecha_listo_entrega) : "—"} />
-            <Campo etiqueta="Verificado por" valor={o.verificado_por || "—"} />
+            <Campo etiqueta="Verificado por" valor={verificadoPorTexto} />
             <Campo etiqueta="Notificaciones al cliente">
               {!o.notificaciones_cliente || o.notificaciones_cliente.length === 0 ? (
                 "—"

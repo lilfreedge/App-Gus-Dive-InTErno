@@ -42,7 +42,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
   const supabase = createClient();
 
   const [informe, setInforme] = useState(() => ({
-    ...informeDefault(orden, tecnicoSugerido),
+    ...informeDefault(orden, tecnicoSugerido, serie),
     ...(orden.informe_mantenimiento || {}),
   }));
   const [yaGenerado, setYaGenerado] = useState(!!orden.informe_mantenimiento);
@@ -60,23 +60,12 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
 
   async function generarInforme() {
     setError("");
-    // Detalles del regulador ahora obligatorios (28-sep-2026, pedido
-    // explícito: "que los detalles del regulador sean inevitables") --
-    // antes bastaba con marca O modelo (cualquiera de los dos) y el No.
-    // de serie era opcional del todo; ahora los 3 campos son obligatorios
-    // para poder generar el informe.
-    if (!informe.marca.trim()) {
-      setError("Indica la marca del regulador.");
-      return;
-    }
-    if (!informe.modelo.trim()) {
-      setError("Indica el modelo del regulador.");
-      return;
-    }
-    if (!informe.serie.trim()) {
-      setError("Indica el número de serie del regulador.");
-      return;
-    }
+    // Marca/Modelo/No. de serie dejaron de pedirse acá (feedback en vivo,
+    // 29-sep-2026, pedido explícito: "que la marca y modelo de regulador
+    // sean intocables, junto al no. de serie") -- ahora son de solo
+    // lectura, tomados directo del equipo (ver Detalles más abajo), así
+    // que ya no hace falta validarlos aquí: si faltan, hay que corregirlos
+    // en "Editar equipo", no en este formulario.
     if (informe.aprobado !== true && informe.aprobado !== false) {
       setError('Indica si el regulador queda "Aprobado para su uso" o "No aprobado".');
       return;
@@ -172,25 +161,22 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
             <div className="hint-text" style={{ marginTop: 6 }}>Se completa automático con los datos de la orden.</div>
           </div>
 
+          {/* "Detalles" (renombrado de "Detalles del regulador", feedback en
+              vivo, 29-sep-2026, pedido explícito) -- Marca/Modelo/No. de
+              serie pasaron de inputs editables a solo lectura, mismo
+              tratamiento que el resto de esta sección (Datos del cliente,
+              Componentes recibidos): se toman directo del equipo, no se
+              editan aquí ("que sean intocables... y que se vean como los
+              otros detalles del regulador"). Para corregir un dato mal
+              cargado, hay que hacerlo en "Editar equipo". */}
           <div style={SECCION_ESTILO_SUTIL}>
-            <div style={SECCION_LABEL_ESTILO_SUTIL}>Detalles del regulador</div>
+            <div style={SECCION_LABEL_ESTILO_SUTIL}>Detalles</div>
             <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}><b>No. de orden:</b> {orden.no_orden_fisico ?? orden.folio}</div>
             <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Fecha de ingreso:</b> {formatFechaDDMMAAAADeDate(orden.fecha)}</div>
-
-            <label style={{ marginTop: 10 }}>
-              Marca <span className="req">*</span>
-            </label>
-            <input type="text" value={informe.marca} onChange={(e) => set("marca", e.target.value)} placeholder="Ej. Scubapro" />
-
-            <label style={{ marginTop: 10 }}>
-              Modelo <span className="req">*</span>
-            </label>
-            <input type="text" value={informe.modelo} onChange={(e) => set("modelo", e.target.value)} placeholder="Ej. MK25 EVO" />
-
-            <label style={{ marginTop: 10 }}>
-              No. de serie <span className="req">*</span>
-            </label>
-            <input type="text" value={informe.serie} onChange={(e) => set("serie", e.target.value)} placeholder={serie || "Ej. 123456"} />
+            <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Marca:</b> {informe.marca || "—"}</div>
+            <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Modelo:</b> {informe.modelo || "—"}</div>
+            <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>No. de serie:</b> {informe.serie || "—"}</div>
+            <div className="hint-text" style={{ marginTop: 6 }}>Se completa automático con los datos del equipo -- para corregirlo, usa &quot;Editar equipo&quot;.</div>
           </div>
 
           <div style={SECCION_ESTILO_SUTIL}>

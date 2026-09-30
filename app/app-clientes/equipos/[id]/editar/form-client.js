@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import { tipoEquipoDisplay } from "@/lib/tipo-equipo";
+import { serieYaRegistrada, MENSAJE_SERIE_DUPLICADA } from "@/lib/equipos";
 import DetalleComponentesRegulador from "@/components/DetalleComponentesRegulador";
 
 // "Compresor" agregado (pedido explícito, ronda grande de feedback,
@@ -46,6 +47,20 @@ export default function EditarEquipoForm({ equipo }) {
     if (tipoEquipo === "Otro" && !tipoEquipoOtro.trim()) {
       setError('Especifica qué tipo de equipo es.');
       return;
+    }
+
+    // Seriales repetidos prohibidos (feedback en vivo, 29-sep-2026, pedido
+    // explícito) -- se excluye este mismo equipo de la búsqueda (editar sin
+    // tocar la serie no debe chocar consigo mismo). Ver lib/equipos.js.
+    const serieLimpia = CON_SERIE.includes(tipoEquipo) ? serie.trim() : "";
+    if (serieLimpia) {
+      setGuardando(true);
+      const existente = await serieYaRegistrada(supabase, serieLimpia, { excluirId: equipo.id });
+      setGuardando(false);
+      if (existente) {
+        setError(MENSAJE_SERIE_DUPLICADA);
+        return;
+      }
     }
 
     setGuardando(true);
@@ -117,6 +132,23 @@ export default function EditarEquipoForm({ equipo }) {
           <input id="marca" type="text" value={marca} onChange={(e) => setMarca(e.target.value)} placeholder="Opcional" />
           <label htmlFor="serie">No. Serie</label>
           <input id="serie" type="text" value={serie} onChange={(e) => setSerie(e.target.value)} placeholder="Opcional" />
+          {/* Tamaño/Material de solo lectura (feedback en vivo, 29-sep-2026:
+              "no aparecen los datos del tamaño ni material del tanque...
+              afuera tampoco se ve") -- se piden solo al crear el equipo y
+              no se pueden editar después ("es imposible que cambie"), pero
+              antes no se mostraban en ningún lado de este formulario, así
+              que no había forma de confirmar que sí quedaron guardados. */}
+          <div style={{ display: "flex", gap: 16, marginTop: 10 }}>
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--texto-suave)", marginBottom: 2 }}>Tamaño</div>
+              <div style={{ fontSize: 14.5 }}>{equipo.tamano || "—"}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--texto-suave)", marginBottom: 2 }}>Material</div>
+              <div style={{ fontSize: 14.5 }}>{equipo.material || "—"}</div>
+            </div>
+          </div>
+          <div className="hint-text" style={{ marginTop: 4 }}>Se fijan al crear el tanque y no se pueden cambiar después.</div>
         </>
       ) : (
         tipoEquipo && (

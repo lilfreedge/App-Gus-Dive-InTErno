@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { tipoEquipoDisplay, tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { serieYaRegistrada, MENSAJE_SERIE_DUPLICADA } from "@/lib/equipos";
 import DetalleComponentesRegulador from "@/components/DetalleComponentesRegulador";
 
 // "Compresor" agregado (pedido explícito, ronda grande de feedback,
@@ -131,6 +132,15 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
     setError("");
     if (!tipoNuevo) return setError("Selecciona el tipo de equipo.");
     if (tipoNuevo === "Otro" && !tipoOtroNuevo.trim()) return setError("Especifica qué tipo de equipo es.");
+
+    // Seriales repetidos prohibidos (feedback en vivo, 29-sep-2026, pedido
+    // explícito) -- ver lib/equipos.js.
+    if (CON_SERIE.includes(tipoNuevo) && serieNueva.trim()) {
+      setGuardando(true);
+      const existente = await serieYaRegistrada(supabase, serieNueva);
+      setGuardando(false);
+      if (existente) return setError(MENSAJE_SERIE_DUPLICADA);
+    }
 
     setGuardando(true);
     const {

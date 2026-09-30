@@ -54,7 +54,16 @@ const GRUPOS = [
       { clave: "equipos_clientes_listado_clientes", label: "Listado de clientes", Icono: IconUsers },
       { clave: "equipos_clientes_listado_ordenes", label: "Listado de órdenes", Icono: IconReport },
       { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
-      { clave: "equipos_clientes_reportes", label: "Reportes e Informes", Icono: IconReport },
+      // Etiqueta separada de "Informe de mantenimiento" (feedback en vivo,
+      // 29-sep-2026, pedido explícito: "separa los accesos reporte e
+      // informe, que esten por separado") -- ya eran 2 permisos distintos
+      // (equipos_clientes_reportes / equipos_clientes_informe_mantenimiento,
+      // cada uno con su propio checkbox), pero la etiqueta de este primero
+      // decía "Reportes e Informes", como si diera acceso a los informes
+      // también -- confuso al lado del checkbox de "Informe de
+      // mantenimiento", que es el que de verdad controla eso. Ahora dice
+      // solo "Reportes".
+      { clave: "equipos_clientes_reportes", label: "Reportes", Icono: IconReport },
       { clave: "equipos_clientes_informe_mantenimiento", label: "Informe de mantenimiento", Icono: IconWrench },
     ],
   },

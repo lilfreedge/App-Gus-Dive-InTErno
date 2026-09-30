@@ -45,9 +45,15 @@ const TABS = [
   { clave: "cerradas", label: "Órdenes cerradas" },
 ];
 
+// Opciones de orden ampliadas (feedback en vivo, 29-sep-2026, pedido
+// explícito: "pon que se pueda filtrar por: No. de orden, mas recientes
+// primero/ultimo, orden alfabetico") -- antes solo había fecha ascendente/
+// descendente.
 const SORTS = [
-  { clave: "fecha_asc", label: "Más antiguas primero" },
   { clave: "fecha_desc", label: "Más recientes primero" },
+  { clave: "fecha_asc", label: "Más antiguas primero" },
+  { clave: "no_orden", label: "No. de orden" },
+  { clave: "alfabetico", label: "Orden alfabético (cliente)" },
 ];
 
 // Criterio de cada pestaña (menos "cerradas", que ya es su propia lista, y
@@ -109,9 +115,12 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
     if (query) {
       base = base.filter((o) => o.cliente_nombre_snapshot?.toLowerCase().includes(query));
     }
-    base = [...base].sort((a, b) =>
-      sort === "fecha_desc" ? b.fecha.localeCompare(a.fecha) : a.fecha.localeCompare(b.fecha)
-    );
+    base = [...base].sort((a, b) => {
+      if (sort === "fecha_desc") return b.fecha.localeCompare(a.fecha);
+      if (sort === "no_orden") return (Number(a.no_orden_fisico ?? a.folio) || 0) - (Number(b.no_orden_fisico ?? b.folio) || 0);
+      if (sort === "alfabetico") return (a.cliente_nombre_snapshot || "").localeCompare(b.cliente_nombre_snapshot || "");
+      return a.fecha.localeCompare(b.fecha); // fecha_asc (default)
+    });
     return base;
   }, [ordenes, cerradas, tab, q, sort]);
 
@@ -122,25 +131,18 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
           pueda ser clickeable y compartir el estado `tab` de abajo. */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
         <h1 className="page-title" style={{ margin: 0 }}>Registro de Órdenes</h1>
-        {/* "Órdenes abiertas" (feedback sobre v40, pedido explícito:
-            "ordenes abiertas ponlo entre registro de ordenes y registrar
-            orden") -- total de `ordenes` (todo lo que no está Entregado),
-            mismo criterio de siempre. Pasó de texto/botón fijo a un botón
-            clickeable de verdad (v42/28-sep, pedido explícito: "Ponemos
-            ordenes abiertas que sea clickeable?... me gustaria cambiarle
-            el color y ponerle algo mas neutral") -- ahora es una pestaña
-            más (clave "todas", fuera de la grilla de abajo por su
-            posición), con el mismo estilo neutral que las demás pestañas
-            cuando no está seleccionada, y el mismo azul activo cuando sí
-            (en vez de quedar siempre en azul fijo). Al hacer click muestra
-            TODAS las órdenes abiertas sin dividir por categoría. */}
+        {/* "Ver todas" (renombrado de "Órdenes abiertas", feedback en vivo,
+            29-sep-2026, pedido explícito: "cambiar 'ordenes abiertas' por
+            'ver todas'") -- mismo botón, mismo criterio (todo lo que no
+            está Entregado), solo cambia la etiqueta. Historia previa
+            (feedback sobre v40 / v42) -- ver conteos.todas más arriba. */}
         <button
           type="button"
           className={`period-btn ${tab === "todas" ? "period-btn-active" : ""}`}
           onClick={() => setTab("todas")}
           style={{ flex: "0 0 auto", padding: "9px 16px", whiteSpace: "nowrap" }}
         >
-          Órdenes abiertas ({conteos.todas})
+          Ver todas ({conteos.todas})
         </button>
         {puedeRegistrar && (
           <Link href="/app-clientes/ordenes/nueva">
@@ -169,20 +171,43 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
         ))}
       </div>
 
-      <input
-        type="text"
-        placeholder="Buscar cliente..."
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        style={{ marginBottom: 14 }}
-      />
-
-      <label htmlFor="sort_ordenes" style={{ marginTop: 0 }}>Ordenar por</label>
-      <select id="sort_ordenes" value={sort} onChange={(e) => setSort(e.target.value)} style={{ marginBottom: 14 }}>
-        {SORTS.map((s) => (
-          <option key={s.clave} value={s.clave}>{s.label}</option>
-        ))}
-      </select>
+      {/* Búsqueda y orden al mismo nivel, con el control de orden más chico
+          y sutil (feedback en vivo, 29-sep-2026, pedido explícito: "pon el
+          filtro mas sutil... pon el search y el filtrar al mismo nivel, que
+          el boton de filtrar sea mas chico") -- antes eran 2 bloques
+          apilados, con un <select> de ancho completo y su propia etiqueta
+          "Ordenar por" arriba, mucho más protagonismo del que necesita un
+          ajuste secundario. El buscador sigue siendo lo principal (flex: 1);
+          el de orden queda angosto y discreto al lado, con aria-label en
+          vez de <label> visible. */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        <input
+          type="text"
+          placeholder="Buscar cliente..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          style={{ marginTop: 0, marginBottom: 0, flex: 1, minWidth: 0 }}
+        />
+        <select
+          id="sort_ordenes"
+          aria-label="Ordenar por"
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          style={{
+            marginTop: 0,
+            marginBottom: 0,
+            width: "auto",
+            flexShrink: 0,
+            fontSize: 12.5,
+            padding: "8px 10px",
+            color: "var(--texto-suave)",
+          }}
+        >
+          {SORTS.map((s) => (
+            <option key={s.clave} value={s.clave}>{s.label}</option>
+          ))}
+        </select>
+      </div>
 
       <div className="card">
         {filtrados.length === 0 ? (
@@ -196,19 +221,18 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
         ) : (
           filtrados.map((o) => (
             <div key={o.id} className="list-item" style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              {/* Primer intento (sin flex: 1 en el link) no se notó en la
-                  pantalla real (28-sep-2026, feedback en vivo: "está
-                  exactamente igual") -- el cambio de verdad que pidió el
-                  usuario fue reordenar la fila entera: "Pon que el sello(En
-                  proceso) esté de ultimo. y el boton como al lado del
-                  equipo". El sello salió de junto al título (ya no compite
-                  por espacio ahí) y ahora es el último elemento de la fila,
-                  después del botón; el link de los datos tampoco lleva
-                  flex: 1, así que el botón queda pegado al texto en vez de
-                  en la otra punta. */}
+              {/* `flex: 1` en el link (feedback en vivo, 29-sep-2026, pedido
+                  explícito: "que el estado... salga a la derecha, alineados.
+                  Y el boton de actualizar el seguimiento justo a la
+                  izquierda del boton") -- antes ni el link ni el grupo de
+                  abajo llevaban flex, así que el botón y el sello quedaban
+                  pegados al texto en vez de alineados contra el borde
+                  derecho de la fila. Ahora el título ocupa todo el espacio
+                  libre y el grupo [botón + sello] queda siempre pegado a la
+                  derecha, uno junto al otro. */}
               <Link
                 href={`/app-clientes/ordenes/${o.id}`}
-                style={{ display: "block", minWidth: 0, textDecoration: "none", color: "inherit" }}
+                style={{ display: "block", flex: 1, minWidth: 0, textDecoration: "none", color: "inherit" }}
               >
                 <span className="list-item-title">
                   <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
@@ -240,23 +264,23 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
                   hacer el boton de 'actualizar orden' un poco mas
                   llamativo... mas grande y con color azul?") -- ver
                   .icon-btn-azul en globals.css. */}
-              {puedeActualizarEstado && (
-                <Link
-                  href={`/app-clientes/ordenes/${o.id}/editar?from=registro`}
-                  className="icon-btn icon-btn-azul"
-                  aria-label="Actualizar estado de orden"
-                  title="Actualizar estado de orden"
-                  style={{ flexShrink: 0 }}
-                >
-                  <IconRefresh size={17} />
-                </Link>
-              )}
-              {/* Sello de estado, ahora de último en la fila (28-sep-2026,
-                  feedback en vivo: "Pon que el sello(En proceso) esté de
-                  ultimo") -- antes vivía pegado al título, arriba a la
-                  derecha del link. */}
-              <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ flexShrink: 0 }}>
-                {o.estado}
+              {/* Botón + sello agrupados y pegados a la derecha (ver nota
+                  arriba en el Link del título). */}
+              <span style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                {puedeActualizarEstado && (
+                  <Link
+                    href={`/app-clientes/ordenes/${o.id}/editar?from=registro`}
+                    className="icon-btn icon-btn-azul"
+                    aria-label="Actualizar estado de orden"
+                    title="Actualizar estado de orden"
+                    style={{ flexShrink: 0 }}
+                  >
+                    <IconRefresh size={17} />
+                  </Link>
+                )}
+                <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ flexShrink: 0 }}>
+                  {o.estado}
+                </span>
               </span>
             </div>
           ))

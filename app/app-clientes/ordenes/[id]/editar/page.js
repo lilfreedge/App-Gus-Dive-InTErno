@@ -57,7 +57,12 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
   // mientras se escribe (un <datalist>, ver form-client.js); "Repuestos
   // utilizados" sigue siendo texto libre, así que también se puede escribir
   // algo que no esté en el catálogo.
-  const { data: piezas } = await supabase.from("piezas_catalogo").select("id, nombre").eq("activo", true).order("nombre");
+  // `codigo` agregado al select (feedback en vivo, 29-sep-2026, pedido
+  // explícito: "que aparezca el codigo y la descripcion juntas, no solo la
+  // descripcion") -- antes solo se traía `nombre`, así que no había forma
+  // de anteponer el código al agregar un repuesto desde el catálogo (ver
+  // agregarRepuesto() en form-client.js).
+  const { data: piezas } = await supabase.from("piezas_catalogo").select("id, nombre, codigo").eq("activo", true).order("nombre");
 
   // BUG corregido (item 11a, reportado en vivo, 26-sep-2026: "cuando le
   // doy me abre el actualizar estado de orden desde el 'listado de

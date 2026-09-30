@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { tipoEquipoDisplay } from "@/lib/tipo-equipo";
+import { serieYaRegistrada } from "@/lib/equipos";
 import DetalleComponentesRegulador from "@/components/DetalleComponentesRegulador";
 
 // "Compresor" agregado (pedido explícito, ronda grande de feedback,
@@ -56,7 +57,31 @@ export default function AgregarEquiposForm({ clienteId }) {
       }
     }
 
+    // Seriales repetidos prohibidos (feedback en vivo, 29-sep-2026, pedido
+    // explícito) -- primero entre las propias filas de esta carga (fácil
+    // repetir sin querer al copiar/pegar varias a la vez), y después
+    // contra lo que ya existe en la base de datos (ver lib/equipos.js).
+    const seriesEnEstaCarga = new Map();
+    for (const f of filas) {
+      const serieLimpia = CON_SERIE.includes(f.tipo_equipo) ? f.serie.trim() : "";
+      if (!serieLimpia) continue;
+      const clave = serieLimpia.toLowerCase();
+      if (seriesEnEstaCarga.has(clave)) {
+        return setError(`El No. de serie "${serieLimpia}" está repetido entre los equipos que estás cargando.`);
+      }
+      seriesEnEstaCarga.set(clave, true);
+    }
+
     setGuardando(true);
+    for (const f of filas) {
+      const serieLimpia = CON_SERIE.includes(f.tipo_equipo) ? f.serie.trim() : "";
+      if (!serieLimpia) continue;
+      const existente = await serieYaRegistrada(supabase, serieLimpia);
+      if (existente) {
+        setGuardando(false);
+        return setError(`Ya existe un equipo registrado con el No. de serie "${serieLimpia}". Revisa que no sea el mismo equipo ya cargado antes.`);
+      }
+    }
     const {
       data: { user },
     } = await supabase.auth.getUser();

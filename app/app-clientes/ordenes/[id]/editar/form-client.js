@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
@@ -16,7 +17,6 @@ import {
   editarHold,
   resolverHold,
   labelTipoHold,
-  textoAutorizacionHold,
 } from "@/lib/holds";
 import { useDenegado } from "@/lib/useDenegado";
 import { IconLock, IconCheck } from "@/components/icons";
@@ -290,13 +290,20 @@ export default function EditarSeguimientoForm({
       const resuelto = resolverHold(hold, { decision: decisionSel, decisionNota });
       const holdsNuevo = ordenLocal.holds.map((h) => (h.id === hold.id ? resuelto : h));
 
-      // Autorización -> se agrega solo a Repuestos utilizados, marcado
-      // "autorizado" (pedido explícito: "siii, buenisimo"). Funciona con
-      // Holds viejos y nuevos (textoAutorizacionHold es shape-aware).
-      const repuestosNuevo =
-        decisionSel === "si"
-          ? [...ordenLocal.repuestos_usados_detalle, { nombre: textoAutorizacionHold(hold), origen: "autorizado", holdId: hold.id }]
-          : ordenLocal.repuestos_usados_detalle;
+      // Ya NO se agrega a "Códigos a cobrar" al autorizar (revertido,
+      // feedback en vivo, 29-sep-2026, pedido explícito: "que no salga ese
+      // hold en codigos a cobrar, debe de ser un error. no pinta nada
+      // ahi") -- esto reemplaza el comportamiento anterior ("siii,
+      // buenisimo", feedback sobre v38/v40) que sí lo agregaba
+      // automáticamente cuando la decisión era "Sí". El texto que se
+      // agregaba ahí (la consulta del Hold, o su código) no es en realidad
+      // un código de catálogo -- se prestaba a confusión mezclado con los
+      // códigos reales de esa caja. La autorización del cliente sigue
+      // quedando registrada igual de completa en la Bitácora de la orden
+      // (bitacoraNuevo, justo abajo), con el detalle completo y la
+      // decisión -- si de verdad se usó una pieza, se sigue pudiendo
+      // agregar a mano a Códigos a cobrar como siempre.
+      const repuestosNuevo = ordenLocal.repuestos_usados_detalle;
 
       const bitacoraNuevo = [
         {
@@ -747,6 +754,31 @@ export default function EditarSeguimientoForm({
     }
   }
 
+  // "Guardar" propio, sin salir de la pantalla (feedback en vivo,
+  // 29-sep-2026, pedido explícito: "agregame boton de 'guardar' en la
+  // nota, ahora mismo no tiene nada y no tengo idea de que es lo que
+  // determina si se guarda o no") -- antes la única forma de guardar era
+  // "Regresar a ficha de orden", que además de guardar siempre navegaba
+  // afuera; alguien que quisiera seguir en este wizard (por ejemplo para
+  // usar otro paso) no tenía cómo guardar la nota sin perder su lugar. Deja
+  // un "✓ Guardado" breve como confirmación, mismo espíritu que el resto
+  // del wizard (cada paso confirma con su propio estado "Hecho").
+  const [notasGuardadoOk, setNotasGuardadoOk] = useState(false);
+  async function guardarSoloNotas() {
+    if (!notasSinGuardar) return;
+    setGuardandoNotas(true);
+    setErrorNotas("");
+    setNotasGuardadoOk(false);
+    try {
+      await guardarCampos({ notas_tecnico_regulador: notasTecnico.trim() || null });
+      setNotasGuardadoOk(true);
+    } catch (e) {
+      setErrorNotas(mensajeError(e));
+    } finally {
+      setGuardandoNotas(false);
+    }
+  }
+
   // ---------------------------------------------------------------
   // A qué paso "volver" desde cada paso de la cadena (28-sep-2026, pedido
   // explícito, ver los handlers editarXxx más arriba) -- solo se ofrece
@@ -780,19 +812,39 @@ export default function EditarSeguimientoForm({
 
   return (
     <div className="card">
-      {/* Hold (item 33) -- sin Hold activo: botón para abrir uno. Con
-          Hold activo: caja destacada con la consulta + la decisión del
-          cliente que lo resuelve. */}
-      {!hold ? (
-        <button type="button" className="btn secondary" onClick={abrirHoldModal} style={{ marginTop: 0, width: "auto" }}>
-          Poner en Hold
-        </button>
-      ) : (
+      {/* "Regresar a ficha de orden" arriba de todo, primero, con "Poner en
+          Hold" al lado (feedback en vivo, 29-sep-2026, pedidos explícitos:
+          "pon boton de regresar ficha arriba de primero y 'poner en hold'
+          al lado" / "encima del hold ponme boton de 'regresar a ficha de
+          orden'") -- antes la única forma de volver desde este wizard era
+          el "← Volver" genérico del encabezado de la página, arriba del
+          todo de todo; con Seguimiento completo esto puede quedar lejos de
+          donde se está trabajando. */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+        <Link href={`/app-clientes/ordenes/${orden.id}`}>
+          <button type="button" className="btn secondary" style={{ marginTop: 0, width: "auto" }}>
+            ← Regresar a ficha de orden
+          </button>
+        </Link>
+        {!hold && (
+          <button type="button" className="btn secondary" onClick={abrirHoldModal} style={{ marginTop: 0, width: "auto" }}>
+            Poner en Hold
+          </button>
+        )}
+      </div>
+      {/* Hold (item 33) -- sin Hold activo: nada más que mostrar acá, el
+          botón de arriba ya cubre "Poner en Hold". Con Hold activo: caja
+          destacada con la consulta + la decisión del cliente que lo
+          resuelve. */}
+      {hold && (
         <>
           <div style={{ background: "var(--error-fondo)", border: "2px solid var(--rojo)", borderRadius: 10, padding: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--rojo)", textTransform: "uppercase", letterSpacing: 0.3 }}>
-                En Hold — {labelTipoHold(hold)}
+              {/* "Orden en hold" en vez de solo "En hold", un poco más
+                  grande (feedback en vivo, 29-sep-2026, pedido explícito:
+                  ver la misma nota en ordenes/[id]/page.js). */}
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--rojo)", textTransform: "uppercase", letterSpacing: 0.3 }}>
+                Orden en hold — {labelTipoHold(hold)}
               </div>
               {/* Editar un Hold ya creado (item 6, pedido explícito: "pon
                   el permiso en administración") -- gateado por
@@ -1008,8 +1060,17 @@ export default function EditarSeguimientoForm({
           </button>
         </div>
         <datalist id="piezas-catalogo">
+          {/* Código + descripción juntos, igual que se ven en Base de
+              datos > Códigos a cobrar (feedback en vivo, 29-sep-2026,
+              pedido explícito: "que aparezca el codigo y la descripcion
+              juntas, no solo la descripcion") -- antes el `value` de cada
+              sugerencia era solo `p.nombre`; ahora, para los códigos que sí
+              tienen `codigo`, el valor que se inserta al elegir la
+              sugerencia ya viene como "código · nombre". Los que no tienen
+              código (cargados antes de que el campo fuera obligatorio)
+              siguen mostrando solo el nombre, como siempre. */}
           {piezas.map((p) => (
-            <option key={p.id} value={p.nombre} />
+            <option key={p.id} value={p.codigo ? `${p.codigo} · ${p.nombre}` : p.nombre} />
           ))}
         </datalist>
         {repuestos.length === 0 && (
@@ -1479,26 +1540,40 @@ export default function EditarSeguimientoForm({
               id="notas_tecnico"
               rows={2}
               value={notasTecnico}
-              onChange={(e) => setNotasTecnico(e.target.value)}
+              onChange={(e) => {
+                setNotasTecnico(e.target.value);
+                setNotasGuardadoOk(false);
+              }}
               placeholder="Opcional -- alguna recomendación o pendiente para que el buzo lo tenga en cuenta"
             />
-            {/* Antes se llamaba "Guardar nota" y quedaba deshabilitado sin
-                cambios pendientes en el texto -- se sentía como que "no
-                funcionaba" si uno solo quería regresar (28-sep-2026,
-                feedback en vivo, item 12: "El boton de 'guardar nota' aun no
-                me funciona. Cambia ese boton a 'regresar a ficha de
-                orden'"). Ahora es un botón de navegación siempre disponible:
-                guarda la nota si hay algo sin guardar y, haya o no cambios,
-                regresa a la ficha de la orden. */}
-            <button
-              type="button"
-              className="btn secondary"
-              onClick={guardarNotasTecnico}
-              disabled={guardandoNotas}
-              style={{ marginTop: 8, width: "auto" }}
-            >
-              {guardandoNotas ? "Guardando..." : "Regresar a ficha de orden"}
-            </button>
+            {/* "Guardar" propio, sin salir de la pantalla (feedback en vivo,
+                29-sep-2026, pedido explícito, ver nota en guardarSoloNotas
+                más arriba) + "Regresar a ficha de orden" (28-sep-2026, item
+                12) para cuando sí se quiere salir -- guarda si hace falta y
+                siempre navega. */}
+            <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={guardarSoloNotas}
+                disabled={guardandoNotas || !notasSinGuardar}
+                style={{ marginTop: 0, width: "auto" }}
+              >
+                {guardandoNotas ? "Guardando..." : "Guardar"}
+              </button>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={guardarNotasTecnico}
+                disabled={guardandoNotas}
+                style={{ marginTop: 0, width: "auto" }}
+              >
+                {guardandoNotas ? "Guardando..." : "Regresar a ficha de orden"}
+              </button>
+              {notasGuardadoOk && !notasSinGuardar && (
+                <span style={{ fontSize: 12.5, color: "var(--verde)", fontWeight: 600 }}>✓ Guardado</span>
+              )}
+            </div>
             {errorNotas && <div className="error-box" style={{ marginTop: 8 }}>{errorNotas}</div>}
           </div>
             </>

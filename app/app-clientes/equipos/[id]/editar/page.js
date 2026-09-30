@@ -21,9 +21,12 @@ export default async function EditarEquipoPage({ params }) {
   const supabase = createClient();
   await requirePermisoClientes(supabase, "equipos_clientes_editar_equipo", `/app-clientes/equipos/${params.id}`);
 
+  // Tamaño/Material se agregan al select solo para mostrarlos de solo
+  // lectura en el formulario (feedback en vivo, 29-sep-2026) -- siguen sin
+  // poderse editar, ver nota en form-client.js.
   const { data: equipo } = await supabase
     .from("equipos_del_cliente")
-    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, regulador_componentes_detalle, created_at")
+    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, tamano, material, regulador_componentes_detalle, created_at")
     .eq("id", params.id)
     .maybeSingle();
 

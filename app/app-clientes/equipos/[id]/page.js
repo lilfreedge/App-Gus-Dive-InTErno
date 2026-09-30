@@ -26,9 +26,17 @@ export default async function FichaEquipoPage({ params }) {
   const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
   const puedeEditar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_editar_equipo;
 
+  // BUG corregido (feedback en vivo, 29-sep-2026: "le di a editar equipo a
+  // un tanque que agregué mientras registraba la orden, y no aparecen los
+  // datos del tamaño ni material... entré a editarlo porque afuera
+  // tampoco se ve") -- el Tamaño/Material de un Tanque sí se guardaba bien
+  // al crearlo (ver SelectorEquipoCliente.js), pero esta ficha nunca pedía
+  // esas 2 columnas en el `select()`, así que `equipo.tamano`/`.material`
+  // siempre llegaban `undefined` acá abajo y se veían como "—" aunque el
+  // dato sí estuviera guardado.
   const { data: equipo } = await supabase
     .from("equipos_del_cliente")
-    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, regulador_componentes_detalle, created_at")
+    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, tamano, material, regulador_componentes_detalle, created_at")
     .eq("id", params.id)
     .maybeSingle();
 

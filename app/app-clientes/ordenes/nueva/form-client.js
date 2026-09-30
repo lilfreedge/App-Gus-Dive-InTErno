@@ -660,13 +660,18 @@ export default function NuevaOrdenForm({
             })}
           </div>
 
+          {/* Placeholders acortados a solo "Opcional" (feedback en vivo,
+              29-sep-2026, pedido explícito: "cambia los mensajes que tiene a
+              'opcional'") -- antes traían una descripción larga después del
+              guion; el campo sigue siendo el mismo, solo con el mensaje más
+              corto, igual que el resto de los campos opcionales de la app. */}
           <label htmlFor="problemas_reportados" style={{ marginTop: 12 }}>Problemas reportados por cliente</label>
           <textarea
             id="problemas_reportados"
             rows={2}
             value={problemasReportados}
             onChange={(e) => setProblemasReportados(e.target.value)}
-            placeholder="Opcional -- lo que el cliente reporta que le pasa al equipo"
+            placeholder="Opcional"
           />
 
           <label htmlFor="danos_visibles">Daños visibles</label>
@@ -675,7 +680,7 @@ export default function NuevaOrdenForm({
             rows={2}
             value={danosVisibles}
             onChange={(e) => setDanosVisibles(e.target.value)}
-            placeholder="Opcional -- daños que ya traía el equipo al recibirlo"
+            placeholder="Opcional"
           />
         </PasoOrden>
       )}
