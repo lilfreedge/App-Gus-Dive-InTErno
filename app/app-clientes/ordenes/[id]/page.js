@@ -396,25 +396,43 @@ export default async function FichaOrdenPage({ params }) {
               mantenimiento" -- que es otro documento aparte). **Nota
               (30-sep-2026): gateado también por el permiso de Reportes**
               (pedido explícito: "quien no tenga acceso a 'reportes' que
-              no le salga boton de 'ver reporte de la orden'"). */}
-          {esRegulador && puedeVerReportes && (
+              no le salga boton de 'ver reporte de la orden'"). **Nota
+              (1-oct-2026): renombrado otra vez, a "Ver Recibo de la
+              orden"** -- pedido explícito, tras confirmar que esta pantalla
+              no tiene nada de desglose de cobro (no es un "recibo" en el
+              sentido de precios/total), el usuario decidió igual llamarlo
+              así ("Cambia el nombre de ese botón a 'Ver Recibo de la
+              orden'... El reporte de la orden seria el conjunto del
+              recibo junto al informe" -- confirmado con solo "10"). **Nota
+              (1-oct-2026): ya no exige ser Regulador** (pedido explícito:
+              "necesito que el boton 'ver recibo de orden' figure en todo
+              tipo de orden") -- la pantalla de destino ahora tiene dos
+              vistas, "Recibo" (sin los campos operativos internos, pensada
+              para imprimir y entregar al cliente como constancia) y
+              "Recibo completo" (todo, para consulta interna) -- ver
+              app/app-clientes/reportes/[id]/recibo-client.js y
+              lib/reportes-clientes.js (filasReciboClienteOrden). La
+              sección "Reportes" del menú "Más" sigue acotada a Reguladores
+              a propósito, eso no se tocó. */}
+          {puedeVerReportes && (
             <div style={{ marginTop: 10 }}>
               <Link
                 href={`/app-clientes/reportes/${o.id}`}
                 style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
               >
-                Ver reporte de la orden →
+                Ver Recibo de la orden →
               </Link>
             </div>
           )}
 
           {/* Notas del técnico sobre el regulador (item 12, pedido
               explícito, 25-sep-2026) -- visible al cliente, aquí y en el
-              reporte. */}
+              reporte. Renombrada a "Nota" (1-oct-2026, pedido explícito,
+              ver nota en editar/form-client.js) -- mismo campo. */}
           {o.notas_tecnico_regulador && (
             <div style={{ marginTop: 16 }}>
               <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--texto-suave)", marginBottom: 2 }}>
-                Notas del técnico sobre el regulador
+                Nota
               </div>
               <div style={{ fontSize: 14.5 }}>{o.notas_tecnico_regulador}</div>
             </div>

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { IconGear, IconLogout, IconLock } from "./icons";
+import { IconGear, IconLogout, IconLock, IconCheck } from "./icons";
 
 // Header liviano para pantallas fuera de "un espacio" (selector de espacio,
 // placeholder de App Clientes) -- mismo look navy que el topbar normal
@@ -14,8 +14,13 @@ import { IconGear, IconLogout, IconLock } from "./icons";
 // de v14, 22-sep-2026); se le agregó "Accesos a apps" (26-sep-2026,
 // pedido explícito: mover aquí el control de quién entra a cada app,
 // antes repartido dentro de la Administración de cada una) -- solo la
-// ve el Titular.
-export default function HeaderSimple({ nombre, etiqueta, esTitular }) {
+// ve el Titular. "Usuarios nuevos" se sumó el 1-oct-2026 (item 10, pedido
+// explícito: "esto puede estar al principio en donde estan los apps...
+// que obviamente solo me salga a mi") -- mismo criterio, con un conteo en
+// rojo de cuántas cuentas están esperando aprobación (pendientesAprobacion,
+// calculado en app/espacio/page.js) para que el Titular no tenga que
+// entrar a revisar si no hay nada nuevo.
+export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAprobacion = 0 }) {
   const router = useRouter();
   const supabase = createClient();
   const [open, setOpen] = useState(false);
@@ -63,6 +68,12 @@ export default function HeaderSimple({ nombre, etiqueta, esTitular }) {
               {esTitular && (
                 <Link href="/espacio/accesos" className="settings-menu-link" onClick={() => setOpen(false)}>
                   <IconLock size={15} /> Accesos a apps
+                </Link>
+              )}
+              {esTitular && (
+                <Link href="/espacio/aprobaciones" className="settings-menu-link" onClick={() => setOpen(false)}>
+                  <IconCheck size={15} /> Usuarios nuevos
+                  {pendientesAprobacion > 0 && <span className="badge badge-rojo">{pendientesAprobacion}</span>}
                 </Link>
               )}
               <button

@@ -82,7 +82,6 @@ export default function EditarSeguimientoForm({
 
   const esHidrostatica = esServicioHidrostatica(orden.que_se_hara);
   const esReparacion = esServicioReparacion(orden.que_se_hara);
-  const muestraRetorno = esReparacion || esHidrostatica;
 
   // `ordenLocal` es la única fuente de verdad de lo que YA está guardado
   // en la base de datos -- se actualiza justo después de cada guardado
@@ -102,6 +101,18 @@ export default function EditarSeguimientoForm({
             .filter(Boolean)
             .map((nombre) => ({ nombre, origen: "manual" })),
   }));
+
+  // "Se trabajó en tienda, no fue necesario enviarlo a taller" (1-oct-2026,
+  // pedido explícito: "no siempre aplica 'fecha de envio a taller' Hay
+  // veces que son cosas que lo podemos resolver ahi mismo en tienda sin
+  // necesidad de enviarlo") -- columna nueva `reparacion_en_tienda`
+  // (migration_45.sql). Al marcarla, ni "Fecha de envío a taller o
+  // proveedor" ni "Fecha de retorno a tienda" aplican para esta orden (si
+  // nunca salió, tampoco "regresó") -- la orden pasa directo de recibida a
+  // "Listo para entrega", igual que ya pasa con cualquier otro tipo de
+  // equipo sin Seguimiento de envío/retorno.
+  const trabajadoEnTienda = esReparacion && !!ordenLocal.reparacion_en_tienda;
+  const muestraRetorno = (esReparacion && !trabajadoEnTienda) || esHidrostatica;
 
   const hold = holdActivo(ordenLocal.holds);
 
@@ -1126,6 +1137,21 @@ export default function EditarSeguimientoForm({
           {seguimientoAbierto && (
             <>
           {esReparacion && (
+            <div style={{ marginTop: 6, marginBottom: 4 }}>
+              <label className="check-label" style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+                <input
+                  type="checkbox"
+                  checked={trabajadoEnTienda}
+                  disabled={guardandoPaso === "reparacion_en_tienda"}
+                  onChange={(e) => guardarPasoSimple("reparacion_en_tienda", { reparacion_en_tienda: e.target.checked })}
+                  style={{ width: "auto" }}
+                />
+                Se trabajó en tienda, no fue necesario enviarlo a taller
+              </label>
+              {erroresPaso.reparacion_en_tienda && <div className="error-box" style={{ marginTop: 6 }}>{erroresPaso.reparacion_en_tienda}</div>}
+            </div>
+          )}
+          {esReparacion && !trabajadoEnTienda && (
             <PasoWizard
               id="envio_reparacion"
               label="Fecha de envío a taller o proveedor"
@@ -1527,7 +1553,14 @@ export default function EditarSeguimientoForm({
               de navegar -- mismo comportamiento que tenía el botón de acá
               abajo, ver guardarNotasTecnico más arriba. */}
           <div style={{ marginTop: 16 }}>
-            <label htmlFor="notas_tecnico">Notas del técnico sobre el regulador</label>
+            {/* Renombrado a "Nota" (1-oct-2026, pedido explícito: "cambiarla
+                a 'nota'. Esto vincularlo con la sección que aparece en
+                'formulario' llamada 'observación', y renombrarlo a 'nota'")
+                -- mismo campo de siempre (notas_tecnico_regulador), ahora
+                también usado para prellenar la "Nota" del Informe de
+                mantenimiento la primera vez que se genera, ver
+                informeDefault() en lib/informe-mantenimiento.js. */}
+            <label htmlFor="notas_tecnico">Nota</label>
             <textarea
               id="notas_tecnico"
               rows={2}

@@ -3,7 +3,7 @@ import { requirePermiso } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
-import { IconCatalog, IconReport, IconHistory, IconBook } from "@/components/icons";
+import { IconCatalog, IconReport, IconHistory, IconBook, IconWrench } from "@/components/icons";
 
 // Hub "Más" de App Clientes (23-sep-2026, pedido explícito: "agregar un
 // botón de 'mas' al lado de historial de ordenes... igual como que en
@@ -104,6 +104,17 @@ const OPCIONES = [
     descripcion: "Quién editó qué, en cualquier orden.",
     Icono: IconBook,
     permiso: "equipos_clientes_bitacora_movimientos",
+  },
+  // "Próximos mantenimientos" (1-oct-2026, nueva feature, pedido
+  // explícito: "necesito un lado donde pueda hacer ese tipo de consultar
+  // y saber que cliente llamar") -- mismo permiso que Reportes, misma
+  // audiencia.
+  {
+    href: "/app-clientes/administracion/proximos-mantenimientos",
+    titulo: "Próximos mantenimientos",
+    descripcion: "Equipos con una fecha recomendada de mantenimiento guardada.",
+    Icono: IconWrench,
+    permiso: "equipos_clientes_reportes",
   },
 ];
 

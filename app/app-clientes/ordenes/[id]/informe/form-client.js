@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { sumarMeses, hoyISO } from "@/lib/fechas";
 import {
   COMPONENTES_REGULADOR_DEFS,
   MANTENIMIENTO_DEFS,
@@ -58,6 +59,22 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
     setInforme((prev) => ({ ...prev, mantenimiento: { ...prev.mantenimiento, [id]: !prev.mantenimiento?.[id] } }));
   }
 
+  // "Cambio de o-rings" (1-oct-2026, nueva feature, pedido explícito: "un
+  // campo en donde se pueda ir agregando o rings. tipo como se agregan
+  // cuando son repuestos") -- misma lógica de lista que "Códigos a cobrar"
+  // en el wizard, pero local al formulario (se guarda junto con todo lo
+  // demás al hacer clic en "Generar informe", no de inmediato).
+  const [nuevoOring, setNuevoOring] = useState("");
+  function agregarOring() {
+    const valor = nuevoOring.trim();
+    if (!valor) return;
+    setInforme((prev) => ({ ...prev, orings: [...(prev.orings || []), valor] }));
+    setNuevoOring("");
+  }
+  function quitarOring(i) {
+    setInforme((prev) => ({ ...prev, orings: prev.orings.filter((_, idx) => idx !== i) }));
+  }
+
   async function generarInforme() {
     setError("");
     // Marca/Modelo/No. de serie dejaron de pedirse acá (feedback en vivo,
@@ -93,6 +110,24 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
         .eq("id", orden.id);
 
       if (err) throw err;
+
+      // "Recomendación de próximo mantenimiento" -- se guarda también en
+      // el EQUIPO, no solo en este Informe puntual (1-oct-2026, pedido
+      // explícito: "que cada equipo guarde esta info para yo poder
+      // consultar en alguna parte... saber que cliente llamar"). No
+      // bloquea el guardado del Informe si esto llega a fallar -- ya
+      // quedó guardado donde más importa.
+      if ((informeFinal.recomendacion === "6" || informeFinal.recomendacion === "12") && orden.equipo_id) {
+        const fechaRecomendada = sumarMeses(hoyISO(), Number(informeFinal.recomendacion));
+        try {
+          await supabase
+            .from("equipos_del_cliente")
+            .update({ proximo_mantenimiento_recomendado: fechaRecomendada })
+            .eq("id", orden.equipo_id);
+        } catch {
+          // No bloquea -- el Informe ya quedó guardado.
+        }
+      }
 
       setInforme(informeFinal);
       setYaGenerado(true);
@@ -212,8 +247,90 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
           </div>
 
           <div style={SECCION_ESTILO}>
-            <div style={SECCION_LABEL_ESTILO}>Observación</div>
+            {/* Renombrada a "Nota" (1-oct-2026, pedido explícito, vinculada
+                con la "Nota" del Seguimiento -- ver informeDefault() en
+                lib/informe-mantenimiento.js, que la prellena con
+                notas_tecnico_regulador la primera vez que se genera el
+                Informe para esta orden) -- el campo interno sigue
+                llamándose `observacion` para no tocar lo ya guardado. */}
+            <div style={SECCION_LABEL_ESTILO}>Nota</div>
             <textarea rows={3} value={informe.observacion} onChange={(e) => set("observacion", e.target.value)} style={{ marginTop: 8 }} />
+          </div>
+
+          {/* "Cambio de o-rings" (1-oct-2026, nueva feature, pedido
+              explícito) -- lista armada de a uno, mismo patrón que
+              "Códigos a cobrar" del wizard. Solo aparece en el Informe
+              impreso si se agregó al menos uno (ver filasInformeMantenimiento
+              en lib/informe-mantenimiento.js y la vista "Informe (cliente)"
+              más abajo). */}
+          <div style={SECCION_ESTILO}>
+            <div style={SECCION_LABEL_ESTILO}>Cambio de o-rings</div>
+            {(informe.orings || []).length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8, marginBottom: 6 }}>
+                {informe.orings.map((o, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5 }}>
+                    <span>{o}</span>
+                    <button
+                      type="button"
+                      onClick={() => quitarOring(i)}
+                      style={{ background: "none", border: "none", color: "var(--rojo)", cursor: "pointer", fontSize: 12.5, padding: 0 }}
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <input
+                type="text"
+                value={nuevoOring}
+                onChange={(e) => setNuevoOring(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    agregarOring();
+                  }
+                }}
+                placeholder="Cuál o-ring, ej. '1ra etapa'"
+                style={{ marginTop: 0 }}
+              />
+              <button type="button" className="btn secondary" onClick={agregarOring} style={{ marginTop: 0, width: "auto" }}>
+                + Agregar
+              </button>
+            </div>
+            {(informe.orings || []).length === 0 && (
+              <div className="hint-text" style={{ marginTop: 6 }}>Opcional -- si no se cambió ninguno, déjalo vacío.</div>
+            )}
+          </div>
+
+          {/* "Recomendación de próximo mantenimiento" (1-oct-2026, nueva
+              feature, pedido explícito) -- preset de 6/12 meses (opcional).
+              Al generar el informe con una marcada, se guarda también en el
+              EQUIPO (equipos_del_cliente.proximo_mantenimiento_recomendado,
+              migration_46.sql) para poder consultarlo más adelante, no solo
+              en este Informe puntual -- ver generarInforme() y la nueva
+              pantalla "Próximos mantenimientos" en Más. */}
+          <div style={SECCION_ESTILO}>
+            <div style={SECCION_LABEL_ESTILO}>Recomendación de próximo mantenimiento</div>
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              {[{ v: "6", label: "6 meses" }, { v: "12", label: "12 meses" }].map((op) => (
+                <button
+                  key={op.v}
+                  type="button"
+                  onClick={() => set("recomendacion", informe.recomendacion === op.v ? null : op.v)}
+                  style={{
+                    flex: 1, marginTop: 0, padding: "9px", borderRadius: 8, fontWeight: 700, fontSize: 12.5, cursor: "pointer",
+                    border: "1px solid var(--azul-claro)",
+                    background: informe.recomendacion === op.v ? "var(--azul-claro)" : "transparent",
+                    color: informe.recomendacion === op.v ? "#fff" : "var(--azul-claro)",
+                  }}
+                >
+                  {op.label}
+                </button>
+              ))}
+            </div>
+            <div className="hint-text" style={{ marginTop: 6 }}>Opcional -- si no aplica, déjalo sin marcar.</div>
           </div>
 
           <div style={SECCION_ESTILO}>
@@ -312,7 +429,11 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 )}
               </Seccion>
 
-              {informe.observacion?.trim() && <Seccion titulo="Observación">{informe.observacion.trim()}</Seccion>}
+              {informe.observacion?.trim() && <Seccion titulo="Nota">{informe.observacion.trim()}</Seccion>}
+
+              {(informe.orings || []).length > 0 && (
+                <Seccion titulo="Cambio de o-rings">{informe.orings.join(", ")}</Seccion>
+              )}
 
               <div
                 style={{
@@ -335,6 +456,13 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
               <div style={{ marginTop: 14, borderTop: "1px solid var(--borde)", paddingTop: 10, fontSize: 12.5, color: "var(--texto-suave)", textAlign: "center" }}>
                 Técnico: {informe.tecnico}
               </div>
+
+              {(informe.recomendacion === "6" || informe.recomendacion === "12") && (
+                <div style={{ marginTop: 14, fontSize: 12.5, color: "var(--texto-suave)", textAlign: "center" }}>
+                  Recomendación de próximo mantenimiento: en {informe.recomendacion} meses.
+                </div>
+              )}
+
               <div style={{ marginTop: 16, fontSize: 12.5, textAlign: "center", lineHeight: 1.5 }}>
                 Gracias por confiar en Gus Dive Center para el mantenimiento de tu equipo de buceo.
               </div>

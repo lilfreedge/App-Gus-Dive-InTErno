@@ -3,8 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
-import TarjetaBitacoraMovimiento from "@/components/TarjetaBitacoraMovimiento";
-import BorrarTodoHistorialButton from "@/components/BorrarTodoHistorialButton";
+import BitacoraMovimientosClient from "./bitacora-movimientos-client";
 
 // "Bitácora movimientos en órdenes" (27-sep-2026, pedido explícito: "un
 // boton en 'mas'... un registro de todas las veces que cualquier orden es
@@ -47,26 +46,19 @@ export default async function BitacoraMovimientosPage() {
           ]}
         />
         <h1 className="page-title">Bitácora movimientos en órdenes</h1>
-        <p className="page-subtitle">Quién editó qué, en cualquier orden -- las más recientes primero.</p>
+        <p className="page-subtitle">Quién editó qué, agrupado por orden -- las más recientes primero.</p>
 
-        {/* Borrar toda la bitácora (28-sep-2026, pedido explícito: "ponme
-            un boton aqui para borrar toda la bitacora de movimientos, eso
-            solo tendre acceso yo") -- solo Titular, ver
-            BorrarTodoHistorialButton. */}
-        {profile?.es_titular && (
-          <div style={{ marginBottom: 14 }}>
-            <BorrarTodoHistorialButton
-              filtro={{ tabla: "ordenes_equipos", accion: "editar" }}
-              etiqueta="toda la bitácora de movimientos"
-            />
-          </div>
-        )}
-
-        {!cambios || cambios.length === 0 ? (
-          <div className="empty">Todavía no hay ediciones registradas.</div>
-        ) : (
-          cambios.map((c) => <TarjetaBitacoraMovimiento key={c.id} cambio={c} />)
-        )}
+        {/* Agrupado por orden + buscador por No. de orden (1-oct-2026,
+            pedido explícito: "que dentro de 'bitacora movimientos en
+            ordenes' haya una barra de search para buscar no. de orden. Y
+            que cada orden sea un boton y dentro aparezcan todos sus
+            movimientos. Y pon los botones mas pequenos, se ven muy
+            voluminosos") -- antes cada edición individual se mostraba como
+            su propia tarjeta grande, sin agrupar; ver
+            bitacora-movimientos-client.js. "Borrar toda la bitácora"
+            (28-sep-2026, pedido explícito) se mantiene igual, solo
+            Titular. */}
+        <BitacoraMovimientosClient cambios={cambios || []} esTitular={!!profile?.es_titular} />
       </div>
     </div>
   );

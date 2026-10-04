@@ -19,6 +19,15 @@ export default function RegistroPage() {
     setError("");
     setLoading(true);
 
+    // Aprobación del Titular en vez de confirmación por correo (item 10,
+    // 1-oct-2026, pedido explícito: "quiero que los usuarios nuevos sean
+    // confirmados solo por mi, no que se confirmen ellos mismos por
+    // correo") -- emailRedirectTo/type=signup se deja igual por si
+    // "Confirm email" sigue encendido en el dashboard de Supabase
+    // mientras se hace el cambio, pero la idea es apagarlo ahí (ver
+    // migration_48.sql): con eso apagado, signUp ya deja al usuario con
+    // sesión iniciada, y es profiles.aprobado (middleware.js) lo que
+    // decide si puede entrar.
     const { error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
@@ -62,7 +71,7 @@ export default function RegistroPage() {
         {success ? (
           <>
             <div className="success-box">
-              Cuenta creada. Confirma tu cuenta en el correo que te llegó y luego inicia sesión.
+              Cuenta creada. Ahora el Titular tiene que aprobar tu acceso antes de que puedas entrar.
             </div>
             <Link href="/login">
               <button className="btn btn-primary" type="button">

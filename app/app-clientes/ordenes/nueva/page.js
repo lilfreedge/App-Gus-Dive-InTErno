@@ -45,8 +45,19 @@ export default async function NuevaOrdenPage({ searchParams }) {
       .maybeSingle(),
   ]);
 
-  const ultimoNumero = parseInt(ultimaOrden?.no_orden_fisico, 10);
-  const noOrdenSugerido = Number.isFinite(ultimoNumero) ? String(ultimoNumero + 1) : "";
+  // Ceros a la izquierda conservados en la sugerencia (1-oct-2026, pedido
+  // explícito: "Pon que las secuencia se le vea el '0' o sea, '0001',
+  // '0002', '0003'... Hoy en dia si escribo un 0 se me quita") -- la causa
+  // real: esta sugerencia calculaba el siguiente número pero no conservaba
+  // el ancho del anterior (si el último fue "0009", sugería "10" en vez de
+  // "0010"), lo que además disparaba el aviso de abajo ("el siguiente
+  // número esperado era...") y desalentaba seguir con el formato
+  // acolchado. Ahora, si el último número tenía ceros a la izquierda, el
+  // siguiente se rellena al mismo ancho (`padStart`); si no los tenía
+  // (ej. "9"), sigue igual que antes.
+  const ultimoTexto = (ultimaOrden?.no_orden_fisico || "").trim();
+  const ultimoNumero = parseInt(ultimoTexto, 10);
+  const noOrdenSugerido = Number.isFinite(ultimoNumero) ? String(ultimoNumero + 1).padStart(ultimoTexto.length, "0") : "";
 
   return (
     <div>

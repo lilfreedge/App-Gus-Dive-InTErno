@@ -1,0 +1,11 @@
+-- "Se trabajó en tienda, no fue necesario enviarlo a taller" (feedback en
+-- vivo, 1-oct-2026, pedido explícito: "si es una 'reparación', no siempre
+-- aplica 'fecha de envio a taller'. Hay veces que son cosas que lo podemos
+-- resolver ahi mismo en tienda sin necesidad de enviarlo") -- columna nueva
+-- en ordenes_equipos, boolean, default false (todas las órdenes ya
+-- guardadas siguen comportándose exactamente igual que hoy). Al marcarla
+-- en el Seguimiento de una orden de Reparación, ni "Fecha de envío a
+-- taller o proveedor" ni "Fecha de retorno a tienda" aplican para esa
+-- orden -- ver app/app-clientes/ordenes/[id]/editar/form-client.js
+-- (trabajadoEnTienda) y lib/reportes-clientes.js.
+alter table public.ordenes_equipos add column if not exists reparacion_en_tienda boolean not null default false;

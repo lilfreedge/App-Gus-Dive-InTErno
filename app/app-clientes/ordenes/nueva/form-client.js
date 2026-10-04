@@ -18,6 +18,7 @@ import {
   detalleComponentesTexto,
   detalleEquipoActualizadoDesdeOrden,
 } from "@/lib/regulador-detalle";
+import { noOrdenYaRegistrado, MENSAJE_NO_ORDEN_DUPLICADO } from "@/lib/ordenes";
 import { IconLock, IconCheck } from "@/components/icons";
 
 // Registrar orden (App Equipos Clientes, rediseñado 23-sep-2026 tras
@@ -352,6 +353,16 @@ export default function NuevaOrdenForm({
     const servicioFinal = servicio === "Otro" ? servicioOtro.trim() : servicio;
 
     setLoading(true);
+
+    // No. de orden repetido, prohibido (1-oct-2026, pedido explícito, ver
+    // lib/ordenes.js) -- se valida antes que nada, con el mismo patrón ya
+    // usado para seriales duplicados.
+    const duplicado = await noOrdenYaRegistrado(supabase, noOrdenFisico);
+    if (duplicado) {
+      setLoading(false);
+      setError(MENSAJE_NO_ORDEN_DUPLICADO);
+      return;
+    }
 
     // No permitir dos órdenes abiertas para el mismo Equipo a la vez (item
     // 5, pedido explícito, 27-sep-2026: "No permitir registrar una orden de

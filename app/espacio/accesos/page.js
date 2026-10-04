@@ -34,9 +34,17 @@ export default async function AccesosAppsPage() {
   const conAccesoClientes = noTitulares.filter((p) => !!p.permisos?.equipos_clientes).length;
   const conAccesoInterno = noTitulares.filter((p) => !!p.permisos?.acceso_app_interno).length;
 
+  // Mismo badge de "Usuarios nuevos" que /espacio (item 10, 1-oct-2026) --
+  // para que el Titular lo vea sin importar en cuál de las dos pantallas
+  // de ajustes esté.
+  const { count: pendientesAprobacion } = await supabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("aprobado", false);
+
   return (
     <div>
-      <HeaderSimple nombre="" etiqueta="Accesos a apps" esTitular />
+      <HeaderSimple nombre="" etiqueta="Accesos a apps" esTitular pendientesAprobacion={pendientesAprobacion || 0} />
       <div className="page" style={{ paddingTop: 24 }}>
         <Link href="/espacio" className="back-link">
           ← Volver

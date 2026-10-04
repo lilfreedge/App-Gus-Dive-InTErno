@@ -1108,6 +1108,39 @@ textarea {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  /* "lo que necesito es que se vea completo en la hoja, no asi como con
+     esos datos que aparecen ni es el borde gordo blanco" (feedback en
+     vivo, 1-oct-2026, sobre el Informe/Reporte de la orden) -- el fondo
+     gris de la pantalla (body, var(--fondo)) y el "card" blanco redondeado
+     con sombra y borde (.card) que envuelve el membrete + el contenido
+     quedaban igual al imprimir, armando una tarjeta chica flotando en el
+     medio de la hoja en vez de un documento que ocupa toda la hoja --
+     antes esto no se notaba porque Chrome ni siquiera imprimía esos
+     fondos/colores, pero ahora que `print-color-adjust: exact` (arriba)
+     los fuerza a imprimirse, el fondo gris y el recuadro blanco se veían
+     de más. Se quita el ancho máximo/margen de `.page` y el
+     borde/sombra/esquinas redondeadas de `.card` y `.reporte-membrete`
+     solo al imprimir, y se fuerza el fondo de la hoja a blanco, para que
+     el Informe/Reporte se vea como un documento normal, de borde a
+     borde. */
+  body {
+    background: #fff !important;
+  }
+  .page {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  .reporte-membrete {
+    border-radius: 0 !important;
+  }
 }
 
 .table-mini {

@@ -8,6 +8,7 @@ import SelectorCliente from "@/components/SelectorCliente";
 import SelectorEquipoCliente from "@/components/SelectorEquipoCliente";
 import { COMPONENTES_REGULADOR_DEFS, componentePresente, componenteDetalle } from "@/lib/informe-mantenimiento";
 import { prefillComponentesRecibidos, detalleComponentesTexto, detalleEquipoActualizadoDesdeOrden } from "@/lib/regulador-detalle";
+import { noOrdenYaRegistrado, MENSAJE_NO_ORDEN_DUPLICADO } from "@/lib/ordenes";
 
 const AUTORIZACION_OPCIONES = ["Autoriza cualquier cambio necesario", "Solo lo indicado, nada más"];
 
@@ -163,6 +164,11 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
     if (!fecha) return setError("Selecciona la fecha de ingreso.");
     if (!servicio) return setError("Selecciona el servicio a realizar.");
     if (servicio === "Otro" && !servicioOtro.trim()) return setError("Especifica qué servicio se hará.");
+
+    // No. de orden único (1-oct-2026, pedido explícito) -- se excluye la
+    // propia orden de la búsqueda, ya que acá se está editando, no creando.
+    const duplicado = await noOrdenYaRegistrado(supabase, noOrdenFisico, { excluirId: orden.id });
+    if (duplicado) return setError(MENSAJE_NO_ORDEN_DUPLICADO);
 
     const cliente = clientes.find((c) => c.id === clienteId);
     const equipo = equipos.find((e) => e.id === equipoId);

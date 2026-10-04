@@ -26,6 +26,17 @@ export default async function EspacioPage() {
   const tieneClientes = tieneAcceso(profile, "equipos_clientes");
   const tieneInterno = tieneAcceso(profile, "acceso_app_interno");
 
+  // Conteo de cuentas esperando aprobación (item 10, 1-oct-2026) -- solo
+  // le hace falta al Titular, para el badge del menú de ajustes.
+  let pendientesAprobacion = 0;
+  if (profile?.es_titular) {
+    const { count } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("aprobado", false);
+    pendientesAprobacion = count || 0;
+  }
+
   // Notificación de App Interno (ítem 6 del feedback de v14, 22-sep-2026):
   // reune TODOS los pendientes que ya existen en Inicio -- facturar,
   // inspecciones y mantenimientos vencidos -- con la misma consulta que
@@ -99,7 +110,12 @@ export default async function EspacioPage() {
   if (!tieneClientes && !tieneInterno) {
     return (
       <div>
-        <HeaderSimple nombre={nombre} etiqueta="Selecciona tu espacio" esTitular={!!profile?.es_titular} />
+        <HeaderSimple
+          nombre={nombre}
+          etiqueta="Selecciona tu espacio"
+          esTitular={!!profile?.es_titular}
+          pendientesAprobacion={pendientesAprobacion}
+        />
         <div className="page" style={{ paddingTop: 24 }}>
           <h1 className="page-title">¿A dónde quieres entrar?</h1>
           <div className="card">
@@ -117,7 +133,12 @@ export default async function EspacioPage() {
 
   return (
     <div>
-      <HeaderSimple nombre={nombre} etiqueta="Selecciona tu espacio" esTitular={!!profile?.es_titular} />
+      <HeaderSimple
+        nombre={nombre}
+        etiqueta="Selecciona tu espacio"
+        esTitular={!!profile?.es_titular}
+        pendientesAprobacion={pendientesAprobacion}
+      />
       <div className="page" style={{ paddingTop: 24 }}>
         <h1 className="page-title">¿A dónde quieres entrar?</h1>
 

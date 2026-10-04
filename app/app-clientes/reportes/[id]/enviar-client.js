@@ -10,7 +10,10 @@ const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 // app/reportes/form-client.js: un input de correo destino + un botón,
 // sin modal (aquí ya estamos en la pantalla del reporte, no en un
 // preview aparte).
-export default function EnviarReporteClient({ ordenId }) {
+// `vista` ("simple" | "completo", 1-oct-2026) -- cuál de las dos versiones
+// del Recibo mandar, para que coincida con lo que se está viendo en
+// pantalla al momento de enviarlo.
+export default function EnviarReporteClient({ ordenId, vista = "simple" }) {
   const [abierto, setAbierto] = useState(false);
   const [correo, setCorreo] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -29,7 +32,7 @@ export default function EnviarReporteClient({ ordenId }) {
       const res = await fetch(`/api/reportes-clientes/${ordenId}/enviar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correo: destino }),
+        body: JSON.stringify({ correo: destino, vista }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.error) {
