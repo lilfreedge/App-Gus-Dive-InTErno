@@ -24,14 +24,16 @@ const TABS = [
   { clave: "anulados", label: "Anulados" },
 ];
 
-export default function HistorialClient({ ordenId, cambios, esTitular = false, clientesPorId = {} }) {
+export default function HistorialClient({ ordenId, equipoId, cambios, esTitular = false, clientesPorId = {} }) {
   const [tab, setTab] = useState("ordenes");
 
-  // Vista filtrada de una sola orden (desde "Ver historial de ediciones
-  // de esta orden" en la ficha) -- se queda igual que antes, sin
-  // pestañas: ya viene acotada a una sola orden, no hace falta elegir
-  // categoría.
-  if (ordenId) {
+  // Vista filtrada de una sola orden o de un solo equipo (desde "Ver
+  // historial de ediciones de esta orden"/"Ver ediciones de este equipo"
+  // en sus respectivas fichas) -- se queda igual que antes, sin pestañas:
+  // ya viene acotada a un solo registro, no hace falta elegir categoría.
+  // `equipoId` (feedback sobre v50) replica el mismo patrón que `ordenId`
+  // ya tenía, solo que apuntando a equipos_del_cliente.
+  if (ordenId || equipoId) {
     const ediciones = cambios.filter((c) => c.accion === "editar");
     return (
       <div>
@@ -39,7 +41,9 @@ export default function HistorialClient({ ordenId, cambios, esTitular = false, c
         {ediciones.length > 0 ? (
           ediciones.map((c) => <TarjetaEdicion key={c.id} cambio={c} clientesPorId={clientesPorId} />)
         ) : (
-          <div className="empty">Esta orden todavía no tiene ediciones registradas.</div>
+          <div className="empty">
+            {ordenId ? "Esta orden todavía no tiene ediciones registradas." : "Este equipo todavía no tiene ediciones registradas."}
+          </div>
         )}
       </div>
     );

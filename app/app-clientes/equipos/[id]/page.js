@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermiso, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
@@ -25,6 +25,14 @@ export default async function FichaEquipoPage({ params }) {
   const { profile } = await requirePermiso(supabase, "equipos_clientes");
   const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
   const puedeEditar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_editar_equipo;
+  // "Ver las ediciones de este equipo directamente" (feedback sobre v50,
+  // pedido explícito) -- mismo permiso y mismo patrón de link que ya usa
+  // "Ver historial de ediciones de esta orden" en la ficha de la orden
+  // (ver app/app-clientes/ordenes/[id]/page.js); antes esta ficha solo
+  // tenía "Historial de este equipo" con las ÓRDENES del equipo, sin
+  // forma de llegar directo a sus ediciones (cambios de marca/modelo/
+  // serie/etc.).
+  const puedeVerHistorial = tieneAcceso(profile, "equipos_clientes_historial");
 
   // BUG corregido (feedback en vivo, 29-sep-2026: "le di a editar equipo a
   // un tanque que agregué mientras registraba la orden, y no aparecen los
@@ -122,6 +130,16 @@ export default async function FichaEquipoPage({ params }) {
         <div className="section-title" style={{ marginTop: 0 }}>
           Historial de este equipo
         </div>
+        {puedeVerHistorial && (
+          <div style={{ marginTop: -4, marginBottom: 10 }}>
+            <Link
+              href={`/app-clientes/administracion/historial?equipo=${equipo.id}`}
+              style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
+            >
+              Ver ediciones de este equipo →
+            </Link>
+          </div>
+        )}
         <div className="card">
           {!ordenes || ordenes.length === 0 ? (
             <div className="empty">Este equipo todavía no tiene órdenes registradas.</div>

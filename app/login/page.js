@@ -65,7 +65,21 @@ export default function LoginPage() {
     setLoading(false);
 
     if (error) {
-      setError("Correo o contraseña incorrectos.");
+      // Supabase devuelve un error genérico de credenciales para casi todo,
+      // pero el correo sin confirmar trae su propio código ("email_not_
+      // confirmed") -- feedback en vivo, 1-oct-2026: un usuario nuevo vio
+      // "Correo o contraseña incorrectos" en vez de algo que explicara que
+      // le faltaba un paso. Esto solo debería poder pasar si alguna vez se
+      // vuelve a prender "Confirm email" en Supabase (ver migration_48.sql);
+      // con eso apagado, una cuenta nueva entra directo y la que de verdad
+      // frena es la aprobación del Titular, que ya se avisa aparte en
+      // /pendiente-aprobacion (ver middleware.js) una vez que el login sí
+      // funciona.
+      if (error.code === "email_not_confirmed" || /email.*not.*confirm/i.test(error.message || "")) {
+        setError("Tu cuenta todavía no está habilitada para entrar. Avísale al Titular para que la revise.");
+      } else {
+        setError("Correo o contraseña incorrectos.");
+      }
       return;
     }
 

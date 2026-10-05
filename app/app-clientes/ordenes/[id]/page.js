@@ -40,11 +40,8 @@ export default async function FichaOrdenPage({ params }) {
   // criterio para no ofrecer algo que el servidor va a rechazar.
   // Permisos granulares nuevos (ronda grande de feedback, 27-sep-2026,
   // pedido explícito): "Actualizar estado de orden" se puede ocultar por
-  // permiso (antes cualquiera con acceso a la app veía el botón), y "Ver
-  // historial de ediciones de esta orden" pasó de Titular-only al mismo
-  // permiso que gatea la pantalla completa de Historial.
+  // permiso (antes cualquiera con acceso a la app veía el botón).
   const puedeActualizarEstado = tieneAcceso(profile, "equipos_clientes_actualizar_estado");
-  const puedeVerHistorial = tieneAcceso(profile, "equipos_clientes_historial");
   // Item 36, nueva feature (mockup Informe.dc.html) -- permiso propio,
   // separado de "Actualizar estado de orden".
   const puedeVerInforme = tieneAcceso(profile, "equipos_clientes_informe_mantenimiento");
@@ -53,11 +50,17 @@ export default async function FichaOrdenPage({ params }) {
   // acceso a 'reportes' que no le salga boton de 'ver reporte de la
   // orden'") -- antes se veía con solo ser Regulador, sin mirar permisos.
   const puedeVerReportes = tieneAcceso(profile, "equipos_clientes_reportes");
-  // Bitácora de la orden, restringida a Titular/Administrador (feedback
-  // en vivo, 30-sep-2026, pedido explícito: "haz que solo yo tenga ese
-  // acceso y los administradores") -- antes era visible a cualquiera con
-  // acceso a la app (ver v38, diseño original).
-  const puedeVerBitacoraOrden = esTitular || !!profile?.is_admin;
+  // Bitácora de la orden -- permiso granular propio desde el 5-oct-2026
+  // (pedido explícito: "no me hace sentido tener algo que solo yo pueda
+  // verlo, cuando el otro [Historial de ediciones de esta orden] es casi
+  // igual y puedo dar ese acceso" -- ver migration_49.sql). Antes era
+  // Titular/Administrador hardcodeado (feedback en vivo, 30-sep-2026:
+  // "haz que solo yo tenga ese acceso y los administradores"), sin forma
+  // de dárselo a nadie más. Ya que Bitácora muestra TODO lo que mostraba
+  // el link separado "Ver historial de ediciones de esta orden" (las
+  // ediciones) más holds resueltos y repuestos autorizados eliminados,
+  // ese link se quitó de esta ficha -- ya no hacía falta tener los dos.
+  const puedeVerBitacoraOrden = tieneAcceso(profile, "equipos_clientes_bitacora_orden");
 
   const [{ data: o }, { data: ajustes }] = await Promise.all([
     supabase.from("ordenes_equipos_con_nombre").select("*").eq("id", params.id).single(),
@@ -309,14 +312,41 @@ export default async function FichaOrdenPage({ params }) {
 
           <div className="section-title">Seguimiento</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* "Se trabajó en tienda, no fue necesario enviarlo a taller"
+                (feedback sobre v50, pedido explícito: "que figure que no
+                fue necesario enviarse en la ficha de la orden") -- antes,
+                si se marcaba `reparacion_en_tienda` en el wizard (ver
+                editar/form-client.js, trabajadoEnTienda), esta ficha
+                igual mostraba "—" en ambos campos, sin ninguna indicación
+                de que fue a propósito y no un dato que falta. Mismo texto
+                exacto que ya usa el wizard, para no decir lo mismo de dos
+                formas distintas. */}
             {esReparacion && (
-              <Campo etiqueta="Fecha de envío a taller o proveedor" valor={o.fecha_envio ? formatFechaDDMMAAAADeDate(o.fecha_envio) : "—"} />
+              <Campo
+                etiqueta="Fecha de envío a taller o proveedor"
+                valor={
+                  o.reparacion_en_tienda
+                    ? "Se trabajó en tienda, no fue necesario enviarlo a taller"
+                    : o.fecha_envio
+                      ? formatFechaDDMMAAAADeDate(o.fecha_envio)
+                      : "—"
+                }
+              />
             )}
             {esHidrostatica && (
               <Campo etiqueta="Fecha de envío a prueba hidrostática" valor={o.fecha_envio_hidrostatica ? formatFechaDDMMAAAADeDate(o.fecha_envio_hidrostatica) : "—"} />
             )}
             {muestraRetorno && (
-              <Campo etiqueta="Fecha de retorno a tienda" valor={o.fecha_retorno_tienda ? formatFechaDDMMAAAADeDate(o.fecha_retorno_tienda) : "—"} />
+              <Campo
+                etiqueta="Fecha de retorno a tienda"
+                valor={
+                  esReparacion && o.reparacion_en_tienda
+                    ? "Se trabajó en tienda, no fue necesario enviarlo a taller"
+                    : o.fecha_retorno_tienda
+                      ? formatFechaDDMMAAAADeDate(o.fecha_retorno_tienda)
+                      : "—"
+                }
+              />
             )}
             {esHidrostatica && (
               <Campo etiqueta="Inspección visual realizada" valor={o.inspeccion_visual_realizada ? "Listo" : "Pendiente"} />
@@ -456,16 +486,10 @@ export default async function FichaOrdenPage({ params }) {
           </div>
         </div>
 
-        {puedeVerHistorial && (
-          <div style={{ marginTop: 10 }}>
-            <Link
-              href={`/app-clientes/administracion/historial?orden=${o.id}`}
-              style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
-            >
-              Ver historial de ediciones de esta orden →
-            </Link>
-          </div>
-        )}
+        {/* "Ver historial de ediciones de esta orden" se quitó de acá
+            (5-oct-2026, pedido explícito, ver nota de puedeVerBitacoraOrden
+            más arriba) -- Bitácora de la orden ahora es un permiso que se
+            puede dar igual, y muestra todo esto más holds/repuestos. */}
 
         {/* Editar/anular la orden (item 7, pedido explícito, 26-sep-2026:
             "más allá del seguimiento" -- cliente/equipo/servicio/No. de

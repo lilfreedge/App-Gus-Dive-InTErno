@@ -28,6 +28,10 @@ import HistorialClient from "./historial-client";
 // solo lo de esa orden -- ahí historial-client.js muestra sus ediciones
 // directo, sin pestañas.
 //
+// ?equipo=<id> (opcional, desde la ficha de un equipo, "Ver ediciones de
+// este equipo", feedback sobre v50) -- mismo patrón que ?orden=, pero
+// filtrando equipos_del_cliente en vez de ordenes_equipos.
+//
 // Título renombrado a "Historial de anulaciones y ediciones" (28-sep-2026,
 // pedido explícito) -- el nombre corto "Historial" no dejaba claro que
 // mezcla dos cosas distintas (órdenes/equipos/clientes editados Y órdenes/
@@ -44,6 +48,7 @@ export default async function HistorialAdministracionPage({ searchParams }) {
   const { profile } = await requirePermisoClientes(supabase, "equipos_clientes_historial", "/app-clientes/mas");
 
   const ordenId = searchParams?.orden || "";
+  const equipoId = searchParams?.equipo || "";
 
   // "clientes_equipos" sumada (feature "Editar cliente") -- ver
   // filasCliente() en historial-client.js.
@@ -55,6 +60,7 @@ export default async function HistorialAdministracionPage({ searchParams }) {
     .limit(300);
 
   if (ordenId) query = query.eq("tabla", "ordenes_equipos").eq("registro_id", ordenId);
+  else if (equipoId) query = query.eq("tabla", "equipos_del_cliente").eq("registro_id", equipoId);
 
   const { data: cambios } = await query;
 
@@ -94,7 +100,13 @@ export default async function HistorialAdministracionPage({ searchParams }) {
         />
         <h1 className="page-title">Historial de anulaciones y ediciones</h1>
 
-        <HistorialClient ordenId={ordenId} cambios={cambios || []} esTitular={!!profile?.es_titular} clientesPorId={clientesPorId} />
+        <HistorialClient
+          ordenId={ordenId}
+          equipoId={equipoId}
+          cambios={cambios || []}
+          esTitular={!!profile?.es_titular}
+          clientesPorId={clientesPorId}
+        />
       </div>
     </div>
   );

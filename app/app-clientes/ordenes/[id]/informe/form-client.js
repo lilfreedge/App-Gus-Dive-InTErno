@@ -255,6 +255,29 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 llamándose `observacion` para no tocar lo ya guardado. */}
             <div style={SECCION_LABEL_ESTILO}>Nota</div>
             <textarea rows={3} value={informe.observacion} onChange={(e) => set("observacion", e.target.value)} style={{ marginTop: 8 }} />
+            {/* Botón para traer la Nota del Seguimiento a mano (feedback
+                sobre v50, pedido explícito: "no sale en el informe") -- la
+                Nota del Informe solo se prellena UNA VEZ, la primera vez
+                que se genera (ver informeDefault() en lib/informe-
+                mantenimiento.js), a propósito, para no pisar en silencio
+                la Nota de un Informe ya generado si después cambia la de
+                Seguimiento. El problema es que, si el Informe se llegó a
+                generar antes de escribir (o cambiar) la Nota de
+                Seguimiento, esa versión más nueva nunca entra sola. Este
+                botón aparece solo cuando las dos difieren, para traerla
+                con un clic sin perder la protección contra el pisado
+                silencioso. */}
+            {orden.notas_tecnico_regulador?.trim() &&
+              orden.notas_tecnico_regulador.trim() !== (informe.observacion || "").trim() && (
+                <button
+                  type="button"
+                  onClick={() => set("observacion", orden.notas_tecnico_regulador.trim())}
+                  className="btn secondary"
+                  style={{ marginTop: 8, width: "auto", padding: "6px 12px", fontSize: 12 }}
+                >
+                  Usar la Nota del Seguimiento: &quot;{orden.notas_tecnico_regulador.trim()}&quot;
+                </button>
+              )}
           </div>
 
           {/* "Cambio de o-rings" (1-oct-2026, nueva feature, pedido
@@ -431,8 +454,19 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
 
               {informe.observacion?.trim() && <Seccion titulo="Nota">{informe.observacion.trim()}</Seccion>}
 
+              {/* Bullets, igual que "Trabajo realizado" (feedback sobre v50,
+                  pedido explícito: "que en el informe salga tipo bullets,
+                  asi como salen los trabajos realizados") -- antes era un
+                  texto plano separado por comas, inconsistente con el resto
+                  del Informe y parte de por qué el impreso se veía raro. */}
               {(informe.orings || []).length > 0 && (
-                <Seccion titulo="Cambio de o-rings">{informe.orings.join(", ")}</Seccion>
+                <Seccion titulo="Cambio de o-rings">
+                  <ul style={{ margin: "6px 0 0", paddingLeft: 18, lineHeight: 1.6 }}>
+                    {informe.orings.map((o) => (
+                      <li key={o}>{o}</li>
+                    ))}
+                  </ul>
+                </Seccion>
               )}
 
               <div
@@ -457,10 +491,17 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 Técnico: {informe.tecnico}
               </div>
 
+              {/* Convertida al mismo patrón `Seccion` que el resto del
+                  Informe (feedback sobre v50, pedido explícito: "cambiemos
+                  como sale en el informe. que propones?" -- se propuso y
+                  se confirmó esta opción) -- antes era un texto suelto,
+                  chico y centrado, sin el formato de tarjeta de las demás
+                  secciones (Cliente, Equipo, Trabajo realizado, etc.), lo
+                  que contribuía a que el impreso se viera inconsistente. */}
               {(informe.recomendacion === "6" || informe.recomendacion === "12") && (
-                <div style={{ marginTop: 14, fontSize: 12.5, color: "var(--texto-suave)", textAlign: "center" }}>
-                  Recomendación de próximo mantenimiento: en {informe.recomendacion} meses.
-                </div>
+                <Seccion titulo="Recomendación de próximo mantenimiento">
+                  En {informe.recomendacion} meses.
+                </Seccion>
               )}
 
               <div style={{ marginTop: 16, fontSize: 12.5, textAlign: "center", lineHeight: 1.5 }}>

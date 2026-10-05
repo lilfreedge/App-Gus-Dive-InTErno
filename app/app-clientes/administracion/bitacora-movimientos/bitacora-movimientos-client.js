@@ -6,8 +6,8 @@ import BorrarTodoHistorialButton from "@/components/BorrarTodoHistorialButton";
 import { formatFecha } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 
-// Agrupado por orden, con buscador por No. de orden (feedback en vivo,
-// 1-oct-2026, pedido explícito: "quiero conectar esto con 'bitacora
+// Agrupado por orden, con buscador por No. de orden o cliente (feedback en
+// vivo, 1-oct-2026, pedido explícito: "quiero conectar esto con 'bitacora
 // movimientos en ordenes'. que dentro de 'bitacora movimientos en
 // ordenes' haya una barra de search para buscar no. de orden. Y que cada
 // orden sea un boton y dentro aparezcan todos sus movimientos. Y pon los
@@ -22,6 +22,10 @@ import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 // desde el server (page.js) -- se preserva ese orden tanto entre grupos
 // (el grupo de la orden con el movimiento más reciente va primero) como
 // dentro de cada grupo.
+//
+// Búsqueda también por nombre de cliente (feedback sobre v50, pedido
+// explícito: "pon que se pueda buscar por nombre también, no solo numero
+// de orden") -- antes el buscador solo miraba `noOrden`.
 export default function BitacoraMovimientosClient({ cambios, esTitular }) {
   const [q, setQ] = useState("");
   const [abiertos, setAbiertos] = useState(() => new Set());
@@ -48,7 +52,9 @@ export default function BitacoraMovimientosClient({ cambios, esTitular }) {
   const filtrados = useMemo(() => {
     const query = q.trim().toLowerCase();
     if (!query) return grupos;
-    return grupos.filter((g) => String(g.noOrden).toLowerCase().includes(query));
+    return grupos.filter(
+      (g) => String(g.noOrden).toLowerCase().includes(query) || g.cliente.toLowerCase().includes(query)
+    );
   }, [grupos, q]);
 
   function alternar(registroId) {
@@ -73,7 +79,7 @@ export default function BitacoraMovimientosClient({ cambios, esTitular }) {
 
       <input
         type="text"
-        placeholder="Buscar No. de orden..."
+        placeholder="Buscar No. de orden o cliente..."
         value={q}
         onChange={(e) => setQ(e.target.value)}
         style={{ marginTop: 0, marginBottom: 14 }}
@@ -82,7 +88,7 @@ export default function BitacoraMovimientosClient({ cambios, esTitular }) {
       {grupos.length === 0 ? (
         <div className="empty">Todavía no hay ediciones registradas.</div>
       ) : filtrados.length === 0 ? (
-        <div className="empty">Ninguna orden coincide con esa búsqueda.</div>
+        <div className="empty">Ninguna orden coincide con esa búsqueda (por No. de orden o cliente).</div>
       ) : (
         filtrados.map((g) => {
           const abierto = abiertos.has(g.registroId);

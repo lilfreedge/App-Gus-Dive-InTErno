@@ -20,6 +20,7 @@ const PERMISOS_DEFAULT = {
   equipos_clientes_editar_mantenimiento_compresor: false,
   equipos_clientes_informe_mantenimiento: false,
   equipos_clientes_bitacora_movimientos: false,
+  equipos_clientes_bitacora_orden: false,
   // Item 6 de la ronda de feedback sobre v40 (27-sep-2026, pedido
   // explícito: "permite que el hold se pueda editar, por si algún día es
   // necesario. pon el permiso en administración") -- exclusivo de
@@ -95,12 +96,16 @@ const GRUPOS = [
 // requieren que el usuario sea Administrador. "Editar hold" se sumó antes
 // (feedback sobre v40); "Historial de anulaciones y ediciones" y
 // "Bitácora movimientos en órdenes" se sumaron acá el 28-sep-2026 (item 17,
-// ver nota arriba).
+// ver nota arriba). "Ver bitácora de la orden" se sumó el 5-oct-2026
+// (pedido explícito, confirmado exclusivo de Administrador/Titular, igual
+// que sus dos vecinas de arriba -- antes estaba hardcodeado sin checkbox
+// en ningún lado, ver migration_49.sql).
 const COLUMNAS_ADMIN = [
   { clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit },
   { clave: "equipos_clientes_editar_cliente", label: "Editar cliente", Icono: IconUsers },
   { clave: "equipos_clientes_editar_orden", label: "Editar orden", Icono: IconEdit },
   { clave: "equipos_clientes_editar_mantenimiento_compresor", label: "Editar mantenimiento de compresor", Icono: IconCompressor },
+  { clave: "equipos_clientes_bitacora_orden", label: "Ver bitácora de la orden", Icono: IconBook },
   { clave: "equipos_clientes_editar_hold", label: "Editar Hold", Icono: IconBook },
   { clave: "equipos_clientes_historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory },
   { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos en órdenes", Icono: IconBook },
