@@ -12,6 +12,7 @@ import {
   estadoInicialTexto,
   trabajoRealizadoLista,
   informeDefault,
+  presionConUnidad,
 } from "@/lib/informe-mantenimiento";
 import BotonImprimir from "@/components/BotonImprimir";
 import EnviarInformeClient from "./enviar-client";
@@ -243,7 +244,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
               ))}
             </div>
             <label style={{ marginTop: 12 }}>Presión intermedia (PSI)</label>
-            <input type="text" value={informe.presion} onChange={(e) => set("presion", e.target.value)} placeholder="Ej. 140 PSI" />
+            <input type="text" value={informe.presion} onChange={(e) => set("presion", e.target.value)} placeholder="Ej. 140" />
           </div>
 
           <div style={SECCION_ESTILO}>
@@ -455,7 +456,9 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                   como escondido ahora") -- antes vivía como nota chiquita
                   (.hint-text) al final de "Trabajo realizado"; ahora es su
                   propia Sección, mismo peso visual que Cliente/Equipo/etc. */}
-              {informe.presion?.trim() && <Seccion titulo="Presión intermedia">{informe.presion.trim()}</Seccion>}
+              {/* Con "psi" al final (feedback sobre v52, pedido explícito:
+                  'Agrega "psi" despues del numero. Por ejemplo: "135 psi"'). */}
+              {presionConUnidad(informe.presion) && <Seccion titulo="Presión intermedia">{presionConUnidad(informe.presion)}</Seccion>}
 
               {informe.observacion?.trim() && <Seccion titulo="Nota">{informe.observacion.trim()}</Seccion>}
 

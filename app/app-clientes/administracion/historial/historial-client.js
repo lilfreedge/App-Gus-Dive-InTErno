@@ -7,6 +7,7 @@ import BorrarTodoHistorialButton from "@/components/BorrarTodoHistorialButton";
 import { formatFecha } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { filasOrden, filasCliente } from "@/lib/historial-ordenes";
+import { esCambioVisible } from "@/lib/cambios";
 import { filasDetalleComponentes } from "@/lib/regulador-detalle";
 
 // Pestañas por categoría (item 21, feedback sobre v40, pedido explícito:
@@ -24,7 +25,10 @@ const TABS = [
   { clave: "anulados", label: "Anulados" },
 ];
 
-export default function HistorialClient({ ordenId, equipoId, cambios, esTitular = false, clientesPorId = {} }) {
+export default function HistorialClient({ ordenId, equipoId, cambios: cambiosTodos, esTitular = false, clientesPorId = {} }) {
+  // Ediciones sin ningún cambio real, ocultas (feedback sobre v52, ver
+  // lib/cambios.js) -- no se borran de la base de datos.
+  const cambios = (cambiosTodos || []).filter(esCambioVisible);
   const [tab, setTab] = useState("ordenes");
 
   // Vista filtrada de una sola orden o de un solo equipo (desde "Ver
@@ -271,7 +275,7 @@ function TarjetaEdicion({ cambio, clientesPorId = {} }) {
           </thead>
           <tbody>
             {filas.map((f) => (
-              <tr key={f.label} className={f.antes !== f.despues ? "cambio-resaltado" : ""}>
+              <tr key={f.label} className={(f.cambio ?? f.antes !== f.despues) ? "cambio-resaltado" : ""}>
                 <td>{f.label}</td>
                 <td>{f.antes}</td>
                 <td>{f.despues}</td>

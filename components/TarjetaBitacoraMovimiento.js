@@ -67,7 +67,7 @@ export default function TarjetaBitacoraMovimiento({ cambio }) {
           </thead>
           <tbody>
             {filas.map((f) => (
-              <tr key={f.label} className={f.antes !== f.despues ? "cambio-resaltado" : ""}>
+              <tr key={f.label} className={(f.cambio ?? f.antes !== f.despues) ? "cambio-resaltado" : ""}>
                 <td>{f.label}</td>
                 <td>{f.antes}</td>
                 <td>{f.despues}</td>

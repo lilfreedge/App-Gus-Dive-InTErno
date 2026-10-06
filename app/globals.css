@@ -1159,6 +1159,22 @@ textarea {
   .page:has(.reporte-membrete) {
     padding: 0 !important;
   }
+  /* "El recuadro azul pareciera como que esta flotando, debe de ir pegado
+     del borde de la hoja" (feedback sobre v52, 6-oct-2026) -- el Informe
+     de mantenimiento vive DENTRO de otra tarjeta (la de las pestañas
+     "Formulario (técnico)"/"Informe (cliente)", informe/form-client.js), y
+     a esa tarjeta de afuera nunca se le quitaba su margen interno de 20px
+     al imprimir: la banda navy quedaba separada de los bordes de la hoja
+     por ese margen. Cualquier tarjeta que contenga un membrete pierde su
+     padding al imprimir. Y el tamaño de letra de Apariencia (zoom en
+     body, ver arriba) se anula al imprimir: con "Chica"/"Muy chica" el
+     documento salía achicado y sin llegar al borde derecho. */
+  .card:has(.reporte-membrete) {
+    padding: 0 !important;
+  }
+  body {
+    zoom: 1 !important;
+  }
   .card {
     border: none !important;
     box-shadow: none !important;

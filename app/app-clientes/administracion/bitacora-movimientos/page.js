@@ -4,6 +4,7 @@ import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import BitacoraMovimientosClient from "./bitacora-movimientos-client";
+import { esCambioVisible } from "@/lib/cambios";
 
 // "Bitácora movimientos en órdenes" (27-sep-2026, pedido explícito: "un
 // boton en 'mas'... un registro de todas las veces que cualquier orden es
@@ -58,7 +59,9 @@ export default async function BitacoraMovimientosPage() {
             bitacora-movimientos-client.js. "Borrar toda la bitácora"
             (28-sep-2026, pedido explícito) se mantiene igual, solo
             Titular. */}
-        <BitacoraMovimientosClient cambios={cambios || []} esTitular={!!profile?.es_titular} />
+        {/* Ediciones sin ningún cambio real, ocultas (feedback sobre v52, ver
+            lib/cambios.js) -- no se borran de la base de datos. */}
+        <BitacoraMovimientosClient cambios={(cambios || []).filter(esCambioVisible)} esTitular={!!profile?.es_titular} />
       </div>
     </div>
   );

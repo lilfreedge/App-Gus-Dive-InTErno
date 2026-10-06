@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V28",
+    fecha: "6 de octubre, 2026",
+    titulo: "Membrete pegado al borde al imprimir, \"psi\" en la presión intermedia, ediciones vacías fuera del Historial, contador de la Bitácora arreglado, y la parte de arriba de la ficha de la orden sin espacios vacíos",
+    descripcion:
+      "Al imprimir el Informe de mantenimiento, la banda azul del membrete ya va pegada a los bordes de la hoja -- antes quedaba \"flotando\" porque el Informe vive dentro de otra tarjeta (la de las pestañas Formulario/Informe) cuyo margen interno se seguía imprimiendo, y porque el tamaño de letra de Apariencia (Chica/Muy chica) achicaba todo el documento; las dos cosas se anulan ahora al imprimir. La presión intermedia ahora sale con su unidad (\"138 psi\"), sin repetirla si el técnico ya la escribió, también en el PDF y el correo del Informe (que todavía decían \"Presión intermedia ajustada\"). El número entre paréntesis de \"Ver bitácora de la orden\" ahora cuenta lo mismo que muestra la Bitácora (antes no contaba las ediciones y salía en 0), y esa pantalla ahora respeta el permiso de Bitácora de la orden también si se entra escribiendo la dirección. Las ediciones de una orden que parecían \"intactas\" casi siempre sí habían cambiado algo que la tabla de Antes/Después no mostraba -- la Nota, la fecha de envío a taller o a hidrostática, las notificaciones, el Hold, los componentes, si se trabajó en tienda o el Informe de mantenimiento --; esos campos ya se muestran (resaltados cuando cambian), y las ediciones donde de verdad no cambió nada ya no se guardan ni se muestran o cuentan en Historial, Bitácora de la orden ni Bitácora movimientos (las viejas no se borraron, solo se ocultan). Y la parte de arriba de la ficha de la orden quedó en dos columnas: a la izquierda el No. de orden con la fecha de ingreso chiquita debajo, y el Estado; a la derecha \"Ver Recibo de la orden\" y Códigos a cobrar -- ya no queda el hueco en blanco que había entre el Estado y el Cliente. Sin migración nueva.",
+  },
+  {
     version: "V27",
     fecha: "6 de octubre, 2026",
     titulo: "Impresión a página completa sin fecha/link del navegador, ficha de la orden reorganizada en dos cajas con Códigos a cobrar arriba, aviso de taller arreglado de verdad, y botón nuevo \"Viajes/Buceos\"",

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requirePermiso, tieneAcceso } from "@/lib/roles";
+import { edicionesDeLaOrden } from "@/lib/bitacora-orden";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import TarjetaBitacoraMovimiento from "@/components/TarjetaBitacoraMovimiento";
@@ -30,21 +31,22 @@ import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 export default async function BitacoraOrdenPage({ params }) {
   const supabase = createClient();
   const { profile } = await requirePermiso(supabase, "equipos_clientes");
-  if (!profile?.es_titular && !profile?.is_admin) notFound();
+  // Mismo permiso que el link de la ficha (feedback sobre v52): desde v51
+  // "Ver bitácora de la orden" es el permiso equipos_clientes_bitacora_orden
+  // (ver migration_49.sql), pero esta pantalla seguía con el chequeo viejo
+  // de Titular/Administrador -- un Administrador sin el permiso podía
+  // entrar igual escribiendo la dirección.
+  if (!tieneAcceso(profile, "equipos_clientes_bitacora_orden")) notFound();
 
-  const [{ data: o }, { data: ediciones }] = await Promise.all([
+  const [{ data: o }, ediciones] = await Promise.all([
     supabase
       .from("ordenes_equipos")
       .select("id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, bitacora_orden")
       .eq("id", params.id)
       .single(),
-    supabase
-      .from("historial_con_nombre")
-      .select("*")
-      .eq("tabla", "ordenes_equipos")
-      .eq("accion", "editar")
-      .eq("registro_id", params.id)
-      .order("created_at", { ascending: false }),
+    // Ediciones sin ningún cambio real ya no salen (feedback sobre v52,
+    // ver lib/cambios.js y lib/bitacora-orden.js).
+    edicionesDeLaOrden(supabase, params.id),
   ]);
 
   if (!o) notFound();

@@ -10,6 +10,7 @@ import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
 import { requiereVerificacion } from "@/lib/procesos-ordenes";
 import { holdActivo, diasEnHold, labelTipoHold, detalleHold } from "@/lib/holds";
+import { edicionesDeLaOrden } from "@/lib/bitacora-orden";
 import FotoLightbox from "@/components/FotoLightbox";
 import { IconRefresh } from "@/components/icons";
 
@@ -68,6 +69,15 @@ export default async function FichaOrdenPage({ params }) {
   ]);
 
   if (!o) notFound();
+
+  // Contador de "Ver bitácora de la orden (N)" -- mismo total que muestra
+  // esa pantalla: entradas de bitacora_orden + ediciones con algún cambio
+  // real (feedback sobre v52, pedido explícito: "la cantidad que aparece
+  // en () aparece en 0... corrige eso"). Solo se consulta si la persona
+  // puede ver la Bitácora.
+  const edicionesBitacora = puedeVerBitacoraOrden
+    ? await edicionesDeLaOrden(supabase, o.id, "id, accion, datos_anteriores, datos_nuevos")
+    : [];
 
   // "n/a" en vez de "—" para "Verificado por" cuando la orden ya se cerró
   // y ese paso ni siquiera le aplicaba a este tipo de equipo (Procesos
@@ -212,88 +222,95 @@ export default async function FichaOrdenPage({ params }) {
               uno al lado del otro; Cliente/Equipo/Servicio/Autorización/
               Notas usan .campo-ancho porque su contenido puede ser largo
               (links, texto libre). */}
-          {/* No. de orden / Ver Recibo / Fecha de ingreso en su propia fila,
-              arriba de la cuadrícula (feedback en vivo, 6-oct-2026, pedido
-              explícito: "ponlo que el boton se vea entre el numero de orden
-              y la fecha de ingreso") -- "Ver Recibo de la orden" se movió
-              acá desde el final de la ficha (ver nota vieja más abajo,
-              junto a puedeVerReportes), reemplazando el link de texto por
-              una etiqueta (opción 2 de las que se le mostraron). No. de
-              orden y Fecha de ingreso quedan en el mismo lugar visual de
-              siempre, por eso salieron de .campos-grid: ya no son parte de
-              esa cuadrícula, para que el resto (Estado en adelante) no se
-              recorra. */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 14 }}>
-            <div>{o.no_orden_fisico && <Campo etiqueta="No. de orden" valor={o.no_orden_fisico} destacado />}</div>
-            {puedeVerReportes && (
-              <Link
-                href={`/app-clientes/reportes/${o.id}`}
+          {/* Bloque de arriba en dos columnas (feedback sobre v52, 6-oct-2026,
+              pedido explícito, con foto: "Quiero mover la fecha, donde
+              propones? veo que queda un espacio muy en blanco entre el
+              estado y el cliente" -- se mostró una maqueta con 3 opciones y
+              eligió la C: "me gusta la opcion C"). Izquierda: No. de orden
+              con la Fecha de ingreso chiquita debajo, y el Estado; derecha:
+              "Ver Recibo de la orden" arriba y la copia de "Códigos a
+              cobrar" debajo. Así las dos columnas quedan de una altura
+              parecida y desaparece el hueco que quedaba debajo del Estado.
+              Historia: "Ver Recibo" vivía al final de la ficha hasta v52
+              ("ponlo... entre el numero de orden y la fecha de ingreso",
+              estilo etiqueta, opción 2); al salir la fecha de esa fila pasó
+              arriba a la derecha. La copia de Códigos a cobrar es de v52
+              ("quiero que el recuadro de códigos a cobrar salga en la parte
+              de arriba... formato cuadrado... tipo bullets") -- el campo de
+              siempre sigue en Seguimiento, más abajo. Mismo .campos-grid de
+              siempre: en pantallas angostas las dos columnas se apilan. */}
+          <div className="campos-grid" style={{ marginBottom: 14 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* No. de orden / Estado destacados (item 24, pedido
+                  explícito, 26-sep-2026: "pon esta info que resalten un
+                  poco mas, es lo principal de una orden"). */}
+              {o.no_orden_fisico ? (
+                <div>
+                  <Campo etiqueta="No. de orden" valor={o.no_orden_fisico} destacado />
+                  <div className="hint-text" style={{ marginTop: 2 }}>
+                    Ingreso: {formatFechaDDMMAAAADeDate(o.fecha)}
+                  </div>
+                </div>
+              ) : (
+                <Campo etiqueta="Fecha de ingreso" valor={formatFechaDDMMAAAADeDate(o.fecha)} />
+              )}
+              <Campo etiqueta="Estado" destacado>
+                {/* El badge de "En Hold" separado se quitó (feedback sobre
+                    v40, pedido explícito) -- ahora `o.estado` ES "En Hold"
+                    mientras dure (ver lib/ordenes-estado.js), así que ya no
+                    hace falta un segundo badge repitiendo lo mismo. */}
+                <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ marginLeft: 0 }}>
+                  {o.estado}
+                </span>
+              </Campo>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {puedeVerReportes && (
+                <Link
+                  href={`/app-clientes/reportes/${o.id}`}
+                  style={{
+                    alignSelf: "flex-end",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "var(--azul-claro)",
+                    background: "var(--superficie-suave)",
+                    border: "1px solid var(--borde)",
+                    borderRadius: 6,
+                    padding: "6px 11px",
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Ver Recibo de la orden
+                </Link>
+              )}
+              <div
                 style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "var(--azul-claro)",
                   background: "var(--superficie-suave)",
-                  border: "1px solid var(--borde)",
-                  borderRadius: 6,
-                  padding: "6px 11px",
-                  textDecoration: "none",
-                  whiteSpace: "nowrap",
+                  border: "2px solid var(--azul-claro)",
+                  borderRadius: 10,
+                  padding: 12,
                 }}
               >
-                Ver Recibo de la orden
-              </Link>
-            )}
-            <div style={{ textAlign: "right" }}>
-              <Campo etiqueta="Fecha de ingreso" valor={formatFechaDDMMAAAADeDate(o.fecha)} />
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--azul-claro)", marginBottom: 4 }}>
+                  CÓDIGOS A COBRAR
+                </div>
+                {codigosLista.length > 0 ? (
+                  <ul style={{ margin: 0, paddingLeft: 15, fontSize: 13.5, lineHeight: 1.5 }}>
+                    {codigosLista.map((c, i) => (
+                      <li key={i}>{c}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div style={{ fontSize: 13.5 }}>—</div>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="campos-grid">
-            {/* Estado / Cliente / Equipo destacados (item 24, pedido
-                explícito, 26-sep-2026: "pon esta info que resalten un poco
-                mas, es lo principal de una orden") -- mismo grid de
-                siempre, solo con más peso visual que Servicio/etc. */}
-            <Campo etiqueta="Estado" destacado>
-              {/* El badge de "En Hold" separado se quitó (feedback sobre
-                  v40, pedido explícito) -- ahora `o.estado` ES "En Hold"
-                  mientras dure (ver lib/ordenes-estado.js), así que ya no
-                  hace falta un segundo badge repitiendo lo mismo. */}
-              <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ marginLeft: 0 }}>
-                {o.estado}
-              </span>
-            </Campo>
-            {/* "Códigos a cobrar", copia de acceso rápido (feedback en vivo,
-                6-oct-2026, pedido explícito: "quiero que el recuadro de
-                códigos a cobrar salga en la parte de arriba... debajo de
-                fecha de ingreso... formato cuadrado en vez de rectangular
-                y que los codigos a cobrar escritos se vean tipo bullets")
-                -- cae justo debajo de "Fecha de ingreso" porque Estado (el
-                item anterior en esta cuadrícula de 2 columnas) ocupa la
-                columna izquierda de esta fila. El recuadro de siempre
-                (mismo fondo/borde azul, misma etiqueta) se mantiene en
-                Seguimiento más abajo, pero sin el recuadro -- esto de acá
-                es la copia "chula" para consulta rápida sin bajar. */}
-            <div
-              style={{
-                background: "var(--superficie-suave)",
-                border: "2px solid var(--azul-claro)",
-                borderRadius: 10,
-                padding: 12,
-              }}
-            >
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--azul-claro)", marginBottom: 4 }}>
-                CÓDIGOS A COBRAR
-              </div>
-              {codigosLista.length > 0 ? (
-                <ul style={{ margin: 0, paddingLeft: 15, fontSize: 13.5, lineHeight: 1.5 }}>
-                  {codigosLista.map((c, i) => (
-                    <li key={i}>{c}</li>
-                  ))}
-                </ul>
-              ) : (
-                <div style={{ fontSize: 13.5 }}>—</div>
-              )}
-            </div>
+            {/* Cliente / Equipo destacados (item 24, ver arriba). */}
             <Campo etiqueta="Cliente" full destacado>
               <Link href={`/app-clientes/clientes/${o.cliente_id}`} className="breadcrumb-crumb">
                 {o.cliente_nombre_snapshot}
@@ -529,7 +546,7 @@ export default async function FichaOrdenPage({ params }) {
                   paddingBottom: 2,
                 }}
               >
-                Ver bitácora de la orden ({bitacora.length})
+                Ver bitácora de la orden ({bitacora.length + edicionesBitacora.length})
               </Link>
             </div>
           )}
