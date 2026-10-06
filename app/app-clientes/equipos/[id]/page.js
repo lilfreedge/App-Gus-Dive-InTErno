@@ -108,8 +108,8 @@ export default async function FichaEquipoPage({ params }) {
           </div>
         </div>
 
-        {(puedeRegistrar || puedeEditar) && (
-          <div style={{ display: "flex", gap: 10, marginBottom: 16, marginTop: 4 }}>
+        {(puedeRegistrar || puedeEditar || puedeVerHistorial) && (
+          <div style={{ display: "flex", gap: 10, marginBottom: 16, marginTop: 4, flexWrap: "wrap" }}>
             {puedeRegistrar && (
               <Link href={`/app-clientes/ordenes/nueva?cliente=${equipo.cliente_id}`}>
                 <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
@@ -124,22 +124,26 @@ export default async function FichaEquipoPage({ params }) {
                 </button>
               </Link>
             )}
+            {/* "Ver ediciones de este equipo" pasó de link de texto a botón
+                grande (feedback en vivo, 6-oct-2026, pedido explícito: "pon
+                el boton grande como el de registrar orden y editar equipo.
+                Y ponlo al mismo nivel de esos botones pero all the way
+                para la derecha") -- mismo estilo que "Editar equipo" (btn
+                secondary), empujado al extremo derecho de la fila con
+                marginLeft:auto. */}
+            {puedeVerHistorial && (
+              <Link href={`/app-clientes/administracion/historial?equipo=${equipo.id}`} style={{ marginLeft: "auto" }}>
+                <button className="btn secondary" type="button" style={{ marginTop: 0 }}>
+                  Ver ediciones de este equipo
+                </button>
+              </Link>
+            )}
           </div>
         )}
 
         <div className="section-title" style={{ marginTop: 0 }}>
           Historial de este equipo
         </div>
-        {puedeVerHistorial && (
-          <div style={{ marginTop: -4, marginBottom: 10 }}>
-            <Link
-              href={`/app-clientes/administracion/historial?equipo=${equipo.id}`}
-              style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
-            >
-              Ver ediciones de este equipo →
-            </Link>
-          </div>
-        )}
         <div className="card">
           {!ordenes || ordenes.length === 0 ? (
             <div className="empty">Este equipo todavía no tiene órdenes registradas.</div>

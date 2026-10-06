@@ -1086,6 +1086,25 @@ textarea {
   grid-column: 1 / -1;
 }
 
+/* Márgenes de la hoja en 0 (feedback sobre v51, 6-oct-2026, pedido
+   explícito, con el PDF impreso del Informe en la mano: "hay como un
+   recuadro blanco en el borde de la impresion y dentro tiene estas info:
+   fecha, 'Gus App', el link, 1/1... necesito que el formato original se
+   vea en la pagina completa, y que no se vea esas cosas que no te he
+   pedido"). Esa era la causa de fondo que el arreglo del 1-oct (más
+   abajo) no tocó: el "borde gordo blanco" es el margen de la hoja que
+   pone el navegador, y la fecha/título/link/"1/1" son el encabezado y pie
+   de página que Chrome dibuja DENTRO de ese margen. Con el margen en 0 no
+   queda espacio donde dibujarlos -- desaparecen sin depender de que nadie
+   desmarque "Encabezados y pies de página" en el diálogo de impresión -- y
+   la banda navy del membrete llega de borde a borde. El espacio en blanco
+   que sí hace falta para que el texto no quede pegado al borde del papel
+   se da ahora por dentro (ver .reporte-membrete/.reporte-cuerpo y .page
+   abajo, solo al imprimir). */
+@page {
+  margin: 0;
+}
+
 /* Reportes de App Equipos de clientes (23-sep-2026): oculta navegación y
    controles al imprimir/guardar como PDF -- solo debe quedar el
    contenido del reporte en sí. */
@@ -1127,9 +1146,17 @@ textarea {
   body {
     background: #fff !important;
   }
+  /* Con la hoja sin margen (@page, arriba), cualquier OTRA pantalla que
+     alguien imprima con Cmd+P recibe su espacio en blanco por dentro de
+     .page; el Informe y el Recibo (los que tienen membrete) van de borde
+     a borde, y su espacio en blanco lo ponen .reporte-membrete y
+     .reporte-cuerpo. */
   .page {
     max-width: none !important;
     margin: 0 !important;
+    padding: 0.5in !important;
+  }
+  .page:has(.reporte-membrete) {
     padding: 0 !important;
   }
   .card {
@@ -1140,6 +1167,17 @@ textarea {
   }
   .reporte-membrete {
     border-radius: 0 !important;
+    padding: 0.4in 0.6in !important;
+  }
+  /* Contenido debajo del membrete (Informe de mantenimiento y Recibo) --
+     el mismo aire a los lados que el membrete, para que todo quede
+     alineado. box-decoration-break: si un Recibo completo llega a pasar
+     a una 2da hoja, repite el espacio de arriba/abajo en cada hoja en vez
+     de que el texto arranque pegado al borde del papel. */
+  .reporte-cuerpo {
+    padding: 0.35in 0.6in 0.5in !important;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
   }
 }
 

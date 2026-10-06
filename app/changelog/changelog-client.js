@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V27",
+    fecha: "6 de octubre, 2026",
+    titulo: "Impresión a página completa sin fecha/link del navegador, ficha de la orden reorganizada en dos cajas con Códigos a cobrar arriba, aviso de taller arreglado de verdad, y botón nuevo \"Viajes/Buceos\"",
+    descripcion:
+      "Por fin se arregló la impresión del Informe de mantenimiento y del Recibo: el recuadro blanco alrededor de la hoja y la fecha, el título \"Gus App\", el link de la página y el \"1/1\" que salían en los bordes eran el margen y el encabezado/pie que pone el propio navegador -- ahora la hoja no tiene margen, así que esas cosas ya no aparecen y la banda azul del membrete llega de borde a borde, con el contenido bien separado del borde del papel por dentro. La ficha de la orden se reorganizó: ahora son dos cajas separadas, una con los datos principales y otra de \"Seguimiento\" en adelante; \"Ver Recibo de la orden\" se movió arriba, entre el No. de orden y la Fecha de ingreso, como etiqueta; \"Códigos a cobrar\" tiene ahora una copia de consulta rápida (mismo recuadro azul de siempre, más cuadrado y con los códigos en viñetas) justo debajo de la Fecha de ingreso, al lado del Estado, y en Seguimiento quedó como un campo más, del mismo tamaño que los demás; y \"Ver bitácora de la orden\" pasó a ser lo último de la ficha, debajo de la Nota, con un estilo más discreto. En la ficha de un equipo, \"Ver ediciones de este equipo\" ahora es un botón grande, en la misma fila que \"+ Registrar orden\" y \"Editar equipo\", pegado a la derecha. En el Informe de mantenimiento, \"Presión intermedia ajustada\" ahora se llama solo \"Presión intermedia\" y es su propia sección, del mismo tamaño que las demás (antes se veía como una nota chiquita escondida al final de \"Trabajo realizado\"). Se arregló de verdad que \"Se trabajó en tienda, no fue necesario enviarlo a taller\" no apareciera en la ficha de la orden -- el cambio de la entrega anterior estaba bien, pero la vista de la base de datos que lee la ficha nunca se había actualizado para incluir ese dato. Y en \"¿A dónde quieres entrar?\" apareció una tarjeta nueva, \"Viajes/Buceos\", visible para todos, para la app que viene más adelante -- por ahora lleva a una pantalla de \"Próximamente\". Trae una migración nueva (`migration_50.sql`).",
+  },
+  {
     version: "V26",
     fecha: "5 de octubre, 2026",
     titulo: "Informe de mantenimiento más consistente al imprimir, búsqueda por cliente en Bitácora de movimientos, aviso de taller en la ficha de la orden, mensaje de login más claro, ediciones del equipo a un clic, y Bitácora de la orden otorgable",

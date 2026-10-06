@@ -59,7 +59,7 @@ export default function ReciboClient({ orden: o, filasSimple, filasCompleto }) {
             {o.cliente_nombre_snapshot && <div className="reporte-membrete-subtitulo">{o.cliente_nombre_snapshot}</div>}
           </div>
         </div>
-        <div style={{ padding: 16 }}>
+        <div className="reporte-cuerpo" style={{ padding: 16 }}>
           <div style={{ overflow: "auto" }}>
             <table className="reporte-preview-tabla">
               <thead>

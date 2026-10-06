@@ -216,6 +216,19 @@ export function IconWrench(props) {
   );
 }
 
+// Careta de buceo (6-oct-2026, pedido explícito: tarjeta nueva "Viajes/
+// Buceos" en /espacio) -- marco redondeado (el lente), bolsillo de nariz
+// abajo al centro, y la correa saliendo a los lados.
+export function IconDivingMask(props) {
+  return (
+    <Base {...props}>
+      <rect x="4" y="6" width="16" height="10" rx="5" />
+      <path d="M10 16v1.5a2 2 0 0 0 4 0V16" />
+      <path d="M4 10L1 9.3M20 10l3-0.7" />
+    </Base>
+  );
+}
+
 // Regulador de buceo: primera etapa (el disco que va en la válvula del
 // tanque) + manguera curva + segunda etapa/boquilla -- ítem 8 del feedback
 // de v14 (22-sep-2026): reemplaza a IconWrench en la tarjeta de

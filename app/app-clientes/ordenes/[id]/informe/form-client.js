@@ -242,7 +242,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 </button>
               ))}
             </div>
-            <label style={{ marginTop: 12 }}>Presión intermedia ajustada (PSI)</label>
+            <label style={{ marginTop: 12 }}>Presión intermedia (PSI)</label>
             <input type="text" value={informe.presion} onChange={(e) => set("presion", e.target.value)} placeholder="Ej. 140 PSI" />
           </div>
 
@@ -419,7 +419,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 <div className="reporte-membrete-subtitulo">Regulador — Orden #{orden.no_orden_fisico ?? orden.folio}</div>
               </div>
             </div>
-            <div style={{ padding: 18 }}>
+            <div className="reporte-cuerpo" style={{ padding: 18 }}>
               <Seccion titulo="Cliente">
                 {orden.cliente_nombre_snapshot}
                 {orden.cliente_telefono && ` · ${orden.cliente_telefono}`}
@@ -447,10 +447,15 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 ) : (
                   <div style={{ marginTop: 4 }}>Ninguno indicado.</div>
                 )}
-                {informe.presion?.trim() && (
-                  <div className="hint-text" style={{ marginTop: 6 }}>Presión intermedia ajustada: {informe.presion.trim()}</div>
-                )}
               </Seccion>
+
+              {/* "Presión intermedia" (feedback sobre v51, pedido explícito:
+                  "pon que 'presion intermedia ajustada' sea 'presion
+                  intermedia' y que se vea mas grande en el informe, se ve
+                  como escondido ahora") -- antes vivía como nota chiquita
+                  (.hint-text) al final de "Trabajo realizado"; ahora es su
+                  propia Sección, mismo peso visual que Cliente/Equipo/etc. */}
+              {informe.presion?.trim() && <Seccion titulo="Presión intermedia">{informe.presion.trim()}</Seccion>}
 
               {informe.observacion?.trim() && <Seccion titulo="Nota">{informe.observacion.trim()}</Seccion>}
 

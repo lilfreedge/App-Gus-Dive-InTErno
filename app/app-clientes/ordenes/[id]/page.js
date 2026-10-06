@@ -90,6 +90,19 @@ export default async function FichaOrdenPage({ params }) {
   // "Hold" (27-sep-2026, reemplaza el check "En espera" -- ver lib/holds.js).
   const hold = holdActivo(o.holds);
   const bitacora = o.bitacora_orden || [];
+  // Lista de Códigos a cobrar para mostrar en bullets (feedback en vivo,
+  // 6-oct-2026, pedido explícito: "los codigos a cobrar escritos se vean
+  // tipo bullets") -- usa repuestos_usados_detalle (array con .nombre,
+  // ver editar/form-client.js) cuando existe; si una orden vieja no lo
+  // tiene, cae de vuelta a separar por coma el string repuestos_usados de
+  // siempre, mismo fallback que ya usa el wizard de edición.
+  const codigosLista =
+    Array.isArray(o.repuestos_usados_detalle) && o.repuestos_usados_detalle.length > 0
+      ? o.repuestos_usados_detalle.map((r) => r.nombre).filter(Boolean)
+      : (o.repuestos_usados || "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
   // Editar y Anular ahora se deciden por separado (ronda grande de
   // feedback, 27-sep-2026, pedido explícito: permiso nuevo y propio para
   // "editar orden"/"editar mantenimiento de compresor", sin tocar quién
@@ -199,13 +212,47 @@ export default async function FichaOrdenPage({ params }) {
               uno al lado del otro; Cliente/Equipo/Servicio/Autorización/
               Notas usan .campo-ancho porque su contenido puede ser largo
               (links, texto libre). */}
+          {/* No. de orden / Ver Recibo / Fecha de ingreso en su propia fila,
+              arriba de la cuadrícula (feedback en vivo, 6-oct-2026, pedido
+              explícito: "ponlo que el boton se vea entre el numero de orden
+              y la fecha de ingreso") -- "Ver Recibo de la orden" se movió
+              acá desde el final de la ficha (ver nota vieja más abajo,
+              junto a puedeVerReportes), reemplazando el link de texto por
+              una etiqueta (opción 2 de las que se le mostraron). No. de
+              orden y Fecha de ingreso quedan en el mismo lugar visual de
+              siempre, por eso salieron de .campos-grid: ya no son parte de
+              esa cuadrícula, para que el resto (Estado en adelante) no se
+              recorra. */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 14 }}>
+            <div>{o.no_orden_fisico && <Campo etiqueta="No. de orden" valor={o.no_orden_fisico} destacado />}</div>
+            {puedeVerReportes && (
+              <Link
+                href={`/app-clientes/reportes/${o.id}`}
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "var(--azul-claro)",
+                  background: "var(--superficie-suave)",
+                  border: "1px solid var(--borde)",
+                  borderRadius: 6,
+                  padding: "6px 11px",
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Ver Recibo de la orden
+              </Link>
+            )}
+            <div style={{ textAlign: "right" }}>
+              <Campo etiqueta="Fecha de ingreso" valor={formatFechaDDMMAAAADeDate(o.fecha)} />
+            </div>
+          </div>
+
           <div className="campos-grid">
-            {/* No. de orden / Estado / Cliente / Equipo destacados (item 24,
-                pedido explícito, 26-sep-2026: "pon esta info que resalten un
-                poco mas, es lo principal de una orden") -- mismo grid de
-                siempre, solo con más peso visual que Fecha/Servicio/etc. */}
-            {o.no_orden_fisico && <Campo etiqueta="No. de orden" valor={o.no_orden_fisico} destacado />}
-            <Campo etiqueta="Fecha de ingreso" valor={formatFechaDDMMAAAADeDate(o.fecha)} />
+            {/* Estado / Cliente / Equipo destacados (item 24, pedido
+                explícito, 26-sep-2026: "pon esta info que resalten un poco
+                mas, es lo principal de una orden") -- mismo grid de
+                siempre, solo con más peso visual que Servicio/etc. */}
             <Campo etiqueta="Estado" destacado>
               {/* El badge de "En Hold" separado se quitó (feedback sobre
                   v40, pedido explícito) -- ahora `o.estado` ES "En Hold"
@@ -215,6 +262,38 @@ export default async function FichaOrdenPage({ params }) {
                 {o.estado}
               </span>
             </Campo>
+            {/* "Códigos a cobrar", copia de acceso rápido (feedback en vivo,
+                6-oct-2026, pedido explícito: "quiero que el recuadro de
+                códigos a cobrar salga en la parte de arriba... debajo de
+                fecha de ingreso... formato cuadrado en vez de rectangular
+                y que los codigos a cobrar escritos se vean tipo bullets")
+                -- cae justo debajo de "Fecha de ingreso" porque Estado (el
+                item anterior en esta cuadrícula de 2 columnas) ocupa la
+                columna izquierda de esta fila. El recuadro de siempre
+                (mismo fondo/borde azul, misma etiqueta) se mantiene en
+                Seguimiento más abajo, pero sin el recuadro -- esto de acá
+                es la copia "chula" para consulta rápida sin bajar. */}
+            <div
+              style={{
+                background: "var(--superficie-suave)",
+                border: "2px solid var(--azul-claro)",
+                borderRadius: 10,
+                padding: 12,
+              }}
+            >
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--azul-claro)", marginBottom: 4 }}>
+                CÓDIGOS A COBRAR
+              </div>
+              {codigosLista.length > 0 ? (
+                <ul style={{ margin: 0, paddingLeft: 15, fontSize: 13.5, lineHeight: 1.5 }}>
+                  {codigosLista.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ul>
+              ) : (
+                <div style={{ fontSize: 13.5 }}>—</div>
+              )}
+            </div>
             <Campo etiqueta="Cliente" full destacado>
               <Link href={`/app-clientes/clientes/${o.cliente_id}`} className="breadcrumb-crumb">
                 {o.cliente_nombre_snapshot}
@@ -309,8 +388,20 @@ export default async function FichaOrdenPage({ params }) {
               <FotoLightbox src={o.foto_url} alt="Foto del equipo" />
             </>
           )}
+        </div>
 
-          <div className="section-title">Seguimiento</div>
+        {/* "Seguimiento" en adelante, en su propia caja (feedback en vivo,
+            6-oct-2026, pedido explícito: "quiero que separes la seccion de
+            seguimiento. O sea que de seguimiento para abajo, se vea como un
+            cuadrado aparte a la info que esta arriba" -- confirmado en la
+            maqueta: "la separacion la hiciste bien"). Revierte lo del
+            23-sep (comentario al inicio de este archivo: info principal y
+            Seguimiento en una sola tarjeta) -- la caja de arriba se queda
+            con los datos principales, el Hold, los Holds resueltos y la
+            Foto; esta, con Seguimiento, Nota, Bitácora, "Registrado por"
+            y el folio. */}
+        <div className="card">
+          <div className="section-title" style={{ marginTop: 0 }}>Seguimiento</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {/* "Se trabajó en tienda, no fue necesario enviarlo a taller"
                 (feedback sobre v50, pedido explícito: "que figure que no
@@ -370,90 +461,30 @@ export default async function FichaOrdenPage({ params }) {
             <Campo etiqueta="Fecha de entrega al cliente" valor={o.fecha_entrega_cliente ? formatFechaDDMMAAAADeDate(o.fecha_entrega_cliente) : "—"} />
             <Campo etiqueta="Nombre de quien recibe" valor={o.nombre_recibe || "—"} />
             <Campo etiqueta="Factura de repuesto o servicio" valor={o.factura || "—"} />
+            {/* "Códigos a cobrar" (23-sep-2026, pedido explícito: "que se
+                vea que es algo aparte, que llame la atención") -- vivía en
+                su propia caja destacada acá mismo. Desde el 6-oct-2026
+                (pedido explícito, ver nota de la copia de arriba, junto a
+                Estado) esa caja se volvió la copia de acceso rápido de
+                arriba; acá en Seguimiento se dejó "del mismo tamaño que las
+                demás cosas" (pedido explícito) -- un Campo más de la lista,
+                sin recuadro ni colores propios. Renombrado de "Repuestos
+                utilizados" (feedback sobre v40) -- y ya no se marca como
+                obligatorio: ahora se puede cerrar la orden sin nada aquí,
+                con una advertencia al guardar en vez de un bloqueo (item
+                7.1). */}
+            <Campo etiqueta="Códigos a cobrar">
+              {codigosLista.length > 0 ? (
+                <ul style={{ margin: 0, paddingLeft: 15, lineHeight: 1.5 }}>
+                  {codigosLista.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ul>
+              ) : (
+                "—"
+              )}
+            </Campo>
           </div>
-
-          {/* "Códigos a cobrar", destacado (23-sep-2026, pedido explícito:
-              "que se vea que es algo aparte, que llame la atención") --
-              caja propia en vez de un Campo más de la lista. Renombrado
-              de "Repuestos utilizados" (feedback sobre v40, pedido
-              explícito: "pon 'códigos a cobrar'") -- y ya no se marca
-              como obligatorio: ahora se puede cerrar la orden sin nada
-              aquí, con una advertencia al guardar en vez de un bloqueo
-              (item 7.1). */}
-          <div
-            style={{
-              marginTop: 16,
-              background: "var(--superficie-suave)",
-              border: "2px solid var(--azul-claro)",
-              borderRadius: 10,
-              padding: 14,
-            }}
-          >
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--azul-claro)", marginBottom: 4 }}>
-              CÓDIGOS A COBRAR
-            </div>
-            <div style={{ fontSize: 14.5 }}>{o.repuestos_usados || "—"}</div>
-          </div>
-
-          {/* Bitácora de la orden (27-sep-2026, pedido explícito: "si, que
-              la pueda ver quien sea por ahora") -- historial de Holds
-              resueltos, repuestos autorizados eliminados, y (desde
-              30-sep-2026) también las ediciones de la orden. **Nota
-              (30-sep-2026): se restringió a Titular/Administrador**
-              (pedido explícito: "haz que solo yo tenga ese acceso y los
-              administradores") -- ya no es visible a cualquiera con
-              acceso a la app como en el diseño original. */}
-          {puedeVerBitacoraOrden && (
-            <div style={{ marginTop: 10 }}>
-              <Link
-                href={`/app-clientes/ordenes/${o.id}/bitacora`}
-                style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
-              >
-                Ver bitácora de la orden ({bitacora.length}) →
-              </Link>
-            </div>
-          )}
-
-          {/* "Reporte de la orden" (28-sep-2026, feedback en vivo, item 18)
-              -- se movió de junto a "Actualizar estado de orden" a acá
-              debajo de "Ver bitácora de la orden", y se renombró a "Ver
-              reporte de la orden" (pedido explícito: "sugiereme, dame
-              opciones y razon de por que esa opcion" -- entre "Ver
-              reporte"/"Ver reporte de la orden"/"Reporte para el cliente",
-              se eligió esta: mismo estilo de link que su vecino de arriba,
-              mismo patrón "Ver ___ de la orden" que ya usa Bitácora, y dice
-              exactamente qué es sin confundirse con "Informe de
-              mantenimiento" -- que es otro documento aparte). **Nota
-              (30-sep-2026): gateado también por el permiso de Reportes**
-              (pedido explícito: "quien no tenga acceso a 'reportes' que
-              no le salga boton de 'ver reporte de la orden'"). **Nota
-              (1-oct-2026): renombrado otra vez, a "Ver Recibo de la
-              orden"** -- pedido explícito, tras confirmar que esta pantalla
-              no tiene nada de desglose de cobro (no es un "recibo" en el
-              sentido de precios/total), el usuario decidió igual llamarlo
-              así ("Cambia el nombre de ese botón a 'Ver Recibo de la
-              orden'... El reporte de la orden seria el conjunto del
-              recibo junto al informe" -- confirmado con solo "10"). **Nota
-              (1-oct-2026): ya no exige ser Regulador** (pedido explícito:
-              "necesito que el boton 'ver recibo de orden' figure en todo
-              tipo de orden") -- la pantalla de destino ahora tiene dos
-              vistas, "Recibo" (sin los campos operativos internos, pensada
-              para imprimir y entregar al cliente como constancia) y
-              "Recibo completo" (todo, para consulta interna) -- ver
-              app/app-clientes/reportes/[id]/recibo-client.js y
-              lib/reportes-clientes.js (filasReciboClienteOrden). La
-              sección "Reportes" del menú "Más" sigue acotada a Reguladores
-              a propósito, eso no se tocó. */}
-          {puedeVerReportes && (
-            <div style={{ marginTop: 10 }}>
-              <Link
-                href={`/app-clientes/reportes/${o.id}`}
-                style={{ fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
-              >
-                Ver Recibo de la orden →
-              </Link>
-            </div>
-          )}
 
           {/* Notas del técnico sobre el regulador (item 12, pedido
               explícito, 25-sep-2026) -- visible al cliente, aquí y en el
@@ -465,6 +496,41 @@ export default async function FichaOrdenPage({ params }) {
                 Nota
               </div>
               <div style={{ fontSize: 14.5 }}>{o.notas_tecnico_regulador}</div>
+            </div>
+          )}
+
+          {/* Bitácora de la orden (27-sep-2026, pedido explícito: "si, que
+              la pueda ver quien sea por ahora") -- historial de Holds
+              resueltos, repuestos autorizados eliminados, y (desde
+              30-sep-2026) también las ediciones de la orden. **Nota
+              (30-sep-2026): se restringió a Titular/Administrador**
+              (pedido explícito: "haz que solo yo tenga ese acceso y los
+              administradores") -- ya no es visible a cualquiera con
+              acceso a la app como en el diseño original. **Nota
+              (6-oct-2026): se movió de último de todo, debajo de la Nota**
+              (pedido explícito: "ponla de ultimo incluso debajo de la nota.
+              muy debajo" -- "recuerda que solo yo veré ese cuando sea
+              necesario") -- antes vivía junto a "Ver Recibo de la orden",
+              antes de la Nota. También cambió de link de texto azul a
+              texto normal con una raya azul abajo (opción 2 de las que se
+              le mostraron), para que se vea aún más discreto -- "Ver
+              Recibo de la orden" (de uso más frecuente) se movió arriba de
+              la ficha, junto al No. de orden; ver esa nota más arriba. */}
+          {puedeVerBitacoraOrden && (
+            <div style={{ marginTop: 40, paddingTop: 16, borderTop: "1px dashed var(--borde)" }}>
+              <Link
+                href={`/app-clientes/ordenes/${o.id}/bitacora`}
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  color: "var(--texto)",
+                  textDecoration: "none",
+                  borderBottom: "2px solid var(--azul-claro)",
+                  paddingBottom: 2,
+                }}
+              >
+                Ver bitácora de la orden ({bitacora.length})
+              </Link>
             </div>
           )}
 

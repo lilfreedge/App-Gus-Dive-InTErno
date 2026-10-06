@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import { obtenerPendientesInterno, obtenerPendientesClientes } from "@/lib/notificaciones";
 import HeaderSimple from "@/components/HeaderSimple";
-import { IconUsers, IconWrench } from "@/components/icons";
+import { IconUsers, IconWrench, IconDivingMask } from "@/components/icons";
 
 // Ítem 7 del backlog (22-sep-2026): pantalla que aparece justo después de
 // iniciar sesión, para elegir en qué espacio entrar -- "App Clientes"
@@ -104,32 +104,16 @@ export default async function EspacioPage() {
     );
   }
 
-  // Sin acceso a ninguna (26-sep-2026, pedido explícito) -- puede pasar
-  // con un perfil nuevo, antes de que el Titular le dé acceso a algo
-  // desde /espacio/accesos.
-  if (!tieneClientes && !tieneInterno) {
-    return (
-      <div>
-        <HeaderSimple
-          nombre={nombre}
-          etiqueta="Selecciona tu espacio"
-          esTitular={!!profile?.es_titular}
-          pendientesAprobacion={pendientesAprobacion}
-        />
-        <div className="page" style={{ paddingTop: 24 }}>
-          <h1 className="page-title">¿A dónde quieres entrar?</h1>
-          <div className="card">
-            <div className="empty">Todavía no tienes acceso a ninguna app. Habla con el Titular.</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Con acceso a una sola app: se muestra igual esta pantalla (sin
-  // saltar directo, pedido explícito), pero con una sola tarjeta -- se
-  // ve como una tarjeta centrada, no como una mitad vacía del grid de 2.
-  const soloUna = tieneClientes !== tieneInterno;
+  // Cuántas tarjetas se van a mostrar en total -- determina si el grid de
+  // 2 columnas se centra como una sola tarjeta chica (pedido explícito,
+  // 26-sep-2026: "se ve como una mitad vacía del grid de 2"). "Viajes/
+  // Buceos" (ver más abajo) cuenta siempre, porque es visible para
+  // cualquiera, sin permiso (feedback en vivo, 6-oct-2026, pedido
+  // explícito: "todos con acceso al selector") -- por eso ya no hace
+  // falta el caso aparte de "sin acceso a ninguna app": ahora siempre hay
+  // al menos esa tarjeta para mostrar.
+  const totalTarjetas = (tieneClientes ? 1 : 0) + (tieneInterno ? 1 : 0) + 1;
+  const soloUna = totalTarjetas === 1;
 
   return (
     <div>
@@ -141,6 +125,16 @@ export default async function EspacioPage() {
       />
       <div className="page" style={{ paddingTop: 24 }}>
         <h1 className="page-title">¿A dónde quieres entrar?</h1>
+
+        {/* Mensaje de "sin acceso a las apps principales" (26-sep-2026,
+            pedido explícito) -- ya no reemplaza toda la pantalla, porque
+            siempre hay al menos la tarjeta de Viajes/Buceos para mostrar
+            debajo; se deja como aviso aparte arriba del grid. */}
+        {!tieneClientes && !tieneInterno && (
+          <div className="card" style={{ marginTop: 18 }}>
+            <div className="empty">Todavía no tienes acceso a las apps principales. Habla con el Titular.</div>
+          </div>
+        )}
 
         <div
           className="espacio-grid"
@@ -185,6 +179,22 @@ export default async function EspacioPage() {
               </div>
             </Link>
           )}
+
+          {/* "Viajes/Buceos" (6-oct-2026, pedido explícito: "quiero agregar
+              un boton para hacer un app nuevo mas adelante... junto con
+              los botones de los app") -- placeholder visible para
+              cualquiera que llegue a /espacio, sin permiso propio todavía
+              (mismo patrón que tuvo "App Equipos de clientes" cuando era
+              solo una idea, ver comentario al inicio de este archivo).
+              Lleva a /viajes-buceos, una pantalla de "Próximamente". */}
+          <Link href="/viajes-buceos" className="card espacio-card">
+            <div className="espacio-icon">
+              <IconDivingMask size={22} />
+            </div>
+            <div className="espacio-title">Viajes/Buceos</div>
+            <div className="espacio-badge">Próximamente</div>
+            <div className="espacio-notif">Aún en construcción.</div>
+          </Link>
         </div>
       </div>
     </div>
