@@ -104,6 +104,67 @@ export default async function ManualPage() {
     });
   }
 
+  if (esTitular || permisos.registrar_hidrostatica) {
+    topics.push({
+      key: "registrar-hidrostatica",
+      title: "Registrar una prueba hidrostática",
+      searchText:
+        "registrar prueba hidrostática tanque aprobado rechazado fecha de la prueba 5 años próxima vencida por vencer",
+      body: (
+        <div className="card">
+          En Equipos → Pruebas hidrostáticas → &quot;+ Registrar prueba
+          hidrostática&quot;, elige el tanque, la fecha en que se hizo la
+          prueba (por default hoy; se puede poner una fecha pasada para
+          cargar la última prueba de un tanque que ya existía), si quedó
+          Aprobado o Rechazado y una nota opcional. La próxima prueba del
+          tanque (+5 años desde esa fecha) se calcula sola. En Inicio
+          sale un aviso cuando a un tanque le faltan 2 meses o menos, y
+          otro cuando ya está vencida.
+        </div>
+      ),
+    });
+  }
+
+  if (esTitular || permisos.proximos_vencimientos) {
+    topics.push({
+      key: "proximos-vencimientos",
+      title: "Ver los próximos vencimientos",
+      searchText:
+        "próximos vencimientos vencido por vencer mantenimiento reguladores inspección visual prueba hidrostática 2 meses",
+      body: (
+        <div className="card">
+          Más → Próximos vencimientos junta en una sola pantalla el
+          mantenimiento de reguladores, la inspección visual y la prueba
+          hidrostática de los tanques: primero lo vencido (en rojo) y
+          después lo que vence en los próximos 2 meses (en ámbar). Es
+          solo para consultar — el enlace &quot;Ir a…&quot; de cada
+          sección lleva a la pantalla donde se registra. Se puede poner
+          como atajo en el menú de arriba desde Mi Perfil.
+        </div>
+      ),
+    });
+  }
+
+  if (esTitular || permisos.solicitudes_almacen) {
+    topics.push({
+      key: "solicitudes-almacen",
+      title: "Pedir códigos al almacén",
+      searchText:
+        "solicitud solicitar códigos almacén tienda cantidad nota recibido llegó todo correo aviso",
+      body: (
+        <div className="card">
+          Más → Solicitudes al almacén → &quot;+ Solicitar códigos a
+          almacén&quot;. Agrega uno o varios códigos de la base de datos
+          con su cantidad, y una nota opcional para toda la solicitud. Al
+          enviarla, al almacén le llega un correo con la lista. Cuando la
+          mercancía llega a la tienda, marca cada código como
+          &quot;Recibido&quot; (o &quot;Llegó todo&quot;); la solicitud
+          pasa a &quot;Recibidas&quot; cuando todos sus códigos llegaron.
+        </div>
+      ),
+    });
+  }
+
   if (esTitular || permisos.registrar_mantenimiento) {
     topics.push({
       key: "registrar-mantenimiento",
@@ -183,7 +244,7 @@ export default async function ManualPage() {
       searchText: "agregar códigos catálogo descripción salida",
       body: (
         <div className="card">
-          Catálogo → pestaña &quot;Códigos&quot; → &quot;+ Agregar&quot;.
+          Más → Base de datos → pestaña &quot;Códigos&quot; → &quot;+ Agregar&quot;.
           Escribe el código y una descripción — solo se puede registrar
           una salida de un código que ya esté en el catálogo, así que si
           un artículo nuevo no aparece al buscarlo, hay que agregarlo
@@ -201,7 +262,7 @@ export default async function ManualPage() {
         "agregar reguladores catálogo serie primera etapa segunda etapa octopus manómetro alquiler mantenimiento",
       body: (
         <div className="card">
-          Catálogo → pestaña &quot;Reguladores&quot; → &quot;+
+          Más → Base de datos → pestaña &quot;Reguladores&quot; → &quot;+
           Agregar&quot;. El código es obligatorio; serie, 1ra etapa, 2da
           etapa, octopus y manómetro son opcionales. Un regulador debe
           estar aquí antes de poder registrarle mantenimientos.
@@ -218,7 +279,7 @@ export default async function ManualPage() {
         "agregar tanques de alquiler catálogo descripción número de serie inspección visual",
       body: (
         <div className="card">
-          Catálogo → pestaña &quot;Tanques&quot; → &quot;+ Agregar&quot;.
+          Más → Base de datos → pestaña &quot;Tanques&quot; → &quot;+ Agregar&quot;.
           El código es obligatorio; descripción y número de serie son
           opcionales. Un tanque debe estar aquí antes de poder
           registrarle inspecciones visuales.
@@ -275,11 +336,11 @@ export default async function ManualPage() {
         "permisos reportes catálogo historial changelog manual administrador usuario",
       body: (
         <div className="card">
-          Las casillas de Reportes / Catálogo / Historial / Changelog /
-          Manual controlan qué secciones ve cada Administrador o Usuario
+          Las casillas de Reportes / Base de datos / Historial de
+          anulaciones y ediciones / Changelog / Manual controlan qué secciones ve cada Administrador o Usuario
           en el menú de arriba. Son aparte del rol: sin importar esas
           casillas, editar, borrar e inactivar en Salidas, Tanques y
-          Catálogo solo lo ven Titular y Administrador — un Usuario
+          Base de datos solo lo ven Titular y Administrador — un Usuario
           nunca los ve.
         </div>
       ),

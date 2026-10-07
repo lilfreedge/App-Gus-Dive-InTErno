@@ -19,6 +19,9 @@ import {
   IconEdit,
   IconTank,
   IconUsers,
+  IconPackage,
+  IconGauge,
+  IconCalendar,
 } from "@/components/icons";
 
 export const PERMISOS_DEFAULT = {
@@ -32,12 +35,15 @@ export const PERMISOS_DEFAULT = {
   registrar_inspeccion: false,
   registrar_llenado: false,
   registrar_mantenimiento: false,
+  registrar_hidrostatica: false,
+  proximos_vencimientos: false,
   catalogo_codigo: false,
   catalogo_regulador: false,
   catalogo_tanque: false,
   compresores: false,
   correos_semanales: false,
   equipos_clientes: false,
+  solicitudes_almacen: false,
 };
 
 // Tres tablas apiladas (en vez de una sola tabla ancha con scroll
@@ -53,8 +59,10 @@ export const GRUPOS = [
     titulo: "General",
     columnas: [
       { clave: "reportes", label: "Reportes", Icono: IconReport },
-      { clave: "catalogo", label: "Catálogo", Icono: IconCatalog },
-      { clave: "historial", label: "Historial", Icono: IconHistory },
+      { clave: "catalogo", label: "Base de datos", Icono: IconCatalog },
+      // V29 -- ver app/vencimientos/page.js.
+      { clave: "proximos_vencimientos", label: "Próximos vencimientos", Icono: IconCalendar },
+      { clave: "historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory },
       { clave: "changelog", label: "Changelog", Icono: IconHistory },
       { clave: "manual", label: "Manual", Icono: IconBook },
       { clave: "movimientos", label: "Movimientos", Icono: IconShuffle },
@@ -68,6 +76,7 @@ export const GRUPOS = [
       { clave: "registrar_inspeccion", label: "Inspecciones", Icono: IconEye },
       { clave: "registrar_llenado", label: "Llenados", Icono: IconTankFill },
       { clave: "registrar_mantenimiento", label: "Mantenimiento", Icono: IconWrench },
+      { clave: "registrar_hidrostatica", label: "Hidrostáticas", Icono: IconGauge },
       { clave: "facturacion", label: "Facturación de llenado", Icono: IconReceipt },
       {
         clave: "correos_semanales",
@@ -75,10 +84,12 @@ export const GRUPOS = [
         Icono: IconMail,
         destacado: true,
       },
+      // V29 -- ver migration_52.sql.
+      { clave: "solicitudes_almacen", label: "Solicitar códigos a almacén", Icono: IconPackage },
     ],
   },
   {
-    titulo: "Catálogo — Registrar",
+    titulo: "Base de datos — Registrar",
     columnas: [
       { clave: "catalogo_codigo", label: "Código", Icono: IconEdit },
       { clave: "catalogo_regulador", label: "Regulador", Icono: IconWrench },

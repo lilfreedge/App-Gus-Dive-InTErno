@@ -71,7 +71,7 @@ export default function NuevaSalidaForm({ userId, nombreUsuario, articulos }) {
       <div className="card">
         <div className="empty">
           Todavía no hay artículos en el catálogo. Pídele a un administrador que
-          agregue artículos en "Catálogo" antes de registrar salidas.
+          agregue artículos en "Base de datos" antes de registrar salidas.
         </div>
       </div>
     );

@@ -7,11 +7,11 @@ import { useRouter, usePathname } from "next/navigation";
 import { seccionesVisibles } from "@/lib/nav";
 import { IconArrowLeft, IconArrowRight } from "./icons";
 
-export default function NavArrows({ esTitular, permisos }) {
+export default function NavArrows({ esTitular, permisos, menuPersonalizado }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const secciones = seccionesVisibles({ esTitular, permisos });
+  const secciones = seccionesVisibles({ esTitular, permisos, menuPersonalizado });
   const idx = secciones.findIndex((s) => pathname.startsWith(s.href));
 
   const prev = idx > 0 ? secciones[idx - 1] : null;

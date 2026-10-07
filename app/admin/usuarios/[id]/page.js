@@ -5,7 +5,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { requireTitular } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
-import { IconReport, IconCatalog, IconHistory, IconBook, IconShuffle, IconCompressor, IconEye, IconTankFill, IconWrench, IconReceipt, IconMail, IconEdit, IconTank, IconUsers } from "@/components/icons";
+import { IconReport, IconCatalog, IconHistory, IconBook, IconShuffle, IconCompressor, IconEye, IconTankFill, IconWrench, IconReceipt, IconMail, IconEdit, IconTank, IconUsers, IconPackage, IconGauge, IconCalendar } from "@/components/icons";
 import { formatFecha } from "@/lib/format";
 
 const PERMISOS_DEFAULT = {
@@ -19,20 +19,24 @@ const PERMISOS_DEFAULT = {
   registrar_inspeccion: false,
   registrar_llenado: false,
   registrar_mantenimiento: false,
+  registrar_hidrostatica: false,
+  proximos_vencimientos: false,
   catalogo_codigo: false,
   catalogo_regulador: false,
   catalogo_tanque: false,
   compresores: false,
   correos_semanales: false,
   equipos_clientes: false,
+  solicitudes_almacen: false,
 };
 
 // Mismos íconos y etiquetas que la tabla de permisos (lista-client.js) --
 // se muestran aquí como chips de "qué puede hacer" en la ficha del usuario.
 const PERMISOS_LABELS = [
   { clave: "reportes", label: "Reportes", Icono: IconReport },
-  { clave: "catalogo", label: "Catálogo", Icono: IconCatalog },
-  { clave: "historial", label: "Historial", Icono: IconHistory },
+  { clave: "catalogo", label: "Base de datos", Icono: IconCatalog },
+  { clave: "proximos_vencimientos", label: "Próximos vencimientos", Icono: IconCalendar },
+  { clave: "historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory },
   { clave: "changelog", label: "Changelog", Icono: IconHistory },
   { clave: "manual", label: "Manual", Icono: IconBook },
   { clave: "movimientos", label: "Movimientos", Icono: IconShuffle },
@@ -41,8 +45,10 @@ const PERMISOS_LABELS = [
   { clave: "registrar_inspeccion", label: "Inspecciones", Icono: IconEye },
   { clave: "registrar_llenado", label: "Llenados", Icono: IconTankFill },
   { clave: "registrar_mantenimiento", label: "Mantenimiento", Icono: IconWrench },
+  { clave: "registrar_hidrostatica", label: "Hidrostáticas", Icono: IconGauge },
   { clave: "facturacion", label: "Facturación de llenado", Icono: IconReceipt },
   { clave: "correos_semanales", label: "Correos semanales", Icono: IconMail },
+  { clave: "solicitudes_almacen", label: "Solicitar códigos a almacén", Icono: IconPackage },
   { clave: "catalogo_codigo", label: "Código", Icono: IconEdit },
   { clave: "catalogo_regulador", label: "Regulador", Icono: IconWrench },
   { clave: "catalogo_tanque", label: "Tanque", Icono: IconTank },

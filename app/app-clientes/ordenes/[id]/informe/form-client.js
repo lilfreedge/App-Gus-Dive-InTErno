@@ -334,7 +334,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
               EQUIPO (equipos_del_cliente.proximo_mantenimiento_recomendado,
               migration_46.sql) para poder consultarlo más adelante, no solo
               en este Informe puntual -- ver generarInforme() y la nueva
-              pantalla "Próximos mantenimientos" en Más. */}
+              pantalla "Clientes por contactar" en Más. */}
           <div style={SECCION_ESTILO}>
             <div style={SECCION_LABEL_ESTILO}>Recomendación de próximo mantenimiento</div>
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>

@@ -419,6 +419,19 @@ textarea {
   margin-top: 16px;
 }
 
+/* Aviso "por vencer" (V29, prueba hidrostática a 2 meses de vencer) --
+   mismo formato que .error-box, en el ámbar de .badge-amarillo: todavía
+   no está vencido, pero hay que tenerlo en cuenta. */
+.aviso-box {
+  background: rgba(196, 130, 33, 0.1);
+  color: #b5691f;
+  border: 1px solid rgba(196, 130, 33, 0.35);
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  margin-top: 16px;
+}
+
 .success-box {
   background: var(--exito-fondo);
   color: var(--verde);

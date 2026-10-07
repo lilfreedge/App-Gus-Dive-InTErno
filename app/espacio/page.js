@@ -42,7 +42,7 @@ export default async function EspacioPage() {
   // inspecciones y mantenimientos vencidos -- con la misma consulta que
   // usa app/dashboard/page.js (lib/notificaciones.js), para que ambas
   // pantallas siempre digan lo mismo.
-  const { pendientesFacturar, tanquesVencidos, reguladoresVencidos } =
+  const { pendientesFacturar, tanquesVencidos, reguladoresVencidos, hidroVencidas, hidroPorVencer } =
     await obtenerPendientesInterno(supabase, profile);
   const { ordenesPorTrabajar, ordenesPorDespachar, ordenesEnEspera, ordenesEnHidrostatica, ordenesEnReparacion } =
     await obtenerPendientesClientes(supabase, profile);
@@ -101,6 +101,16 @@ export default async function EspacioPage() {
   if (reguladoresVencidos > 0) {
     lineasInterno.push(
       `${reguladoresVencidos} regulador${reguladoresVencidos === 1 ? "" : "es"} con mantenimiento vencido`
+    );
+  }
+  if (hidroVencidas > 0) {
+    lineasInterno.push(
+      `${hidroVencidas} tanque${hidroVencidas === 1 ? "" : "s"} con prueba hidrostática vencida`
+    );
+  }
+  if (hidroPorVencer > 0) {
+    lineasInterno.push(
+      `${hidroPorVencer} tanque${hidroPorVencer === 1 ? "" : "s"} con prueba hidrostática por vencer`
     );
   }
 

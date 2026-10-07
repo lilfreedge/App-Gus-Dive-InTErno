@@ -1,36 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import SelectorBusqueda from "@/components/SelectorBusqueda";
+import { hoyLocalISO } from "@/lib/fechas";
 
-function filaVacia(tanques) {
-  return { tanqueId: tanques[0]?.id || "", resultado: "Aprobado", nota: "" };
+let siguienteClave = 1;
+function filaVacia(fecha) {
+  return { clave: siguienteClave++, tanqueId: "", fecha: fecha || "", resultado: "Aprobado", nota: "" };
 }
 
-// Permite registrar varias inspecciones de una vez (p. ej. una ronda
-// de inspección de varios tanques el mismo día), sin tener que volver
-// a entrar al formulario por cada una. Con una sola fila se comporta
-// igual que antes.
-export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) {
+// Mismo formulario que Inspección visual (varias filas de una vez), con la
+// FECHA DE LA PRUEBA por fila: por default hoy, pero se puede poner una
+// fecha pasada para cargar la última prueba real de los tanques que ya
+// existen. Una fila nueva copia la fecha de la fila anterior (lo normal es
+// que una tanda de tanques vuelva de la prueba el mismo día).
+// No hace falta actualizar el tanque desde aquí: la próxima prueba
+// (+5 años) la pone la base de datos (migration_53.sql).
+export default function NuevaPruebaHidrostaticaForm({ userId, nombreUsuario, tanques }) {
   const router = useRouter();
   const supabase = createClient();
 
-  const [filas, setFilas] = useState([filaVacia(tanques)]);
+  const [filas, setFilas] = useState(() => [filaVacia()]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // "Hoy" del dispositivo -- se pone después de cargar (no en el servidor,
+  // que está en UTC) como fecha por default de las filas sin fecha.
+  const [hoy, setHoy] = useState("");
 
-  function actualizarFila(i, cambios) {
-    setFilas((prev) => prev.map((f, idx) => (idx === i ? { ...f, ...cambios } : f)));
+  useEffect(() => {
+    const h = hoyLocalISO();
+    setHoy(h);
+    setFilas((prev) => prev.map((f) => (f.fecha ? f : { ...f, fecha: h })));
+  }, []);
+
+  function actualizarFila(clave, cambios) {
+    setFilas((prev) => prev.map((f) => (f.clave === clave ? { ...f, ...cambios } : f)));
   }
 
   function agregarFila() {
-    setFilas((prev) => [...prev, filaVacia(tanques)]);
+    setFilas((prev) => [...prev, filaVacia(prev[prev.length - 1]?.fecha || hoy)]);
   }
 
-  function quitarFila(i) {
-    setFilas((prev) => prev.filter((_, idx) => idx !== i));
+  function quitarFila(clave) {
+    setFilas((prev) => prev.filter((f) => f.clave !== clave));
   }
 
   async function handleSubmit(e) {
@@ -38,7 +52,15 @@ export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) 
     setError("");
 
     if (filas.some((f) => !f.tanqueId)) {
-      setError("Selecciona un tanque en cada inspección.");
+      setError("Selecciona un tanque en cada prueba.");
+      return;
+    }
+    if (filas.some((f) => !f.fecha)) {
+      setError("Pon la fecha de la prueba en cada fila.");
+      return;
+    }
+    if (filas.some((f) => f.fecha > hoyLocalISO())) {
+      setError("La fecha de la prueba no puede ser en el futuro.");
       return;
     }
 
@@ -51,12 +73,13 @@ export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) 
         nombre_usuario_snapshot: nombreUsuario,
         tanque_id: f.tanqueId,
         tanque_codigo_snapshot: tanque?.codigo || null,
+        fecha_prueba: f.fecha,
         resultado: f.resultado,
         nota: f.nota.trim() || null,
       };
     });
 
-    const { error } = await supabase.from("inspecciones_visuales").insert(registros);
+    const { error } = await supabase.from("pruebas_hidrostaticas").insert(registros);
 
     setLoading(false);
 
@@ -65,12 +88,7 @@ export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) 
       return;
     }
 
-    // La próxima inspección (+1 año) de cada tanque ya no se actualiza
-    // desde aquí: desde V29 la pone la base de datos al registrar
-    // (migration_53.sql). Antes, a quien no tenía permiso de editar el
-    // catálogo de tanques la fecha no se le movía (sin dar error).
-
-    router.push("/equipos/inspeccion-visual");
+    router.push("/equipos/pruebas-hidrostaticas");
     router.refresh();
   }
 
@@ -78,17 +96,17 @@ export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) 
     <form onSubmit={handleSubmit} className="card">
       {filas.map((fila, i) => (
         <div
-          key={i}
+          key={fila.clave}
           style={i > 0 ? { marginTop: 22, paddingTop: 18, borderTop: "1px solid var(--borde)" } : undefined}
         >
           {filas.length > 1 && (
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span className="section-title" style={{ marginTop: 0, marginBottom: 0 }}>
-                Inspección {i + 1}
+                Prueba {i + 1}
               </span>
               <button
                 type="button"
-                onClick={() => quitarFila(i)}
+                onClick={() => quitarFila(fila.clave)}
                 style={{
                   fontSize: 11.5,
                   fontWeight: 600,
@@ -103,15 +121,26 @@ export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) 
             </div>
           )}
 
-          <label htmlFor={`tanque-${i}`}>
+          <label>
             Tanque <span style={{ color: "var(--rojo)" }}>*</span>
           </label>
           <SelectorBusqueda
             items={tanques}
             valor={fila.tanqueId}
-            onChange={(v) => actualizarFila(i, { tanqueId: v })}
+            onChange={(v) => actualizarFila(fila.clave, { tanqueId: v })}
             placeholder="Escribe para buscar tanque por código..."
             vacio="No hay tanques activos"
+          />
+
+          <label htmlFor={`fecha-${fila.clave}`}>
+            Fecha de la prueba <span style={{ color: "var(--rojo)" }}>*</span>
+          </label>
+          <input
+            id={`fecha-${fila.clave}`}
+            type="date"
+            max={hoy || undefined}
+            value={fila.fecha}
+            onChange={(e) => actualizarFila(fila.clave, { fecha: e.target.value })}
           />
 
           <label>
@@ -121,28 +150,28 @@ export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) 
             <label>
               <input
                 type="radio"
-                name={`resultado-${i}`}
+                name={`resultado-${fila.clave}`}
                 checked={fila.resultado === "Aprobado"}
-                onChange={() => actualizarFila(i, { resultado: "Aprobado" })}
+                onChange={() => actualizarFila(fila.clave, { resultado: "Aprobado" })}
               />
               Aprobado
             </label>
             <label>
               <input
                 type="radio"
-                name={`resultado-${i}`}
+                name={`resultado-${fila.clave}`}
                 checked={fila.resultado === "Rechazado"}
-                onChange={() => actualizarFila(i, { resultado: "Rechazado" })}
+                onChange={() => actualizarFila(fila.clave, { resultado: "Rechazado" })}
               />
               Rechazado
             </label>
           </div>
 
-          <label htmlFor={`nota-${i}`}>Nota</label>
+          <label htmlFor={`nota-${fila.clave}`}>Nota</label>
           <textarea
-            id={`nota-${i}`}
+            id={`nota-${fila.clave}`}
             value={fila.nota}
-            onChange={(e) => actualizarFila(i, { nota: e.target.value })}
+            onChange={(e) => actualizarFila(fila.clave, { nota: e.target.value })}
             placeholder="Cualquier detalle extra (opcional)"
           />
         </div>
@@ -169,8 +198,8 @@ export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) 
         {loading
           ? "Guardando..."
           : filas.length > 1
-          ? `Registrar ${filas.length} inspecciones`
-          : "Registrar inspección"}
+          ? `Registrar ${filas.length} pruebas`
+          : "Registrar prueba"}
       </button>
     </form>
   );

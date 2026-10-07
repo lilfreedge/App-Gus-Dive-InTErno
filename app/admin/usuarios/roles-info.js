@@ -11,7 +11,7 @@ const ROLES = [
     nombre: "Administrador",
     tag: null,
     descripcion:
-      "Puede registrar y editar salidas/tanques y ver las secciones que el Titular le habilite (Reportes, Catálogo, Historial, Changelog, Manual, Movimientos).",
+      "Puede registrar y editar salidas/tanques y ver las secciones que el Titular le habilite (Reportes, Base de datos, Historial de anulaciones y ediciones, Changelog, Manual, Movimientos).",
   },
   {
     nombre: "Usuario",

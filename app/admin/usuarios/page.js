@@ -8,6 +8,7 @@ import ListaUsuarios from "./lista-client";
 import RolesInfo from "./roles-info";
 import FormatearRegistros from "./formatear-registros-client";
 import RespaldoDatos from "./respaldo-client";
+import CorreosAlmacen from "./correos-almacen-client";
 
 // Administración: solo el Titular puede entrar (ni siquiera los
 // administradores comunes). No está en el nav de arriba, solo en el
@@ -16,10 +17,10 @@ export default async function UsuariosPage() {
   const supabase = createClient();
   const { user } = await requireTitular(supabase);
 
-  const { data: perfiles } = await supabase
-    .from("profiles")
-    .select("id, full_name, is_admin, es_titular, permisos")
-    .order("full_name");
+  const [{ data: perfiles }, { data: config }] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, is_admin, es_titular, permisos").order("full_name"),
+    supabase.from("app_config").select("solicitudes_correos").maybeSingle(),
+  ]);
 
   return (
     <div>
@@ -36,6 +37,12 @@ export default async function UsuariosPage() {
 
         <SeccionColapsable titulo="Roles">
           <RolesInfo />
+        </SeccionColapsable>
+
+        {/* V29 -- correos del almacén para el aviso de Solicitudes al
+            almacén (ver app/solicitudes y migration_52.sql). */}
+        <SeccionColapsable titulo="Solicitudes al almacén">
+          <CorreosAlmacen correosIniciales={config?.solicitudes_correos || []} />
         </SeccionColapsable>
 
         <div style={{ marginTop: 14 }}>

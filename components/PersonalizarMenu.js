@@ -3,28 +3,35 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { atajosPermitidos } from "@/lib/nav";
 
 // Accesos directos que el usuario puede activar/desactivar para que
 // aparezcan en el menú de arriba (top nav), además de las secciones fijas
 // de lib/nav.js (NAV_SECTIONS). Ver lib/nav.js -> ATAJOS_MENU. "Equipos"
 // se quitó de aquí porque ya es una sección fija siempre visible.
-const OPCIONES_BASE = [
-  { clave: "llenados", etiqueta: "Llenados" },
-  { clave: "inspeccion_visual", etiqueta: "Inspección visual" },
-  { clave: "mantenimiento_reguladores", etiqueta: "Mantenimiento de reguladores" },
-];
+const ETIQUETAS = {
+  llenados: "Llenados",
+  inspeccion_visual: "Inspección visual",
+  pruebas_hidrostaticas: "Pruebas hidrostáticas",
+  mantenimiento_reguladores: "Mantenimiento de reguladores",
+  compresores: "Compresores",
+  solicitudes: "Solicitudes al almacén",
+  proximos_vencimientos: "Próximos vencimientos",
+};
 
-// puedeCompresores: solo se ofrece este atajo a quien ya tenga el permiso
-// "compresores" (Administración > Usuarios y permisos > General) -- si se
-// lo quitan después, lib/nav.js -> seccionesVisibles lo revalida solo y
-// el atajo deja de aparecer en el menú aunque siga "activado" aquí.
-export default function PersonalizarMenu({ menuInicial, puedeCompresores }) {
+// De vuelta en Mi Perfil (6-oct-2026, V29, pedido explícito: "quiero que
+// lo pongas como estaba antes" -- ver la historia en lib/nav.js). Solo se
+// ofrecen los atajos que esta persona tiene habilitados en Administración
+// (atajosPermitidos); si le quitan un permiso después, el atajo deja de
+// ofrecerse y de salir en el menú aunque siga "activado" aquí.
+export default function PersonalizarMenu({ menuInicial, esTitular, permisos }) {
   const router = useRouter();
   const supabase = createClient();
 
-  const opciones = puedeCompresores
-    ? [...OPCIONES_BASE, { clave: "compresores", etiqueta: "Compresores" }]
-    : OPCIONES_BASE;
+  const opciones = atajosPermitidos({ esTitular, permisos }).map((a) => ({
+    clave: a.id,
+    etiqueta: ETIQUETAS[a.id] || a.label,
+  }));
 
   const [menu, setMenu] = useState(menuInicial || {});
   const [loading, setLoading] = useState(false);

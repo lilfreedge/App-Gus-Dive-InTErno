@@ -4,6 +4,8 @@ import { getProfileYUser } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import PreferenciasApariencia from "@/components/PreferenciasApariencia";
+import PersonalizarMenu from "@/components/PersonalizarMenu";
+import { atajosPermitidos } from "@/lib/nav";
 import MiActividad from "@/components/MiActividad";
 import PerfilForm from "./form-client";
 
@@ -53,6 +55,27 @@ export default async function PerfilPage() {
         <div style={{ marginTop: 26 }}>
           <PreferenciasApariencia />
         </div>
+
+        {/* "Personalizar mi menú", de vuelta (6-oct-2026, V29, pedido
+            explícito: "no se ven los shortcut para uno poder quitarlo o
+            ponerlo del menu principal... quiero que lo pongas como estaba
+            antes") -- se había quitado el 29-sep (v47). Mismo formato que
+            en Mi Perfil de App Equipos de clientes. Si la persona no tiene
+            ningún atajo permitido, la sección no se muestra. */}
+        {atajosPermitidos({ esTitular: !!profile?.es_titular, permisos: profile?.permisos }).length > 0 && (
+          <>
+            <div className="section-title" style={{ marginTop: 26 }}>
+              Personalizar mi menú
+            </div>
+            <div className="card">
+              <PersonalizarMenu
+                menuInicial={profile?.menu_personalizado}
+                esTitular={!!profile?.es_titular}
+                permisos={profile?.permisos || {}}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

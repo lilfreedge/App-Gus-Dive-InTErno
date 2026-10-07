@@ -66,7 +66,7 @@ export default async function DashboardPage({ searchParams }) {
     0
   );
   const totalPendientesFacturar = pendientes.pendientesFacturar;
-  const { tanquesVencidos, reguladoresVencidos } = pendientes;
+  const { tanquesVencidos, reguladoresVencidos, hidroVencidas, hidroPorVencer } = pendientes;
 
   const topArticulos = calcularTopArticulos(salidasRes.data || []).slice(0, 3);
 
@@ -142,6 +142,31 @@ export default async function DashboardPage({ searchParams }) {
             <IconAlert size={18} />
             {reguladoresVencidos} regulador{reguladoresVencidos === 1 ? "" : "es"} con mantenimiento
             vencido
+          </Link>
+        )}
+
+        {hidroVencidas > 0 && (
+          <Link
+            href="/equipos/pruebas-hidrostaticas"
+            className="error-box"
+            style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
+          >
+            <IconAlert size={18} />
+            {hidroVencidas} tanque{hidroVencidas === 1 ? "" : "s"} con prueba hidrostática vencida
+          </Link>
+        )}
+
+        {/* Aviso con 2 meses de anticipación (V29, pedido explícito) -- en
+            ámbar, para distinguirlo de lo que ya está vencido (rojo). */}
+        {hidroPorVencer > 0 && (
+          <Link
+            href="/equipos/pruebas-hidrostaticas"
+            className="aviso-box"
+            style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
+          >
+            <IconAlert size={18} />
+            {hidroPorVencer} tanque{hidroPorVencer === 1 ? "" : "s"} con prueba hidrostática por vencer (2 meses o
+            menos)
           </Link>
         )}
 

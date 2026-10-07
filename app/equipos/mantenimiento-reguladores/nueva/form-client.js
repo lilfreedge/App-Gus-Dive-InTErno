@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import SelectorBusqueda from "@/components/SelectorBusqueda";
-import { proximoMantenimiento } from "@/lib/fechas";
 
 export default function NuevoMantenimientoForm({ userId, nombreUsuario, reguladores }) {
   const router = useRouter();
@@ -50,16 +49,10 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
       return;
     }
 
-    // Mejor esfuerzo: actualiza el próximo mantenimiento del regulador
-    // (+8 meses). No bloquea la navegación si falla.
-    try {
-      await supabase
-        .from("reguladores_alquiler")
-        .update({ proximo_mantenimiento: proximoMantenimiento(new Date().toISOString()) })
-        .eq("id", reguladorId);
-    } catch (e) {
-      console.error("No se pudo actualizar proximo_mantenimiento del regulador:", e);
-    }
+    // El próximo mantenimiento del regulador (+8 meses) ya no se actualiza
+    // desde aquí: desde V29 lo pone la base de datos al registrar
+    // (migration_53.sql). Antes, a quien no tenía permiso de editar el
+    // catálogo de reguladores la fecha no se le movía (sin dar error).
 
     router.push("/equipos/mantenimiento-reguladores");
     router.refresh();

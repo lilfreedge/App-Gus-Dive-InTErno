@@ -17,6 +17,7 @@ export default function TopbarClient({
   esTitular,
   permisos,
   ordenMenu,
+  menuPersonalizado,
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -30,8 +31,8 @@ export default function TopbarClient({
   // usuario en profiles.orden_menu, o el orden normal si nunca lo
   // cambió.
   const linksBase = useMemo(
-    () => seccionesVisibles({ esTitular, permisos }),
-    [esTitular, permisos]
+    () => seccionesVisibles({ esTitular, permisos, menuPersonalizado }),
+    [esTitular, permisos, menuPersonalizado]
   );
   const [links, setLinks] = useState(() => ordenarSecciones(linksBase, ordenMenu));
 

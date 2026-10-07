@@ -208,6 +208,35 @@ export function IconEye(props) {
   );
 }
 
+// Calendario con reloj (V29, "Próximos vencimientos" en Más): lo que
+// vence pronto -- mantenimientos, inspecciones y pruebas hidrostáticas.
+export function IconCalendar(props) {
+  return (
+    <Base {...props}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M8 3v4" />
+      <path d="M16 3v4" />
+      <path d="M12 14v3l2 1" />
+    </Base>
+  );
+}
+
+// Manómetro (V29, "Pruebas hidrostáticas" en Equipos › Tanques): carátula
+// redonda con marcas y la aguja -- distinto de IconEye (inspección visual)
+// y de IconTankFill (llenados), los otros dos del mismo grupo.
+export function IconGauge(props) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="13" r="8" />
+      <path d="M12 13l3.5-3.5" />
+      <path d="M7 13h1M16 13h1M12 8v1M8.5 9.5l.7.7M15.5 9.5l-.7.7" />
+      <path d="M10 2h4" />
+      <path d="M12 2v3" />
+    </Base>
+  );
+}
+
 export function IconWrench(props) {
   return (
     <Base {...props}>

@@ -108,11 +108,13 @@ const OPCIONES = [
   // "Próximos mantenimientos" (1-oct-2026, nueva feature, pedido
   // explícito: "necesito un lado donde pueda hacer ese tipo de consultar
   // y saber que cliente llamar") -- mismo permiso que Reportes, misma
-  // audiencia.
+  // audiencia. V29: renombrado a "Clientes por contactar" (pedido
+  // explícito, "Sobre nombre app clientes, me gusta") -- solo el nombre, la
+  // ruta y el permiso siguen iguales.
   {
     href: "/app-clientes/administracion/proximos-mantenimientos",
-    titulo: "Próximos mantenimientos",
-    descripcion: "Equipos con una fecha recomendada de mantenimiento guardada.",
+    titulo: "Clientes por contactar",
+    descripcion: "Mantenimientos recomendados y clientes que no vienen hace más de 12 meses -- a quién llamar.",
     Icono: IconWrench,
     permiso: "equipos_clientes_reportes",
   },

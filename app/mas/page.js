@@ -3,20 +3,34 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
-import { IconCatalog, IconReport, IconHistory } from "@/components/icons";
+import { IconCatalog, IconReport, IconHistory, IconShuffle, IconCalendar } from "@/components/icons";
 
 // Hub "Más": une Catálogo, Historial y Reportes en un solo botón del menú
 // superior para no sobrecargarlo (antes eran 3 botones fijos aparte).
+// Renombrado en App Interno (V29, pedido explícito: "renombra 'catalogo' a
+// 'base de datos' asi igual como esta en app equipos de clientes" y "a
+// historial de app interno, renombralo igual como esta en app equipos de
+// clientes") -- solo cambian los nombres que se ven; las rutas (/catalogo,
+// /admin/historial) y los permisos (catalogo, historial) siguen igual.
+//
 // Cada tarjeta se muestra solo si el usuario tiene el permiso granular
 // correspondiente (el Titular siempre tiene acceso vía tieneAcceso).
 // Ver lib/nav.js -> NAV_SECTIONS ("Más" usa key: [array de permisos]).
 const OPCIONES = [
   {
     href: "/catalogo",
-    titulo: "Catálogo",
+    titulo: "Base de datos",
     descripcion: "Códigos, reguladores y tanques de alquiler.",
     permiso: "catalogo",
     Icono: IconCatalog,
+  },
+  // V29 (maqueta aprobada: segundo, debajo de Base de datos).
+  {
+    href: "/vencimientos",
+    titulo: "Próximos vencimientos",
+    descripcion: "Mantenimientos, inspecciones y pruebas hidrostáticas vencidas o por vencer.",
+    permiso: "proximos_vencimientos",
+    Icono: IconCalendar,
   },
   {
     href: "/reportes",
@@ -25,9 +39,17 @@ const OPCIONES = [
     permiso: "reportes",
     Icono: IconReport,
   },
+  // V29, pedido explícito: "dejalo en mas" -- ver app/solicitudes.
+  {
+    href: "/solicitudes",
+    titulo: "Solicitudes al almacén",
+    descripcion: "Pide códigos al almacén y marca cuándo llegan a la tienda.",
+    permiso: "solicitudes_almacen",
+    Icono: IconShuffle,
+  },
   {
     href: "/admin/historial",
-    titulo: "Historial",
+    titulo: "Historial de anulaciones y ediciones",
     descripcion: "Registro de ediciones y movimientos anulados.",
     permiso: "historial",
     Icono: IconHistory,

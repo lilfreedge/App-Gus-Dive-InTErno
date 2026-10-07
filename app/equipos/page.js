@@ -3,9 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
-import { IconTankFill, IconEye, IconRegulator, IconCompressor } from "@/components/icons";
+import { IconTankFill, IconEye, IconGauge, IconRegulator, IconCompressor } from "@/components/icons";
 
-// Grupo "Tanques": llenados e inspección visual, todo lo relacionado
+// Grupo "Tanques": llenados, inspección visual y pruebas hidrostáticas, todo lo relacionado
 // a los tanques de alquiler, agrupado bajo un mismo encabezado.
 const GRUPO_TANQUES = [
   {
@@ -19,6 +19,14 @@ const GRUPO_TANQUES = [
     titulo: "Inspección visual",
     descripcion: "Aprobación o rechazo de tanques en inspección visual.",
     Icono: IconEye,
+  },
+  // V29 (pedido explícito: "pon el boton de pruebas hidrostaticas debajo
+  // de inspeccion visual, en vez de encima").
+  {
+    href: "/equipos/pruebas-hidrostaticas",
+    titulo: "Pruebas hidrostáticas",
+    descripcion: "Prueba hidrostática de los tanques, cada 5 años.",
+    Icono: IconGauge,
   },
 ];
 

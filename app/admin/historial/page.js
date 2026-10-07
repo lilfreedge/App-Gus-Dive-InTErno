@@ -33,7 +33,7 @@ export default async function HistorialCambiosPage() {
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
-        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Historial" }]} />
+        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Historial de anulaciones y ediciones" }]} />
 
         <div className="section-title">Movimientos anulados</div>
         {/* Botones separados de "Borrar todo" (28-sep-2026, pedido
@@ -84,6 +84,7 @@ function tituloRegistro(tabla) {
   if (tabla === "articulos") return "Código de catálogo";
   if (tabla === "inspecciones_visuales") return "Inspección visual";
   if (tabla === "mantenimientos_reguladores") return "Mantenimiento de regulador";
+  if (tabla === "pruebas_hidrostaticas") return "Prueba hidrostática";
   return "Cambio de nombre";
 }
 
@@ -194,6 +195,16 @@ function filasInspeccionVisual(d, dn) {
   ];
 }
 
+function filasPruebaHidrostatica(d, dn) {
+  const f = (iso) => (iso ? formatFechaDDMMAAAADeDate(iso) : "—");
+  return [
+    { label: "Tanque", antes: d.tanque_codigo_snapshot || "—", despues: dn?.tanque_codigo_snapshot || "—" },
+    { label: "Fecha de la prueba", antes: f(d.fecha_prueba), despues: dn ? f(dn.fecha_prueba) : "—" },
+    { label: "Resultado", antes: d.resultado || "—", despues: dn?.resultado || "—" },
+    { label: "Nota", antes: d.nota || "—", despues: dn?.nota || "—" },
+  ];
+}
+
 function filasMantenimientoRegulador(d, dn) {
   const siNo = (v) => (v ? "Sí" : "No");
   return [
@@ -263,6 +274,7 @@ const FILAS_POR_TABLA = {
   salidas: filasSalida,
   llenados_tanques: filasLlenado,
   inspecciones_visuales: filasInspeccionVisual,
+  pruebas_hidrostaticas: filasPruebaHidrostatica,
   mantenimientos_reguladores: filasMantenimientoRegulador,
   tanques_alquiler: filasTanqueCatalogo,
   reguladores_alquiler: filasReguladorCatalogo,
@@ -416,6 +428,11 @@ function contenido(tabla, d) {
   }
   if (tabla === "inspecciones_visuales") {
     return `${d.tanque_codigo_snapshot || "?"} · ${d.resultado || "?"}${d.nota ? ` · ${d.nota}` : ""}`;
+  }
+  if (tabla === "pruebas_hidrostaticas") {
+    return `${d.tanque_codigo_snapshot || "?"} · ${d.fecha_prueba ? formatFechaDDMMAAAADeDate(d.fecha_prueba) : "?"} · ${
+      d.resultado || "?"
+    }`;
   }
   if (tabla === "mantenimientos_reguladores") {
     const partes = [

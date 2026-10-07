@@ -9,5 +9,11 @@ export default async function NavArrowsServer() {
   const { profile } = await getProfileYUser(supabase);
   if (!profile) return null;
 
-  return <NavArrows esTitular={!!profile.es_titular} permisos={profile.permisos || {}} />;
+  return (
+    <NavArrows
+      esTitular={!!profile.es_titular}
+      permisos={profile.permisos || {}}
+      menuPersonalizado={profile.menu_personalizado || null}
+    />
+  );
 }
