@@ -21,6 +21,8 @@ const PERMISOS_DEFAULT = {
   registrar_mantenimiento: false,
   registrar_hidrostatica: false,
   proximos_vencimientos: false,
+  registrar_salida: false,
+  rol_operativo: false,
   catalogo_codigo: false,
   catalogo_regulador: false,
   catalogo_tanque: false,
@@ -33,25 +35,28 @@ const PERMISOS_DEFAULT = {
 // Mismos íconos y etiquetas que la tabla de permisos (lista-client.js) --
 // se muestran aquí como chips de "qué puede hacer" en la ficha del usuario.
 const PERMISOS_LABELS = [
-  { clave: "reportes", label: "Reportes", Icono: IconReport },
+  // V30: mismo orden que "Usuarios y permisos" (lista-client.js,
+  // SECCIONES): Salidas, Equipos, Movimientos, Más, menú ⚙.
+  { clave: "registrar_salida", label: "Salidas", Icono: IconPackage },
+  { clave: "registrar_llenado", label: "Llenados de tanque", Icono: IconTankFill },
+  { clave: "facturacion", label: "Facturación de llenado", Icono: IconReceipt },
+  { clave: "registrar_inspeccion", label: "Inspección visual", Icono: IconEye },
+  { clave: "registrar_hidrostatica", label: "Pruebas hidrostáticas", Icono: IconGauge },
+  { clave: "registrar_mantenimiento", label: "Mantenimiento de reguladores", Icono: IconWrench },
+  { clave: "compresores", label: "Compresores", Icono: IconCompressor },
+  { clave: "movimientos", label: "Movimientos", Icono: IconShuffle },
   { clave: "catalogo", label: "Base de datos", Icono: IconCatalog },
+  { clave: "catalogo_codigo", label: "Registrar código", Icono: IconEdit },
+  { clave: "catalogo_regulador", label: "Registrar regulador", Icono: IconWrench },
+  { clave: "catalogo_tanque", label: "Registrar tanque", Icono: IconTank },
   { clave: "proximos_vencimientos", label: "Próximos vencimientos", Icono: IconCalendar },
+  { clave: "reportes", label: "Reportes", Icono: IconReport },
+  { clave: "correos_semanales", label: "Correos semanales", Icono: IconMail },
+  { clave: "solicitudes_almacen", label: "Solicitudes al almacén", Icono: IconPackage },
   { clave: "historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory },
   { clave: "changelog", label: "Changelog", Icono: IconHistory },
   { clave: "manual", label: "Manual", Icono: IconBook },
-  { clave: "movimientos", label: "Movimientos", Icono: IconShuffle },
-  { clave: "compresores", label: "Compresores", Icono: IconCompressor },
-  { clave: "equipos_clientes", label: "Equipos de clientes", Icono: IconUsers },
-  { clave: "registrar_inspeccion", label: "Inspecciones", Icono: IconEye },
-  { clave: "registrar_llenado", label: "Llenados", Icono: IconTankFill },
-  { clave: "registrar_mantenimiento", label: "Mantenimiento", Icono: IconWrench },
-  { clave: "registrar_hidrostatica", label: "Hidrostáticas", Icono: IconGauge },
-  { clave: "facturacion", label: "Facturación de llenado", Icono: IconReceipt },
-  { clave: "correos_semanales", label: "Correos semanales", Icono: IconMail },
-  { clave: "solicitudes_almacen", label: "Solicitar códigos a almacén", Icono: IconPackage },
-  { clave: "catalogo_codigo", label: "Código", Icono: IconEdit },
-  { clave: "catalogo_regulador", label: "Regulador", Icono: IconWrench },
-  { clave: "catalogo_tanque", label: "Tanque", Icono: IconTank },
+  { clave: "equipos_clientes", label: "App Equipos de clientes", Icono: IconUsers },
 ];
 
 function iniciales(nombre) {
@@ -112,7 +117,13 @@ export default async function FichaUsuarioPage({ params }) {
         .then((r) => (r.error ? { count: 0 } : r)),
     ]);
 
-  const rolLabel = perfil.es_titular ? "Titular" : perfil.is_admin ? "Administrador" : "Usuario";
+  const rolLabel = perfil.es_titular
+    ? "Titular"
+    : permisos.rol_operativo
+    ? "Operativo"
+    : perfil.is_admin
+    ? "Administrador"
+    : "Usuario";
   const permisosActivos = perfil.es_titular
     ? []
     : PERMISOS_LABELS.filter((p) => permisos[p.clave]);

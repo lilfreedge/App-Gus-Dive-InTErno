@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import CatalogoTabs from "@/components/CatalogoTabs";
@@ -12,7 +12,7 @@ import ListaReguladores from "./lista-client";
 // solo Titular inactiva/reactiva.
 export default async function CatalogoReguladoresPage() {
   const supabase = createClient();
-  const { profile } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, "catalogo");
   const puedeAdministrar = tieneAcceso(profile, "catalogo_regulador");
   const esTitular = !!profile?.es_titular;
 

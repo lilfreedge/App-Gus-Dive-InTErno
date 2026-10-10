@@ -1,17 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import { hoyLocalISO } from "@/lib/fechas";
+import MesAnioSelector, { mesAnioCompleto } from "@/components/MesAnioSelector";
 
 export default function EditarPruebaHidrostaticaForm({ registro, tanques }) {
   const router = useRouter();
   const supabase = createClient();
 
   const [tanqueId, setTanqueId] = useState(registro.tanque_id || "");
-  const [fecha, setFecha] = useState(registro.fecha_prueba || "");
+  // Solo mes y año (V30) -- "aaaa-mm"; se guarda como el día 1 del mes.
+  const [fecha, setFecha] = useState((registro.fecha_prueba || "").slice(0, 7));
+  const [anioActual, setAnioActual] = useState("");
+  useEffect(() => setAnioActual(hoyLocalISO().slice(0, 4)), []);
   const [resultado, setResultado] = useState(registro.resultado || "Aprobado");
   const [nota, setNota] = useState(registro.nota || "");
   const [error, setError] = useState("");
@@ -25,11 +29,11 @@ export default function EditarPruebaHidrostaticaForm({ registro, tanques }) {
       setError("Selecciona un tanque.");
       return;
     }
-    if (!fecha) {
-      setError("Pon la fecha de la prueba.");
+    if (!mesAnioCompleto(fecha)) {
+      setError("Pon el mes y el año de la prueba.");
       return;
     }
-    if (fecha > hoyLocalISO()) {
+    if (fecha > hoyLocalISO().slice(0, 7)) {
       setError("La fecha de la prueba no puede ser en el futuro.");
       return;
     }
@@ -41,7 +45,7 @@ export default function EditarPruebaHidrostaticaForm({ registro, tanques }) {
     const cambios = {
       tanque_id: tanqueId,
       tanque_codigo_snapshot: tanque?.codigo || registro.tanque_codigo_snapshot,
-      fecha_prueba: fecha,
+      fecha_prueba: `${fecha}-01`,
       resultado,
       nota: nota.trim() || null,
     };
@@ -82,8 +86,8 @@ export default function EditarPruebaHidrostaticaForm({ registro, tanques }) {
         ))}
       </select>
 
-      <label htmlFor="fecha">Fecha de la prueba</label>
-      <input id="fecha" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+      <label htmlFor="fecha">Fecha de la prueba (mes y año)</label>
+      <MesAnioSelector id="fecha" valor={fecha} anioActual={anioActual} onChange={setFecha} />
 
       <label>Resultado</label>
       <div className="radio-pills">

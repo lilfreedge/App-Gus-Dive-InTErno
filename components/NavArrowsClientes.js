@@ -9,19 +9,20 @@
 // -- igual que en App Interno, las flechas usan el orden fijo de las
 // secciones, no el orden personalizado con drag & drop (item 4).
 import { useRouter, usePathname } from "next/navigation";
-import { NAV_SECTIONS_CLIENTES } from "@/lib/nav-clientes";
+import { NAV_SECTIONS_CLIENTES, puedeVerSeccionClientes } from "@/lib/nav-clientes";
 import { IconArrowLeft, IconArrowRight } from "./icons";
 
-export default function NavArrowsClientes() {
+export default function NavArrowsClientes({ esTitular, permisos }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const idx = NAV_SECTIONS_CLIENTES.findIndex((s) =>
+  const secciones = NAV_SECTIONS_CLIENTES.filter((s) => puedeVerSeccionClientes(s, { esTitular, permisos }));
+  const idx = secciones.findIndex((s) =>
     s.href === "/app-clientes" ? pathname === "/app-clientes" : pathname.startsWith(s.href)
   );
 
-  const prev = idx > 0 ? NAV_SECTIONS_CLIENTES[idx - 1] : null;
-  const next = idx >= 0 && idx < NAV_SECTIONS_CLIENTES.length - 1 ? NAV_SECTIONS_CLIENTES[idx + 1] : null;
+  const prev = idx > 0 ? secciones[idx - 1] : null;
+  const next = idx >= 0 && idx < secciones.length - 1 ? secciones[idx + 1] : null;
 
   return (
     <div className="nav-arrows">

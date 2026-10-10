@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevoTanqueForm from "./form-client";
@@ -9,7 +9,7 @@ import NuevoTanqueForm from "./form-client";
 // granular catalogo_tanque (el Titular siempre tiene acceso).
 export default async function NuevoTanquePage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "catalogo_tanque");
+  await requireInterno(supabase, "catalogo_tanque");
 
   return (
     <div>

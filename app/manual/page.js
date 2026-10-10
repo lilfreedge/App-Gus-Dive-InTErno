@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import ManualClient from "./manual-client";
@@ -17,7 +17,7 @@ import ManualClient from "./manual-client";
 // manual-client.js pueda mostrarlos como acordeón con buscador.
 export default async function ManualPage() {
   const supabase = createClient();
-  const { profile } = await requirePermiso(supabase, "manual");
+  const { profile } = await requireInterno(supabase, "manual");
 
   const esTitular = !!profile?.es_titular;
   const esAdmin = !!profile?.is_admin;
@@ -240,7 +240,7 @@ export default async function ManualPage() {
   if (esTitular || permisos.catalogo_codigo) {
     topics.push({
       key: "catalogo-codigo",
-      title: "Agregar códigos al catálogo",
+      title: "Registrar códigos en la base de datos",
       searchText: "agregar códigos catálogo descripción salida",
       body: (
         <div className="card">
@@ -315,17 +315,26 @@ export default async function ManualPage() {
   if (verRolYPermisos) {
     topics.push({
       key: "admin-rol",
-      title: "Dar (o quitar) el rol de Administrador",
+      title: "Cambiar el rol de una persona (Usuario, Administrador u Operativo)",
       searchText:
-        "dar quitar rol administrador ajustes administración usuario titular",
+        "dar quitar rol administrador operativo ajustes administración usuario titular llenados",
       body: (
-        <div className="card">
-          Ajustes → Administración. Ahí eliges &quot;Administrador&quot;
-          o &quot;Usuario&quot; para cada persona con el desplegable de
-          la columna &quot;Rol&quot;. El Titular no se puede cambiar ni
-          asignar desde ahí — solo el Titular lo es, y nadie se lo puede
-          quitar.
-        </div>
+        <>
+          <div className="card">
+            Ajustes → Administración → Usuarios y permisos. Toca a la
+            persona y elige su rol en &quot;Rol&quot;:
+            &quot;Usuario&quot;, &quot;Administrador&quot; u
+            &quot;Operativo&quot;. El Titular no se puede cambiar ni
+            asignar desde ahí — solo el Titular lo es, y nadie se lo puede
+            quitar.
+          </div>
+          <div className="card">
+            <b>Operativo:</b> solo registra llenados de tanque. Entra
+            directo a una sola pantalla, sin botones en el menú de arriba:
+            el formulario de llenado, el resumen de la semana (lunes a
+            sábado) y los llenados de hoy de todos.
+          </div>
+        </>
       ),
     });
 
@@ -333,15 +342,17 @@ export default async function ManualPage() {
       key: "permisos",
       title: "Qué hace cada permiso",
       searchText:
-        "permisos reportes catálogo historial changelog manual administrador usuario",
+        "permisos salidas equipos llenados movimientos más base de datos reportes historial changelog manual administrador usuario",
       body: (
         <div className="card">
-          Las casillas de Reportes / Base de datos / Historial de
-          anulaciones y ediciones / Changelog / Manual controlan qué secciones ve cada Administrador o Usuario
-          en el menú de arriba. Son aparte del rol: sin importar esas
-          casillas, editar, borrar e inactivar en Salidas, Tanques y
-          Base de datos solo lo ven Titular y Administrador — un Usuario
-          nunca los ve.
+          En Administración → Usuarios y permisos, al tocar a una persona
+          se ven sus permisos por sección, en el mismo orden del menú:
+          Salidas, Equipos, Movimientos, Más y el menú ⚙. Cada sección
+          del menú de arriba solo le sale si tiene al menos un permiso
+          adentro, y cada permiso deja ver esa pantalla y registrar en
+          ella. Son aparte del rol: sin importar esas casillas, editar,
+          anular e inactivar solo lo ven Titular y Administrador. La
+          entrada a cada app se da en Accesos a apps.
         </div>
       ),
     });

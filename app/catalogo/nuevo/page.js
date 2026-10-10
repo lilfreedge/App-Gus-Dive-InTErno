@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevoCodigoForm from "./form-client";
@@ -10,7 +10,7 @@ import NuevoCodigoForm from "./form-client";
 // catalogo_codigo (el Titular siempre tiene acceso).
 export default async function NuevoCodigoPage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "catalogo_codigo");
+  await requireInterno(supabase, "catalogo_codigo");
 
   return (
     <div>

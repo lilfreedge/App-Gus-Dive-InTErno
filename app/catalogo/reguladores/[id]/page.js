@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -11,7 +11,7 @@ import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 // accesos a su historial de mantenimiento y (si hay permiso) a editarlo.
 export default async function FichaReguladorPage({ params }) {
   const supabase = createClient();
-  const { profile } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, "catalogo");
   const puedeAdministrar = tieneAcceso(profile, "catalogo_regulador");
 
   const { data: regulador } = await supabase

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import HistorialClient from "./historial-client";
@@ -12,7 +12,7 @@ import HistorialClient from "./historial-client";
 // mantenimientos no amerita paginación server-side todavía.
 export default async function HistorialCompresoresPage({ searchParams }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "compresores");
+  await requireInterno(supabase, "compresores");
 
   const [{ data: mantenimientos }, { data: compresores }] = await Promise.all([
     supabase.from("mantenimientos_compresores_con_nombre").select("*").limit(500),

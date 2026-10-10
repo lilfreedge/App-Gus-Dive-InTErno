@@ -188,7 +188,7 @@ export default function SelectorCliente({ clientes, valor, onChange, onClienteCr
               onMouseDown={abrirCrear}
               style={{ fontWeight: 700, color: "var(--azul-claro)" }}
             >
-              + Agregar {texto.trim() ? `"${texto.trim()}"` : ""} como cliente nuevo
+              + Registrar {texto.trim() ? `"${texto.trim()}"` : ""} como cliente nuevo
             </div>
           )}
         </div>

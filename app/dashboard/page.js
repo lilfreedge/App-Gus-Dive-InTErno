@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { getProfileYUser, tieneAcceso, esOperativo } from "@/lib/roles";
+import { seccionesVisibles } from "@/lib/nav";
 import { obtenerPendientesInterno } from "@/lib/notificaciones";
 import AppHeader from "@/components/AppHeader";
-import { IconPackage, IconTank, IconAlert } from "@/components/icons";
+import { IconPackage, IconTank, IconAlert, IconLock } from "@/components/icons";
+import InicioOperativo from "./operativo";
 
 const ETIQUETAS_PERIODO = {
   semana: "esta semana",
@@ -26,6 +28,27 @@ export default async function DashboardPage({ searchParams }) {
   if (!tieneAcceso(profile, "acceso_app_interno")) {
     redirect("/espacio");
   }
+  // Rol Operativo (V30, pedido explícito: "En inicio reestructúralo
+  // completo y hazlo dedicado para ese rol... solo tendrá una ventana"):
+  // su Inicio es otra pantalla, la única que tiene.
+  if (esOperativo(profile)) {
+    return <InicioOperativo profile={profile} />;
+  }
+
+  // V30 (pedido explícito: "si alguien no tiene permiso de registrar
+  // salida ni tanque, que no aparezcan esos botones en inicio. Y si
+  // alguien solo tiene 1 permiso, que solo salga ese, centralizado"):
+  // botones, números, "Artículos más sacados" y la actividad reciente
+  // salen según lo que cada quien puede ver.
+  const puedeSalidas = tieneAcceso(profile, "registrar_salida");
+  const puedeRegistrarLlenado = tieneAcceso(profile, "registrar_llenado");
+  const puedeVerLlenados = puedeRegistrarLlenado || tieneAcceso(profile, "facturacion");
+  const puedeVerTodoMovimientos = tieneAcceso(profile, "movimientos");
+  // Sin ninguna sección habilitada (solo "Inicio" en el menú de arriba):
+  // en vez de una pantalla vacía, un aviso.
+  const sinSecciones =
+    seccionesVisibles({ esTitular: !!profile?.es_titular, permisos: profile?.permisos || {} }).length <= 1;
+
   // "Ver movimientos" (destino de las tarjetas de "Artículos más sacados")
   // es solo para Titular/Administrador — mismo gate que en Catálogo.
   const puedeVerMovimientos = !!(profile?.is_admin || profile?.es_titular);
@@ -41,18 +64,22 @@ export default async function DashboardPage({ searchParams }) {
 
   const [salidasRes, tanquesRes, ultimasSalidas, ultimosTanques, pendientes] =
     await Promise.all([
-      supabase
-        .from("salidas")
-        .select("articulo, articulo_id, cantidad")
-        .gte("created_at", desde.toISOString())
-        .limit(1000),
-      supabase
-        .from("llenados_tanques")
-        .select("cantidad")
-        .gte("created_at", desde.toISOString())
-        .limit(1000),
-      supabase.from("salidas_con_nombre").select("*").limit(8),
-      supabase.from("llenados_con_nombre").select("*").limit(8),
+      puedeSalidas
+        ? supabase
+            .from("salidas")
+            .select("articulo, articulo_id, cantidad")
+            .gte("created_at", desde.toISOString())
+            .limit(1000)
+        : Promise.resolve({ data: [] }),
+      puedeVerLlenados
+        ? supabase
+            .from("llenados_tanques")
+            .select("cantidad")
+            .gte("created_at", desde.toISOString())
+            .limit(1000)
+        : Promise.resolve({ data: [] }),
+      puedeSalidas ? supabase.from("salidas_con_nombre").select("*").limit(8) : Promise.resolve({ data: [] }),
+      puedeVerLlenados ? supabase.from("llenados_con_nombre").select("*").limit(8) : Promise.resolve({ data: [] }),
       // Notificaciones operativas (pendiente por facturar, inspecciones/
       // mantenimientos vencidos): sin importar el periodo (semana/mes/
       // año) del dashboard -- son alertas del momento, no estadísticas del
@@ -98,6 +125,21 @@ export default async function DashboardPage({ searchParams }) {
       <AppHeader />
 
       <div className="page">
+        {sinSecciones && (
+          <div className="card" style={{ textAlign: "center", padding: "28px 18px" }}>
+            <div style={{ color: "var(--texto-suave)", marginBottom: 8 }}>
+              <IconLock size={26} />
+            </div>
+            <div style={{ fontWeight: 700, color: "var(--azul-texto)", marginBottom: 4 }}>
+              Todavía no tienes secciones habilitadas
+            </div>
+            <div className="hint-text" style={{ marginTop: 0 }}>
+              Pídele al Titular que te dé acceso a lo que vas a usar.
+            </div>
+          </div>
+        )}
+
+        {(puedeSalidas || puedeVerLlenados) && (
         <div className="period-toggle">
           {["semana", "mes", "anio"].map((p) => (
             <Link
@@ -109,6 +151,7 @@ export default async function DashboardPage({ searchParams }) {
             </Link>
           ))}
         </div>
+        )}
 
         {puedeFacturar && totalPendientesFacturar > 0 && (
           <Link
@@ -170,27 +213,50 @@ export default async function DashboardPage({ searchParams }) {
           </Link>
         )}
 
-        <div className="stat-row">
-          <div className="stat-card">
-            <div className="stat-value">{totalSalidas}</div>
-            <div className="stat-label">Salidas {ETIQUETAS_PERIODO[periodo]}</div>
+        {(puedeSalidas || puedeVerLlenados) && (
+          <div
+            className="stat-row"
+            style={puedeSalidas && puedeVerLlenados ? undefined : { gridTemplateColumns: "1fr" }}
+          >
+            {puedeSalidas && (
+              <div className="stat-card">
+                <div className="stat-value">{totalSalidas}</div>
+                <div className="stat-label">Salidas {ETIQUETAS_PERIODO[periodo]}</div>
+              </div>
+            )}
+            {puedeVerLlenados && (
+              <div className="stat-card">
+                <div className="stat-value">{totalTanques}</div>
+                <div className="stat-label">Tanques llenados {ETIQUETAS_PERIODO[periodo]}</div>
+              </div>
+            )}
           </div>
-          <div className="stat-card">
-            <div className="stat-value">{totalTanques}</div>
-            <div className="stat-label">Tanques llenados {ETIQUETAS_PERIODO[periodo]}</div>
-          </div>
-        </div>
+        )}
 
-        <div className="grid-actions">
-          <Link href="/salidas/nueva" className="action-card">
-            <IconPackage size={26} />
-            Registrar salida de pieza
-          </Link>
-          <Link href="/tanques/nuevo" className="action-card">
-            <IconTank size={26} />
-            Registrar llenado de tanque
-          </Link>
-        </div>
+        {/* Un solo botón: centrado, del mismo ancho que cuando son dos. */}
+        {(puedeSalidas || puedeRegistrarLlenado) && (
+          <div
+            className="grid-actions"
+            style={
+              puedeSalidas && puedeRegistrarLlenado
+                ? undefined
+                : { gridTemplateColumns: "minmax(0, calc(50% - 6px))", justifyContent: "center" }
+            }
+          >
+            {puedeSalidas && (
+              <Link href="/salidas/nueva" className="action-card">
+                <IconPackage size={26} />
+                Registrar salida de pieza
+              </Link>
+            )}
+            {puedeRegistrarLlenado && (
+              <Link href="/tanques/nuevo" className="action-card">
+                <IconTank size={26} />
+                Registrar llenado de tanque
+              </Link>
+            )}
+          </div>
+        )}
 
         {topArticulos.length > 0 && (
           <>
@@ -229,9 +295,11 @@ export default async function DashboardPage({ searchParams }) {
           </>
         )}
 
+        {(puedeSalidas || puedeVerLlenados) && (
+        <>
         <div className="section-title">
           Actividad reciente
-          <Link href="/movimientos">Ver todo</Link>
+          {puedeVerTodoMovimientos && <Link href="/movimientos">Ver todo</Link>}
         </div>
         <div className="card">
           {actividad.length > 0 ? (
@@ -256,6 +324,8 @@ export default async function DashboardPage({ searchParams }) {
             <div className="empty">Aún no hay actividad registrada.</div>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );

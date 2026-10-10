@@ -37,10 +37,11 @@ export default async function HistorialOrdenesPage() {
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
-            { label: "Listado de órdenes" },
+            { label: "Historial de órdenes" },
           ]}
         />
-        <h1 className="page-title">Listado de órdenes</h1>
+        {/* V30: "Listado de órdenes" -> "Historial de órdenes" (pedido explícito). */}
+        <h1 className="page-title">Historial de órdenes</h1>
 
         <HistorialClient ordenes={ordenes || []} clientes={clientes || []} />
       </div>

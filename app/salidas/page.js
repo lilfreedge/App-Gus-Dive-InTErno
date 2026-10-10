@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import SalidasList from "@/components/SalidasList";
 
 export default async function SalidasPage() {
   const supabase = createClient();
-  const { profile } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, "registrar_salida");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
 
   const { data: salidas } = await supabase

@@ -69,9 +69,12 @@ export default function TopbarClient({
     router.refresh();
   }
 
-  const rolLabel = esTitular ? "Titular" : isAdmin ? "Administrador" : "Usuario";
-  const verChangelog = esTitular || permisos?.changelog;
-  const verManual = esTitular || permisos?.manual;
+  // Operativo (V30): una sola pantalla -- sin botones en el menú de
+  // arriba y, en el menú de ajustes, solo Mi Perfil y Cerrar sesión.
+  const operativo = !esTitular && !!permisos?.rol_operativo;
+  const rolLabel = esTitular ? "Titular" : operativo ? "Operativo" : isAdmin ? "Administrador" : "Usuario";
+  const verChangelog = !operativo && (esTitular || permisos?.changelog);
+  const verManual = !operativo && (esTitular || permisos?.manual);
 
   return (
     <div className="topbar">
@@ -134,9 +137,11 @@ export default function TopbarClient({
                 </Link>
               )}
               <hr />
-              <Link href="/espacio" className="settings-menu-link" onClick={() => setOpen(false)}>
-                <IconShuffle size={15} /> Cambiar de app
-              </Link>
+              {!operativo && (
+                <Link href="/espacio" className="settings-menu-link" onClick={() => setOpen(false)}>
+                  <IconShuffle size={15} /> Cambiar de app
+                </Link>
+              )}
               <button className="settings-menu-link settings-menu-danger" onClick={salir}>
                 <IconLogout size={15} /> Cerrar sesión
               </button>
@@ -145,6 +150,7 @@ export default function TopbarClient({
         </div>
       </div>
       <div className="topbar-appname">App Interno</div>
+      {!operativo && (
       <nav className="topnav" onClickCapture={onNavClickCapture}>
         {links.map((l) => {
           const fijo = SECCIONES_FIJAS.includes(l.href);
@@ -174,6 +180,7 @@ export default function TopbarClient({
           );
         })}
       </nav>
+      )}
     </div>
   );
 }

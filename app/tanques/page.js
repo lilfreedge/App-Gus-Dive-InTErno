@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import LlenadosList from "@/components/LlenadosList";
 
 export default async function TanquesPage() {
   const supabase = createClient();
-  const { profile } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, ["registrar_llenado", "facturacion"]);
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
   const puedeRegistrar = tieneAcceso(profile, "registrar_llenado");
   const puedeFacturar = tieneAcceso(profile, "facturacion");

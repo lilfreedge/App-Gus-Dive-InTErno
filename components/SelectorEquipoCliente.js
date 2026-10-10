@@ -292,7 +292,7 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
           ))}
           {puedeAgregarEquipo && (
             <div onMouseDown={abrirCrear} style={{ fontWeight: 700, color: "var(--azul-claro)" }}>
-              + Agregar equipo nuevo para este cliente
+              + Registrar equipo nuevo para este cliente
             </div>
           )}
         </div>

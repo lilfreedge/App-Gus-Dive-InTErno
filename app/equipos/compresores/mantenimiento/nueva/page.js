@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { getProfileYUser, tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevoMantenimientoCompresorForm from "./form-client";
 
 export default async function NuevoMantenimientoCompresorPage({ searchParams }) {
   const supabase = createClient();
+  await requireInterno(supabase, "compresores");
   const {
     data: { user },
   } = await supabase.auth.getUser();

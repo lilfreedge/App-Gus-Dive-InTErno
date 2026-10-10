@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -9,7 +9,7 @@ import ListaArticulos from "./lista-client";
 
 export default async function CatalogoPage() {
   const supabase = createClient();
-  const { profile } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, "catalogo");
   // Editar/agregar: permiso granular catalogo_codigo (el Titular siempre
   // tiene acceso vía tieneAcceso). Inactivar: solo Titular (ver
   // lista-client.js, más abajo se pasa esTitular aparte).

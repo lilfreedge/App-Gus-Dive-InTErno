@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { redirect } from "next/navigation";
+import { getProfileYUser, tieneAcceso, esOperativo } from "@/lib/roles";
 import { obtenerPendientesInterno, obtenerPendientesClientes } from "@/lib/notificaciones";
 import HeaderSimple from "@/components/HeaderSimple";
 import { IconUsers, IconWrench, IconDivingMask } from "@/components/icons";
@@ -16,6 +17,8 @@ import { IconUsers, IconWrench, IconDivingMask } from "@/components/icons";
 export default async function EspacioPage() {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
+  // Operativo (V30): no elige app -- entra directo a su única pantalla.
+  if (esOperativo(profile)) redirect("/dashboard");
   const nombreCompleto = profile?.full_name || "";
   const nombre = nombreCompleto.split(" ")[0] || "";
 

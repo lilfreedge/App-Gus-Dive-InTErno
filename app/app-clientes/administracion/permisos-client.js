@@ -3,7 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconEdit, IconTank, IconPlus, IconCatalog, IconBook, IconHistory, IconReport, IconRefresh, IconUsers, IconCompressor, IconWrench } from "@/components/icons";
+import {
+  IconEdit,
+  IconTank,
+  IconPlus,
+  IconCatalog,
+  IconBook,
+  IconHistory,
+  IconReport,
+  IconRefresh,
+  IconUsers,
+  IconCompressor,
+  IconWrench,
+} from "@/components/icons";
 
 const PERMISOS_DEFAULT = {
   equipos_clientes: false,
@@ -21,259 +33,250 @@ const PERMISOS_DEFAULT = {
   equipos_clientes_informe_mantenimiento: false,
   equipos_clientes_bitacora_movimientos: false,
   equipos_clientes_bitacora_orden: false,
-  // Item 6 de la ronda de feedback sobre v40 (27-sep-2026, pedido
-  // explícito: "permite que el hold se pueda editar, por si algún día es
-  // necesario. pon el permiso en administración") -- exclusivo de
-  // Administradores, mismo patrón que editar orden/cliente/equipo.
   equipos_clientes_editar_hold: false,
-  // "Listado de clientes" y "Listado de órdenes" (28-sep-2026, pedido
-  // explícito: "AGREGAR AQUI: Listado de clientes, listado de ordenes")
-  // -- antes se veían con solo tener acceso base a la app.
   equipos_clientes_listado_clientes: false,
   equipos_clientes_listado_ordenes: false,
-  // Agregar/editar Códigos a cobrar, separados (feedback en vivo,
-  // 30-sep-2026, pedido explícito: "ponme para darle acceso para agregar
-  // codigos en base de datos>codigos a cobrar" en Registrar, y "ponme
-  // acceso para poder dar acceso a editar los codigos a cobrar" en
-  // Administradores) -- antes los dos vivían atrás de un solo permiso,
-  // equipos_clientes_catalogo (que además es el que deja VER la pantalla
-  // de Base de datos). Ahora: verla sigue siendo equipos_clientes_catalogo;
-  // agregar un código nuevo es este permiso, en "Registrar"; y editar/
-  // borrar uno ya existente pasa a ser exclusivo de Administradores.
   equipos_clientes_agregar_codigo: false,
   equipos_clientes_editar_codigo: false,
+  // V30 (migration_54.sql).
+  equipos_clientes_registrar_servicio: false,
+  equipos_clientes_editar_servicio: false,
+  equipos_clientes_contactar: false,
 };
 
-// Reorganizado en tablas apiladas por grupo (feedback sobre v40, pedido
-// explícito: "pon los accesos más como están en app interno, que se ven
-// mejor distribuido" -- fotos de referencia: app/admin/usuarios/
-// lista-client.js) -- antes era una sola tabla ancha de 9 columnas que se
-// cortaba en pantallas angostas. Mismo patrón que GRUPOS de esa pantalla:
-// "General" para accesos de solo consulta/gestión, "Registrar" para
-// acciones de creación/actualización. Los íconos se alinearon con los
-// que usa App Interno para el mismo concepto (Historial, Reportes,
-// Catálogo/Base de datos).
-// Reorganizado de nuevo (28-sep-2026, feedback en vivo, item 17: "mover
-// Historial de anulaciones y ediciones y Bitácora movimientos en órdenes a
-// la seccion de 'administradores'") -- las dos se mudaron de "General" a
-// la tabla exclusiva de Administradores (ver COLUMNAS_ADMIN más abajo):
-// ambas dejan ver el detalle de ediciones/movimientos de TODAS las
-// órdenes y equipos, más sensible que el resto de "General".
-const GRUPOS = [
+// V30 -- Permisos de App Equipos de clientes por usuario, igual que en App
+// Interno (pedido explícito: "1. ok si. hazme lo mismo en el otro app").
+// Antes eran tablas anchas (General / Registrar / Administradores). Ahora:
+// lista de personas agrupada por rol; al tocar una, sus permisos por
+// sección. Pedidos de las notas del 8-oct-2026 que se reflejan aquí:
+// - "junta los permisos que aparecen en 'mas'... una sección donde
+//   aparezca 'mas'" -> sección "Más", con todo lo que sale en Más;
+// - "Registrar servicio en base de datos" (nuevo) en Registrar, y "Editar
+//   servicio" (nuevo, "queda solo para administradores y yo") en
+//   Administradores;
+// - nombres: "Agregar código/equipo/cliente" -> "Registrar código en base
+//   de datos" / "Registrar equipo de cliente" / "Registrar cliente";
+//   "Listado de órdenes" -> "Historial de órdenes".
+// Las claves de permiso NO cambiaron (equipos_clientes_agregar_*), solo
+// los nombres que se ven. `soloAdmin`: igual que antes, solo se le puede
+// dar a un Administrador.
+const SECCIONES = [
   {
     titulo: "General",
-    columnas: [
+    items: [
       { clave: "equipos_clientes_listado_clientes", label: "Listado de clientes", Icono: IconUsers },
-      { clave: "equipos_clientes_listado_ordenes", label: "Listado de órdenes", Icono: IconReport },
-      { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
-      // Etiqueta separada de "Informe de mantenimiento" (feedback en vivo,
-      // 29-sep-2026, pedido explícito: "separa los accesos reporte e
-      // informe, que esten por separado") -- ya eran 2 permisos distintos
-      // (equipos_clientes_reportes / equipos_clientes_informe_mantenimiento,
-      // cada uno con su propio checkbox), pero la etiqueta de este primero
-      // decía "Reportes e Informes", como si diera acceso a los informes
-      // también -- confuso al lado del checkbox de "Informe de
-      // mantenimiento", que es el que de verdad controla eso. Ahora dice
-      // solo "Reportes".
-      { clave: "equipos_clientes_reportes", label: "Reportes", Icono: IconReport },
       { clave: "equipos_clientes_informe_mantenimiento", label: "Informe de mantenimiento", Icono: IconWrench },
     ],
   },
   {
     titulo: "Registrar",
-    columnas: [
+    items: [
       { clave: "equipos_clientes_registrar", label: "Registrar orden", Icono: IconEdit },
-      { clave: "equipos_clientes_agregar_equipo", label: "Agregar equipo", Icono: IconTank },
-      { clave: "equipos_clientes_agregar_cliente", label: "Agregar cliente", Icono: IconPlus },
       { clave: "equipos_clientes_actualizar_estado", label: "Actualizar estado de orden", Icono: IconRefresh },
-      { clave: "equipos_clientes_agregar_codigo", label: "Agregar código", Icono: IconCatalog },
+      { clave: "equipos_clientes_agregar_cliente", label: "Registrar cliente", Icono: IconPlus },
+      { clave: "equipos_clientes_agregar_equipo", label: "Registrar equipo de cliente", Icono: IconTank },
+      { clave: "equipos_clientes_agregar_codigo", label: "Registrar código en base de datos", Icono: IconCatalog },
+      { clave: "equipos_clientes_registrar_servicio", label: "Registrar servicio en base de datos", Icono: IconWrench },
+    ],
+  },
+  {
+    titulo: "Más",
+    items: [
+      { clave: "equipos_clientes_listado_ordenes", label: "Historial de órdenes", Icono: IconReport },
+      { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
+      { clave: "equipos_clientes_reportes", label: "Reportes e Informes", Icono: IconReport },
+      { clave: "equipos_clientes_contactar", label: "Clientes por contactar", Icono: IconUsers },
+      { clave: "equipos_clientes_historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory, soloAdmin: true },
+      { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos en órdenes", Icono: IconBook, soloAdmin: true },
+    ],
+  },
+  {
+    titulo: "Administradores",
+    soloAdmin: true,
+    items: [
+      { clave: "equipos_clientes_editar_orden", label: "Editar orden", Icono: IconEdit },
+      { clave: "equipos_clientes_editar_hold", label: "Editar Hold", Icono: IconBook },
+      { clave: "equipos_clientes_bitacora_orden", label: "Ver bitácora de la orden", Icono: IconBook },
+      { clave: "equipos_clientes_editar_cliente", label: "Editar cliente", Icono: IconUsers },
+      { clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit },
+      { clave: "equipos_clientes_editar_codigo", label: "Editar código", Icono: IconCatalog },
+      { clave: "equipos_clientes_editar_servicio", label: "Editar servicio", Icono: IconWrench },
+      {
+        clave: "equipos_clientes_editar_mantenimiento_compresor",
+        label: "Editar mantenimiento de compresor",
+        Icono: IconCompressor,
+      },
     ],
   },
 ];
 
-// Tabla "Administradores" (solo para quienes ya tienen ese rol) --
-// acciones más sensibles, que además de venir con el permiso puntual
-// requieren que el usuario sea Administrador. "Editar hold" se sumó antes
-// (feedback sobre v40); "Historial de anulaciones y ediciones" y
-// "Bitácora movimientos en órdenes" se sumaron acá el 28-sep-2026 (item 17,
-// ver nota arriba). "Ver bitácora de la orden" se sumó el 5-oct-2026
-// (pedido explícito, confirmado exclusivo de Administrador/Titular, igual
-// que sus dos vecinas de arriba -- antes estaba hardcodeado sin checkbox
-// en ningún lado, ver migration_49.sql).
-const COLUMNAS_ADMIN = [
-  { clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit },
-  { clave: "equipos_clientes_editar_cliente", label: "Editar cliente", Icono: IconUsers },
-  { clave: "equipos_clientes_editar_orden", label: "Editar orden", Icono: IconEdit },
-  { clave: "equipos_clientes_editar_mantenimiento_compresor", label: "Editar mantenimiento de compresor", Icono: IconCompressor },
-  { clave: "equipos_clientes_bitacora_orden", label: "Ver bitácora de la orden", Icono: IconBook },
-  { clave: "equipos_clientes_editar_hold", label: "Editar Hold", Icono: IconBook },
-  { clave: "equipos_clientes_historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory },
-  { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos en órdenes", Icono: IconBook },
-  { clave: "equipos_clientes_editar_codigo", label: "Editar código", Icono: IconCatalog },
+const CLAVES = SECCIONES.flatMap((s) => s.items.map((i) => i.clave));
+
+function rolDe(p) {
+  if (p.es_titular) return "titular";
+  if (p.permisos?.rol_operativo) return "operativo";
+  if (p.is_admin) return "admin";
+  return "usuario";
+}
+
+const GRUPOS_ROL = [
+  { rol: "titular", titulo: "Titular" },
+  { rol: "admin", titulo: "Administradores" },
+  { rol: "usuario", titulo: "Usuarios" },
+  { rol: "operativo", titulo: "Operativos (App Interno)" },
 ];
 
 export default function PermisosClientes({ perfiles, miId }) {
   const router = useRouter();
   const supabase = createClient();
   const [loadingId, setLoadingId] = useState(null);
+  const [abierto, setAbierto] = useState(null);
+  const [error, setError] = useState("");
 
-  async function cambiarRol(perfil, esAdmin) {
+  async function guardar(perfil, cambios) {
     setLoadingId(perfil.id);
-    await supabase.from("profiles").update({ is_admin: esAdmin }).eq("id", perfil.id);
+    setError("");
+    const { error: err } = await supabase.from("profiles").update(cambios).eq("id", perfil.id);
     setLoadingId(null);
+    if (err) setError(err.message || "No se pudo guardar.");
     router.refresh();
   }
 
-  async function togglePermiso(perfil, clave, valor) {
-    const permisos = { ...PERMISOS_DEFAULT, ...(perfil.permisos || {}), [clave]: valor };
-    setLoadingId(perfil.id);
-    await supabase.from("profiles").update({ permisos }).eq("id", perfil.id);
-    setLoadingId(null);
-    router.refresh();
+  function permisosDe(perfil) {
+    return { ...PERMISOS_DEFAULT, ...(perfil.permisos || {}) };
   }
-
-  const administradores = perfiles.filter((p) => p.is_admin && !p.es_titular);
 
   return (
     <div>
-      {GRUPOS.map((grupo, i) => (
-        <div key={grupo.titulo} style={{ marginTop: i === 0 ? 0 : 24 }}>
-          <div className="section-title" style={{ marginTop: 0 }}>
-            {grupo.titulo}
-          </div>
-          <div style={{ overflowX: "auto" }}>
-            <table className="perm-table">
-              <thead>
-                <tr>
-                  <th>Usuario</th>
-                  {i === 0 && <th>Rol</th>}
-                  {grupo.columnas.map((c) => (
-                    <th key={c.clave} title={c.label}>
-                      <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
-                      {c.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {perfiles.map((p) => {
-                  if (p.es_titular) {
-                    return (
-                      <tr key={p.id}>
-                        <td>
-                          {p.full_name}
-                          <span className="role-tag role-tag-titular">Titular</span>
-                        </td>
-                        {i === 0 && (
-                          <td>
-                            <span className="role-tag role-tag-titular">Titular</span>
-                          </td>
-                        )}
-                        {grupo.columnas.map((c) => (
-                          <td key={c.clave}>—</td>
-                        ))}
-                      </tr>
-                    );
-                  }
+      {error && <div className="error-box" style={{ marginTop: 0, marginBottom: 12 }}>{error}</div>}
+      <p className="hint-text" style={{ marginTop: 0, marginBottom: 12 }}>
+        Toca a una persona para ver y cambiar su rol y sus permisos en esta app. Los cambios se guardan al momento.
+      </p>
 
-                  const permisos = { ...PERMISOS_DEFAULT, ...(p.permisos || {}) };
-                  return (
-                    <tr key={p.id}>
-                      <td>
+      {GRUPOS_ROL.map(({ rol, titulo }) => {
+        const gente = perfiles.filter((p) => rolDe(p) === rol);
+        if (gente.length === 0) return null;
+        return (
+          <div key={rol} style={{ marginTop: 14 }}>
+            <div className="section-title" style={{ marginTop: 0, marginBottom: 8 }}>
+              {titulo}
+            </div>
+            <div className="card" style={{ padding: "4px 16px" }}>
+              {gente.map((p) => {
+                const permisos = permisosDe(p);
+                const esAdmin = rol === "admin";
+                const cuantos = CLAVES.filter((c) => permisos[c]).length;
+                const estaAbierto = abierto === p.id;
+                const cerrado = rol === "titular" || rol === "operativo";
+                const conAcceso = rol === "titular" || !!permisos.equipos_clientes;
+                return (
+                  <div key={p.id} className="list-item">
+                    <div
+                      className="list-item-top"
+                      onClick={cerrado ? undefined : () => setAbierto(estaAbierto ? null : p.id)}
+                      style={{ cursor: cerrado ? "default" : "pointer" }}
+                    >
+                      <span className="list-item-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         {p.full_name}
                         {p.id === miId && <span className="tag-tu">Tú</span>}
-                      </td>
-                      {i === 0 && (
-                        <td>
-                          <select
-                            value={p.is_admin ? "admin" : "usuario"}
-                            disabled={loadingId === p.id}
-                            onChange={(e) => cambiarRol(p, e.target.value === "admin")}
-                          >
-                            <option value="admin">Administrador</option>
-                            <option value="usuario">Usuario</option>
-                          </select>
-                        </td>
-                      )}
-                      {grupo.columnas.map((c) => (
-                        <td key={c.clave}>
-                          <input
-                            type="checkbox"
-                            checked={!!permisos[c.clave]}
-                            disabled={loadingId === p.id}
-                            onChange={(e) => togglePermiso(p, c.clave, e.target.checked)}
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ))}
+                      </span>
+                      <span className="hint-text" style={{ margin: 0, whiteSpace: "nowrap" }}>
+                        {rol === "titular"
+                          ? "Acceso a todo"
+                          : rol === "operativo"
+                          ? "No usa esta app"
+                          : !conAcceso
+                          ? "Sin acceso a esta app"
+                          : cuantos === 0
+                          ? "Sin permisos"
+                          : `${cuantos} permiso${cuantos === 1 ? "" : "s"}`}
+                        {!cerrado && <span style={{ marginLeft: 6 }}>{estaAbierto ? "▴" : "▾"}</span>}
+                      </span>
+                    </div>
 
-      <div style={{ marginTop: 24 }}>
-        <div className="section-title" style={{ marginTop: 0 }}>
-          Administradores
-        </div>
-        {administradores.length === 0 ? (
-          <div className="empty">Todavía no hay nadie con el rol Administrador.</div>
-        ) : (
-          <>
-            {/* Las tablas General/Registrar de arriba ya incluyen a los
-                Administradores (perfiles.map trae a todos, no solo a
-                Usuarios) -- repetirlas acá abajo era mostrar dos veces lo
-                mismo (28-sep-2026, pedido explícito: "en administradores,
-                quitar lo que ya se repite anteriormente"). Esta sección
-                se queda solo con la tabla exclusiva de Administradores
-                (Editar equipo/cliente/orden/mantenimiento de compresor/
-                Hold) -- acciones que de verdad no existen arriba, porque
-                solo un Administrador las puede tener. */}
-            <div style={{ marginTop: 10 }}>
-              <div style={{ overflowX: "auto" }}>
-                <table className="perm-table">
-                  <thead>
-                    <tr>
-                      <th>Administradores</th>
-                      {COLUMNAS_ADMIN.map((c) => (
-                        <th key={c.clave} title={c.label}>
-                          <c.Icono size={15} style={{ display: "block", margin: "0 auto 3px" }} />
-                          {c.label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {administradores.map((p) => {
-                      const permisos = { ...PERMISOS_DEFAULT, ...(p.permisos || {}) };
-                      return (
-                        <tr key={p.id}>
-                          <td>
-                            {p.full_name}
-                            {p.id === miId && <span className="tag-tu">Tú</span>}
-                          </td>
-                          {COLUMNAS_ADMIN.map((c) => (
-                            <td key={c.clave}>
-                              <input
-                                type="checkbox"
-                                checked={!!permisos[c.clave]}
-                                disabled={loadingId === p.id}
-                                onChange={(e) => togglePermiso(p, c.clave, e.target.checked)}
-                              />
-                            </td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                    {estaAbierto && !cerrado && (
+                      <div style={{ marginTop: 10 }}>
+                        {!conAcceso && (
+                          <div className="aviso-box" style={{ marginTop: 0, marginBottom: 10 }}>
+                            Todavía no tiene acceso a esta app: se le da en <b>Accesos a apps</b> (selector de apps).
+                            Puedes dejarle los permisos listos desde ya.
+                          </div>
+                        )}
+                        <label style={{ marginTop: 0 }}>Rol</label>
+                        <select
+                          value={esAdmin ? "admin" : "usuario"}
+                          disabled={loadingId === p.id}
+                          onChange={(e) => guardar(p, { is_admin: e.target.value === "admin" })}
+                        >
+                          <option value="usuario">Usuario</option>
+                          <option value="admin">Administrador</option>
+                        </select>
+
+                        {SECCIONES.map((sec) => (
+                          <div key={sec.titulo}>
+                            <div className="section-title" style={{ marginTop: 16, marginBottom: 2, fontSize: 14 }}>
+                              {sec.titulo}
+                            </div>
+                            {sec.soloAdmin && !esAdmin && (
+                              <div className="hint-text" style={{ marginTop: 0, marginBottom: 4 }}>
+                                Solo se le pueden dar a un Administrador.
+                              </div>
+                            )}
+                            {sec.items.map((it) => {
+                              const bloqueado = (sec.soloAdmin || it.soloAdmin) && !esAdmin;
+                              const activo = !bloqueado && !!permisos[it.clave];
+                              return (
+                                <label
+                                  key={it.clave}
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    gap: 10,
+                                    padding: "9px 0",
+                                    borderBottom: "1px solid var(--borde)",
+                                    margin: 0,
+                                    fontWeight: 500,
+                                    fontSize: 13.5,
+                                    color: bloqueado ? "var(--texto-suave)" : "var(--texto)",
+                                    cursor: bloqueado ? "default" : "pointer",
+                                    opacity: bloqueado ? 0.6 : 1,
+                                  }}
+                                >
+                                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <it.Icono size={15} style={{ color: "var(--texto-suave)", flexShrink: 0 }} />
+                                    <span>
+                                      {it.label}
+                                      {it.soloAdmin && !esAdmin && (
+                                        <span className="hint-text" style={{ display: "block", marginTop: 1 }}>
+                                          Solo Administradores
+                                        </span>
+                                      )}
+                                    </span>
+                                  </span>
+                                  <input
+                                    type="checkbox"
+                                    checked={activo}
+                                    disabled={bloqueado || loadingId === p.id}
+                                    onChange={(e) =>
+                                      guardar(p, { permisos: { ...permisos, [it.clave]: e.target.checked } })
+                                    }
+                                    style={{ width: 18, height: 18, flexShrink: 0 }}
+                                  />
+                                </label>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

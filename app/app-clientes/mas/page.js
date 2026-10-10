@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requirePermiso } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
@@ -29,7 +30,9 @@ import { IconCatalog, IconReport, IconHistory, IconBook, IconWrench } from "@/co
 const OPCIONES = [
   {
     href: "/app-clientes/historial",
-    titulo: "Listado de órdenes",
+    // V30: renombrado (pedido explícito: "Renombrar 'listado de ordenes' a
+    // 'historial de ordenes'") -- la ruta y el permiso siguen iguales.
+    titulo: "Historial de órdenes",
     descripcion: "Todas las órdenes registradas, incluidas las ya entregadas.",
     Icono: IconReport,
     // Permiso granular propio (28-sep-2026, pedido explícito) -- antes se
@@ -116,7 +119,9 @@ const OPCIONES = [
     titulo: "Clientes por contactar",
     descripcion: "Mantenimientos recomendados y clientes que no vienen hace más de 12 meses -- a quién llamar.",
     Icono: IconWrench,
-    permiso: "equipos_clientes_reportes",
+    // V30: permiso propio ("Ponme para dar acceso de esto") -- antes usaba
+    // el de Reportes; migration_54.sql se lo deja a quien ya lo tenía.
+    permiso: "equipos_clientes_contactar",
   },
 ];
 
@@ -129,6 +134,9 @@ export default async function MasClientesPage() {
     return !o.permiso || esTitular || !!profile?.permisos?.[o.permiso];
   };
   const opcionesVisibles = OPCIONES.filter(puedeVer);
+  // V30: sin ninguna opción, "Más" ya no sale en el menú -- si se entra
+  // escribiendo la dirección, de vuelta a Inicio.
+  if (opcionesVisibles.length === 0) redirect("/app-clientes");
 
   return (
     <div>

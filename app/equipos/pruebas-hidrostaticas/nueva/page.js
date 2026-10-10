@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { getProfileYUser, tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevaPruebaHidrostaticaForm from "./form-client";
@@ -9,6 +9,7 @@ import NuevaPruebaHidrostaticaForm from "./form-client";
 // Registrar prueba(s) hidrostática(s) -- ver app/equipos/pruebas-hidrostaticas/page.js.
 export default async function NuevaPruebaHidrostaticaPage() {
   const supabase = createClient();
+  await requireInterno(supabase, "registrar_hidrostatica");
   const {
     data: { user },
   } = await supabase.auth.getUser();

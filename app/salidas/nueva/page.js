@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevaSalidaForm from "./form-client";
 
 export default async function NuevaSalidaPage() {
   const supabase = createClient();
+  await requireInterno(supabase, "registrar_salida");
   const {
     data: { user },
   } = await supabase.auth.getUser();

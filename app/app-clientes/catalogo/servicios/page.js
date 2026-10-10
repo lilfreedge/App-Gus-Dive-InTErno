@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermisoClientes } from "@/lib/roles";
+import { requirePermisoClientes, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 
@@ -19,7 +19,13 @@ export default async function CatalogoServiciosPage() {
   // acceso pues que no le salga") -- antes estaba abierto a cualquiera
   // con acceso a la app, solo el botón de agregar estaba gateado.
   const { profile } = await requirePermisoClientes(supabase, "equipos_clientes_catalogo");
-  const puedeEditarCatalogo = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_catalogo;
+  // V30 (pedido explícito: "agrégame una opción para dar acceso a
+  // registrar servicio. Ahora mismo cualquiera puede registrar servicios";
+  // editar "queda solo para administradores y yo"): ver la lista sigue
+  // siendo Base de datos; registrar y editar tienen permiso propio.
+  const puedeRegistrar = tieneAcceso(profile, "equipos_clientes_registrar_servicio");
+  const puedeEditarCatalogo =
+    !!profile?.es_titular || (!!profile?.is_admin && tieneAcceso(profile, "equipos_clientes_editar_servicio"));
 
   const { data: servicios } = await supabase
     .from("servicios_catalogo")
@@ -44,11 +50,11 @@ export default async function CatalogoServiciosPage() {
         <h1 className="page-title">Catálogo de servicios</h1>
         <p className="page-subtitle">Estos son los servicios que aparecen para elegir en &quot;Registrar orden&quot;.</p>
 
-        {puedeEditarCatalogo && (
+        {puedeRegistrar && (
           <div style={{ marginBottom: 16 }}>
             <Link href="/app-clientes/catalogo/servicios/nuevo">
               <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
-                + Agregar servicio
+                + Registrar servicio
               </button>
             </Link>
           </div>

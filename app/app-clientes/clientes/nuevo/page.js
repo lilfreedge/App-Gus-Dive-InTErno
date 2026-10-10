@@ -22,10 +22,10 @@ export default async function NuevoClientePage() {
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Listado de clientes", href: "/app-clientes/clientes" },
-            { label: "Nuevo cliente" },
+            { label: "Registrar cliente" },
           ]}
         />
-        <h1 className="page-title">Nuevo cliente</h1>
+        <h1 className="page-title">Registrar cliente</h1>
 
         <NuevoClienteForm />
       </div>

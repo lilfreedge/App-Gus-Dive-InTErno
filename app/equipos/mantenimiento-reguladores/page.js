@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
@@ -9,7 +9,7 @@ import { hoyISO, sumarDias } from "@/lib/fechas";
 
 export default async function MantenimientoReguladoresPage({ searchParams }) {
   const supabase = createClient();
-  const { profile } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, "registrar_mantenimiento");
   const puedeRegistrar = tieneAcceso(profile, "registrar_mantenimiento");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
@@ -7,10 +7,17 @@ import Breadcrumb from "@/components/Breadcrumb";
 import { esServicioHidrostatica } from "@/lib/ordenes-estado";
 import EditarServicioForm from "./form-client";
 
-// Gateado por el permiso granular equipos_clientes_catalogo (item 15).
+// V30: editar un servicio "queda solo para administradores y yo" --
+// Titular, o Administrador con el permiso "Editar servicio"
+// (equipos_clientes_editar_servicio). Antes bastaba con ver Base de datos.
 export default async function EditarServicioPage({ params }) {
   const supabase = createClient();
-  await requirePermisoClientes(supabase, "equipos_clientes_catalogo", "/app-clientes/catalogo/servicios");
+  const { profile } = await requirePermisoClientes(
+    supabase,
+    "equipos_clientes_editar_servicio",
+    "/app-clientes/catalogo/servicios"
+  );
+  if (!profile?.es_titular && !profile?.is_admin) redirect("/app-clientes/catalogo/servicios");
 
   const { data: servicio } = await supabase
     .from("servicios_catalogo")

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevoReguladorForm from "./form-client";
@@ -9,7 +9,7 @@ import NuevoReguladorForm from "./form-client";
 // granular catalogo_regulador (el Titular siempre tiene acceso).
 export default async function NuevoReguladorPage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "catalogo_regulador");
+  await requireInterno(supabase, "catalogo_regulador");
 
   return (
     <div>

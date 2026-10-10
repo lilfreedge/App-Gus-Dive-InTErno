@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import SelectorBusqueda from "@/components/SelectorBusqueda";
+import MesAnioSelector, { mesAnioCompleto } from "@/components/MesAnioSelector";
 import { hoyLocalISO } from "@/lib/fechas";
 
 let siguienteClave = 1;
@@ -12,9 +13,11 @@ function filaVacia(fecha) {
 }
 
 // Mismo formulario que Inspección visual (varias filas de una vez), con la
-// FECHA DE LA PRUEBA por fila: por default hoy, pero se puede poner una
-// fecha pasada para cargar la última prueba real de los tanques que ya
-// existen. Una fila nueva copia la fecha de la fila anterior (lo normal es
+// FECHA DE LA PRUEBA por fila: por default este mes, pero se puede poner
+// uno pasado para cargar la última prueba real de los tanques que ya
+// existen. Desde V30 solo mes y año (MesAnioSelector) -- se guarda como el
+// día 1 de ese mes, y la próxima prueba vence el último día de ese mes, 5
+// años después (migration_54.sql). Una fila nueva copia la fecha de la fila anterior (lo normal es
 // que una tanda de tanques vuelva de la prueba el mismo día).
 // No hace falta actualizar el tanque desde aquí: la próxima prueba
 // (+5 años) la pone la base de datos (migration_53.sql).
@@ -25,12 +28,12 @@ export default function NuevaPruebaHidrostaticaForm({ userId, nombreUsuario, tan
   const [filas, setFilas] = useState(() => [filaVacia()]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  // "Hoy" del dispositivo -- se pone después de cargar (no en el servidor,
-  // que está en UTC) como fecha por default de las filas sin fecha.
+  // Mes actual del dispositivo ("aaaa-mm") -- se pone después de cargar
+  // (no en el servidor, que está en UTC) como default de las filas.
   const [hoy, setHoy] = useState("");
 
   useEffect(() => {
-    const h = hoyLocalISO();
+    const h = hoyLocalISO().slice(0, 7);
     setHoy(h);
     setFilas((prev) => prev.map((f) => (f.fecha ? f : { ...f, fecha: h })));
   }, []);
@@ -55,11 +58,11 @@ export default function NuevaPruebaHidrostaticaForm({ userId, nombreUsuario, tan
       setError("Selecciona un tanque en cada prueba.");
       return;
     }
-    if (filas.some((f) => !f.fecha)) {
-      setError("Pon la fecha de la prueba en cada fila.");
+    if (filas.some((f) => !mesAnioCompleto(f.fecha))) {
+      setError("Pon el mes y el año de la prueba en cada fila.");
       return;
     }
-    if (filas.some((f) => f.fecha > hoyLocalISO())) {
+    if (filas.some((f) => f.fecha > hoyLocalISO().slice(0, 7))) {
       setError("La fecha de la prueba no puede ser en el futuro.");
       return;
     }
@@ -73,7 +76,7 @@ export default function NuevaPruebaHidrostaticaForm({ userId, nombreUsuario, tan
         nombre_usuario_snapshot: nombreUsuario,
         tanque_id: f.tanqueId,
         tanque_codigo_snapshot: tanque?.codigo || null,
-        fecha_prueba: f.fecha,
+        fecha_prueba: `${f.fecha}-01`,
         resultado: f.resultado,
         nota: f.nota.trim() || null,
       };
@@ -133,14 +136,13 @@ export default function NuevaPruebaHidrostaticaForm({ userId, nombreUsuario, tan
           />
 
           <label htmlFor={`fecha-${fila.clave}`}>
-            Fecha de la prueba <span style={{ color: "var(--rojo)" }}>*</span>
+            Fecha de la prueba (mes y año) <span style={{ color: "var(--rojo)" }}>*</span>
           </label>
-          <input
+          <MesAnioSelector
             id={`fecha-${fila.clave}`}
-            type="date"
-            max={hoy || undefined}
-            value={fila.fecha}
-            onChange={(e) => actualizarFila(fila.clave, { fecha: e.target.value })}
+            valor={fila.fecha}
+            anioActual={hoy.slice(0, 4)}
+            onChange={(v) => actualizarFila(fila.clave, { fecha: v })}
           />
 
           <label>

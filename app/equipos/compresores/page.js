@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import { IconCompressor } from "@/components/icons";
@@ -25,7 +25,7 @@ import { hoyISO, sumarDias } from "@/lib/fechas";
 // Preventivo/Correctivo no llevan rango todavía.
 export default async function CompresoresPage() {
   const supabase = createClient();
-  const { profile } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, "compresores");
   const puedeRegistrar = tieneAcceso(profile, "compresores");
 
   const { data: compresores } = await supabase

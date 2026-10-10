@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import EditarReguladorForm from "./form-client";
@@ -10,7 +10,7 @@ import EditarReguladorForm from "./form-client";
 // granular catalogo_regulador (el Titular siempre tiene acceso).
 export default async function EditarReguladorPage({ params }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "catalogo_regulador");
+  await requireInterno(supabase, "catalogo_regulador");
 
   const { data: regulador } = await supabase
     .from("reguladores_alquiler")

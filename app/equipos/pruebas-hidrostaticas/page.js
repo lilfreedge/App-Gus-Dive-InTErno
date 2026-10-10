@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
-import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { formatFecha, formatFechaDDMMAAAADeDate, formatMesAnio } from "@/lib/format";
 import { hoyISO, sumarMeses } from "@/lib/fechas";
 
 // Pruebas hidrostáticas de los tanques de alquiler (V29, pedido explícito:
@@ -18,7 +18,7 @@ import { hoyISO, sumarMeses } from "@/lib/fechas";
 // años (ver supabase/migration_53.sql).
 export default async function PruebasHidrostaticasPage() {
   const supabase = createClient();
-  const { profile } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, "registrar_hidrostatica");
   const puedeRegistrar = tieneAcceso(profile, "registrar_hidrostatica");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
 
@@ -86,7 +86,7 @@ export default async function PruebasHidrostaticasPage() {
                     </div>
                   </div>
                   <div className="list-item-meta">
-                    Fecha de la prueba: <b>{formatFechaDDMMAAAADeDate(p.fecha_prueba)}</b>
+                    Fecha de la prueba: <b>{formatMesAnio(p.fecha_prueba)}</b>
                   </div>
                   <div className="list-item-meta">
                     Registrada por {full_name} · {formatFecha(p.created_at)}

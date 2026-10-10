@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevaSolicitudForm from "./form-client";
@@ -8,7 +8,7 @@ import NuevaSolicitudForm from "./form-client";
 // "Solicitar códigos a almacén" (V29) -- ver app/solicitudes/page.js.
 export default async function NuevaSolicitudPage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "solicitudes_almacen");
+  await requireInterno(supabase, "solicitudes_almacen");
 
   const [{ data: articulos }, { data: config }] = await Promise.all([
     supabase.from("articulos").select("id, nombre, descripcion").eq("activo", true).order("nombre"),

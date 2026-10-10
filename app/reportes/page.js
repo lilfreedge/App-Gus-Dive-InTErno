@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { tieneAcceso, requireInterno } from "@/lib/roles";
 import { obtenerUsuariosConMovimientos } from "@/lib/reportes";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
@@ -10,14 +9,11 @@ import ReporteCorreoConfig from "./reporte-correo-client";
 
 export default async function ReportesPage() {
   const supabase = createClient();
-  const { user, profile } = await getProfileYUser(supabase);
-
   // Acceso normal por el permiso "reportes" -- o, aunque no tenga ese
   // permiso, si el Titular le dio "correos_semanales" (para que pueda
   // entrar solo a administrar los envíos automáticos, sin ver el resto).
-  if (!user || !(tieneAcceso(profile, "reportes") || tieneAcceso(profile, "correos_semanales"))) {
-    redirect("/dashboard");
-  }
+  // V30: además exige el acceso a App Interno (requireInterno).
+  const { user, profile } = await requireInterno(supabase, ["reportes", "correos_semanales"]);
 
   const puedeCorreos = tieneAcceso(profile, "correos_semanales");
   const esTitular = !!profile?.es_titular;

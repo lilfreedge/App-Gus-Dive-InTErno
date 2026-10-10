@@ -36,7 +36,7 @@ export default async function ListadoClientesPage() {
           {puedeAgregarCliente && (
             <Link href="/app-clientes/clientes/nuevo">
               <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
-                + Agregar cliente
+                + Registrar cliente
               </button>
             </Link>
           )}

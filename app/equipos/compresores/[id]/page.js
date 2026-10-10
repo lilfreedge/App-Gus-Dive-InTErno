@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
@@ -15,7 +15,7 @@ import EstadoCompresor from "./estado-client";
 // Reactivar (solo Titular).
 export default async function FichaCompresorPage({ params }) {
   const supabase = createClient();
-  const { profile } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, "compresores");
   const puedeAdministrar = tieneAcceso(profile, "compresores");
   const esTitular = !!profile?.es_titular;
 

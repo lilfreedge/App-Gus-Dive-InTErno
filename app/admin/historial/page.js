@@ -1,16 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import Breadcrumb from "@/components/Breadcrumb";
 import HistorialDeleteButton from "@/components/HistorialDeleteButton";
 import HistorialRestoreButton from "@/components/HistorialRestoreButton";
 import BorrarTodoHistorialButton from "@/components/BorrarTodoHistorialButton";
-import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { formatFecha, formatFechaDDMMAAAADeDate, formatMesAnio } from "@/lib/format";
 
 export default async function HistorialCambiosPage() {
   const supabase = createClient();
-  const { profile } = await requirePermiso(supabase, "historial");
+  const { profile } = await requireInterno(supabase, "historial");
   const esTitular = !!profile?.es_titular;
   const esAdmin = esTitular || !!profile?.is_admin;
 
@@ -196,7 +196,7 @@ function filasInspeccionVisual(d, dn) {
 }
 
 function filasPruebaHidrostatica(d, dn) {
-  const f = (iso) => (iso ? formatFechaDDMMAAAADeDate(iso) : "—");
+  const f = (iso) => formatMesAnio(iso);
   return [
     { label: "Tanque", antes: d.tanque_codigo_snapshot || "—", despues: dn?.tanque_codigo_snapshot || "—" },
     { label: "Fecha de la prueba", antes: f(d.fecha_prueba), despues: dn ? f(dn.fecha_prueba) : "—" },
@@ -430,7 +430,7 @@ function contenido(tabla, d) {
     return `${d.tanque_codigo_snapshot || "?"} · ${d.resultado || "?"}${d.nota ? ` · ${d.nota}` : ""}`;
   }
   if (tabla === "pruebas_hidrostaticas") {
-    return `${d.tanque_codigo_snapshot || "?"} · ${d.fecha_prueba ? formatFechaDDMMAAAADeDate(d.fecha_prueba) : "?"} · ${
+    return `${d.tanque_codigo_snapshot || "?"} · ${d.fecha_prueba ? formatMesAnio(d.fecha_prueba) : "?"} · ${
       d.resultado || "?"
     }`;
   }

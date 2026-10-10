@@ -11,13 +11,19 @@ const ROLES = [
     nombre: "Administrador",
     tag: null,
     descripcion:
-      "Puede registrar y editar salidas/tanques y ver las secciones que el Titular le habilite (Reportes, Base de datos, Historial de anulaciones y ediciones, Changelog, Manual, Movimientos).",
+      "Además de lo que el Titular le habilite, puede editar y anular registros (salidas, llenados, inspecciones, mantenimientos, etc.).",
   },
   {
     nombre: "Usuario",
     tag: null,
     descripcion:
-      "Registra salidas y llenados de tanque desde el día a día; solo ve el resto de secciones si el Titular se las habilita.",
+      "Ve y usa solo las secciones que el Titular le habilite (Salidas, Llenados, Inspección visual, etc.). Sin ningún permiso, solo ve Inicio.",
+  },
+  {
+    nombre: "Operativo",
+    tag: null,
+    descripcion:
+      "Solo registra llenados de tanque, en una sola pantalla sin menú: el formulario de llenado, el resumen de la semana (lunes a sábado) y los llenados de hoy.",
   },
 ];
 

@@ -113,7 +113,7 @@ export default async function FichaClientePage({ params }) {
           {puedeAgregarEquipo && (
             <Link href={`/app-clientes/clientes/${cliente.id}/equipos/nuevo`}>
               <button className="btn secondary" type="button" style={{ marginTop: 0 }}>
-                + Agregar equipo
+                + Registrar equipo de cliente
               </button>
             </Link>
           )}

@@ -52,7 +52,7 @@ export default async function CatalogoPiezasPage() {
           <div style={{ marginBottom: 16 }}>
             <Link href="/app-clientes/catalogo/piezas/nuevo">
               <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
-                + Agregar código
+                + Registrar código
               </button>
             </Link>
           </div>

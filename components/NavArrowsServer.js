@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser } from "@/lib/roles";
+import { getProfileYUser, esOperativo } from "@/lib/roles";
 import NavArrows from "./NavArrows";
 
 // Wrapper de servidor: resuelve el perfil del usuario actual y le pasa
@@ -7,7 +7,7 @@ import NavArrows from "./NavArrows";
 export default async function NavArrowsServer() {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
-  if (!profile) return null;
+  if (!profile || esOperativo(profile)) return null;
 
   return (
     <NavArrows

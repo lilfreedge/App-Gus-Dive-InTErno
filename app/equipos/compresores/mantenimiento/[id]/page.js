@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso, getProfileYUser } from "@/lib/roles";
+import { getProfileYUser, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
@@ -13,7 +13,7 @@ import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 // notas, fotos) vive ahora en esta pantalla dedicada.
 export default async function FichaMantenimientoCompresorPage({ params }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "compresores");
+  await requireInterno(supabase, "compresores");
   // Editar/anular un mantenimiento (item 8, pedido explícito, 26-sep-2026)
   // -- la base de datos ya solo deja editar/borrar a Titular/Admin
   // (migration_14.sql), mismo criterio para los botones.

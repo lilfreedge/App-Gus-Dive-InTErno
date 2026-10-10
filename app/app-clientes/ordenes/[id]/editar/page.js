@@ -87,7 +87,7 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
             { label: "App Equipos de clientes", href: "/app-clientes" },
             vieneDeRegistro
               ? { label: "Registro de Órdenes", href: "/app-clientes/ordenes" }
-              : { label: "Listado de órdenes", href: "/app-clientes/historial" },
+              : { label: "Historial de órdenes", href: "/app-clientes/historial" },
             { label: `No. ${orden.no_orden_fisico ?? orden.folio}`, href: `/app-clientes/ordenes/${params.id}` },
             { label: "Actualizar estado de orden" },
           ]}

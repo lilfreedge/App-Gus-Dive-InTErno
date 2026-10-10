@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -12,8 +15,16 @@ import ChangelogClient from "./changelog-client";
 // de App Clientes en vez de los de App Interno. El contenido del
 // changelog (ChangelogClient) sigue siendo el mismo para las dos apps,
 // solo cambia el marco alrededor.
-export default function ChangelogPage({ searchParams }) {
+// V30 ("corrige todos los accesos"): la página revisa el permiso
+// "changelog" -- antes solo lo revisaba el botón del menú ⚙, y
+// cualquiera con el enlace la podía abrir.
+export default async function ChangelogPage({ searchParams }) {
   const desdeClientes = searchParams?.desde === "clientes";
+  const supabase = createClient();
+  const { profile } = await getProfileYUser(supabase);
+  if (!tieneAcceso(profile, "changelog")) {
+    redirect(desdeClientes ? "/app-clientes" : "/dashboard");
+  }
 
   return (
     <div>

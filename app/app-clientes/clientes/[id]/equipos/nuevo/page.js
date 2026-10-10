@@ -37,11 +37,11 @@ export default async function NuevosEquiposPage({ params }) {
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Listado de clientes", href: "/app-clientes/clientes" },
             { label: cliente.nombre, href: `/app-clientes/clientes/${cliente.id}` },
-            { label: "Agregar equipo" },
+            { label: "Registrar equipo de cliente" },
           ]}
         />
-        <h1 className="page-title">Agregar equipo a {cliente.nombre}</h1>
-        <p className="page-subtitle">Puedes agregar varios de una vez -- usa &quot;+ Agregar otro equipo&quot; para sumar más filas.</p>
+        <h1 className="page-title">Registrar equipo de {cliente.nombre}</h1>
+        <p className="page-subtitle">Puedes registrar varios de una vez -- usa &quot;+ Agregar otro equipo&quot; para sumar más filas.</p>
 
         <AgregarEquiposForm clienteId={cliente.id} />
       </div>

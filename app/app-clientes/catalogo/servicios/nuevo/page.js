@@ -5,12 +5,12 @@ import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevoServicioForm from "./form-client";
 
-// Gateado por el permiso granular equipos_clientes_catalogo (item 15,
-// pedido explícito) -- ver el catálogo sigue abierto para cualquiera
-// con acceso a la app, esto solo gatea crear/editar.
+// V30: gateado por "Registrar servicio en base de datos"
+// (equipos_clientes_registrar_servicio, pedido explícito) -- antes bastaba
+// con el permiso de ver Base de datos.
 export default async function NuevoServicioPage() {
   const supabase = createClient();
-  await requirePermisoClientes(supabase, "equipos_clientes_catalogo", "/app-clientes/catalogo/servicios");
+  await requirePermisoClientes(supabase, "equipos_clientes_registrar_servicio", "/app-clientes/catalogo/servicios");
 
   return (
     <div>
@@ -25,10 +25,10 @@ export default async function NuevoServicioPage() {
             { label: "Más", href: "/app-clientes/mas" },
             { label: "Base de datos", href: "/app-clientes/catalogo" },
             { label: "Servicios", href: "/app-clientes/catalogo/servicios" },
-            { label: "Agregar servicio" },
+            { label: "Registrar servicio" },
           ]}
         />
-        <h1 className="page-title">Agregar servicio</h1>
+        <h1 className="page-title">Registrar servicio</h1>
 
         <NuevoServicioForm />
       </div>

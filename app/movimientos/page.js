@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso, tieneAcceso } from "@/lib/roles";
+import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import MovimientosList from "@/components/MovimientosList";
@@ -11,7 +11,7 @@ import MovimientosList from "@/components/MovimientosList";
 // patrón que Reportes/Catálogo/Historial (ahora agrupados en "Más").
 export default async function MovimientosPage() {
   const supabase = createClient();
-  const { profile } = await requirePermiso(supabase, "movimientos");
+  const { profile } = await requireInterno(supabase, "movimientos");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
   // Acceso directo a Reportes desde aquí, ya que los reportes se arman
   // justamente a partir de estos mismos movimientos.

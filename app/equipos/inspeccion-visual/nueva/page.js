@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { getProfileYUser, tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevaInspeccionForm from "./form-client";
 
 export default async function NuevaInspeccionPage() {
   const supabase = createClient();
+  await requireInterno(supabase, "registrar_inspeccion");
   const {
     data: { user },
   } = await supabase.auth.getUser();

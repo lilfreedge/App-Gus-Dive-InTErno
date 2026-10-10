@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { requireInterno, tieneAlguno } from "@/lib/roles";
+import { MAS_PERMISOS } from "@/lib/nav";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import { IconCatalog, IconReport, IconHistory, IconShuffle, IconCalendar } from "@/components/icons";
@@ -36,7 +37,7 @@ const OPCIONES = [
     href: "/reportes",
     titulo: "Reportes",
     descripcion: "Genera y descarga reportes de movimientos.",
-    permiso: "reportes",
+    permiso: ["reportes", "correos_semanales"],
     Icono: IconReport,
   },
   // V29, pedido explícito: "dejalo en mas" -- ver app/solicitudes.
@@ -58,9 +59,9 @@ const OPCIONES = [
 
 export default async function MasPage() {
   const supabase = createClient();
-  const { profile } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, MAS_PERMISOS);
 
-  const opciones = OPCIONES.filter((o) => tieneAcceso(profile, o.permiso));
+  const opciones = OPCIONES.filter((o) => tieneAlguno(profile, Array.isArray(o.permiso) ? o.permiso : [o.permiso]));
 
   return (
     <div>

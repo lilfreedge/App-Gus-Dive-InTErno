@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevoCompresorForm from "./form-client";
@@ -10,7 +10,7 @@ import NuevoCompresorForm from "./form-client";
 // el catálogo, a diferencia de reguladores/tanques).
 export default async function NuevoCompresorPage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "compresores");
+  await requireInterno(supabase, "compresores");
 
   return (
     <div>

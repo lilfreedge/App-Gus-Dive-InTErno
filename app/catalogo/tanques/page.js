@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso } from "@/lib/roles";
+import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import CatalogoTabs from "@/components/CatalogoTabs";
@@ -12,7 +12,7 @@ import ListaTanques from "./lista-client";
 // "Tanques" en /tanques, que es la bitácora de llenados de tanque.
 export default async function CatalogoTanquesPage() {
   const supabase = createClient();
-  const { profile } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, "catalogo");
   const puedeAdministrar = tieneAcceso(profile, "catalogo_tanque");
   const esTitular = !!profile?.es_titular;
 

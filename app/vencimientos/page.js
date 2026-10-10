@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -102,7 +102,7 @@ function Seccion({ titulo, href, irA, campo, datos, femenino, textoNunca, hoy })
 
 export default async function ProximosVencimientosPage() {
   const supabase = createClient();
-  await requirePermiso(supabase, "proximos_vencimientos");
+  await requireInterno(supabase, "proximos_vencimientos");
 
   const [{ data: reguladores }, { data: tanques }, hidroRes] = await Promise.all([
     supabase.from("reguladores_alquiler").select("id, codigo, proximo_mantenimiento").eq("activo", true),

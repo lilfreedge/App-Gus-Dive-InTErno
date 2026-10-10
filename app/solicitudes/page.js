@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import { estadoSolicitud } from "@/lib/solicitudes";
@@ -15,7 +15,7 @@ import SolicitudCard from "./solicitud-card";
 // "Solicitar códigos a almacén" (o el Titular). Ver migration_52.sql.
 export default async function SolicitudesPage({ searchParams }) {
   const supabase = createClient();
-  const { user, profile } = await requirePermiso(supabase, "solicitudes_almacen");
+  const { user, profile } = await requireInterno(supabase, "solicitudes_almacen");
   const tab = searchParams?.tab === "recibidas" ? "recibidas" : "pendientes";
   const creada = searchParams?.creada || "";
 

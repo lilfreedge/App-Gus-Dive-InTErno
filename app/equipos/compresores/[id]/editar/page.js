@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import EditarCompresorForm from "./form-client";
@@ -12,7 +12,7 @@ import EditarCompresorForm from "./form-client";
 // usuario, 23-sep-2026.
 export default async function EditarCompresorPage({ params }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "compresores");
+  await requireInterno(supabase, "compresores");
 
   const { data: compresor } = await supabase.from("compresores").select("*").eq("id", params.id).single();
 

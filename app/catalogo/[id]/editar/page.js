@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso } from "@/lib/roles";
+import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import EditarCodigoForm from "./form-client";
@@ -11,7 +11,7 @@ import EditarCodigoForm from "./form-client";
 // el servidor.
 export default async function EditarCodigoPage({ params }) {
   const supabase = createClient();
-  await requirePermiso(supabase, "catalogo_codigo");
+  await requireInterno(supabase, "catalogo_codigo");
 
   const { data: articulo } = await supabase
     .from("articulos")

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { NAV_SECTIONS_CLIENTES, SECCIONES_FIJAS_CLIENTES, ordenarSeccionesClientes } from "@/lib/nav-clientes";
+import { NAV_SECTIONS_CLIENTES, SECCIONES_FIJAS_CLIENTES, ordenarSeccionesClientes, puedeVerSeccionClientes } from "@/lib/nav-clientes";
 import { useReorderDrag } from "@/lib/useReorderDrag";
 import { IconLogout, IconGear, IconEdit, IconShuffle, IconLock, IconHistory } from "./icons";
 
@@ -134,7 +134,7 @@ export default function TopbarClientes({
       <div className="topbar-appname">App Equipos de clientes</div>
       <nav className="topnav" onClickCapture={onNavClickCapture}>
         {links
-          .filter((l) => !l.permiso || esTitular || !!permisos?.[l.permiso])
+          .filter((l) => puedeVerSeccionClientes(l, { esTitular, permisos }))
           .map((l) => {
           const fijo = SECCIONES_FIJAS_CLIENTES.includes(l.href);
           // Accesos directos opcionales (26-sep-2026, pedido explícito:
