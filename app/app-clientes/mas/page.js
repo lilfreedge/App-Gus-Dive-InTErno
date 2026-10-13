@@ -4,7 +4,7 @@ import { requirePermiso } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
-import { IconCatalog, IconReport, IconHistory, IconBook, IconPhone, IconCalendar } from "@/components/icons";
+import { IconCatalog, IconReport, IconHistory, IconClipboard, IconPhone } from "@/components/icons";
 
 // Hub "Más" de App Clientes (23-sep-2026, pedido explícito: "agregar un
 // botón de 'mas' al lado de historial de ordenes... igual como que en
@@ -34,7 +34,7 @@ const OPCIONES = [
     // 'historial de ordenes'") -- la ruta y el permiso siguen iguales.
     titulo: "Historial de órdenes",
     descripcion: "Todas las órdenes registradas, incluidas las ya entregadas.",
-    Icono: IconCalendar,
+    Icono: IconHistory,
     // Permiso granular propio (28-sep-2026, pedido explícito) -- antes se
     // veía con solo tener acceso base a la app, igual que "Listado de
     // clientes" (top nav, ver lib/nav-clientes.js).
@@ -98,7 +98,7 @@ const OPCIONES = [
     // "vamos a cambiarlo por 'Bitácora de ordenes'").
     titulo: "Bitácora de órdenes",
     descripcion: "Quién editó qué, en cualquier orden.",
-    Icono: IconBook,
+    Icono: IconClipboard,
     permiso: "equipos_clientes_bitacora_movimientos",
   },
   {

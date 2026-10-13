@@ -8,7 +8,7 @@ import {
   IconTank,
   IconPlus,
   IconCatalog,
-  IconBook,
+  IconClipboard,
   IconHistory,
   IconReport,
   IconRefresh,
@@ -44,68 +44,62 @@ const PERMISOS_DEFAULT = {
   equipos_clientes_contactar: false,
 };
 
-// V30 -- Permisos de App Equipos de clientes por usuario, igual que en App
-// Interno (pedido explícito: "1. ok si. hazme lo mismo en el otro app").
-// Antes eran tablas anchas (General / Registrar / Administradores). Ahora:
-// lista de personas agrupada por rol; al tocar una, sus permisos por
-// sección. Pedidos de las notas del 8-oct-2026 que se reflejan aquí:
-// - "junta los permisos que aparecen en 'mas'... una sección donde
-//   aparezca 'mas'" -> sección "Más", con todo lo que sale en Más;
-// - "Registrar servicio en base de datos" (nuevo) en Registrar, y "Editar
-//   servicio" (nuevo, "queda solo para administradores y yo") en
-//   Administradores;
-// - nombres: "Agregar código/equipo/cliente" -> "Registrar código en base
-//   de datos" / "Registrar equipo de cliente" / "Registrar cliente";
-//   "Listado de órdenes" -> "Historial de órdenes".
-// Las claves de permiso NO cambiaron (equipos_clientes_agregar_*), solo
-// los nombres que se ven. `soloAdmin`: igual que antes, solo se le puede
-// dar a un Administrador.
+// V30 → v56 -- Permisos agrupados por sección de la app (igual que App
+// Interno), en lugar de por tipo de acción (General / Registrar / Más /
+// Administradores). Los ítems con `soloAdmin: true` siguen apareciendo
+// dentro de cada sección pero atenuados/bloqueados para usuarios no-admin.
+// Las claves de permiso NO cambiaron, solo la agrupación visual.
 const SECCIONES = [
   {
-    titulo: "General",
+    titulo: "Órdenes",
     items: [
-      { clave: "equipos_clientes_listado_clientes", label: "Listado de clientes", Icono: IconUsers },
-      { clave: "equipos_clientes_informe_mantenimiento", label: "Informe de mantenimiento", Icono: IconWrench },
+      { clave: "equipos_clientes_listado_ordenes", label: "Historial de órdenes", Icono: IconHistory },
+      { clave: "equipos_clientes_registrar", label: "Registrar orden", Icono: IconEdit },
+      { clave: "equipos_clientes_actualizar_estado", label: "Actualizar estado de orden", Icono: IconRefresh },
+      { clave: "equipos_clientes_editar_orden", label: "Editar orden", Icono: IconEdit, soloAdmin: true },
+      { clave: "equipos_clientes_editar_hold", label: "Editar Hold", Icono: IconEdit, soloAdmin: true },
+      { clave: "equipos_clientes_bitacora_orden", label: "Ver bitácora de la orden", Icono: IconClipboard, soloAdmin: true },
     ],
   },
   {
-    titulo: "Registrar",
+    titulo: "Clientes",
     items: [
-      { clave: "equipos_clientes_registrar", label: "Registrar orden", Icono: IconEdit },
-      { clave: "equipos_clientes_actualizar_estado", label: "Actualizar estado de orden", Icono: IconRefresh },
+      { clave: "equipos_clientes_listado_clientes", label: "Listado de clientes", Icono: IconUsers },
       { clave: "equipos_clientes_agregar_cliente", label: "Registrar cliente", Icono: IconPlus },
+      { clave: "equipos_clientes_editar_cliente", label: "Editar cliente", Icono: IconEdit, soloAdmin: true },
+    ],
+  },
+  {
+    titulo: "Equipos",
+    items: [
       { clave: "equipos_clientes_agregar_equipo", label: "Registrar equipo de cliente", Icono: IconTank },
+      { clave: "equipos_clientes_informe_mantenimiento", label: "Informe de mantenimiento", Icono: IconWrench },
+      { clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit, soloAdmin: true },
+      {
+        clave: "equipos_clientes_editar_mantenimiento_compresor",
+        label: "Editar mantenimiento de compresor",
+        Icono: IconCompressor,
+        soloAdmin: true,
+      },
+    ],
+  },
+  {
+    titulo: "Base de datos",
+    items: [
+      { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
       { clave: "equipos_clientes_agregar_codigo", label: "Registrar código en base de datos", Icono: IconCatalog },
       { clave: "equipos_clientes_registrar_servicio", label: "Registrar servicio en base de datos", Icono: IconWrench },
+      { clave: "equipos_clientes_editar_codigo", label: "Editar código", Icono: IconEdit, soloAdmin: true },
+      { clave: "equipos_clientes_editar_servicio", label: "Editar servicio", Icono: IconWrench, soloAdmin: true },
     ],
   },
   {
     titulo: "Más",
     items: [
-      { clave: "equipos_clientes_listado_ordenes", label: "Historial de órdenes", Icono: IconReport },
-      { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
       { clave: "equipos_clientes_reportes", label: "Recibos e Informes", Icono: IconReport },
       { clave: "equipos_clientes_contactar", label: "Clientes por contactar", Icono: IconUsers },
       { clave: "equipos_clientes_historial", label: "Anulaciones y ediciones", Icono: IconHistory, soloAdmin: true },
-      { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora de órdenes", Icono: IconBook, soloAdmin: true },
-    ],
-  },
-  {
-    titulo: "Administradores",
-    soloAdmin: true,
-    items: [
-      { clave: "equipos_clientes_editar_orden", label: "Editar orden", Icono: IconEdit },
-      { clave: "equipos_clientes_editar_hold", label: "Editar Hold", Icono: IconBook },
-      { clave: "equipos_clientes_bitacora_orden", label: "Ver bitácora de la orden", Icono: IconBook },
-      { clave: "equipos_clientes_editar_cliente", label: "Editar cliente", Icono: IconUsers },
-      { clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit },
-      { clave: "equipos_clientes_editar_codigo", label: "Editar código", Icono: IconCatalog },
-      { clave: "equipos_clientes_editar_servicio", label: "Editar servicio", Icono: IconWrench },
-      {
-        clave: "equipos_clientes_editar_mantenimiento_compresor",
-        label: "Editar mantenimiento de compresor",
-        Icono: IconCompressor,
-      },
+      { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora de órdenes", Icono: IconClipboard, soloAdmin: true },
     ],
   },
 ];

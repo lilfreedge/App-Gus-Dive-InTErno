@@ -1063,10 +1063,22 @@ export default function EditarSeguimientoForm({
               tienen `codigo`, el valor que se inserta al elegir la
               sugerencia ya viene como "código · nombre". Los que no tienen
               código (cargados antes de que el campo fuera obligatorio)
-              siguen mostrando solo el nombre, como siempre. */}
-          {piezas.map((p) => (
-            <option key={p.id} value={p.codigo ? `${p.codigo} · ${p.nombre}` : p.nombre} />
-          ))}
+              siguen mostrando solo el nombre, como siempre.
+              v56: filtrado por tipos_equipo (pedido explícito: "que en
+              seguimiento, dependiendo del equipo que sea, que solo
+              aparezcan los codigos correspondiente") -- si el código tiene
+              tipos_equipo asignado, solo se muestra cuando el tipo de
+              equipo de la orden está en esa lista. Códigos sin
+              tipos_equipo (null o vacío) siguen apareciendo para todos. */}
+          {piezas
+            .filter((p) =>
+              !p.tipos_equipo ||
+              p.tipos_equipo.length === 0 ||
+              (orden.tipo_equipo && p.tipos_equipo.includes(orden.tipo_equipo))
+            )
+            .map((p) => (
+              <option key={p.id} value={p.codigo ? `${p.codigo} · ${p.nombre}` : p.nombre} />
+            ))}
         </datalist>
         {repuestos.length === 0 && (
           // Ya no bloquea el cierre (item 7.1, pedido explícito: permitir

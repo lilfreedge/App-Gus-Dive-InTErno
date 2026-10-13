@@ -62,7 +62,12 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
   // descripcion") -- antes solo se traía `nombre`, así que no había forma
   // de anteponer el código al agregar un repuesto desde el catálogo (ver
   // agregarRepuesto() en form-client.js).
-  const { data: piezas } = await supabase.from("piezas_catalogo").select("id, nombre, codigo").eq("activo", true).order("nombre");
+  // v56: tipos_equipo agregado al select para filtrar en seguimiento los
+  // códigos que solo aplican al tipo de equipo de la orden (pedido
+  // explícito: "que en seguimiento, dependiendo del equipo que sea, que
+  // solo aparezcan los codigos correspondiente"). Códigos sin tipos_equipo
+  // siguen apareciendo para todos los equipos (retrocompatible).
+  const { data: piezas } = await supabase.from("piezas_catalogo").select("id, nombre, codigo, tipos_equipo").eq("activo", true).order("nombre");
 
   // BUG corregido (item 11a, reportado en vivo, 26-sep-2026: "cuando le
   // doy me abre el actualizar estado de orden desde el 'listado de
