@@ -16,7 +16,7 @@ export default async function EditarPiezaPage({ params }) {
 
   const { data: pieza } = await supabase
     .from("piezas_catalogo")
-    .select("id, nombre, codigo, descripcion, activo")
+    .select("id, nombre, codigo, descripcion, activo, tipos_equipo")
     .eq("id", params.id)
     .maybeSingle();
 

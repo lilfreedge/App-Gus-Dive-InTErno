@@ -18,10 +18,12 @@ export default async function ListadoClientesPage() {
   const supabase = createClient();
   const { profile } = await requirePermisoClientes(supabase, "equipos_clientes_listado_clientes", "/app-clientes");
   const puedeAgregarCliente = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_agregar_cliente;
+  // Borrar clientes: mismo permiso que editar cliente (Titular y Admin).
+  const puedeEliminar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_editar_cliente;
 
   const { data: clientes } = await supabase
     .from("clientes_equipos")
-    .select("id, nombre, telefono, created_at")
+    .select("id, nombre, numero, telefono, created_at")
     .order("nombre");
 
   return (
@@ -42,7 +44,7 @@ export default async function ListadoClientesPage() {
           )}
         </div>
 
-        <ClientesClient clientes={clientes || []} />
+        <ClientesClient clientes={clientes || []} puedeEliminar={puedeEliminar} />
       </div>
     </div>
   );

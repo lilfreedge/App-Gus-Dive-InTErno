@@ -11,12 +11,26 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
 
   const [reguladorId, setReguladorId] = useState(reguladores[0]?.id || "");
   const [limpiezaUltrasonido, setLimpiezaUltrasonido] = useState(false);
-  const [presionIntermedia, setPresionIntermedia] = useState(false);
-  const [oRingsAplica, setORingsAplica] = useState(false);
-  const [oRings, setORings] = useState("");
+  const [presionIntermedia, setPresionIntermedia] = useState("");
+  // o_rings: array de {descripcion, parte}
+  const [oRings, setORings] = useState([]);
+  const [oRingDesc, setORingDesc] = useState("");
+  const [oRingParte, setORingParte] = useState("");
   const [nota, setNota] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function agregarORing() {
+    const desc = oRingDesc.trim();
+    if (!desc) return;
+    setORings((prev) => [...prev, { descripcion: desc, parte: oRingParte.trim() }]);
+    setORingDesc("");
+    setORingParte("");
+  }
+
+  function quitarORing(idx) {
+    setORings((prev) => prev.filter((_, i) => i !== idx));
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -37,8 +51,8 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
       regulador_id: reguladorId,
       regulador_codigo_snapshot: regulador?.codigo || null,
       limpieza_ultrasonido: limpiezaUltrasonido,
-      presion_intermedia: presionIntermedia,
-      o_rings: oRingsAplica ? oRings.trim() || null : null,
+      presion_intermedia: presionIntermedia.trim() || null,
+      o_rings: oRings.length > 0 ? oRings : null,
       detalle: nota.trim() || null,
     });
 
@@ -48,11 +62,6 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
       setError("No se pudo guardar. Intenta de nuevo.");
       return;
     }
-
-    // El próximo mantenimiento del regulador (+8 meses) ya no se actualiza
-    // desde aquí: desde V29 lo pone la base de datos al registrar
-    // (migration_53.sql). Antes, a quien no tenía permiso de editar el
-    // catálogo de reguladores la fecha no se le movía (sin dar error).
 
     router.push("/equipos/mantenimiento-reguladores");
     router.refresh();
@@ -93,58 +102,69 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
         </label>
       </div>
 
-      <label>Presión intermedia</label>
-      <div className="radio-pills">
-        <label>
-          <input
-            type="radio"
-            name="presion_intermedia"
-            checked={!presionIntermedia}
-            onChange={() => setPresionIntermedia(false)}
-          />
-          No
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="presion_intermedia"
-            checked={presionIntermedia}
-            onChange={() => setPresionIntermedia(true)}
-          />
-          Sí
-        </label>
-      </div>
+      <label htmlFor="presion_intermedia">Presión intermedia</label>
+      <input
+        id="presion_intermedia"
+        type="text"
+        value={presionIntermedia}
+        onChange={(e) => setPresionIntermedia(e.target.value)}
+        placeholder="Ej: 135 PSI (dejar vacío si no aplica)"
+      />
 
-      <label>O-rings</label>
-      <div className="radio-pills">
-        <label>
-          <input
-            type="radio"
-            name="o_rings_aplica"
-            checked={!oRingsAplica}
-            onChange={() => setORingsAplica(false)}
-          />
-          Ninguno
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="o_rings_aplica"
-            checked={oRingsAplica}
-            onChange={() => setORingsAplica(true)}
-          />
-          Especificar
-        </label>
-      </div>
-      {oRingsAplica && (
+      <label>O-rings utilizados</label>
+      {oRings.length > 0 && (
+        <ul style={{ margin: "4px 0 10px", paddingLeft: 20, fontSize: 14 }}>
+          {oRings.map((r, i) => (
+            <li key={i} style={{ marginBottom: 4 }}>
+              <span>
+                <strong>{r.descripcion}</strong>
+                {r.parte ? ` — ${r.parte}` : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() => quitarORing(i)}
+                style={{
+                  marginLeft: 8,
+                  background: "none",
+                  border: "none",
+                  color: "var(--rojo)",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  padding: 0,
+                }}
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <input
           type="text"
-          value={oRings}
-          onChange={(e) => setORings(e.target.value)}
-          placeholder="Ej: O-ring de primera etapa"
-          style={{ marginTop: 8 }}
+          value={oRingDesc}
+          onChange={(e) => setORingDesc(e.target.value)}
+          placeholder="O-ring (ej: kit 1ª etapa)"
+          style={{ flex: "2 1 140px" }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); agregarORing(); } }}
         />
-      )}
+        <input
+          type="text"
+          value={oRingParte}
+          onChange={(e) => setORingParte(e.target.value)}
+          placeholder="Parte del regulador (opcional)"
+          style={{ flex: "3 1 180px" }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); agregarORing(); } }}
+        />
+        <button
+          type="button"
+          className="btn"
+          onClick={agregarORing}
+          style={{ flexShrink: 0 }}
+        >
+          + Agregar
+        </button>
+      </div>
 
       <label htmlFor="nota">Nota</label>
       <textarea

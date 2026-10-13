@@ -13,6 +13,7 @@ export default function EditarClienteForm({ cliente }) {
   const supabase = createClient();
 
   const [nombre, setNombre] = useState(cliente.nombre || "");
+  const [numero, setNumero] = useState(cliente.numero || "");
   const [telefono, setTelefono] = useState(cliente.telefono || "");
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -30,6 +31,7 @@ export default function EditarClienteForm({ cliente }) {
 
     const cambios = {
       nombre: nombre.trim(),
+      numero: numero.trim() || null,
       telefono: telefono.trim() || null,
     };
 
@@ -62,8 +64,23 @@ export default function EditarClienteForm({ cliente }) {
       </label>
       <input id="nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
 
-      <label htmlFor="telefono">Teléfono</label>
-      <input id="telefono" type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Opcional" />
+      <label htmlFor="numero">Número de cliente</label>
+      <input
+        id="numero"
+        type="text"
+        value={numero}
+        onChange={(e) => setNumero(e.target.value)}
+        placeholder="Ej: GUS-001 (opcional)"
+      />
+
+      <label htmlFor="telefono">Contacto</label>
+      <input
+        id="telefono"
+        type="text"
+        value={telefono}
+        onChange={(e) => setTelefono(e.target.value)}
+        placeholder="Teléfono, WhatsApp, email... (opcional)"
+      />
 
       {error && <div className="error-box">{error}</div>}
 

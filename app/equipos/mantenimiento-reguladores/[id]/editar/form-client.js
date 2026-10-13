@@ -5,18 +5,51 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 
+// Normaliza o_rings desde la BD (puede ser jsonb array, string legacy, o null)
+function parsearORings(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.map((r) =>
+    typeof r === "object" && r !== null
+      ? { descripcion: r.descripcion || "", parte: r.parte || "" }
+      : { descripcion: String(r), parte: "" }
+  );
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsearORings(parsed);
+    } catch {}
+    return raw.trim() ? [{ descripcion: raw.trim(), parte: "" }] : [];
+  }
+  return [];
+}
+
 export default function EditarMantenimientoForm({ registro, reguladores }) {
   const router = useRouter();
   const supabase = createClient();
 
   const [reguladorId, setReguladorId] = useState(registro.regulador_id || "");
   const [limpiezaUltrasonido, setLimpiezaUltrasonido] = useState(!!registro.limpieza_ultrasonido);
-  const [presionIntermedia, setPresionIntermedia] = useState(!!registro.presion_intermedia);
-  const [oRingsAplica, setORingsAplica] = useState(!!registro.o_rings);
-  const [oRings, setORings] = useState(registro.o_rings || "");
+  const [presionIntermedia, setPresionIntermedia] = useState(
+    typeof registro.presion_intermedia === "string" ? registro.presion_intermedia : ""
+  );
+  const [oRings, setORings] = useState(parsearORings(registro.o_rings));
+  const [oRingDesc, setORingDesc] = useState("");
+  const [oRingParte, setORingParte] = useState("");
   const [nota, setNota] = useState(registro.detalle || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function agregarORing() {
+    const desc = oRingDesc.trim();
+    if (!desc) return;
+    setORings((prev) => [...prev, { descripcion: desc, parte: oRingParte.trim() }]);
+    setORingDesc("");
+    setORingParte("");
+  }
+
+  function quitarORing(idx) {
+    setORings((prev) => prev.filter((_, i) => i !== idx));
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -31,15 +64,12 @@ export default function EditarMantenimientoForm({ registro, reguladores }) {
 
     setLoading(true);
 
-    // Guarda también el "después" (item 11, pedido explícito, 27-sep-2026:
-    // "pon este mismo formato de historial en app interno") -- mismo
-    // patrón que ya usa App Equipos de clientes (item 20).
     const cambios = {
       regulador_id: reguladorId,
       regulador_codigo_snapshot: regulador?.codigo || registro.regulador_codigo_snapshot,
       limpieza_ultrasonido: limpiezaUltrasonido,
-      presion_intermedia: presionIntermedia,
-      o_rings: oRingsAplica ? oRings.trim() || null : null,
+      presion_intermedia: presionIntermedia.trim() || null,
+      o_rings: oRings.length > 0 ? oRings : null,
       detalle: nota.trim() || null,
     };
 
@@ -106,58 +136,69 @@ export default function EditarMantenimientoForm({ registro, reguladores }) {
         </label>
       </div>
 
-      <label>Presión intermedia</label>
-      <div className="radio-pills">
-        <label>
-          <input
-            type="radio"
-            name="presion_intermedia"
-            checked={!presionIntermedia}
-            onChange={() => setPresionIntermedia(false)}
-          />
-          No
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="presion_intermedia"
-            checked={presionIntermedia}
-            onChange={() => setPresionIntermedia(true)}
-          />
-          Sí
-        </label>
-      </div>
+      <label htmlFor="presion_intermedia">Presión intermedia</label>
+      <input
+        id="presion_intermedia"
+        type="text"
+        value={presionIntermedia}
+        onChange={(e) => setPresionIntermedia(e.target.value)}
+        placeholder="Ej: 135 PSI (dejar vacío si no aplica)"
+      />
 
-      <label>O-rings</label>
-      <div className="radio-pills">
-        <label>
-          <input
-            type="radio"
-            name="o_rings_aplica"
-            checked={!oRingsAplica}
-            onChange={() => setORingsAplica(false)}
-          />
-          Ninguno
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="o_rings_aplica"
-            checked={oRingsAplica}
-            onChange={() => setORingsAplica(true)}
-          />
-          Especificar
-        </label>
-      </div>
-      {oRingsAplica && (
+      <label>O-rings utilizados</label>
+      {oRings.length > 0 && (
+        <ul style={{ margin: "4px 0 10px", paddingLeft: 20, fontSize: 14 }}>
+          {oRings.map((r, i) => (
+            <li key={i} style={{ marginBottom: 4 }}>
+              <span>
+                <strong>{r.descripcion}</strong>
+                {r.parte ? ` — ${r.parte}` : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() => quitarORing(i)}
+                style={{
+                  marginLeft: 8,
+                  background: "none",
+                  border: "none",
+                  color: "var(--rojo)",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  padding: 0,
+                }}
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <input
           type="text"
-          value={oRings}
-          onChange={(e) => setORings(e.target.value)}
-          placeholder="Ej: O-ring de primera etapa"
-          style={{ marginTop: 8 }}
+          value={oRingDesc}
+          onChange={(e) => setORingDesc(e.target.value)}
+          placeholder="O-ring (ej: kit 1ª etapa)"
+          style={{ flex: "2 1 140px" }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); agregarORing(); } }}
         />
-      )}
+        <input
+          type="text"
+          value={oRingParte}
+          onChange={(e) => setORingParte(e.target.value)}
+          placeholder="Parte del regulador (opcional)"
+          style={{ flex: "3 1 180px" }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); agregarORing(); } }}
+        />
+        <button
+          type="button"
+          className="btn"
+          onClick={agregarORing}
+          style={{ flexShrink: 0 }}
+        >
+          + Agregar
+        </button>
+      </div>
 
       <label htmlFor="nota">Nota</label>
       <textarea

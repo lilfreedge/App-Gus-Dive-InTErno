@@ -92,8 +92,10 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
                 <div className="list-item-meta">
                   {[
                     `Limpieza ultrasonido: ${m.limpieza_ultrasonido ? "Sí" : "No"}`,
-                    `Presión intermedia: ${m.presion_intermedia ? "Sí" : "No"}`,
-                    `O-rings: ${m.o_rings || "Ninguno"}`,
+                    m.presion_intermedia ? `Presión intermedia: ${m.presion_intermedia}` : "Presión intermedia: —",
+                    Array.isArray(m.o_rings) && m.o_rings.length > 0
+                      ? `O-rings: ${m.o_rings.map((r) => r.descripcion + (r.parte ? ` (${r.parte})` : "")).join(", ")}`
+                      : "O-rings: Ninguno",
                   ].join(" · ")}
                 </div>
                 {m.detalle && <div className="list-item-note">{m.detalle}</div>}

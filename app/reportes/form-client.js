@@ -263,6 +263,27 @@ export default function ReportesForm({ usuarios }) {
                     </tbody>
                   </table>
                 </div>
+                {vista.totalesPorGas && (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      padding: "10px 14px",
+                      background: "var(--fondo-suave, #f4f6f8)",
+                      borderRadius: 8,
+                      fontSize: 13,
+                    }}
+                  >
+                    <span style={{ fontWeight: 600 }}>Totales de llenados: </span>
+                    {Object.entries(vista.totalesPorGas.porGas).map(([gas, cant]) => (
+                      <span key={gas} style={{ marginRight: 14 }}>
+                        {gas}: <strong>{cant}</strong>
+                      </span>
+                    ))}
+                    <span style={{ marginLeft: 4, borderLeft: "1px solid #ccc", paddingLeft: 14 }}>
+                      Total: <strong>{vista.totalesPorGas.total}</strong>
+                    </span>
+                  </div>
+                )}
               </>
             )}
 
