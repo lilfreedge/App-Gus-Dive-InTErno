@@ -33,7 +33,7 @@ export default async function HistorialCambiosPage() {
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
-        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Historial de anulaciones y ediciones" }]} />
+        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Anulaciones y ediciones" }]} />
 
         <div className="section-title">Movimientos anulados</div>
         {/* Botones separados de "Borrar todo" (28-sep-2026, pedido

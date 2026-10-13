@@ -27,6 +27,7 @@ export default async function CompresoresPage() {
   const supabase = createClient();
   const { profile } = await requireInterno(supabase, "compresores");
   const puedeRegistrar = tieneAcceso(profile, "compresores");
+  const puedeRegistrarCompresor = tieneAcceso(profile, "registrar_compresor");
 
   const { data: compresores } = await supabase
     .from("compresores")
@@ -71,7 +72,7 @@ export default async function CompresoresPage() {
         )}
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20, alignItems: "center" }}>
-          {puedeRegistrar && (
+          {puedeRegistrar && compresores && compresores.length > 0 && (
             <Link href="/equipos/compresores/mantenimiento/nueva">
               <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
                 + Registrar mantenimiento
@@ -83,7 +84,7 @@ export default async function CompresoresPage() {
               Historial de mantenimientos
             </button>
           </Link>
-          {puedeRegistrar && (
+          {puedeRegistrarCompresor && (
             <Link
               href="/equipos/compresores/nuevo"
               style={{

@@ -49,10 +49,10 @@ export default async function ReportesPage() {
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
-            { label: "Reportes e Informes" },
+            { label: "Recibos e Informes" },
           ]}
         />
-        <h1 className="page-title">Reportes e Informes</h1>
+        <h1 className="page-title">Recibos e Informes</h1>
         <p className="page-subtitle">
           Reporte de seguimiento e informe de mantenimiento por orden, armados con lo que ya se fue registrando -- por ahora, solo para
           Reguladores.

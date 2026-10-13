@@ -95,10 +95,10 @@ export default async function HistorialAdministracionPage({ searchParams }) {
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
-            { label: "Historial de anulaciones y ediciones" },
+            { label: "Anulaciones y ediciones" },
           ]}
         />
-        <h1 className="page-title">Historial de anulaciones y ediciones</h1>
+        <h1 className="page-title">Anulaciones y ediciones</h1>
 
         <HistorialClient
           ordenId={ordenId}

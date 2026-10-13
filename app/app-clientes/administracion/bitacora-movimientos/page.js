@@ -43,10 +43,10 @@ export default async function BitacoraMovimientosPage() {
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
             { label: "Más", href: "/app-clientes/mas" },
-            { label: "Bitácora movimientos en órdenes" },
+            { label: "Bitácora de órdenes" },
           ]}
         />
-        <h1 className="page-title">Bitácora movimientos en órdenes</h1>
+        <h1 className="page-title">Bitácora de órdenes</h1>
         <p className="page-subtitle">Quién editó qué, agrupado por orden -- las más recientes primero.</p>
 
         {/* Agrupado por orden + buscador por No. de orden (1-oct-2026,

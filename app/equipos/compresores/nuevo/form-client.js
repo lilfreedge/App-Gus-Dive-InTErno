@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { subirFoto } from "@/lib/storage-client";
 import CampoFoto from "@/components/CampoFoto";
 
 export default function NuevoCompresorForm() {
-  const router = useRouter();
   const supabase = createClient();
 
   const [descripcion, setDescripcion] = useState("");
@@ -62,8 +60,7 @@ export default function NuevoCompresorForm() {
       return;
     }
 
-    router.push("/equipos/compresores");
-    router.refresh();
+    window.location.href = "/equipos/compresores";
   }
 
   return (

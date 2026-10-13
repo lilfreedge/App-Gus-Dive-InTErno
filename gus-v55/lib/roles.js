@@ -1,0 +1,286 @@
+import { redirect } from "next/navigation";
+import { PERMISOS_EQUIPOS } from "@/lib/nav";
+
+export { PERMISOS_EQUIPOS };
+
+const PERMISOS_DEFAULT = {
+  // V30 (pedido explícito, notas del 8-oct-2026: "si alguien no tiene
+  // permiso de registrar salida ni tanque, que no aparezcan esos botones en
+  // inicio"): hasta V29 no existía -- cualquiera con App Interno veía y
+  // registraba salidas. migration_54.sql lo deja en true para todos los que
+  // ya tenían App Interno ("2. ok"), para no quitarle nada a nadie de golpe.
+  registrar_salida: false,
+  // V30: rol "Operativo" (pedido explícito, punto 7 de las notas): solo
+  // registra llenados, en una sola pantalla (app/dashboard/operativo.js).
+  // Se guarda aquí (no en una columna nueva) porque convive con is_admin:
+  // Usuario = ninguno de los dos, Administrador = is_admin, Operativo =
+  // este. Ver esOperativo() y tieneAcceso() más abajo.
+  rol_operativo: false,
+  reportes: false,
+  catalogo: true,
+  historial: false,
+  changelog: false,
+  manual: false,
+  movimientos: false,
+  facturacion: false,
+  registrar_inspeccion: false,
+  registrar_llenado: false,
+  registrar_mantenimiento: false,
+  // V29 (migration_53.sql): registrar pruebas hidrostáticas de tanques.
+  registrar_hidrostatica: false,
+  // V29: "Próximos vencimientos" en Más (pedido explícito: "quien tenga el
+  // permiso, mismo sistema que ya tienen los otros botones").
+  proximos_vencimientos: false,
+  catalogo_codigo: false,
+  catalogo_regulador: false,
+  catalogo_tanque: false,
+  compresores: false,
+  correos_semanales: false,
+  equipos_clientes: false,
+  // Acceso a App Interno, como tal (25-sep-2026, pedido explícito: nueva
+  // pantalla "Accesos a apps" desde /espacio, para dar/quitar acceso a
+  // cada app por separado). Ver migration_28.sql: se le puso en true a
+  // todos los perfiles YA existentes al agregar esta columna, para no
+  // sacar de golpe a nadie que ya estuviera usando App Interno -- de
+  // aquí en adelante, un perfil nuevo nace sin este acceso hasta que el
+  // Titular se lo dé.
+  acceso_app_interno: false,
+  // Permisos granulares de App Clientes (23-sep-2026, pedido explícito):
+  // equipos_clientes ya gatea poder ENTRAR a la app -- estos 4 son más
+  // finos, para acciones puntuales dentro de ella. Sin un permiso dado,
+  // el usuario igual puede VER todo, solo no puede hacer esa acción
+  // (botones ocultos/deshabilitados).
+  equipos_clientes_registrar: false,
+  equipos_clientes_agregar_equipo: false,
+  equipos_clientes_agregar_cliente: false,
+  equipos_clientes_catalogo: false,
+  // Editar un Equipo del cliente ya creado (pedido explícito, 23-sep-2026).
+  equipos_clientes_editar_equipo: false,
+  // "Bitácora movimientos en órdenes" (27-sep-2026, pedido explícito: "pon
+  // para yo dar acceso... ponme para yo dar acceso en administracion") --
+  // antes era Titular-only a la fuerza (requireTitular); ahora es un
+  // permiso granular más, para que el Titular se lo pueda dar a alguien
+  // más sin tener que hacerlo Titular o Administrador.
+  equipos_clientes_bitacora_movimientos: false,
+  // 6 permisos nuevos de la ronda grande de feedback (27-sep-2026,
+  // pedido explícito): Historial y Reportes de App Clientes pasan de
+  // Titular-only/siempre-visible a permisos granulares; Actualizar
+  // estado de orden ahora también se puede ocultar por permiso; y 3
+  // permisos nuevos exclusivos de Administradores (misma tabla que
+  // equipos_clientes_editar_equipo, ver COLUMNAS_ADMIN en
+  // permisos-client.js) para editar el cliente, editar los datos de la
+  // orden, y editar el mantenimiento de un Compresor por separado (item
+  // 3 de esa ronda, pedido explícito: "una permiso nuevo para eso, no
+  // meterlo con editar orden").
+  equipos_clientes_historial: false,
+  // "Ver bitácora de la orden" (5-oct-2026, pedido explícito: antes era
+  // Titular/Administrador hardcodeado, sin forma de dársela a nadie más
+  // -- "no me hace sentido tener algo que solo yo pueda ver, cuando el
+  // otro es casi igual y lo puedo dar"). Confirmado exclusivo de
+  // Administrador/Titular (igual que "equipos_clientes_historial"/
+  // "equipos_clientes_bitacora_movimientos", ver COLUMNAS_ADMIN en
+  // permisos-client.js) -- la diferencia con el hardcodeo de antes es que
+  // ahora el Titular puede dárselo a un Administrador puntual, uno por
+  // uno, en vez de ser automático para todos (ver migration_49.sql).
+  equipos_clientes_bitacora_orden: false,
+  equipos_clientes_reportes: false,
+  equipos_clientes_actualizar_estado: false,
+  equipos_clientes_editar_cliente: false,
+  equipos_clientes_editar_orden: false,
+  equipos_clientes_editar_mantenimiento_compresor: false,
+  // Item 36, nueva feature (mockup Informe.dc.html): pantalla propia para
+  // que el técnico llene el informe de mantenimiento de un Regulador y
+  // genere el PDF/correo para el cliente -- permiso granular igual que
+  // Actualizar estado de orden (asignable a cualquiera, no exclusivo de
+  // Administradores).
+  equipos_clientes_informe_mantenimiento: false,
+  // Editar un Hold ya creado (feedback sobre v40, pedido explícito: "pon
+  // el permiso en administración") -- exclusivo de Administradores, mismo
+  // patrón que editar_orden/editar_cliente/editar_equipo.
+  equipos_clientes_editar_hold: false,
+  // "Listado de clientes" (top nav fijo) y "Listado de órdenes" (tarjeta
+  // en Más) no tenían permiso granular propio -- cualquiera con acceso
+  // base a la app (equipos_clientes) los veía siempre (28-sep-2026,
+  // pedido explícito: "AGREGAR AQUI: Listado de clientes, listado de
+  // ordenes" en Permisos > General). "Listado de clientes" se filtra en
+  // TopbarClientes.js (es de los 4 fijos del menú superior, ver
+  // lib/nav-clientes.js); "Listado de órdenes" se filtra igual que el
+  // resto de tarjetas de Más (mas/page.js).
+  equipos_clientes_listado_clientes: false,
+  equipos_clientes_listado_ordenes: false,
+  // V30 (migration_54.sql): registrar / editar servicios del catálogo de
+  // App Clientes (antes los daba el permiso de ver Base de datos), y
+  // "Clientes por contactar" con permiso propio (antes, el de Reportes).
+  equipos_clientes_registrar_servicio: false,
+  equipos_clientes_editar_servicio: false,
+  equipos_clientes_contactar: false,
+  // "Solicitar códigos a almacén" (App Interno, V29, pedido explícito:
+  // "controlamos eso servicios, con un boton de acceso al boton de
+  // 'Solicitar códigos a almacen'") -- un solo permiso: quien lo tiene ve
+  // "Solicitudes al almacén" en Más, puede pedir y puede marcar lo
+  // recibido. Ver migration_52.sql.
+  solicitudes_almacen: false,
+};
+
+const MENU_PERSONALIZADO_DEFAULT = {
+  llenados: true,
+  inspeccion_visual: false,
+  mantenimiento_reguladores: false,
+  compresores: false,
+  // Atajo opcional a Solicitudes al almacén (V29, pedido explícito:
+  // "dejalo en mas y pon opcion en mi perfil para quienes quieran tener
+  // un shortcut en el menu principal") -- apagado por default.
+  solicitudes: false,
+  // Atajo opcional a Pruebas hidrostáticas (V29), apagado por default.
+  pruebas_hidrostaticas: false,
+  // Atajo opcional a Próximos vencimientos (V29), apagado por default.
+  proximos_vencimientos: false,
+};
+
+// Accesos directos opcionales de App Equipos de clientes (23-sep-2026,
+// pedido explícito: "agrega boton opcional (asi como esta en app
+// interno) para que la gente puedan ver shortcut de reportes en su
+// menú") -- mismo mecanismo que MENU_PERSONALIZADO_DEFAULT de arriba,
+// pero en su propia columna (menu_personalizado_clientes) para no pisar
+// la de App Interno, mismo patrón que orden_menu_clientes.
+const MENU_PERSONALIZADO_CLIENTES_DEFAULT = {
+  reportes: false,
+};
+
+// Trae el perfil (nombre, si es administrador, si es Titular y sus
+// permisos) del usuario logueado.
+export async function getProfileYUser(supabase) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { user: null, profile: null };
+
+  // BUG corregido (item de la ronda grande de feedback: el atajo
+  // "Registro de Órdenes" en Inicio de App Clientes no se quedaba
+  // marcado tras activarlo en "Personalizar mi menú") -- esta consulta
+  // nunca traía la columna atajos_inicio_clientes, así que el valor
+  // guardado nunca volvía al perfil que lee Inicio para decidir qué
+  // atajos mostrar, aunque PersonalizarMenuClientes.js sí lo guardaba
+  // bien en la base de datos.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select(
+      "id, full_name, is_admin, es_titular, aprobado, permisos, menu_personalizado, menu_personalizado_clientes, orden_menu, orden_menu_clientes, atajos_inicio_clientes"
+    )
+    .eq("id", user.id)
+    .single();
+
+  return {
+    user,
+    profile: profile
+      ? {
+          ...profile,
+          permisos: { ...PERMISOS_DEFAULT, ...(profile.permisos || {}) },
+          menu_personalizado: {
+            ...MENU_PERSONALIZADO_DEFAULT,
+            ...(profile.menu_personalizado || {}),
+          },
+          menu_personalizado_clientes: {
+            ...MENU_PERSONALIZADO_CLIENTES_DEFAULT,
+            ...(profile.menu_personalizado_clientes || {}),
+          },
+        }
+      : null,
+  };
+}
+
+// Rol "Operativo" (V30) -- ver PERMISOS_DEFAULT.rol_operativo.
+export function esOperativo(profile) {
+  return !!profile && !profile.es_titular && !!profile.permisos?.rol_operativo;
+}
+
+// El Titular siempre tiene acceso total a todo, sin importar `permisos`.
+// Un Operativo (V30) solo puede registrar llenados -- cualquier otro
+// permiso que tuviera guardado de antes no cuenta mientras tenga ese rol
+// (no se borra, por si vuelve a ser Usuario).
+export function tieneAcceso(profile, seccion) {
+  if (!profile) return false;
+  if (profile.es_titular) return true;
+  if (profile.permisos?.rol_operativo) {
+    return seccion === "registrar_llenado" || seccion === "acceso_app_interno";
+  }
+  return !!profile.permisos?.[seccion];
+}
+
+export function tieneAlguno(profile, secciones) {
+  return secciones.some((s) => tieneAcceso(profile, s));
+}
+
+// Para usar al inicio de páginas/acciones que son solo de administrador.
+// Si no es admin (ni Titular), lo manda de vuelta al dashboard.
+export async function requireAdmin(supabase) {
+  const { user, profile } = await getProfileYUser(supabase);
+
+  if (!user || !(profile?.is_admin || profile?.es_titular)) {
+    redirect("/dashboard");
+  }
+
+  return { user, profile };
+}
+
+// Para páginas que son solo del Titular (p. ej. Administración).
+export async function requireTitular(supabase) {
+  const { user, profile } = await getProfileYUser(supabase);
+
+  if (!user || !profile?.es_titular) {
+    redirect("/dashboard");
+  }
+
+  return { user, profile };
+}
+
+// Para páginas visibles según profiles.permisos (p. ej. Historial),
+// donde el Titular siempre tiene acceso sin importar el valor guardado.
+export async function requirePermiso(supabase, seccion) {
+  const { user, profile } = await getProfileYUser(supabase);
+
+  if (!user || !tieneAcceso(profile, seccion)) {
+    redirect("/dashboard");
+  }
+
+  return { user, profile };
+}
+
+// Para las pantallas de App Interno (V30, "corrige todos los accesos"):
+// antes varias se podían abrir escribiendo la dirección aunque la persona
+// no tuviera el permiso. Exige el acceso a App Interno, saca al Operativo
+// (que solo tiene su pantalla de Inicio) y, si se pasan claves, que tenga
+// al menos una.
+export async function requireInterno(supabase, claves = []) {
+  const { user, profile } = await getProfileYUser(supabase);
+
+  if (!user || !profile) redirect("/login");
+  if (!tieneAcceso(profile, "acceso_app_interno")) redirect("/espacio");
+  if (esOperativo(profile)) redirect("/dashboard");
+  const lista = Array.isArray(claves) ? claves : [claves];
+  if (lista.length > 0 && !tieneAlguno(profile, lista)) redirect("/dashboard");
+
+  return { user, profile };
+}
+
+// Para páginas de App Clientes gateadas por uno de los permisos
+// granulares nuevos (item 15, 23-sep-2026: registrar orden, agregar
+// equipo, agregar cliente, acceso a Base de datos). A diferencia de
+// requirePermiso, si falta el permiso puntual no manda a /dashboard
+// (eso es de App Interno, sacaría de la app a alguien que sí tiene
+// acceso a ella) sino de vuelta a una página de App Clientes -- sin el
+// permiso, el usuario igual puede VER todo, solo no puede hacer esa
+// acción en concreto.
+export async function requirePermisoClientes(supabase, seccion, redirectTo = "/app-clientes") {
+  const { user, profile } = await getProfileYUser(supabase);
+
+  if (!user || !tieneAcceso(profile, "equipos_clientes")) {
+    redirect("/dashboard");
+  }
+  if (!tieneAcceso(profile, seccion)) {
+    redirect(redirectTo);
+  }
+
+  return { user, profile };
+}

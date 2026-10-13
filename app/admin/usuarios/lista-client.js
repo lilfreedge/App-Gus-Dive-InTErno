@@ -42,6 +42,7 @@ export const PERMISOS_DEFAULT = {
   catalogo_regulador: false,
   catalogo_tanque: false,
   compresores: false,
+  registrar_compresor: false,
   correos_semanales: false,
   equipos_clientes: false,
   solicitudes_almacen: false,
@@ -75,6 +76,7 @@ export const SECCIONES = [
       { clave: "registrar_hidrostatica", label: "Pruebas hidrostáticas", Icono: IconGauge },
       { clave: "registrar_mantenimiento", label: "Mantenimiento de reguladores", Icono: IconRegulator },
       { clave: "compresores", label: "Compresores", Icono: IconCompressor },
+      { clave: "registrar_compresor", label: "Registrar compresor", Icono: IconCompressor, sub_de: true },
     ],
   },
   {
@@ -99,7 +101,7 @@ export const SECCIONES = [
         destacado: true,
       },
       { clave: "solicitudes_almacen", label: "Solicitudes al almacén", Icono: IconPackage },
-      { clave: "historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory },
+      { clave: "historial", label: "Anulaciones y ediciones", Icono: IconHistory },
     ],
   },
   {

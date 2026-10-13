@@ -18,12 +18,13 @@ import { IconCatalog, IconReport, IconHistory, IconShuffle, IconCalendar } from 
 // correspondiente (el Titular siempre tiene acceso vía tieneAcceso).
 // Ver lib/nav.js -> NAV_SECTIONS ("Más" usa key: [array de permisos]).
 const OPCIONES = [
+  // V29, pedido explícito: "dejalo en mas" -- ver app/solicitudes.
   {
-    href: "/catalogo",
-    titulo: "Base de datos",
-    descripcion: "Códigos, reguladores y tanques de alquiler.",
-    permiso: "catalogo",
-    Icono: IconCatalog,
+    href: "/solicitudes",
+    titulo: "Solicitudes al almacén",
+    descripcion: "Pide códigos al almacén y marca cuándo llegan a la tienda.",
+    permiso: "solicitudes_almacen",
+    Icono: IconShuffle,
   },
   // V29 (maqueta aprobada: segundo, debajo de Base de datos).
   {
@@ -40,17 +41,19 @@ const OPCIONES = [
     permiso: ["reportes", "correos_semanales"],
     Icono: IconReport,
   },
-  // V29, pedido explícito: "dejalo en mas" -- ver app/solicitudes.
   {
-    href: "/solicitudes",
-    titulo: "Solicitudes al almacén",
-    descripcion: "Pide códigos al almacén y marca cuándo llegan a la tienda.",
-    permiso: "solicitudes_almacen",
-    Icono: IconShuffle,
+    href: "/catalogo",
+    titulo: "Base de datos",
+    descripcion: "Códigos, reguladores y tanques de alquiler.",
+    permiso: "catalogo",
+    Icono: IconCatalog,
   },
   {
     href: "/admin/historial",
-    titulo: "Historial de anulaciones y ediciones",
+    // Renombrado a "Anulaciones y ediciones" (13-oct-2026, pedido explícito:
+    // "cambiemos el nombre a 'anulaciones y ediciones'") -- antes era
+    // "Historial de anulaciones y ediciones".
+    titulo: "Anulaciones y ediciones",
     descripcion: "Registro de ediciones y movimientos anulados.",
     permiso: "historial",
     Icono: IconHistory,

@@ -5,12 +5,12 @@ import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevoCompresorForm from "./form-client";
 
-// Agregar un compresor al catálogo. Gateado por el permiso "compresores"
-// (el mismo que gatea toda la sección -- no hay un permiso separado para
-// el catálogo, a diferencia de reguladores/tanques).
+// Agregar un compresor al catálogo. Gateado por el permiso granular
+// "registrar_compresor" (separado de "compresores" que da acceso a la
+// sección -- igual que registrar_inspeccion, registrar_llenado, etc.).
 export default async function NuevoCompresorPage() {
   const supabase = createClient();
-  await requireInterno(supabase, "compresores");
+  await requireInterno(supabase, "registrar_compresor");
 
   return (
     <div>

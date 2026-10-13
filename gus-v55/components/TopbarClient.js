@@ -1,0 +1,186 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { seccionesVisibles, ordenarSecciones, NAV_SECTIONS, SECCIONES_FIJAS } from "@/lib/nav";
+import { useReorderDrag } from "@/lib/useReorderDrag";
+import { IconLogout, IconGear, IconEdit, IconHistory, IconUsers, IconBook, IconShuffle } from "./icons";
+
+export default function TopbarClient({
+  nombre,
+  nombreCompleto,
+  correo,
+  isAdmin,
+  esTitular,
+  permisos,
+  ordenMenu,
+  menuPersonalizado,
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const supabase = createClient();
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Orden del menú superior, reorganizable con drag & drop. "Inicio"
+  // queda siempre fijo de primero (ordenarSecciones lo excluye del
+  // reordenamiento); el resto arranca con el orden guardado por este
+  // usuario en profiles.orden_menu, o el orden normal si nunca lo
+  // cambió.
+  const linksBase = useMemo(
+    () => seccionesVisibles({ esTitular, permisos, menuPersonalizado }),
+    [esTitular, permisos, menuPersonalizado]
+  );
+  const [links, setLinks] = useState(() => ordenarSecciones(linksBase, ordenMenu));
+
+  useEffect(() => {
+    setLinks(ordenarSecciones(linksBase, ordenMenu));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linksBase]);
+
+  async function guardarOrden(nuevosLinks) {
+    const orden = nuevosLinks.filter((l) => !SECCIONES_FIJAS.includes(l.href)).map((l) => l.href);
+    await supabase.from("profiles").update({ orden_menu: orden }).eq("id", (await supabase.auth.getUser()).data.user.id);
+  }
+
+  // Arrastre manual con Pointer Events (lib/useReorderDrag.js) -- ver el
+  // comentario ahí para el porqué (bug reportado en vivo con el drag &
+  // drop nativo de HTML5, que un simple click con trackpad disparaba).
+  const { sobreHref, getItemProps, onNavClickCapture } = useReorderDrag({
+    fijos: SECCIONES_FIJAS,
+    setLinks,
+    guardarOrden,
+  });
+
+  useEffect(() => {
+    function onClick(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  async function salir() {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
+  // Operativo (V30): una sola pantalla -- sin botones en el menú de
+  // arriba y, en el menú de ajustes, solo Mi Perfil y Cerrar sesión.
+  const operativo = !esTitular && !!permisos?.rol_operativo;
+  const rolLabel = esTitular ? "Titular" : operativo ? "Operativo" : isAdmin ? "Administrador" : "Usuario";
+  const verChangelog = !operativo && (esTitular || permisos?.changelog);
+  const verManual = !operativo && (esTitular || permisos?.manual);
+
+  return (
+    <div className="topbar">
+      <div className="topbar-inner">
+        <div>
+          <Image
+            src="/logo-gus-icon.png"
+            alt="Gus Dive"
+            width={64}
+            height={22}
+            className="topbar-logo"
+            priority
+          />
+          <div className="topbar-sub">Hola, {nombre}</div>
+        </div>
+
+        <div className="gear-wrap" ref={menuRef}>
+          <button
+            className="gear-btn"
+            onClick={() => setOpen((o) => !o)}
+            aria-label="Ajustes"
+          >
+            <IconGear size={18} />
+          </button>
+          {open && (
+            <div className="settings-menu">
+              <div className="settings-menu-who">
+                <b>{nombreCompleto}</b>
+                {correo} · {rolLabel}
+              </div>
+              <Link href="/perfil" className="settings-menu-link" onClick={() => setOpen(false)}>
+                <IconEdit size={15} /> Mi Perfil
+              </Link>
+              {verChangelog && (
+                <Link
+                  href="/changelog"
+                  className="settings-menu-link"
+                  onClick={() => setOpen(false)}
+                >
+                  <IconHistory size={15} /> Changelog
+                </Link>
+              )}
+              {verManual && (
+                <Link
+                  href="/manual"
+                  className="settings-menu-link"
+                  onClick={() => setOpen(false)}
+                >
+                  <IconBook size={15} /> Manual
+                </Link>
+              )}
+              {esTitular && (
+                <Link
+                  href="/admin/usuarios"
+                  className="settings-menu-link"
+                  onClick={() => setOpen(false)}
+                >
+                  <IconUsers size={15} /> Administración
+                  <span className="settings-menu-tag">TITULAR</span>
+                </Link>
+              )}
+              <hr />
+              {!operativo && (
+                <Link href="/espacio" className="settings-menu-link" onClick={() => setOpen(false)}>
+                  <IconShuffle size={15} /> Cambiar de app
+                </Link>
+              )}
+              <button className="settings-menu-link settings-menu-danger" onClick={salir}>
+                <IconLogout size={15} /> Cerrar sesión
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="topbar-appname">App Interno</div>
+      {!operativo && (
+      <nav className="topnav" onClickCapture={onNavClickCapture}>
+        {links.map((l) => {
+          const fijo = SECCIONES_FIJAS.includes(l.href);
+          const esAtajo = !NAV_SECTIONS.some((s) => s.href === l.href);
+          return (
+            <Link
+              key={l.href}
+              href={l.href}
+              {...getItemProps(l.href)}
+              className={
+                "topnav-link" +
+                (pathname === l.href ? " topnav-link-active" : "") +
+                (!fijo ? " topnav-link-drag" : "") +
+                (esAtajo ? " topnav-link-atajo" : "") +
+                (sobreHref === l.href ? " topnav-link-over" : "")
+              }
+              title={
+                esAtajo
+                  ? "Acceso directo según tus permisos"
+                  : !fijo
+                  ? "Arrastra para reordenar"
+                  : undefined
+              }
+            >
+              {l.label}
+            </Link>
+          );
+        })}
+      </nav>
+      )}
+    </div>
+  );
+}

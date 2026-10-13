@@ -1,0 +1,187 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { requirePermiso, tieneAcceso } from "@/lib/roles";
+import AppHeaderClientes from "@/components/AppHeaderClientes";
+import Breadcrumb from "@/components/Breadcrumb";
+import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { detalleComponentesTexto } from "@/lib/regulador-detalle";
+
+const BADGE_ESTADO = {
+  "Pendiente por trabajar": "badge-rojo",
+  "En proceso": "badge-amarillo",
+  "Pendiente por despachar": "badge-azul",
+  Entregado: "badge-verde",
+};
+
+// Ficha de un equipo del cliente: esto es lo que responde al pedido
+// explícito del usuario (23-sep-2026) de "tener un historial de que se le
+// ha hecho cada vez que ha ido un mismo equipo a la tienda" -- cada visita
+// (orden) de este equipo, sin importar cuántas veces haya venido, listada
+// como botón hacia su propia ficha (no acordeón).
+export default async function FichaEquipoPage({ params }) {
+  const supabase = createClient();
+  const { profile } = await requirePermiso(supabase, "equipos_clientes");
+  const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
+  const puedeEditar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_editar_equipo;
+  // "Ver las ediciones de este equipo directamente" (feedback sobre v50,
+  // pedido explícito) -- mismo permiso y mismo patrón de link que ya usa
+  // "Ver historial de ediciones de esta orden" en la ficha de la orden
+  // (ver app/app-clientes/ordenes/[id]/page.js); antes esta ficha solo
+  // tenía "Historial de este equipo" con las ÓRDENES del equipo, sin
+  // forma de llegar directo a sus ediciones (cambios de marca/modelo/
+  // serie/etc.).
+  const puedeVerHistorial = tieneAcceso(profile, "equipos_clientes_historial");
+
+  // BUG corregido (feedback en vivo, 29-sep-2026: "le di a editar equipo a
+  // un tanque que agregué mientras registraba la orden, y no aparecen los
+  // datos del tamaño ni material... entré a editarlo porque afuera
+  // tampoco se ve") -- el Tamaño/Material de un Tanque sí se guardaba bien
+  // al crearlo (ver SelectorEquipoCliente.js), pero esta ficha nunca pedía
+  // esas 2 columnas en el `select()`, así que `equipo.tamano`/`.material`
+  // siempre llegaban `undefined` acá abajo y se veían como "—" aunque el
+  // dato sí estuviera guardado.
+  const { data: equipo } = await supabase
+    .from("equipos_del_cliente")
+    .select("id, cliente_id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, tamano, material, regulador_componentes_detalle, created_at")
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (!equipo) notFound();
+
+  const [{ data: cliente }, { data: ordenes }] = await Promise.all([
+    supabase.from("clientes_equipos").select("id, nombre").eq("id", equipo.cliente_id).maybeSingle(),
+    supabase
+      .from("ordenes_equipos")
+      .select("id, folio, no_orden_fisico, fecha, estado, que_se_hara, created_at")
+      .eq("equipo_id", params.id)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const tipoLabel = tipoEquipoLabel(equipo.tipo_equipo, equipo.tipo_equipo_otro);
+  const marcaModelo = [equipo.marca, equipo.modelo].filter(Boolean).join(" ");
+
+  return (
+    <div>
+      <AppHeaderClientes />
+      <div className="page" style={{ paddingTop: 24 }}>
+        <Link href={`/app-clientes/clientes/${equipo.cliente_id}`} className="back-link">
+          ← Volver
+        </Link>
+        <Breadcrumb
+          items={[
+            { label: "App Equipos de clientes", href: "/app-clientes" },
+            { label: "Listado de clientes", href: "/app-clientes/clientes" },
+            { label: cliente?.nombre || "Cliente", href: `/app-clientes/clientes/${equipo.cliente_id}` },
+            { label: tipoLabel },
+          ]}
+        />
+        <h1 className="page-title">{marcaModelo ? `${tipoLabel} — ${marcaModelo}` : tipoLabel}</h1>
+
+        <div className="card">
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Campo etiqueta="Cliente">
+              <Link href={`/app-clientes/clientes/${equipo.cliente_id}`} className="breadcrumb-crumb">
+                {cliente?.nombre || "—"}
+              </Link>
+            </Campo>
+            <Campo etiqueta="Tipo de equipo" valor={tipoLabel} />
+            <Campo etiqueta={equipo.tipo_equipo === "Tanques" ? "Fabricante" : "Marca"} valor={equipo.marca || "—"} />
+            {equipo.tipo_equipo !== "Tanques" && <Campo etiqueta="Modelo" valor={equipo.modelo || "—"} />}
+            {["Reguladores", "Tanques", "Computadora"].includes(equipo.tipo_equipo) && (
+              <Campo etiqueta="No. Serie" valor={equipo.serie || "—"} />
+            )}
+            {/* Tamaño y Material -- solo Tanques, se piden al crear el
+                equipo y no se pueden editar después (feedback en vivo,
+                29-sep-2026, pedido explícito: "es imposible que cambie"). */}
+            {equipo.tipo_equipo === "Tanques" && (
+              <>
+                <Campo etiqueta="Tamaño" valor={equipo.tamano || "—"} />
+                <Campo etiqueta="Material" valor={equipo.material || "—"} />
+              </>
+            )}
+            {equipo.tipo_equipo === "Reguladores" && (
+              <Campo etiqueta="Detalle de componentes" valor={detalleComponentesTexto(equipo.regulador_componentes_detalle)} />
+            )}
+            <Campo etiqueta="Registrado" valor={formatFecha(equipo.created_at)} />
+          </div>
+        </div>
+
+        {(puedeRegistrar || puedeEditar || puedeVerHistorial) && (
+          <div style={{ display: "flex", gap: 10, marginBottom: 16, marginTop: 4, flexWrap: "wrap" }}>
+            {puedeRegistrar && (
+              <Link href={`/app-clientes/ordenes/nueva?cliente=${equipo.cliente_id}`}>
+                <button className="btn btn-primary" type="button" style={{ marginTop: 0 }}>
+                  + Registrar orden
+                </button>
+              </Link>
+            )}
+            {puedeEditar && (
+              <Link href={`/app-clientes/equipos/${equipo.id}/editar`}>
+                <button className="btn secondary" type="button" style={{ marginTop: 0 }}>
+                  Editar equipo
+                </button>
+              </Link>
+            )}
+            {/* "Ver ediciones de este equipo" pasó de link de texto a botón
+                grande (feedback en vivo, 6-oct-2026, pedido explícito: "pon
+                el boton grande como el de registrar orden y editar equipo.
+                Y ponlo al mismo nivel de esos botones pero all the way
+                para la derecha") -- mismo estilo que "Editar equipo" (btn
+                secondary), empujado al extremo derecho de la fila con
+                marginLeft:auto. */}
+            {puedeVerHistorial && (
+              <Link href={`/app-clientes/administracion/historial?equipo=${equipo.id}`} style={{ marginLeft: "auto" }}>
+                <button className="btn secondary" type="button" style={{ marginTop: 0 }}>
+                  Ver ediciones de este equipo
+                </button>
+              </Link>
+            )}
+          </div>
+        )}
+
+        <div className="section-title" style={{ marginTop: 0 }}>
+          Historial de este equipo
+        </div>
+        <div className="card">
+          {!ordenes || ordenes.length === 0 ? (
+            <div className="empty">Este equipo todavía no tiene órdenes registradas.</div>
+          ) : (
+            ordenes.map((o) => (
+              <Link
+                key={o.id}
+                href={`/app-clientes/ordenes/${o.id}`}
+                className="list-item"
+                style={{ display: "block", textDecoration: "none", color: "inherit" }}
+              >
+                <div className="list-item-top">
+                  <span className="list-item-title">
+                    <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
+                    {o.que_se_hara}
+                  </span>
+                  <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
+                </div>
+                <div className="list-item-bottom">
+                  <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
+                  <div className="folio-discreto">folio #{o.folio}</div>
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Campo({ etiqueta, valor, children }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--texto-suave)", marginBottom: 2 }}>
+        {etiqueta}
+      </div>
+      <div style={{ fontSize: 14.5 }}>{children !== undefined ? children : valor}</div>
+    </div>
+  );
+}

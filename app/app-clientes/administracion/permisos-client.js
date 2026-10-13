@@ -84,10 +84,10 @@ const SECCIONES = [
     items: [
       { clave: "equipos_clientes_listado_ordenes", label: "Historial de órdenes", Icono: IconReport },
       { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
-      { clave: "equipos_clientes_reportes", label: "Reportes e Informes", Icono: IconReport },
+      { clave: "equipos_clientes_reportes", label: "Recibos e Informes", Icono: IconReport },
       { clave: "equipos_clientes_contactar", label: "Clientes por contactar", Icono: IconUsers },
-      { clave: "equipos_clientes_historial", label: "Historial de anulaciones y ediciones", Icono: IconHistory, soloAdmin: true },
-      { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora movimientos en órdenes", Icono: IconBook, soloAdmin: true },
+      { clave: "equipos_clientes_historial", label: "Anulaciones y ediciones", Icono: IconHistory, soloAdmin: true },
+      { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora de órdenes", Icono: IconBook, soloAdmin: true },
     ],
   },
   {

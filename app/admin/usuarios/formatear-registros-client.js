@@ -15,12 +15,34 @@ import { createClient } from "@/lib/supabase/client";
 // el dueño de la app -- no cambiarlos; se agregó una primera
 // confirmación informativa (nueva, dinámica según lo marcado) porque
 // ahora sí hay una elección real que avisar antes de esas 3.
+// 13-oct-2026, pedido explícito: agregar inspección visual, pruebas
+// hidrostáticas, mantenimiento de reguladores y compresores.
 const CATEGORIAS = [
   { clave: "salidas", label: "Salidas", detalle: "Borra todas las salidas (piezas/ring) y reinicia su numeración." },
   {
     clave: "llenados",
     label: "Llenados de tanque",
     detalle: "Borra todos los llenados de tanque y reinicia su numeración.",
+  },
+  {
+    clave: "inspecciones",
+    label: "Inspección visual",
+    detalle: "Borra todos los registros de inspección visual de tanques.",
+  },
+  {
+    clave: "hidrostaticas",
+    label: "Pruebas hidrostáticas",
+    detalle: "Borra todos los registros de pruebas hidrostáticas de tanques.",
+  },
+  {
+    clave: "mantenimientos",
+    label: "Mantenimiento de reguladores",
+    detalle: "Borra todos los registros de mantenimiento de reguladores.",
+  },
+  {
+    clave: "compresores",
+    label: "Compresores",
+    detalle: "Borra todos los registros de mantenimiento de compresores.",
   },
 ];
 
@@ -55,6 +77,10 @@ export default function FormatearRegistros() {
     const { error } = await supabase.rpc("formatear_registros", {
       p_borrar_salidas: !!marcadas.salidas,
       p_borrar_llenados: !!marcadas.llenados,
+      p_borrar_inspecciones: !!marcadas.inspecciones,
+      p_borrar_hidrostaticas: !!marcadas.hidrostaticas,
+      p_borrar_mantenimientos: !!marcadas.mantenimientos,
+      p_borrar_compresores: !!marcadas.compresores,
     });
 
     setLoading(false);

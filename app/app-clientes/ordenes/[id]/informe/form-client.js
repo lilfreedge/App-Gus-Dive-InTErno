@@ -194,7 +194,6 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
             <div style={SECCION_LABEL_ESTILO_SUTIL}>Datos del cliente</div>
             <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}><b>Nombre:</b> {orden.cliente_nombre_snapshot || "—"}</div>
             {orden.cliente_telefono && <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Teléfono:</b> {orden.cliente_telefono}</div>}
-            <div className="hint-text" style={{ marginTop: 6 }}>Se completa automático con los datos de la orden.</div>
           </div>
 
           {/* "Detalles" (renombrado de "Detalles del regulador", feedback en
@@ -212,20 +211,17 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
             <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Marca:</b> {informe.marca || "—"}</div>
             <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Modelo:</b> {informe.modelo || "—"}</div>
             <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>No. de serie:</b> {informe.serie || "—"}</div>
-            <div className="hint-text" style={{ marginTop: 6 }}>Se completa automático con los datos del equipo -- para corregirlo, usa &quot;Editar equipo&quot;.</div>
           </div>
 
           <div style={SECCION_ESTILO_SUTIL}>
             <div style={SECCION_LABEL_ESTILO_SUTIL}>Componentes recibidos</div>
             <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}>{componentesTexto}</div>
-            <div className="hint-text" style={{ marginTop: 6 }}>Se anota al registrar la orden -- no se edita aquí.</div>
           </div>
 
           <div style={SECCION_ESTILO_SUTIL}>
             <div style={SECCION_LABEL_ESTILO_SUTIL}>Estado inicial del regulador</div>
             <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}><b>Daños visibles:</b> {orden.regulador_danos_visibles || "Ninguno"}</div>
             <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Problemas reportados:</b> {orden.regulador_problemas_reportados || "Ninguno reportado"}</div>
-            <div className="hint-text" style={{ marginTop: 6 }}>Se anota al registrar la orden -- no se edita aquí.</div>
           </div>
 
           <div style={SECCION_ESTILO}>
