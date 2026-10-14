@@ -4,16 +4,10 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 
-// Mismo patrón que "Editar equipo" (equipos/[id]/editar/form-client.js):
-// formulario precargado, registrarCambio con los datos de ANTES justo
-// antes del update, para que quede en Historial con antes/después (tabla
-// clientes_equipos). Solo nombre y teléfono -- las órdenes y equipos del
-// cliente se editan cada uno por su lado.
 export default function EditarClienteForm({ cliente }) {
   const supabase = createClient();
 
   const [nombre, setNombre] = useState(cliente.nombre || "");
-  const [numero, setNumero] = useState(cliente.numero || "");
   const [telefono, setTelefono] = useState(cliente.telefono || "");
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -31,7 +25,6 @@ export default function EditarClienteForm({ cliente }) {
 
     const cambios = {
       nombre: nombre.trim(),
-      numero: numero.trim() || null,
       telefono: telefono.trim() || null,
     };
 
@@ -52,8 +45,6 @@ export default function EditarClienteForm({ cliente }) {
       return;
     }
 
-    // Navegación dura (mismo patrón que el resto de la app) -- se vuelve
-    // a la ficha del cliente, ya actualizada.
     window.location.href = `/app-clientes/clientes/${cliente.id}`;
   }
 
@@ -64,22 +55,13 @@ export default function EditarClienteForm({ cliente }) {
       </label>
       <input id="nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
 
-      <label htmlFor="numero">Número de cliente</label>
-      <input
-        id="numero"
-        type="text"
-        value={numero}
-        onChange={(e) => setNumero(e.target.value)}
-        placeholder="Ej: GUS-001 (opcional)"
-      />
-
-      <label htmlFor="telefono">Contacto</label>
+      <label htmlFor="telefono">Número de contacto</label>
       <input
         id="telefono"
         type="text"
         value={telefono}
         onChange={(e) => setTelefono(e.target.value)}
-        placeholder="Teléfono, WhatsApp, email... (opcional)"
+        placeholder="Teléfono o WhatsApp (opcional)"
       />
 
       {error && <div className="error-box">{error}</div>}

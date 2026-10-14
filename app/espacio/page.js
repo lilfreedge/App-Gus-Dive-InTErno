@@ -18,7 +18,8 @@ export default async function EspacioPage() {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
   // Operativo (V30): no elige app -- entra directo a su única pantalla.
-  if (esOperativo(profile)) redirect("/dashboard");
+  // V31: salvo que también tenga acceso a App Equipos de clientes.
+  if (esOperativo(profile) && !tieneAcceso(profile, "equipos_clientes")) redirect("/dashboard");
   const nombreCompleto = profile?.full_name || "";
   const nombre = nombreCompleto.split(" ")[0] || "";
 

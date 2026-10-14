@@ -73,8 +73,9 @@ export default function TopbarClient({
   // arriba y, en el menú de ajustes, solo Mi Perfil y Cerrar sesión.
   const operativo = !esTitular && !!permisos?.rol_operativo;
   const rolLabel = esTitular ? "Titular" : operativo ? "Operativo" : isAdmin ? "Administrador" : "Usuario";
-  const verChangelog = !operativo && (esTitular || permisos?.changelog);
-  const verManual = !operativo && (esTitular || permisos?.manual);
+  // V31: el rol del Operativo puede darle Changelog/Manual también.
+  const verChangelog = esTitular || permisos?.changelog;
+  const verManual = esTitular || permisos?.manual;
 
   return (
     <div className="topbar">
@@ -137,7 +138,7 @@ export default function TopbarClient({
                 </Link>
               )}
               <hr />
-              {!operativo && (
+              {(!operativo || permisos?.equipos_clientes) && (
                 <Link href="/espacio" className="settings-menu-link" onClick={() => setOpen(false)}>
                   <IconShuffle size={15} /> Cambiar de app
                 </Link>
@@ -150,7 +151,8 @@ export default function TopbarClient({
         </div>
       </div>
       <div className="topbar-appname">App Interno</div>
-      {!operativo && (
+      {/* V31: el Operativo ve el menú solo si su rol le da secciones extra. */}
+      {(!operativo || links.length > 1) && (
       <nav className="topnav" onClickCapture={onNavClickCapture}>
         {links.map((l) => {
           const fijo = SECCIONES_FIJAS.includes(l.href);

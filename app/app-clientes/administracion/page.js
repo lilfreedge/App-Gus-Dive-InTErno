@@ -4,7 +4,8 @@ import { requireTitular } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import SeccionColapsable from "@/components/SeccionColapsable";
-import PermisosClientes from "./permisos-client";
+import PermisosClientes, { SECCIONES } from "./permisos-client";
+import RolesAdmin from "@/components/RolesAdmin";
 import FormatearRegistrosClientes from "./formatear-registros-client";
 import ProcesosOrdenesClientes from "./procesos-ordenes-client";
 
@@ -21,10 +22,12 @@ export default async function AdministracionClientesPage() {
   const supabase = createClient();
   const { user } = await requireTitular(supabase);
 
-  const { data: perfiles } = await supabase
-    .from("profiles")
-    .select("id, full_name, is_admin, es_titular, permisos")
-    .order("full_name");
+  // "*" para que abra aunque falte migration_61.sql; sin cuentas eliminadas.
+  const [{ data: perfilesTodos }, { data: roles }] = await Promise.all([
+    supabase.from("profiles").select("*").order("full_name"),
+    supabase.from("roles_app").select("*").eq("app", "clientes").order("nombre"),
+  ]);
+  const perfiles = (perfilesTodos || []).filter((p) => !p.eliminado_en);
 
   // "Procesos órdenes" (28-sep-2026, pedido explícito) -- fila única de
   // ajustes_app_clientes (migration_40.sql), sembrada por la propia
@@ -46,7 +49,12 @@ export default async function AdministracionClientesPage() {
         <div className="section-title" style={{ marginTop: 0 }}>
           Permisos
         </div>
-        <PermisosClientes perfiles={perfiles || []} miId={user.id} />
+        <PermisosClientes perfiles={perfiles} miId={user.id} roles={roles || []} />
+
+        {/* V31: Roles de esta app (migration_61.sql). */}
+        <SeccionColapsable titulo="Roles">
+          <RolesAdmin app="clientes" roles={roles || []} secciones={SECCIONES} perfiles={perfiles} />
+        </SeccionColapsable>
 
         <div className="section-title">Procesos órdenes</div>
         <ProcesosOrdenesClientes ajustes={ajustes} />

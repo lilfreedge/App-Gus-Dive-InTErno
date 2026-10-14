@@ -20,10 +20,9 @@ export default async function AccesosAppsPage() {
   const supabase = createClient();
   const { user } = await requireTitular(supabase);
 
-  const { data: perfiles } = await supabase
-    .from("profiles")
-    .select("id, full_name, es_titular, permisos")
-    .order("full_name");
+  // "*" + filtro: sin las cuentas eliminadas (V31, migration_62.sql).
+  const { data: perfilesTodos } = await supabase.from("profiles").select("*").order("full_name");
+  const perfiles = (perfilesTodos || []).filter((p) => !p.eliminado_en);
 
   // Resumen de conteos (item 9, pedido explícito, 26-sep-2026) -- cuántos
   // usuarios tienen acceso marcado a cada app, del total. El Titular no

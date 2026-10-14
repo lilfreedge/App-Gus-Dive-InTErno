@@ -35,7 +35,7 @@ export default async function MovimientosArticuloPage({ params }) {
         </Link>
         <Breadcrumb
           items={[
-            { label: "Códigos", href: "/catalogo" },
+            { label: "Base de datos", href: "/catalogo" },
             { label: `Movimientos de ${articulo.nombre}` },
           ]}
         />

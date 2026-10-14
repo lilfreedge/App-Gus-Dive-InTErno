@@ -26,8 +26,7 @@ export default function ClientesClient({ clientes: clientesIniciales, puedeElimi
       : clientes.filter(
           (c) =>
             c.nombre?.toLowerCase().includes(query) ||
-            c.telefono?.toLowerCase().includes(query) ||
-            c.numero?.toLowerCase().includes(query)
+            c.telefono?.toLowerCase().includes(query)
         );
     base = [...base].sort((a, b) => {
       if (sort === "nombre_desc") return (b.nombre || "").localeCompare(a.nombre || "");
@@ -109,7 +108,7 @@ export default function ClientesClient({ clientes: clientesIniciales, puedeElimi
     <div>
       <input
         type="text"
-        placeholder="Buscar por nombre, número o contacto..."
+        placeholder="Buscar por nombre o número de contacto..."
         value={q}
         onChange={(e) => { setQ(e.target.value); setSeleccionados(new Set()); }}
         style={{ marginBottom: 14 }}
@@ -185,11 +184,6 @@ export default function ClientesClient({ clientes: clientesIniciales, puedeElimi
               >
                 <div className="list-item-top">
                   <span className="list-item-title">{c.nombre}</span>
-                  {c.numero && (
-                    <span style={{ fontSize: 12, color: "var(--texto-suave)", marginLeft: 8 }}>
-                      #{c.numero}
-                    </span>
-                  )}
                 </div>
                 {c.telefono && <div className="list-item-meta">{c.telefono}</div>}
               </Link>

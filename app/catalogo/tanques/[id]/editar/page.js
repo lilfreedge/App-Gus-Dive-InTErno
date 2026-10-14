@@ -29,7 +29,7 @@ export default async function EditarTanquePage({ params }) {
         </Link>
         <Breadcrumb
           items={[
-            { label: "Códigos", href: "/catalogo" },
+            { label: "Base de datos", href: "/catalogo" },
             { label: "Tanques de alquiler", href: "/catalogo/tanques" },
             { label: "Editar tanque" },
           ]}

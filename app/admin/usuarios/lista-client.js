@@ -115,22 +115,16 @@ export const SECCIONES = [
 
 const CLAVES = SECCIONES.flatMap((s) => s.items.map((i) => i.clave));
 
-function rolDe(p) {
+// V31: además de Titular / Administrador / Usuario, los roles creados en
+// Administración › Roles (migration_61.sql). El valor del <select> es
+// "usuario", "admin" o el id del rol. "Operativo" ahora es uno de esos.
+function rolDe(p, roles = []) {
   if (p.es_titular) return "titular";
-  if (p.permisos?.rol_operativo) return "operativo";
   if (p.is_admin) return "admin";
+  if (p.rol_interno_id && roles.some((r) => r.id === p.rol_interno_id)) return p.rol_interno_id;
   return "usuario";
 }
-
-const ROL_ETIQUETA = { titular: "Titular", admin: "Administrador", usuario: "Usuario", operativo: "Operativo" };
-const GRUPOS_ROL = [
-  { rol: "titular", titulo: "Titular" },
-  { rol: "admin", titulo: "Administradores" },
-  { rol: "usuario", titulo: "Usuarios" },
-  { rol: "operativo", titulo: "Operativos" },
-];
-
-export default function ListaUsuarios({ perfiles, miId }) {
+export default function ListaUsuarios({ perfiles, miId, roles = [] }) {
   const router = useRouter();
   const supabase = createClient();
   const [loadingId, setLoadingId] = useState(null);
@@ -150,20 +144,17 @@ export default function ListaUsuarios({ perfiles, miId }) {
     return { ...PERMISOS_DEFAULT, ...(perfil.permisos || {}) };
   }
 
-  // Rol: Usuario / Administrador / Operativo (V30). Operativo no es
-  // Administrador; además se le activan "Llenados de tanque" (lo que la
-  // base de datos exige para guardar un llenado) y la entrada a App
-  // Interno. Sus otros permisos no se borran -- quedan guardados, sin
-  // efecto, por si vuelve a ser Usuario.
-  function cambiarRol(perfil, rol) {
-    const permisos = permisosDe(perfil);
-    if (rol === "operativo") {
-      guardar(perfil, {
-        is_admin: false,
-        permisos: { ...permisos, rol_operativo: true, registrar_llenado: true, acceso_app_interno: true },
-      });
+  // Rol: Usuario / Administrador / un rol creado (V31). Al elegir un rol,
+  // la base de datos le copia sus accesos (trigger de migration_61.sql).
+  // Al volver a Usuario conserva esos accesos como permisos sueltos.
+  // Administrador cubre las dos apps, así que le quita el rol de las dos.
+  function cambiarRol(perfil, valor) {
+    if (valor === "admin") {
+      guardar(perfil, { is_admin: true, rol_interno_id: null, rol_clientes_id: null });
+    } else if (valor === "usuario") {
+      guardar(perfil, { is_admin: false, rol_interno_id: null });
     } else {
-      guardar(perfil, { is_admin: rol === "admin", permisos: { ...permisos, rol_operativo: false } });
+      guardar(perfil, { is_admin: false, rol_interno_id: valor });
     }
   }
 
@@ -178,8 +169,13 @@ export default function ListaUsuarios({ perfiles, miId }) {
         Toca a una persona para ver y cambiar su rol y sus permisos. Los cambios se guardan al momento.
       </p>
 
-      {GRUPOS_ROL.map(({ rol, titulo }) => {
-        const gente = perfiles.filter((p) => rolDe(p) === rol);
+      {[
+        { rol: "titular", titulo: "Titular" },
+        { rol: "admin", titulo: "Administradores" },
+        ...roles.map((r) => ({ rol: r.id, titulo: r.nombre, deRol: r })),
+        { rol: "usuario", titulo: "Usuarios" },
+      ].map(({ rol, titulo, deRol }) => {
+        const gente = perfiles.filter((p) => rolDe(p, roles) === rol);
         if (gente.length === 0) return null;
         return (
           <div key={rol} style={{ marginTop: 14 }}>
@@ -212,8 +208,8 @@ export default function ListaUsuarios({ perfiles, miId }) {
                       <span className="hint-text" style={{ margin: 0, whiteSpace: "nowrap" }}>
                         {esTitular
                           ? "Acceso a todo"
-                          : rol === "operativo"
-                          ? "Solo llenados"
+                          : deRol
+                          ? `Rol: ${deRol.nombre}`
                           : cuantos === 0
                           ? "Sin permisos"
                           : `${cuantos} permiso${cuantos === 1 ? "" : "s"}`}
@@ -229,18 +225,23 @@ export default function ListaUsuarios({ perfiles, miId }) {
                           disabled={loadingId === p.id}
                           onChange={(e) => cambiarRol(p, e.target.value)}
                         >
-                          <option value="usuario">Usuario</option>
+                          <option value="usuario">Usuario (permisos sueltos)</option>
                           <option value="admin">Administrador</option>
-                          <option value="operativo">Operativo</option>
+                          {roles.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.nombre}
+                            </option>
+                          ))}
                         </select>
 
-                        {rol === "operativo" ? (
+                        {deRol ? (
                           <div className="hint-text" style={{ marginTop: 8 }}>
-                            Operativo: solo registra llenados de tanque, en una sola pantalla (sin menú). Ve el
-                            resumen de la semana y los llenados de hoy. Mientras tenga este rol, los demás permisos no
-                            aplican.
+                            Sus accesos los manda el rol <b>{deRol.nombre}</b>
+                            {deRol.inicio === "llenados" ? " (Inicio: solo llenados)" : ""}. Para cambiarlos, edita el
+                            rol en <b>Roles</b> (cambia para todos los que lo tienen) o pásalo a Usuario.
                           </div>
-                        ) : (
+                        ) : null}
+                        {(
                           SECCIONES.map((sec) => (
                             <div key={sec.titulo}>
                               <div className="section-title" style={{ marginTop: 16, marginBottom: 2, fontSize: 14 }}>
@@ -281,7 +282,7 @@ export default function ListaUsuarios({ perfiles, miId }) {
                                     <input
                                       type="checkbox"
                                       checked={activo}
-                                      disabled={loadingId === p.id}
+                                      disabled={!!deRol || loadingId === p.id}
                                       onChange={(e) => togglePermiso(p, it.clave, e.target.checked)}
                                       style={{ width: 18, height: 18, flexShrink: 0 }}
                                     />

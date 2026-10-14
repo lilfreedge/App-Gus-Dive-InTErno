@@ -29,7 +29,7 @@ export default async function FichaReguladorPage({ params }) {
         <NavArrowsServer />
         <Breadcrumb
           items={[
-            { label: "Códigos", href: "/catalogo" },
+            { label: "Base de datos", href: "/catalogo" },
             { label: "Reguladores de alquiler", href: "/catalogo/reguladores" },
             { label: regulador.codigo },
           ]}

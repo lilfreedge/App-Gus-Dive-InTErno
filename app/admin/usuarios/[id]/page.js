@@ -1,3 +1,4 @@
+import BotonEliminarCuenta from "@/components/BotonEliminarCuenta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -80,7 +81,7 @@ export default async function FichaUsuarioPage({ params }) {
 
   const { data: perfil } = await supabase
     .from("profiles")
-    .select("id, full_name, is_admin, es_titular, permisos, created_at")
+    .select("*")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -119,12 +120,22 @@ export default async function FichaUsuarioPage({ params }) {
         .then((r) => (r.error ? { count: 0 } : r)),
     ]);
 
-  const rolLabel = perfil.es_titular
+  // V31: rol creado en Administración › Roles (migration_61.sql).
+  let nombreRol = null;
+  if (perfil.rol_interno_id) {
+    const { data: rol } = await supabase.from("roles_app").select("nombre").eq("id", perfil.rol_interno_id).maybeSingle();
+    nombreRol = rol?.nombre || null;
+  }
+  const rolLabel = perfil.eliminado_en
+    ? "Cuenta eliminada"
+    : perfil.es_titular
     ? "Titular"
-    : permisos.rol_operativo
-    ? "Operativo"
     : perfil.is_admin
     ? "Administrador"
+    : nombreRol
+    ? nombreRol
+    : permisos.rol_operativo
+    ? "Operativo"
     : "Usuario";
   const permisosActivos = perfil.es_titular
     ? []
@@ -238,8 +249,20 @@ export default async function FichaUsuarioPage({ params }) {
               <td>Usuario desde</td>
               <td>{perfil.created_at ? formatFecha(perfil.created_at) : "—"}</td>
             </tr>
+            {perfil.eliminado_en && (
+              <tr>
+                <td>Cuenta eliminada</td>
+                <td>{formatFecha(perfil.eliminado_en)}</td>
+              </tr>
+            )}
           </tbody>
         </table>
+        {/* V31: eliminar la cuenta desde la app (solo Titular). */}
+        {!perfil.es_titular && !perfil.eliminado_en && (
+          <div style={{ marginTop: 18 }}>
+            <BotonEliminarCuenta id={perfil.id} nombre={perfil.full_name} volverA="/admin/usuarios" />
+          </div>
+        )}
       </div>
     </div>
   );

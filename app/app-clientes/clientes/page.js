@@ -23,7 +23,7 @@ export default async function ListadoClientesPage() {
 
   const { data: clientes } = await supabase
     .from("clientes_equipos")
-    .select("id, nombre, numero, telefono, created_at")
+    .select("id, nombre, telefono, created_at")
     .order("nombre");
 
   return (

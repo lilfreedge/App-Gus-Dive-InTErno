@@ -20,10 +20,10 @@ const ROLES = [
       "Ve y usa solo las secciones que el Titular le habilite (Salidas, Llenados, Inspección visual, etc.). Sin ningún permiso, solo ve Inicio.",
   },
   {
-    nombre: "Operativo",
+    nombre: "Roles creados (abajo)",
     tag: null,
     descripcion:
-      "Solo registra llenados de tanque, en una sola pantalla sin menú: el formulario de llenado, el resumen de la semana (lunes a sábado) y los llenados de hoy.",
+      "Tienen exactamente los accesos que se marquen en el rol. Un rol puede tener como pantalla de inicio la de llenados (como Operativo).",
   },
 ];
 

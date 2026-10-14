@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { IconRefresh } from "@/components/icons";
+import { coincideOrden } from "@/lib/buscar-orden";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -51,9 +52,14 @@ const TABS = [
 // **Nota (30-sep-2026): se quitaron "Más recientes primero" y "Más
 // antiguas primero"** (pedido explícito: "Quitemos del filtro 'mas
 // antiguas primero' y 'mas recientes primero'"), quedando solo estas 2.
+// La pestaña "Órdenes cerradas" muestra las últimas 100 (como antes); el
+// buscador sí busca en todas (V31).
+const CERRADAS_EN_PESTANA = 100;
+
 const SORTS = [
-  { clave: "no_orden", label: "No. de orden" },
-  { clave: "alfabetico", label: "Orden alfabético (cliente)" },
+  // V31: "Ordenar: ..." para que no se confunda con el buscador ("B. si").
+  { clave: "no_orden", label: "Ordenar: No. de orden" },
+  { clave: "alfabetico", label: "Ordenar: A-Z cliente" },
 ];
 
 // Criterio de cada pestaña (menos "cerradas", que ya es su propia lista, y
@@ -101,21 +107,25 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
       en_hold: ordenes.filter(CRITERIOS.en_hold).length,
       hidrostatica: ordenes.filter(CRITERIOS.hidrostatica).length,
       reparacion: ordenes.filter(CRITERIOS.reparacion).length,
-      cerradas: cerradas.length,
+      cerradas: Math.min(cerradas.length, CERRADAS_EN_PESTANA),
     }),
     [ordenes, cerradas]
   );
 
   const filtrados = useMemo(() => {
-    let base = tab === "cerradas" ? cerradas : ordenes;
-    // tab === "todas" (Órdenes abiertas, ver más abajo) no filtra nada más
-    // -- muestra todo lo que no está Entregado, sin dividir por categoría.
-    if (tab !== "cerradas" && tab !== "todas" && CRITERIOS[tab]) {
-      base = base.filter(CRITERIOS[tab]);
-    }
-    const query = q.trim().toLowerCase();
+    const query = q.trim();
+    let base;
     if (query) {
-      base = base.filter((o) => o.cliente_nombre_snapshot?.toLowerCase().includes(query));
+      // V31 (confirmado "a. en todas"): mientras haya algo escrito, busca en
+      // TODAS las órdenes, abiertas y cerradas, sin importar la pestaña.
+      base = [...ordenes, ...cerradas].filter((o) => coincideOrden(o, query));
+    } else {
+      base = tab === "cerradas" ? cerradas.slice(0, CERRADAS_EN_PESTANA) : ordenes;
+      // tab === "todas" (Órdenes abiertas, ver más abajo) no filtra nada más
+      // -- muestra todo lo que no está Entregado, sin dividir por categoría.
+      if (tab !== "cerradas" && tab !== "todas" && CRITERIOS[tab]) {
+        base = base.filter(CRITERIOS[tab]);
+      }
     }
     base = [...base].sort((a, b) => {
       if (sort === "alfabetico") return (a.cliente_nombre_snapshot || "").localeCompare(b.cliente_nombre_snapshot || "");
@@ -183,7 +193,7 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
       <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
         <input
           type="text"
-          placeholder="Buscar cliente..."
+          placeholder="Buscar cliente o No. de orden..."
           value={q}
           onChange={(e) => setQ(e.target.value)}
           style={{ marginTop: 0, marginBottom: 0, flex: 1, minWidth: 0 }}
@@ -212,7 +222,9 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
       <div className="card">
         {filtrados.length === 0 ? (
           <div className="empty">
-            {tab === "cerradas"
+            {q.trim()
+              ? "Ninguna orden coincide con esa búsqueda."
+              : tab === "cerradas"
               ? "No hay órdenes cerradas recientes."
               : ordenes.length === 0
                 ? "No hay órdenes abiertas."

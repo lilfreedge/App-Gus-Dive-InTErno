@@ -1,3 +1,4 @@
+import { todasLasFilas } from "@/lib/todas-las-filas";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermiso, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
@@ -29,18 +30,18 @@ export default async function RegistroPage() {
   const CAMPOS =
     "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, en_espera";
 
-  const [{ data: ordenes }, { data: cerradas }] = await Promise.all([
+  // V31: las cerradas se traen todas (de a 1000) para que el buscador por
+  // cliente o No. de orden encuentre también las viejas; la pestaña
+  // "Órdenes cerradas" sigue mostrando solo las últimas 100.
+  const [{ data: ordenes }, cerradas] = await Promise.all([
     supabase.from("ordenes_equipos").select(CAMPOS).neq("estado", "Entregado").order("fecha"),
-    // "Órdenes cerradas" (feedback sobre v40, pedido explícito) -- lista
-    // aparte y acotada (las últimas 100), en vez de sumarlas a `ordenes`
-    // (que el resto de las pestañas asume que son todas abiertas) o de
-    // traer el historial completo acá.
-    supabase
-      .from("ordenes_equipos")
-      .select(CAMPOS)
-      .eq("estado", "Entregado")
-      .order("fecha_entrega_cliente", { ascending: false })
-      .limit(100),
+    todasLasFilas(supabase, "ordenes_equipos", (q) =>
+      q
+        .select(CAMPOS)
+        .eq("estado", "Entregado")
+        .order("fecha_entrega_cliente", { ascending: false, nullsFirst: false })
+        .order("id")
+    ),
   ]);
 
   return (

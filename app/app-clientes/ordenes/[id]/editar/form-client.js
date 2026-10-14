@@ -356,6 +356,7 @@ export default function EditarSeguimientoForm({
   // ---------------------------------------------------------------
   const repuestos = ordenLocal.repuestos_usados_detalle;
   const [nuevoRepuesto, setNuevoRepuesto] = useState("");
+  const [errorCodigoNoRegistrado, setErrorCodigoNoRegistrado] = useState("");
   const [guardandoRepuestos, setGuardandoRepuestos] = useState(false);
   const [errorRepuestos, setErrorRepuestos] = useState("");
   const [repuestoAEliminar, setRepuestoAEliminar] = useState(null);
@@ -381,11 +382,43 @@ export default function EditarSeguimientoForm({
     }
   }
 
+  // V31 (pedido explícito: "que no te permita escribir nada que no esté
+  // registrado en códigos a cobrar"; confirmado "con aviso rojo y que no
+  // permita guardar"): se sigue escribiendo y salen abajo los códigos que
+  // coinciden, pero solo se agrega si es un código registrado en Base de
+  // datos › Códigos a cobrar (para este tipo de equipo). Si se escribe solo
+  // el código ("REG-001"), se agrega como "código · descripción".
+  const piezasPermitidas = piezas.filter(
+    (p) =>
+      !p.tipos_equipo ||
+      p.tipos_equipo.length === 0 ||
+      (orden.tipo_equipo && p.tipos_equipo.includes(orden.tipo_equipo))
+  );
+  const etiquetaPieza = (p) => (p.codigo ? `${p.codigo} · ${p.nombre}` : p.nombre);
+
+  function piezaRegistrada(texto) {
+    const t = texto.trim().toLowerCase();
+    if (!t) return null;
+    return (
+      piezasPermitidas.find((p) => etiquetaPieza(p).toLowerCase() === t) ||
+      piezasPermitidas.find((p) => p.codigo && p.codigo.trim().toLowerCase() === t) ||
+      null
+    );
+  }
+
   async function agregarRepuesto() {
     const valor = nuevoRepuesto.trim();
     if (!valor) return;
+    const pieza = piezaRegistrada(valor);
+    if (!pieza) {
+      setErrorCodigoNoRegistrado(
+        "Ese código no está registrado en Códigos a cobrar. Elige uno de la lista que sale al escribir."
+      );
+      return;
+    }
+    setErrorCodigoNoRegistrado("");
     setNuevoRepuesto("");
-    await guardarRepuestos([...repuestos, { nombre: valor, origen: "manual" }]);
+    await guardarRepuestos([...repuestos, { nombre: etiquetaPieza(pieza), origen: "manual" }]);
   }
 
   function quitarRepuesto(i) {
@@ -1032,14 +1065,17 @@ export default function EditarSeguimientoForm({
           <input
             type="text"
             value={nuevoRepuesto}
-            onChange={(e) => setNuevoRepuesto(e.target.value)}
+            onChange={(e) => {
+              setNuevoRepuesto(e.target.value);
+              setErrorCodigoNoRegistrado("");
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
                 agregarRepuesto();
               }
             }}
-            placeholder="Nombre del repuesto"
+            placeholder="Escribe el código o la descripción"
             style={{ marginTop: 0 }}
             list="piezas-catalogo"
             disabled={guardandoRepuestos}
@@ -1070,15 +1106,9 @@ export default function EditarSeguimientoForm({
               tipos_equipo asignado, solo se muestra cuando el tipo de
               equipo de la orden está en esa lista. Códigos sin
               tipos_equipo (null o vacío) siguen apareciendo para todos. */}
-          {piezas
-            .filter((p) =>
-              !p.tipos_equipo ||
-              p.tipos_equipo.length === 0 ||
-              (orden.tipo_equipo && p.tipos_equipo.includes(orden.tipo_equipo))
-            )
-            .map((p) => (
-              <option key={p.id} value={p.codigo ? `${p.codigo} · ${p.nombre}` : p.nombre} />
-            ))}
+          {piezasPermitidas.map((p) => (
+            <option key={p.id} value={etiquetaPieza(p)} />
+          ))}
         </datalist>
         {repuestos.length === 0 && (
           // Ya no bloquea el cierre (item 7.1, pedido explícito: permitir
@@ -1087,6 +1117,11 @@ export default function EditarSeguimientoForm({
           // confirmación real aparece al guardar el Cierre de la orden.
           <div className="hint-text">
             Si no se usó ninguno, puedes dejarlo vacío -- se pedirá confirmar al cerrar la orden.
+          </div>
+        )}
+        {errorCodigoNoRegistrado && (
+          <div className="error-box" style={{ marginTop: 8 }}>
+            {errorCodigoNoRegistrado}
           </div>
         )}
         {errorRepuestos && <div className="error-msg">⚠ {errorRepuestos}</div>}

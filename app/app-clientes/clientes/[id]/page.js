@@ -33,7 +33,7 @@ export default async function FichaClientePage({ params }) {
 
   const { data: cliente } = await supabase
     .from("clientes_equipos")
-    .select("id, nombre, numero, telefono, created_at")
+    .select("id, nombre, telefono, created_at")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -91,8 +91,7 @@ export default async function FichaClientePage({ params }) {
 
         <div className="card">
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {cliente.numero && <Campo etiqueta="Número de cliente" valor={cliente.numero} />}
-            <Campo etiqueta="Contacto" valor={cliente.telefono || "—"} />
+            <Campo etiqueta="Número de contacto" valor={cliente.telefono || "—"} />
             <Campo etiqueta="Cliente desde" valor={formatFecha(cliente.created_at)} />
           </div>
         </div>

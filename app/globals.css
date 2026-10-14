@@ -251,6 +251,11 @@ button {
 
 .topnav-link-drag {
   cursor: grab;
+  /* V31: que Chrome no arrastre el enlace por su cuenta ni seleccione el
+     texto mientras se reordena el menú (ver lib/useReorderDrag.js). */
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .topnav-link-over {

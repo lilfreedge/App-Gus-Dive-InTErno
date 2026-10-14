@@ -49,7 +49,7 @@ const PERMISOS_DEFAULT = {
 // Administradores). Los ítems con `soloAdmin: true` siguen apareciendo
 // dentro de cada sección pero atenuados/bloqueados para usuarios no-admin.
 // Las claves de permiso NO cambiaron, solo la agrupación visual.
-const SECCIONES = [
+export const SECCIONES = [
   {
     titulo: "Órdenes",
     items: [
@@ -106,21 +106,16 @@ const SECCIONES = [
 
 const CLAVES = SECCIONES.flatMap((s) => s.items.map((i) => i.clave));
 
-function rolDe(p) {
+// V31: Titular / Administrador / un rol de esta app (migration_61.sql) /
+// Usuario. El Operativo de App Interno ya no es un grupo aparte aquí.
+function rolDe(p, roles = []) {
   if (p.es_titular) return "titular";
-  if (p.permisos?.rol_operativo) return "operativo";
   if (p.is_admin) return "admin";
+  if (p.rol_clientes_id && roles.some((r) => r.id === p.rol_clientes_id)) return p.rol_clientes_id;
   return "usuario";
 }
 
-const GRUPOS_ROL = [
-  { rol: "titular", titulo: "Titular" },
-  { rol: "admin", titulo: "Administradores" },
-  { rol: "usuario", titulo: "Usuarios" },
-  { rol: "operativo", titulo: "Operativos (App Interno)" },
-];
-
-export default function PermisosClientes({ perfiles, miId }) {
+export default function PermisosClientes({ perfiles, miId, roles = [] }) {
   const router = useRouter();
   const supabase = createClient();
   const [loadingId, setLoadingId] = useState(null);
@@ -147,8 +142,13 @@ export default function PermisosClientes({ perfiles, miId }) {
         Toca a una persona para ver y cambiar su rol y sus permisos en esta app. Los cambios se guardan al momento.
       </p>
 
-      {GRUPOS_ROL.map(({ rol, titulo }) => {
-        const gente = perfiles.filter((p) => rolDe(p) === rol);
+      {[
+        { rol: "titular", titulo: "Titular" },
+        { rol: "admin", titulo: "Administradores" },
+        ...roles.map((r) => ({ rol: r.id, titulo: r.nombre, deRol: r })),
+        { rol: "usuario", titulo: "Usuarios" },
+      ].map(({ rol, titulo, deRol }) => {
+        const gente = perfiles.filter((p) => rolDe(p, roles) === rol);
         if (gente.length === 0) return null;
         return (
           <div key={rol} style={{ marginTop: 14 }}>
@@ -161,7 +161,7 @@ export default function PermisosClientes({ perfiles, miId }) {
                 const esAdmin = rol === "admin";
                 const cuantos = CLAVES.filter((c) => permisos[c]).length;
                 const estaAbierto = abierto === p.id;
-                const cerrado = rol === "titular" || rol === "operativo";
+                const cerrado = rol === "titular";
                 const conAcceso = rol === "titular" || !!permisos.equipos_clientes;
                 return (
                   <div key={p.id} className="list-item">
@@ -177,8 +177,10 @@ export default function PermisosClientes({ perfiles, miId }) {
                       <span className="hint-text" style={{ margin: 0, whiteSpace: "nowrap" }}>
                         {rol === "titular"
                           ? "Acceso a todo"
-                          : rol === "operativo"
-                          ? "No usa esta app"
+                          : !conAcceso
+                          ? "Sin acceso a esta app"
+                          : deRol
+                          ? `Rol: ${deRol.nombre}`
                           : !conAcceso
                           ? "Sin acceso a esta app"
                           : cuantos === 0
@@ -198,13 +200,30 @@ export default function PermisosClientes({ perfiles, miId }) {
                         )}
                         <label style={{ marginTop: 0 }}>Rol</label>
                         <select
-                          value={esAdmin ? "admin" : "usuario"}
+                          value={rol}
                           disabled={loadingId === p.id}
-                          onChange={(e) => guardar(p, { is_admin: e.target.value === "admin" })}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            // Administrador cubre las dos apps: le quita el rol de las dos.
+                            if (v === "admin") guardar(p, { is_admin: true, rol_interno_id: null, rol_clientes_id: null });
+                            else if (v === "usuario") guardar(p, { is_admin: false, rol_clientes_id: null });
+                            else guardar(p, { is_admin: false, rol_clientes_id: v });
+                          }}
                         >
-                          <option value="usuario">Usuario</option>
+                          <option value="usuario">Usuario (permisos sueltos)</option>
                           <option value="admin">Administrador</option>
+                          {roles.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.nombre}
+                            </option>
+                          ))}
                         </select>
+                        {deRol && (
+                          <div className="hint-text" style={{ marginTop: 8 }}>
+                            Sus accesos los manda el rol <b>{deRol.nombre}</b>. Para cambiarlos, edita el rol en{" "}
+                            <b>Roles</b> (cambia para todos los que lo tienen) o pásalo a Usuario.
+                          </div>
+                        )}
 
                         {SECCIONES.map((sec) => (
                           <div key={sec.titulo}>
@@ -251,7 +270,7 @@ export default function PermisosClientes({ perfiles, miId }) {
                                   <input
                                     type="checkbox"
                                     checked={activo}
-                                    disabled={bloqueado || loadingId === p.id}
+                                    disabled={bloqueado || !!deRol || loadingId === p.id}
                                     onChange={(e) =>
                                       guardar(p, { permisos: { ...permisos, [it.clave]: e.target.checked } })
                                     }

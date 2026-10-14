@@ -93,6 +93,12 @@ export default function ListaTanques({ tanques, puedeAdministrar, esTitular }) {
                 ? `Próxima inspección: ${formatFechaDDMMAAAADeDate(t.proxima_inspeccion)}`
                 : "Sin inspecciones registradas"}
             </div>
+            {/* V31: próxima prueba hidrostática al lado de la inspección. */}
+            <div className="list-item-meta">
+              {t.proxima_hidrostatica
+                ? `Próxima hidrostática: ${formatFechaDDMMAAAADeDate(t.proxima_hidrostatica)}`
+                : "Sin prueba hidrostática registrada"}
+            </div>
           </div>
         ))
       )}

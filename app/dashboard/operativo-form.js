@@ -9,6 +9,11 @@ import { createClient } from "@/lib/supabase/client";
 // pero siempre abierto en su pantalla: después de guardar se queda aquí,
 // limpio para el siguiente, y la lista de "Llenados de hoy" y el resumen
 // de la semana se actualizan solos.
+//
+// V31 (pedido explícito tras probar V30: "que el botón de registrar llenado
+// esté cerrado y se abra cuando uno le dé click"; eligió la opción B de la
+// maqueta): cerrado es un botón azul de lado a lado; abierto lleva
+// "Cancelar ✕"; al guardar se cierra solo y queda el aviso "✓ Registrado".
 export default function FormLlenadoOperativo({ userId, nombreUsuario }) {
   const router = useRouter();
   const supabase = createClient();
@@ -19,6 +24,21 @@ export default function FormLlenadoOperativo({ userId, nombreUsuario }) {
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [loading, setLoading] = useState(false);
+  const [abierto, setAbierto] = useState(false);
+
+  function abrir() {
+    setOk("");
+    setError("");
+    setAbierto(true);
+  }
+
+  function cerrar() {
+    setAbierto(false);
+    setError("");
+    setCantidad(1);
+    setTipoGas("Aire");
+    setNota("");
+  }
 
   function cambiar(delta) {
     setOk("");
@@ -53,16 +73,47 @@ export default function FormLlenadoOperativo({ userId, nombreUsuario }) {
 
     setOk(`✓ Registrado: ${n} tanque${n === 1 ? "" : "s"} de ${tipoGas}.`);
     setCantidad(1);
+    setTipoGas("Aire");
     setNota("");
+    setAbierto(false);
     router.refresh();
   }
 
   const botonPaso = { width: 52, marginTop: 0, fontSize: 22, padding: "8px 0", flexShrink: 0 };
 
+  if (!abierto) {
+    return (
+      <div style={{ marginBottom: 16 }}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={abrir}
+          style={{ marginTop: 0, width: "100%", padding: "16px 0", fontSize: 16 }}
+        >
+          + Registrar llenado
+        </button>
+        {ok && (
+          <div className="success-box" style={{ marginTop: 10 }}>
+            {ok}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="card">
-      <div className="section-title" style={{ marginTop: 0 }}>
-        Registrar llenado de tanque
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+        <div className="section-title" style={{ margin: 0 }}>
+          Registrar llenado de tanque
+        </div>
+        <button
+          type="button"
+          onClick={cerrar}
+          style={{ border: "none", background: "none", color: "var(--texto-suave)", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+        >
+          Cancelar ✕
+        </button>
       </div>
 
       <label htmlFor="cantidad" style={{ marginTop: 4 }}>
@@ -112,7 +163,6 @@ export default function FormLlenadoOperativo({ userId, nombreUsuario }) {
       />
 
       {error && <div className="error-box">{error}</div>}
-      {ok && <div className="success-box">{ok}</div>}
 
       <button className="btn btn-primary" type="submit" disabled={loading} style={{ marginTop: 14 }}>
         {loading ? "Guardando..." : "Registrar llenado"}

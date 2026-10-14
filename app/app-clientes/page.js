@@ -53,7 +53,9 @@ export default async function AppClientesPage() {
   // tocado en "Personalizar mi menú"), se sigue mostrando -- solo se
   // esconde para quien lo apague explícitamente.
   const puedeRegistrar = tieneAcceso(profile, "equipos_clientes_registrar");
-  const muestraBotonRegistrarInicio = profile?.atajos_inicio_clientes?.registrar_orden !== false;
+  // V31 (pedido explícito, "si, apagado por default"): ahora solo sale si
+  // la persona lo prendió en "Personalizar mi menú".
+  const muestraBotonRegistrarInicio = profile?.atajos_inicio_clientes?.registrar_orden === true;
   const CAMPOS =
     "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, verificado_por, en_espera, motivo_espera, holds";
 

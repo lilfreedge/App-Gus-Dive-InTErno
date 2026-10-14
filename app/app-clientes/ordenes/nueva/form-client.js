@@ -12,7 +12,7 @@ import { subirFoto } from "@/lib/storage-client";
 import { hoyISO } from "@/lib/fechas";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { COMPONENTES_REGULADOR_DEFS } from "@/lib/informe-mantenimiento";
+import { COMPONENTES_REGULADOR_DEFS, componentesRecibidosTexto } from "@/lib/informe-mantenimiento";
 import {
   prefillComponentesRecibidos,
   detalleComponentesTexto,
@@ -101,6 +101,10 @@ export default function NuevaOrdenForm({
   // Item 36 (Informe de mantenimiento) -- estado inicial del regulador,
   // solo se anota aquí, en el registro.
   const [componentesRecibidos, setComponentesRecibidos] = useState({});
+  // V31: id del equipo creado en ESTA orden ("+ Registrar equipo de
+  // cliente"). Si el elegido es ese, no se vuelve a pedir el checklist de
+  // componentes: se toma lo que se acaba de poner al registrar el equipo.
+  const [equipoCreadoAquiId, setEquipoCreadoAquiId] = useState("");
   const [danosVisibles, setDanosVisibles] = useState("");
   const [problemasReportados, setProblemasReportados] = useState("");
   const [notas, setNotas] = useState("");
@@ -158,6 +162,7 @@ export default function NuevaOrdenForm({
 
   function onEquipoCreado(nuevo) {
     setEquipos((prev) => [...prev, nuevo]);
+    setEquipoCreadoAquiId(nuevo.id);
     // Precarga el checklist con lo recién capturado en "Equipo nuevo" --
     // se hace aquí (con el objeto fresco) y no en onEquipoChange, que
     // corre justo después pero con el `equipos` de este mismo render,
@@ -602,6 +607,17 @@ export default function NuevaOrdenForm({
               SOLO aquí, al registrar la orden (el Informe lo muestra de
               solo lectura). */}
           <label style={{ marginTop: 14 }}>Componentes recibidos</label>
+          {/* V31 (pedido explícito, confirmado "claro si"): si el regulador
+              se acaba de registrar en esta misma orden, no se vuelve a
+              confirmar el checklist -- solo una línea de lectura con lo
+              que se puso al registrarlo. */}
+          {equipoId && equipoId === equipoCreadoAquiId ? (
+            <div className="hint-text" style={{ marginTop: 4, fontSize: 13, color: "var(--texto)" }}>
+              {componentesRecibidosTexto(componentesRecibidos) || "—"}
+              <div style={{ marginTop: 4 }}>Tomado del equipo que acabas de registrar.</div>
+            </div>
+          ) : (
+          <>
           {equipoSeleccionado && (
             <div className="hint-text" style={{ marginBottom: 6 }}>
               Según el equipo: {detalleComponentesTexto(equipoSeleccionado.regulador_componentes_detalle)}
@@ -670,6 +686,8 @@ export default function NuevaOrdenForm({
               );
             })}
           </div>
+          </>
+          )}
 
           {/* Placeholders acortados a solo "Opcional" (feedback en vivo,
               29-sep-2026, pedido explícito: "cambia los mensajes que tiene a

@@ -4,13 +4,18 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoDisplay, tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { coincideOrden } from "@/lib/buscar-orden";
+
+// Cuántas filas se dibujan de entrada (V31: ahora llegan todas las órdenes).
+const POR_PAGINA = 100;
 
 const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Otro"];
-const ESTADOS = ["Pendiente por trabajar", "En proceso", "Pendiente por despachar", "Entregado"];
+const ESTADOS = ["Pendiente por trabajar", "En proceso", "Pendiente por despachar", "En Hold", "Entregado"];
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
   "En proceso": "badge-amarillo",
   "Pendiente por despachar": "badge-azul",
+  "En Hold": "badge-rojo",
   Entregado: "badge-verde",
 };
 
@@ -18,6 +23,10 @@ const BADGE_ESTADO = {
 // lección aprendida ese mismo día): cada fila es un botón que navega a su
 // propia ficha, nunca un acordeón.
 export default function HistorialClient({ ordenes, clientes }) {
+  // V31 (pedido explícito: "Pon un search bar en el historial de ordenes y
+  // pon igual que se puedan buscar por nombre o por numero").
+  const [q, setQ] = useState("");
+  const [visibles, setVisibles] = useState(POR_PAGINA);
   const [tipo, setTipo] = useState("");
   const [clienteId, setClienteId] = useState("");
   const [estado, setEstado] = useState("");
@@ -26,6 +35,7 @@ export default function HistorialClient({ ordenes, clientes }) {
 
   const filtrados = useMemo(() => {
     return ordenes.filter((o) => {
+      if (!coincideOrden(o, q)) return false;
       if (tipo && o.tipo_equipo !== tipo) return false;
       if (clienteId && o.cliente_id !== clienteId) return false;
       if (estado && o.estado !== estado) return false;
@@ -33,7 +43,7 @@ export default function HistorialClient({ ordenes, clientes }) {
       if (hasta && o.fecha > hasta) return false;
       return true;
     });
-  }, [ordenes, tipo, clienteId, estado, desde, hasta]);
+  }, [ordenes, q, tipo, clienteId, estado, desde, hasta]);
 
   const hayFiltros = tipo || clienteId || estado || desde || hasta;
 
@@ -47,6 +57,18 @@ export default function HistorialClient({ ordenes, clientes }) {
 
   return (
     <div>
+      <div className="search-bar">
+        <input
+          type="text"
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setVisibles(POR_PAGINA);
+          }}
+          placeholder="Buscar cliente o No. de orden..."
+        />
+      </div>
+
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="section-title" style={{ marginTop: 0 }}>Filtros</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 14px" }}>
@@ -97,10 +119,14 @@ export default function HistorialClient({ ordenes, clientes }) {
       <div className="card">
         {filtrados.length === 0 ? (
           <div className="empty">
-            {ordenes.length === 0 ? "Aún no hay órdenes registradas." : "Ninguna orden coincide con esos filtros."}
+            {ordenes.length === 0
+              ? "Aún no hay órdenes registradas."
+              : q.trim()
+                ? "Ninguna orden coincide con esa búsqueda."
+                : "Ninguna orden coincide con esos filtros."}
           </div>
         ) : (
-          filtrados.map((o) => (
+          filtrados.slice(0, visibles).map((o) => (
             <Link
               key={o.id}
               href={`/app-clientes/ordenes/${o.id}`}
@@ -120,6 +146,16 @@ export default function HistorialClient({ ordenes, clientes }) {
               </div>
             </Link>
           ))
+        )}
+        {filtrados.length > visibles && (
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => setVisibles((v) => v + POR_PAGINA)}
+            style={{ marginTop: 12 }}
+          >
+            Mostrar más ({filtrados.length - visibles} restantes)
+          </button>
         )}
       </div>
     </div>

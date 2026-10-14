@@ -102,7 +102,7 @@ export default function PersonalizarMenuClientes({ menuInicial, atajosInicioInic
             <label className="switch">
               <input
                 type="checkbox"
-                checked={atajosInicio[op.id] !== false}
+                checked={atajosInicio[op.id] === true}
                 disabled={loading}
                 onChange={(e) => toggleAtajoInicio(op.id, e.target.checked)}
               />

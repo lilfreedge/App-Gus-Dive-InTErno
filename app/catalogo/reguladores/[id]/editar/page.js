@@ -29,7 +29,7 @@ export default async function EditarReguladorPage({ params }) {
         </Link>
         <Breadcrumb
           items={[
-            { label: "Códigos", href: "/catalogo" },
+            { label: "Base de datos", href: "/catalogo" },
             { label: "Reguladores de alquiler", href: "/catalogo/reguladores" },
             { label: "Editar regulador" },
           ]}

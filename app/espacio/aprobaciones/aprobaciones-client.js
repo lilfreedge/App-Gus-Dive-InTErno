@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatFecha } from "@/lib/format";
+import BotonEliminarCuenta from "@/components/BotonEliminarCuenta";
 
 // Lista de cuentas pendientes de aprobación (item 10, 1-oct-2026) --
 // "Aprobar" pone profiles.aprobado = true; desde ese momento el
@@ -30,14 +31,19 @@ export default function AprobacionesClient({ pendientes }) {
   return (
     <div className="card">
       {pendientes.map((p) => (
-        <div key={p.id} className="list-item" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div key={p.id} className="list-item" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>
             <div className="list-item-title">{p.full_name}</div>
             <div className="hint-text" style={{ marginTop: 2 }}>Se registró el {formatFecha(p.created_at)}</div>
           </div>
-          <button className="btn btn-primary" type="button" style={{ marginTop: 0, width: "auto" }} disabled={loadingId === p.id} onClick={() => aprobar(p.id)}>
-            {loadingId === p.id ? "Aprobando..." : "Aprobar"}
-          </button>
+          {/* V31: además de Aprobar, se puede eliminar la cuenta (si no se
+              sabe quién es) sin tener que ir a Supabase. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <BotonEliminarCuenta id={p.id} nombre={p.full_name} />
+            <button className="btn btn-primary" type="button" style={{ marginTop: 0, width: "auto" }} disabled={loadingId === p.id} onClick={() => aprobar(p.id)}>
+              {loadingId === p.id ? "Aprobando..." : "Aprobar"}
+            </button>
+          </div>
         </div>
       ))}
     </div>

@@ -6,6 +6,8 @@ import Breadcrumb from "@/components/Breadcrumb";
 import SeccionColapsable from "@/components/SeccionColapsable";
 import ListaUsuarios from "./lista-client";
 import RolesInfo from "./roles-info";
+import RolesAdmin from "@/components/RolesAdmin";
+import { SECCIONES } from "./lista-client";
 import FormatearRegistros from "./formatear-registros-client";
 import RespaldoDatos from "./respaldo-client";
 import CorreosAlmacen from "./correos-almacen-client";
@@ -17,10 +19,15 @@ export default async function UsuariosPage() {
   const supabase = createClient();
   const { user } = await requireTitular(supabase);
 
-  const [{ data: perfiles }, { data: config }] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, is_admin, es_titular, permisos").order("full_name"),
+  // "*" (y no una lista de columnas) para que la pantalla siga abriendo
+  // aunque todavía no se haya corrido migration_61.sql (rol_interno_id).
+  // V31: sin las cuentas eliminadas (migration_62.sql).
+  const [{ data: perfilesTodos }, { data: config }, { data: roles }] = await Promise.all([
+    supabase.from("profiles").select("*").order("full_name"),
     supabase.from("app_config").select("solicitudes_correos").maybeSingle(),
+    supabase.from("roles_app").select("*").eq("app", "interno").order("nombre"),
   ]);
+  const perfiles = (perfilesTodos || []).filter((p) => !p.eliminado_en);
 
   return (
     <div>
@@ -32,11 +39,15 @@ export default async function UsuariosPage() {
         <Breadcrumb items={[{ label: "Administración" }]} />
 
         <SeccionColapsable titulo="Usuarios y permisos">
-          <ListaUsuarios perfiles={perfiles || []} miId={user.id} />
+          <ListaUsuarios perfiles={perfiles} miId={user.id} roles={roles || []} />
         </SeccionColapsable>
 
+        {/* V31: Roles editables (migration_61.sql). */}
         <SeccionColapsable titulo="Roles">
           <RolesInfo />
+          <div style={{ marginTop: 14 }}>
+            <RolesAdmin app="interno" roles={roles || []} secciones={SECCIONES} perfiles={perfiles} conInicio />
+          </div>
         </SeccionColapsable>
 
         {/* V29 -- correos del almacén para el aviso de Solicitudes al

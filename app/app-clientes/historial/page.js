@@ -4,6 +4,7 @@ import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import HistorialClient from "./historial-client";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 
 // "Listado de órdenes" dejó de ser una sección fija del menú superior
 // (23-sep-2026, pedido explícito: "ya se! pon listado de ordenes dentro
@@ -21,8 +22,12 @@ export default async function HistorialOrdenesPage() {
   const supabase = createClient();
   await requirePermisoClientes(supabase, "equipos_clientes_listado_ordenes", "/app-clientes/mas");
 
-  const [{ data: ordenes }, { data: clientes }] = await Promise.all([
-    supabase.from("ordenes_equipos_con_nombre").select("*").limit(500),
+  // V31: antes traía solo 500 (.limit(500)); ahora todas, de a 1000, para
+  // que el buscador y los filtros cubran el historial completo.
+  const [ordenes, { data: clientes }] = await Promise.all([
+    todasLasFilas(supabase, "ordenes_equipos_con_nombre", (q) =>
+      q.select("*").order("fecha", { ascending: false }).order("id")
+    ),
     supabase.from("clientes_equipos").select("id, nombre").order("nombre"),
   ]);
 
@@ -43,7 +48,7 @@ export default async function HistorialOrdenesPage() {
         {/* V30: "Listado de órdenes" -> "Historial de órdenes" (pedido explícito). */}
         <h1 className="page-title">Historial de órdenes</h1>
 
-        <HistorialClient ordenes={ordenes || []} clientes={clientes || []} />
+        <HistorialClient ordenes={ordenes} clientes={clientes || []} />
       </div>
     </div>
   );

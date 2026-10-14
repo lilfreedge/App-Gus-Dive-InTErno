@@ -9,7 +9,6 @@ export default function NuevoClienteForm() {
   const supabase = createClient();
 
   const [nombre, setNombre] = useState("");
-  const [numero, setNumero] = useState("");
   const [telefono, setTelefono] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,7 +32,6 @@ export default function NuevoClienteForm() {
       .from("clientes_equipos")
       .insert({
         nombre: nombre.trim(),
-        numero: numero.trim() || null,
         telefono: telefono.trim() || null,
         user_id: user?.id || null,
         nombre_usuario_snapshot: perfil?.full_name || null,
@@ -59,22 +57,13 @@ export default function NuevoClienteForm() {
       </label>
       <input id="nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
 
-      <label htmlFor="numero">Número de cliente</label>
-      <input
-        id="numero"
-        type="text"
-        value={numero}
-        onChange={(e) => setNumero(e.target.value)}
-        placeholder="Ej: GUS-001 (opcional)"
-      />
-
-      <label htmlFor="telefono">Contacto</label>
+      <label htmlFor="telefono">Número de contacto</label>
       <input
         id="telefono"
         type="text"
         value={telefono}
         onChange={(e) => setTelefono(e.target.value)}
-        placeholder="Teléfono, WhatsApp, email... (opcional)"
+        placeholder="Teléfono o WhatsApp (opcional)"
       />
 
       {error && <div className="error-box">{error}</div>}
