@@ -6,6 +6,7 @@ import NavArrowsServer from "@/components/NavArrowsServer";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { hoyISO, sumarMeses } from "@/lib/fechas";
+import { idsTanquesAfuera } from "@/lib/envios-hidrostatica";
 
 // "Próximos vencimientos" (V29, maqueta aprobada): en un solo lugar, lo
 // vencido y lo que vence en los próximos 2 meses ("1. si") de las tres
@@ -104,13 +105,20 @@ export default async function ProximosVencimientosPage() {
   const supabase = createClient();
   await requireInterno(supabase, "proximos_vencimientos");
 
-  const [{ data: reguladores }, { data: tanques }, hidroRes] = await Promise.all([
+  const [{ data: reguladores }, { data: tanques }, hidroResTodo, afuera] = await Promise.all([
     supabase.from("reguladores_alquiler").select("id, codigo, proximo_mantenimiento").eq("activo", true),
     supabase.from("tanques_alquiler").select("id, codigo, proxima_inspeccion").eq("activo", true),
     // Aparte: si migration_53.sql todavía no se corrió, la columna no
     // existe -- esa sección sale vacía en vez de romper toda la pantalla.
     supabase.from("tanques_alquiler").select("id, codigo, proxima_hidrostatica").eq("activo", true),
+    idsTanquesAfuera(supabase),
   ]);
+  // V32: los tanques que están afuera en prueba hidrostática no salen como
+  // vencidos/por vencer (ya se están atendiendo).
+  const idsAfuera = new Set(afuera);
+  const hidroRes = hidroResTodo.error
+    ? hidroResTodo
+    : { ...hidroResTodo, data: (hidroResTodo.data || []).filter((t) => !idsAfuera.has(t.id)) };
 
   const hoy = hoyISO();
   const limite = sumarMeses(hoy, HORIZONTE_MESES);

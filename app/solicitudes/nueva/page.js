@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
+import ConInfo from "@/components/ConInfo";
 import NuevaSolicitudForm from "./form-client";
 
 // "Solicitar códigos a almacén" (V29) -- ver app/solicitudes/page.js.
@@ -29,7 +30,18 @@ export default async function NuevaSolicitudPage() {
             { label: "Solicitar códigos" },
           ]}
         />
-        <h1 className="page-title">Solicitar códigos a almacén</h1>
+        {/* V32: "Se le avisa al almacén por correo..." pasa al botón ⓘ
+            (el aviso de que NO hay correo configurado se queda a la vista,
+            abajo del botón Enviar). */}
+        {(config?.solicitudes_correos || []).length > 0 ? (
+          <ConInfo style={{ marginBottom: 10 }} texto="Se le avisa al almacén por correo con la lista de códigos.">
+            <h1 className="page-title" style={{ margin: 0 }}>
+              Solicitar códigos a almacén
+            </h1>
+          </ConInfo>
+        ) : (
+          <h1 className="page-title">Solicitar códigos a almacén</h1>
+        )}
         <p className="page-subtitle">Códigos del catálogo que la tienda necesita del almacén.</p>
 
         <NuevaSolicitudForm

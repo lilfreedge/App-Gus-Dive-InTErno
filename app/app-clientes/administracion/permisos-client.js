@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { SECCIONES_CLIENTES } from "@/lib/permisos-clientes";
 import {
   IconEdit,
   IconTank,
@@ -44,65 +46,10 @@ const PERMISOS_DEFAULT = {
   equipos_clientes_contactar: false,
 };
 
-// V30 → v56 -- Permisos agrupados por sección de la app (igual que App
-// Interno), en lugar de por tipo de acción (General / Registrar / Más /
-// Administradores). Los ítems con `soloAdmin: true` siguen apareciendo
-// dentro de cada sección pero atenuados/bloqueados para usuarios no-admin.
-// Las claves de permiso NO cambiaron, solo la agrupación visual.
-export const SECCIONES = [
-  {
-    titulo: "Órdenes",
-    items: [
-      { clave: "equipos_clientes_listado_ordenes", label: "Historial de órdenes", Icono: IconHistory },
-      { clave: "equipos_clientes_registrar", label: "Registrar orden", Icono: IconEdit },
-      { clave: "equipos_clientes_actualizar_estado", label: "Actualizar estado de orden", Icono: IconRefresh },
-      { clave: "equipos_clientes_editar_orden", label: "Editar orden", Icono: IconEdit, soloAdmin: true },
-      { clave: "equipos_clientes_editar_hold", label: "Editar Hold", Icono: IconEdit, soloAdmin: true },
-      { clave: "equipos_clientes_bitacora_orden", label: "Ver bitácora de la orden", Icono: IconClipboard, soloAdmin: true },
-    ],
-  },
-  {
-    titulo: "Clientes",
-    items: [
-      { clave: "equipos_clientes_listado_clientes", label: "Listado de clientes", Icono: IconUsers },
-      { clave: "equipos_clientes_agregar_cliente", label: "Registrar cliente", Icono: IconPlus },
-      { clave: "equipos_clientes_editar_cliente", label: "Editar cliente", Icono: IconEdit, soloAdmin: true },
-    ],
-  },
-  {
-    titulo: "Equipos",
-    items: [
-      { clave: "equipos_clientes_agregar_equipo", label: "Registrar equipo de cliente", Icono: IconTank },
-      { clave: "equipos_clientes_informe_mantenimiento", label: "Informe de mantenimiento", Icono: IconWrench },
-      { clave: "equipos_clientes_editar_equipo", label: "Editar equipo", Icono: IconEdit, soloAdmin: true },
-      {
-        clave: "equipos_clientes_editar_mantenimiento_compresor",
-        label: "Editar mantenimiento de compresor",
-        Icono: IconCompressor,
-        soloAdmin: true,
-      },
-    ],
-  },
-  {
-    titulo: "Base de datos",
-    items: [
-      { clave: "equipos_clientes_catalogo", label: "Base de datos", Icono: IconCatalog },
-      { clave: "equipos_clientes_agregar_codigo", label: "Registrar código en base de datos", Icono: IconCatalog },
-      { clave: "equipos_clientes_registrar_servicio", label: "Registrar servicio en base de datos", Icono: IconWrench },
-      { clave: "equipos_clientes_editar_codigo", label: "Editar código", Icono: IconEdit, soloAdmin: true },
-      { clave: "equipos_clientes_editar_servicio", label: "Editar servicio", Icono: IconWrench, soloAdmin: true },
-    ],
-  },
-  {
-    titulo: "Más",
-    items: [
-      { clave: "equipos_clientes_reportes", label: "Recibos e Informes", Icono: IconReport },
-      { clave: "equipos_clientes_contactar", label: "Clientes por contactar", Icono: IconUsers },
-      { clave: "equipos_clientes_historial", label: "Anulaciones y ediciones", Icono: IconHistory, soloAdmin: true },
-      { clave: "equipos_clientes_bitacora_movimientos", label: "Bitácora de órdenes", Icono: IconClipboard, soloAdmin: true },
-    ],
-  },
-];
+// V30 → v56 -- Permisos agrupados por sección de la app. V32: la lista
+// vive ahora en lib/permisos-clientes.js (la usa también la ficha del
+// usuario); aquí se sigue exportando como SECCIONES, igual que antes.
+export const SECCIONES = SECCIONES_CLIENTES;
 
 const CLAVES = SECCIONES.flatMap((s) => s.items.map((i) => i.clave));
 
@@ -138,9 +85,6 @@ export default function PermisosClientes({ perfiles, miId, roles = [] }) {
   return (
     <div>
       {error && <div className="error-box" style={{ marginTop: 0, marginBottom: 12 }}>{error}</div>}
-      <p className="hint-text" style={{ marginTop: 0, marginBottom: 12 }}>
-        Toca a una persona para ver y cambiar su rol y sus permisos en esta app. Los cambios se guardan al momento.
-      </p>
 
       {[
         { rol: "titular", titulo: "Titular" },
@@ -171,7 +115,16 @@ export default function PermisosClientes({ perfiles, miId, roles = [] }) {
                       style={{ cursor: cerrado ? "default" : "pointer" }}
                     >
                       <span className="list-item-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        {p.full_name}
+                        {/* V32 (pedido explícito: "que yo pueda darle click a
+                            cada usuario y ver sus stats y poder borrarlo, así
+                            como está en app interno"): el nombre abre su ficha. */}
+                        <Link
+                          href={`/app-clientes/administracion/usuarios/${p.id}`}
+                          className="breadcrumb-crumb"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {p.full_name}
+                        </Link>
                         {p.id === miId && <span className="tag-tu">Tú</span>}
                       </span>
                       <span className="hint-text" style={{ margin: 0, whiteSpace: "nowrap" }}>

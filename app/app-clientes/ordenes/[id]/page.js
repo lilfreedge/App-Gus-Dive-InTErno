@@ -331,6 +331,8 @@ export default async function FichaOrdenPage({ params }) {
               )}
             </Campo>
             <Campo etiqueta="Servicio a realizar" valor={o.que_se_hara} full />
+            {/* V32: No. de cotización (se pone en "Actualizar estado de orden"). */}
+            {o.cotizacion && <Campo etiqueta="No. de cotización" valor={o.cotizacion} full />}
             {o.autorizacion_cliente && (
               <Campo etiqueta="Autorización del cliente" full>
                 {o.autorizacion_cliente}

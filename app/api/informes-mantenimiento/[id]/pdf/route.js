@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
-import { construirPDFOrdenCliente } from "@/lib/reportes-clientes";
-import { filasInformeMantenimiento } from "@/lib/informe-mantenimiento";
+import { construirPDFInformeMantenimiento } from "@/lib/informe-documento";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// "Descargar PDF" del Informe de mantenimiento (item 36). Mismo formato
-// que el resto de los documentos de la app (construirPDFOrdenCliente).
+// PDF del Informe de mantenimiento (item 36). V32: mismo diseño que el
+// app, en hoja carta (lib/informe-documento.js) -- el mismo que va
+// adjunto en el correo.
 export async function GET(request, { params }) {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
@@ -31,23 +31,8 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: "Todavía no se ha generado el informe de esta orden." }, { status: 400 });
   }
 
-  let serie = null;
-  if (o.equipo_id) {
-    const { data: equipo } = await supabase
-      .from("equipos_del_cliente")
-      .select("serie")
-      .eq("id", o.equipo_id)
-      .maybeSingle();
-    serie = equipo?.serie || null;
-  }
-
-  const filas = filasInformeMantenimiento(o, o.informe_mantenimiento, { serie });
   const numero = o.no_orden_fisico ?? o.folio;
-  const pdfBuffer = await construirPDFOrdenCliente({
-    titulo: `Informe de mantenimiento — Orden #${numero}`,
-    subtitulo: `${o.cliente_nombre_snapshot || ""}`,
-    filas,
-  });
+  const pdfBuffer = await construirPDFInformeMantenimiento(o, o.informe_mantenimiento);
 
   return new NextResponse(pdfBuffer, {
     status: 200,

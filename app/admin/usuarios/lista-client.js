@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ConInfo from "@/components/ConInfo";
 import {
   IconPackage,
   IconTankFill,
@@ -37,6 +38,11 @@ export const PERMISOS_DEFAULT = {
   registrar_llenado: false,
   registrar_mantenimiento: false,
   registrar_hidrostatica: false,
+  // V32: registrar (antes el de arriba daba ver y registrar). Apagados
+  // para todos ("no, quítalo y yo se lo pongo").
+  inspeccion_registrar: false,
+  hidrostatica_registrar: false,
+  mantenimiento_registrar: false,
   proximos_vencimientos: false,
   catalogo_codigo: false,
   catalogo_regulador: false,
@@ -72,9 +78,21 @@ export const SECCIONES = [
     items: [
       { clave: "registrar_llenado", label: "Llenados de tanque", sub: "Ver y registrar llenados", Icono: IconTankFill },
       { clave: "facturacion", label: "Facturación de llenado", sub: "Marcar llenados como facturados", Icono: IconReceipt, sub_de: true },
-      { clave: "registrar_inspeccion", label: "Inspección visual", Icono: IconEye },
-      { clave: "registrar_hidrostatica", label: "Pruebas hidrostáticas", Icono: IconGauge },
-      { clave: "registrar_mantenimiento", label: "Mantenimiento de reguladores", Icono: IconRegulator },
+      // V32 (pedido explícito: "agregame permisos para yo dar de registrar
+      // inspección visual, prueba hidrostáticas y mantenimiento de
+      // reguladores"): el de arriba es VER; el de abajo, REGISTRAR.
+      { clave: "registrar_inspeccion", label: "Inspección visual", sub: "Ver las inspecciones", Icono: IconEye },
+      { clave: "inspeccion_registrar", label: "Registrar inspección visual", Icono: IconEdit, sub_de: true },
+      { clave: "registrar_hidrostatica", label: "Pruebas hidrostáticas", sub: "Ver las pruebas y los tanques afuera", Icono: IconGauge },
+      {
+        clave: "hidrostatica_registrar",
+        label: "Registrar prueba hidrostática",
+        sub: "Enviar tanques a PH, registrar regreso y anotar pruebas",
+        Icono: IconEdit,
+        sub_de: true,
+      },
+      { clave: "registrar_mantenimiento", label: "Mantenimiento de reguladores", sub: "Ver los mantenimientos", Icono: IconRegulator },
+      { clave: "mantenimiento_registrar", label: "Registrar mantenimiento de regulador", Icono: IconEdit, sub_de: true },
       { clave: "compresores", label: "Compresores", Icono: IconCompressor },
       { clave: "registrar_compresor", label: "Registrar compresor", Icono: IconCompressor, sub_de: true },
     ],
@@ -165,9 +183,21 @@ export default function ListaUsuarios({ perfiles, miId, roles = [] }) {
   return (
     <div>
       {error && <div className="error-box" style={{ marginTop: 0, marginBottom: 12 }}>{error}</div>}
-      <p className="hint-text" style={{ marginTop: 0, marginBottom: 12 }}>
-        Toca a una persona para ver y cambiar su rol y sus permisos. Los cambios se guardan al momento.
-      </p>
+      {/* V32: los textos de explicación pasan al botón ⓘ. */}
+      <ConInfo
+        style={{ marginBottom: 12 }}
+        texto={
+          <>
+            Toca a una persona para ver y cambiar su rol y sus permisos. Los cambios se guardan al momento.
+            <div style={{ marginTop: 6 }}>
+              La entrada a cada app (App Interno, App Equipos de clientes) se da en <b>Accesos a apps</b>, desde el
+              selector de apps.
+            </div>
+          </>
+        }
+      >
+        <div style={{ fontWeight: 700, color: "var(--azul-texto)", fontSize: 14.5 }}>Usuarios y permisos</div>
+      </ConInfo>
 
       {[
         { rol: "titular", titulo: "Titular" },
@@ -301,10 +331,6 @@ export default function ListaUsuarios({ perfiles, miId, roles = [] }) {
           </div>
         );
       })}
-      <div className="hint-text" style={{ marginTop: 12 }}>
-        La entrada a cada app (App Interno, App Equipos de clientes) se da en <b>Accesos a apps</b>, desde el selector de
-        apps.
-      </div>
     </div>
   );
 }

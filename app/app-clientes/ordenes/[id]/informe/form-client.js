@@ -9,14 +9,13 @@ import {
   COMPONENTES_REGULADOR_DEFS,
   MANTENIMIENTO_DEFS,
   componentesRecibidosTexto,
-  estadoInicialTexto,
-  trabajoRealizadoLista,
   informeDefault,
-  presionConUnidad,
+  seccionesInforme,
 } from "@/lib/informe-mantenimiento";
 import BotonImprimir from "@/components/BotonImprimir";
 import EnviarInformeClient from "./enviar-client";
 import { IconLock } from "@/components/icons";
+import ConInfo from "@/components/ConInfo";
 
 const SECCION_ESTILO = { background: "var(--fondo)", border: "1px solid var(--borde)", borderRadius: 10, padding: 14, marginBottom: 12 };
 const SECCION_LABEL_ESTILO = { fontSize: 11, fontWeight: 700, color: "var(--texto-suave)", textTransform: "uppercase", letterSpacing: 0.3 };
@@ -141,9 +140,6 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
   }
 
   const componentesTexto = componentesRecibidosTexto(orden.regulador_componentes);
-  const mostrarEstadoInicial = !!(orden.regulador_danos_visibles?.trim() || orden.regulador_problemas_reportados?.trim());
-  const estadoInicial = estadoInicialTexto({ danos: orden.regulador_danos_visibles, problemas: orden.regulador_problemas_reportados });
-  const trabajoRealizado = trabajoRealizadoLista(informe.mantenimiento);
 
   return (
     <div className="card">
@@ -284,7 +280,10 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
               en lib/informe-mantenimiento.js y la vista "Informe (cliente)"
               más abajo). */}
           <div style={SECCION_ESTILO}>
-            <div style={SECCION_LABEL_ESTILO}>Cambio de o-rings</div>
+            {/* V32: la letra chica "Opcional..." pasa al botón ⓘ. */}
+            <ConInfo texto="Opcional -- si no se cambió ninguno, déjalo vacío.">
+              <div style={SECCION_LABEL_ESTILO}>Cambio de o-rings</div>
+            </ConInfo>
             {(informe.orings || []).length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8, marginBottom: 6 }}>
                 {informe.orings.map((o, i) => (
@@ -319,9 +318,6 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 + Agregar
               </button>
             </div>
-            {(informe.orings || []).length === 0 && (
-              <div className="hint-text" style={{ marginTop: 6 }}>Opcional -- si no se cambió ninguno, déjalo vacío.</div>
-            )}
           </div>
 
           {/* "Recomendación de próximo mantenimiento" (1-oct-2026, nueva
@@ -332,7 +328,9 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
               en este Informe puntual -- ver generarInforme() y la nueva
               pantalla "Clientes por contactar" en Más. */}
           <div style={SECCION_ESTILO}>
-            <div style={SECCION_LABEL_ESTILO}>Recomendación de próximo mantenimiento</div>
+            <ConInfo texto="Opcional -- si no aplica, déjalo sin marcar.">
+              <div style={SECCION_LABEL_ESTILO}>Recomendación de próximo mantenimiento</div>
+            </ConInfo>
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
               {[{ v: "6", label: "6 meses" }, { v: "12", label: "12 meses" }].map((op) => (
                 <button
@@ -350,7 +348,6 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 </button>
               ))}
             </div>
-            <div className="hint-text" style={{ marginTop: 6 }}>Opcional -- si no aplica, déjalo sin marcar.</div>
           </div>
 
           <div style={SECCION_ESTILO}>
@@ -390,10 +387,15 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
 
           {error && <div className="error-box">{error}</div>}
 
-          <button type="button" className="btn btn-primary" onClick={generarInforme} disabled={guardando} style={{ width: "100%", marginTop: 10 }}>
-            {guardando ? "Guardando..." : "Generar informe (PDF)"}
-          </button>
-          <div className="hint-text" style={{ textAlign: "center", marginTop: 6 }}>Se genera un PDF con este contenido para entregar al cliente.</div>
+          <ConInfo
+            style={{ marginTop: 10 }}
+            filaStyle={{ gap: 8 }}
+            texto="Se genera un PDF con este contenido para entregar al cliente."
+          >
+            <button type="button" className="btn btn-primary" onClick={generarInforme} disabled={guardando} style={{ flex: 1, width: "auto", marginTop: 0 }}>
+              {guardando ? "Guardando..." : "Generar informe (PDF)"}
+            </button>
+          </ConInfo>
         </>
       ) : (
         <>
@@ -417,61 +419,31 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
               </div>
             </div>
             <div className="reporte-cuerpo" style={{ padding: 18 }}>
-              <Seccion titulo="Cliente">
-                {orden.cliente_nombre_snapshot}
-                {orden.cliente_telefono && ` · ${orden.cliente_telefono}`}
-              </Seccion>
-
-              <Seccion titulo="Equipo">
-                {[informe.marca, informe.modelo].filter(Boolean).join(" ") || "—"}
-                <div className="hint-text" style={{ marginTop: 2 }}>
-                  No. de orden {orden.no_orden_fisico ?? orden.folio} · Ingreso {formatFechaDDMMAAAADeDate(orden.fecha)}
-                  {informe.serie?.trim() ? ` · No. de serie ${informe.serie.trim()}` : ""}
-                </div>
-              </Seccion>
-
-              <Seccion titulo="Componentes recibidos">{componentesTexto}</Seccion>
-
-              {mostrarEstadoInicial && <Seccion titulo="Estado inicial">{estadoInicial}</Seccion>}
-
-              <Seccion titulo="Trabajo realizado">
-                {trabajoRealizado.length > 0 ? (
-                  <ul style={{ margin: "6px 0 0", paddingLeft: 18, lineHeight: 1.6 }}>
-                    {trabajoRealizado.map((t) => (
-                      <li key={t}>{t}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div style={{ marginTop: 4 }}>Ninguno indicado.</div>
-                )}
-              </Seccion>
-
-              {/* "Presión intermedia" (feedback sobre v51, pedido explícito:
-                  "pon que 'presion intermedia ajustada' sea 'presion
-                  intermedia' y que se vea mas grande en el informe, se ve
-                  como escondido ahora") -- antes vivía como nota chiquita
-                  (.hint-text) al final de "Trabajo realizado"; ahora es su
-                  propia Sección, mismo peso visual que Cliente/Equipo/etc. */}
-              {/* Con "psi" al final (feedback sobre v52, pedido explícito:
-                  'Agrega "psi" despues del numero. Por ejemplo: "135 psi"'). */}
-              {presionConUnidad(informe.presion) && <Seccion titulo="Presión intermedia">{presionConUnidad(informe.presion)}</Seccion>}
-
-              {informe.observacion?.trim() && <Seccion titulo="Nota">{informe.observacion.trim()}</Seccion>}
-
-              {/* Bullets, igual que "Trabajo realizado" (feedback sobre v50,
-                  pedido explícito: "que en el informe salga tipo bullets,
-                  asi como salen los trabajos realizados") -- antes era un
-                  texto plano separado por comas, inconsistente con el resto
-                  del Informe y parte de por qué el impreso se veía raro. */}
-              {(informe.orings || []).length > 0 && (
-                <Seccion titulo="Cambio de o-rings">
-                  <ul style={{ margin: "6px 0 0", paddingLeft: 18, lineHeight: 1.6 }}>
-                    {informe.orings.map((o) => (
-                      <li key={o}>{o}</li>
-                    ))}
-                  </ul>
+              {/* V32: las secciones salen de seccionesInforme() (lib/
+                  informe-mantenimiento.js), la misma lista que usan el
+                  correo y el PDF -- así los tres se ven igual. Pedido
+                  explícito: "Cambio de o-rings" ahora va ANTES de "Nota".
+                  (Historia de cada sección: Presión intermedia como sección
+                  propia y con "psi" -- feedback sobre v51/v52; o-rings con
+                  viñetas -- feedback sobre v50.) */}
+              {seccionesInforme(orden, informe).map((sec) => (
+                <Seccion key={sec.titulo} titulo={sec.titulo}>
+                  {sec.items ? (
+                    <ul style={{ margin: "6px 0 0", paddingLeft: 18, lineHeight: 1.6 }}>
+                      {sec.items.map((t, i) => (
+                        <li key={`${t}-${i}`}>{t}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    sec.texto
+                  )}
+                  {sec.detalle && (
+                    <div className="hint-text" style={{ marginTop: 2 }}>
+                      {sec.detalle}
+                    </div>
+                  )}
                 </Seccion>
-              )}
+              ))}
 
               <div
                 style={{

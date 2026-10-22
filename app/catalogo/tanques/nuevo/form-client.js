@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { proximaInspeccion, finDeMesMasMeses } from "@/lib/fechas";
+import { proximaInspeccion, finDeMesMasMeses, MESES_INSPECCION_TANQUE, MESES_HIDROSTATICA } from "@/lib/fechas";
+import ConInfo from "@/components/ConInfo";
 import MesAnioSelector, { mesAnioCompleto } from "@/components/MesAnioSelector";
 
 function hoyISO() {
@@ -47,10 +48,11 @@ export default function NuevoTanqueForm() {
     if (ultimaHidro && !mesAnioCompleto(ultimaHidro)) {
       return setError("Elige el mes y el año de la última prueba hidrostática, o deja los dos vacíos.");
     }
+    // V32: inspección cada 2 años (24 meses) para nuestros tanques.
     const proxInspeccion = ultimaInspeccion
-      ? finDeMesMasMeses(ultimaInspeccion, 12)
+      ? finDeMesMasMeses(ultimaInspeccion, MESES_INSPECCION_TANQUE)
       : proximaInspeccion(hoyISO());
-    const proxHidro = ultimaHidro ? finDeMesMasMeses(ultimaHidro, 60) : null;
+    const proxHidro = ultimaHidro ? finDeMesMasMeses(ultimaHidro, MESES_HIDROSTATICA) : null;
 
     setLoading(true);
     const { error } = await supabase.from("tanques_alquiler").insert({
@@ -64,7 +66,7 @@ export default function NuevoTanqueForm() {
 
     if (error) {
       if (error.message.toLowerCase().includes("duplicate")) {
-        setError("Ese código ya existe en el catálogo de tanques.");
+        setError("Ya hay un tanque ACTIVO con ese código. (Un código solo se puede repetir si el otro tanque está inactivo.)");
       } else {
         setError("No se pudo agregar. Intenta de nuevo.");
       }
@@ -111,7 +113,9 @@ export default function NuevoTanqueForm() {
         placeholder="Ej: AL80-2024-00123"
       />
 
-      <label htmlFor="ultima_inspeccion">Última inspección visual</label>
+      <ConInfo style={{ margin: "14px 0 6px" }} texto="Opcional. Si la dejas vacía, la próxima inspección se calcula desde hoy. Vence al final del mes, 2 años después.">
+        <label htmlFor="ultima_inspeccion" style={{ margin: 0 }}>Última inspección visual</label>
+      </ConInfo>
       <MesAnioSelector
         id="ultima_inspeccion"
         valor={ultimaInspeccion}
@@ -119,20 +123,16 @@ export default function NuevoTanqueForm() {
         anioActual={new Date().getFullYear()}
         aniosAtras={10}
       />
-      <p className="hint-text" style={{ marginTop: 4 }}>
-        Opcional. Si la dejas vacía, la próxima inspección se calcula desde hoy (+12 meses).
-      </p>
 
-      <label htmlFor="ultima_hidro">Última prueba hidrostática</label>
+      <ConInfo style={{ margin: "14px 0 6px" }} texto="Opcional. La próxima vence al final de ese mes, 5 años después.">
+        <label htmlFor="ultima_hidro" style={{ margin: 0 }}>Última prueba hidrostática</label>
+      </ConInfo>
       <MesAnioSelector
         id="ultima_hidro"
         valor={ultimaHidro}
         onChange={setUltimaHidro}
         anioActual={new Date().getFullYear()}
       />
-      <p className="hint-text" style={{ marginTop: 4 }}>
-        Opcional. La próxima vence al final de ese mes, 5 años después.
-      </p>
 
       {error && <div className="error-box">{error}</div>}
       <button className="btn btn-primary" style={{ marginTop: 20 }} type="submit" disabled={loading}>

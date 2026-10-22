@@ -15,7 +15,7 @@ export default async function NuevoMantenimientoPage() {
 
   const { profile } = await getProfileYUser(supabase);
 
-  if (!user || !tieneAcceso(profile, "registrar_mantenimiento")) {
+  if (!user || !tieneAcceso(profile, "mantenimiento_registrar")) {
     redirect("/equipos/mantenimiento-reguladores");
   }
 

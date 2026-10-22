@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermisoClientes, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
+import ConInfo from "@/components/ConInfo";
 
 // Catálogo de servicios de App Clientes (23-sep-2026, pedido explícito,
 // dentro del nuevo botón "Más"). Reemplaza la lista fija que antes
@@ -47,8 +48,12 @@ export default async function CatalogoServiciosPage() {
             { label: "Servicios" },
           ]}
         />
-        <h1 className="page-title">Catálogo de servicios</h1>
-        <p className="page-subtitle">Estos son los servicios que aparecen para elegir en &quot;Registrar orden&quot;.</p>
+        {/* V32: el subtítulo pasa al botón ⓘ junto al título. */}
+        <ConInfo style={{ marginBottom: 16 }} texto="Estos son los servicios que aparecen para elegir en &quot;Registrar orden&quot;.">
+          <h1 className="page-title" style={{ margin: 0 }}>
+            Catálogo de servicios
+          </h1>
+        </ConInfo>
 
         {puedeRegistrar && (
           <div style={{ marginBottom: 16 }}>

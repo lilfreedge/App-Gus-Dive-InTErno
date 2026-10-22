@@ -163,6 +163,14 @@ button {
   padding: 16px;
 }
 
+/* V32: App Interno con su propio color de barra, para saber en qué app
+   estás de un vistazo (App Equipos de clientes se queda azul). Solo la
+   barra: --azul no cambia, así que membretes, botones y el Informe siguen
+   igual. */
+.topbar-interno {
+  background: #0e6660;
+}
+
 .topbar-inner {
   max-width: 720px;
   margin: 0 auto;
@@ -1629,6 +1637,53 @@ label .req {
   border-color: var(--azul-claro);
   color: var(--azul-claro);
 }
+
+/* V32: botón ⓘ (components/ConInfo.js) -- mismo círculo que el "?" de
+   antes, con una "i" en cursiva, y la caja que se abre debajo. */
+.info-btn {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  margin-left: 0;
+}
+.info-btn-abierto {
+  border-color: var(--azul-claro);
+  color: var(--azul-claro);
+}
+/* V32: título (miga de pan) con su ⓘ al lado -- sin el margen del h1
+   para que el botón quede centrado con el texto. */
+.titulo-con-info .page-title {
+  margin: 0;
+}
+
+/* V32: secciones plegables (<details>) con flechita ▸ / ▾. */
+.plegable > summary::-webkit-details-marker {
+  display: none;
+}
+.plegable-flecha {
+  display: inline-block;
+  width: 14px;
+  color: var(--texto-suave);
+  text-align: center;
+}
+.plegable-flecha::before {
+  content: "▸";
+}
+.plegable[open] > summary .plegable-flecha::before {
+  content: "▾";
+}
+
+.info-box {
+  background: var(--superficie-suave);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--texto);
+  margin: 6px 0 10px;
+  font-weight: 400;
+}
+
 
 /* Apariencia (Mi Perfil): toggle de modo oscuro */
 .switch-row {

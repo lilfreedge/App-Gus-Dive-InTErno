@@ -10,7 +10,8 @@ import { hoyISO, sumarDias } from "@/lib/fechas";
 export default async function InspeccionVisualPage() {
   const supabase = createClient();
   const { profile } = await requireInterno(supabase, "registrar_inspeccion");
-  const puedeRegistrar = tieneAcceso(profile, "registrar_inspeccion");
+  // V32: "registrar_inspeccion" es para ver; registrar pide "inspeccion_registrar".
+  const puedeRegistrar = tieneAcceso(profile, "inspeccion_registrar");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
 
   const [{ data: inspecciones }, { data: tanques }] = await Promise.all([
@@ -75,6 +76,11 @@ export default async function InspeccionVisualPage() {
                     )}
                   </div>
                 </div>
+                {i.fecha_inspeccion && (
+                  <div className="list-item-meta">
+                    Fecha de la inspección: <b>{formatFechaDDMMAAAADeDate(i.fecha_inspeccion)}</b>
+                  </div>
+                )}
                 <div className="list-item-meta">
                   {i.full_name} · {formatFecha(i.created_at)}
                 </div>

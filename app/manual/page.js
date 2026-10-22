@@ -86,40 +86,44 @@ export default async function ManualPage() {
     });
   }
 
-  if (esTitular || permisos.registrar_inspeccion) {
+  if (esTitular || permisos.inspeccion_registrar) {
     topics.push({
       key: "registrar-inspeccion",
       title: "Registrar una inspección visual",
       searchText:
-        "registrar inspección visual tanque aprobado rechazado próxima inspección",
+        "registrar inspección visual tanque aprobado rechazado próxima inspección 2 años",
       body: (
         <div className="card">
           En Inspección visual → &quot;Nueva inspección&quot;, elige el
           tanque y marca si quedó Aprobado o Rechazado, con una nota
           opcional. Puedes agregar varias filas para registrar de una vez
-          varias inspecciones del mismo día, y la fecha de la próxima
-          inspección del tanque (+1 año) se actualiza sola.
+          varias inspecciones del mismo día. La próxima inspección del
+          tanque se calcula sola: al final del mes, 2 años después. Cuando
+          un tanque vuelve de la prueba hidrostática aprobado, su
+          inspección visual se anota sola.
         </div>
       ),
     });
   }
 
-  if (esTitular || permisos.registrar_hidrostatica) {
+  if (esTitular || permisos.hidrostatica_registrar) {
     topics.push({
       key: "registrar-hidrostatica",
-      title: "Registrar una prueba hidrostática",
+      title: "Enviar tanques a prueba hidrostática y registrar el regreso",
       searchText:
-        "registrar prueba hidrostática tanque aprobado rechazado fecha de la prueba 5 años próxima vencida por vencer",
+        "prueba hidrostática enviar tanques ph afuera días regreso aprobado rechazado inactivo 5 años próxima vencida por vencer",
       body: (
         <div className="card">
-          En Equipos → Pruebas hidrostáticas → &quot;+ Registrar prueba
-          hidrostática&quot;, elige el tanque, la fecha en que se hizo la
-          prueba (por default hoy; se puede poner una fecha pasada para
-          cargar la última prueba de un tanque que ya existía), si quedó
-          Aprobado o Rechazado y una nota opcional. La próxima prueba del
-          tanque (+5 años desde esa fecha) se calcula sola. En Inicio
-          sale un aviso cuando a un tanque le faltan 2 meses o menos, y
-          otro cuando ya está vencida.
+          En Equipos → Pruebas hidrostáticas → &quot;Enviar tanques a
+          PH&quot;, escoge los tanques que salen ese día y la fecha. Mientras
+          están afuera salen en &quot;Afuera en prueba hidrostática&quot; con
+          los días que llevan (azul hasta 15, ámbar hasta 30, rojo más de
+          30). Cuando vuelve, toca &quot;Registrar regreso&quot;: pon la fecha
+          de regreso, el mes y año de la prueba y el resultado. Con eso queda
+          la prueba (la próxima, a 5 años, se calcula sola) y, si salió
+          aprobada, también la inspección visual. Si salió rechazada, el
+          tanque se inactiva solo. Para pruebas viejas, de antes de usar el
+          app, usa el enlace &quot;Anotar una prueba ya hecha&quot;.
         </div>
       ),
     });
@@ -165,7 +169,7 @@ export default async function ManualPage() {
     });
   }
 
-  if (esTitular || permisos.registrar_mantenimiento) {
+  if (esTitular || permisos.mantenimiento_registrar) {
     topics.push({
       key: "registrar-mantenimiento",
       title: "Registrar un mantenimiento de regulador",

@@ -5,6 +5,7 @@ import { requirePermiso, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { hoyISO } from "@/lib/fechas";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { IconEdit } from "@/components/icons";
 
@@ -53,11 +54,12 @@ export default async function FichaClientePage({ params }) {
       .order("created_at", { ascending: false }),
     supabase
       .from("equipos_del_cliente")
-      .select("id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie")
+      .select("id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, tamano, proximo_mantenimiento_recomendado")
       .eq("cliente_id", params.id)
       .order("created_at", { ascending: false }),
   ]);
 
+  const hoy = hoyISO();
   for (const o of ordenes || []) {
     if (!o.equipo_id || !o.fecha) continue;
     const actual = ultimaFechaPorEquipo.get(o.equipo_id);
@@ -135,18 +137,45 @@ export default async function FichaClientePage({ params }) {
                 >
                   <div className="list-item-top">
                     <span className="list-item-title">
-                      {tipoLabel}
-                      {marcaModelo && ` — ${marcaModelo}`}
-                      {/* No. de serie al lado del equipo (item 14, pedido
-                          explícito, 27-sep-2026: "pon que los tanques y
-                          reguladores aparezcan con su numero de serie al
-                          lado"). */}
-                      {e.serie && ` — No. Serie ${e.serie}`}
+                      {e.tipo_equipo === "Tanques" ? (
+                        // V32 (pedido explícito, solo aquí en la ficha del
+                        // cliente): "Tanque 80 cf — S/AS0832793" -- el
+                        // tamaño y la serie, sin el fabricante.
+                        [[tipoLabel, e.tamano].filter(Boolean).join(" "), e.serie && `S/${e.serie}`]
+                          .filter(Boolean)
+                          .join(" — ")
+                      ) : (
+                        <>
+                          {tipoLabel}
+                          {marcaModelo && ` — ${marcaModelo}`}
+                          {/* No. de serie al lado del equipo (item 14, pedido
+                              explícito, 27-sep-2026: "pon que los tanques y
+                              reguladores aparezcan con su numero de serie al
+                              lado"). */}
+                          {e.serie && ` — No. Serie ${e.serie}`}
+                        </>
+                      )}
                     </span>
                   </div>
                   <div className="list-item-meta">
                     {ultimaFecha ? `Última vez en tienda: ${formatFechaDDMMAAAADeDate(ultimaFecha)}` : "Sin órdenes todavía"}
                   </div>
+                  {/* V32 (aprobado en maqueta): el próximo mantenimiento
+                      recomendado (el del Informe de mantenimiento), en rojo
+                      si ya pasó. */}
+                  {e.proximo_mantenimiento_recomendado && (
+                    <div
+                      className="list-item-meta"
+                      style={{
+                        fontWeight: 600,
+                        color: e.proximo_mantenimiento_recomendado < hoy ? "var(--rojo)" : "var(--azul-claro)",
+                      }}
+                    >
+                      {e.proximo_mantenimiento_recomendado < hoy
+                        ? `Mantenimiento vencido desde ${formatFechaDDMMAAAADeDate(e.proximo_mantenimiento_recomendado)}`
+                        : `Próximo mantenimiento: ${formatFechaDDMMAAAADeDate(e.proximo_mantenimiento_recomendado)}`}
+                    </div>
+                  )}
                 </Link>
               );
             })

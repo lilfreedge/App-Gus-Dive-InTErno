@@ -77,8 +77,12 @@ export default function TopbarClient({
   const verChangelog = esTitular || permisos?.changelog;
   const verManual = esTitular || permisos?.manual;
 
+  // V32: barra verde solo en App Interno (pedido explícito: "Me gustó mucho
+  // el verde que utilizaste... vamos a ponérselo al app interno", y "Por el
+  // momento, dejemos el verde"). Solo el fondo de la barra: los membretes de
+  // reportes/Informe/PDF siguen con --azul.
   return (
-    <div className="topbar">
+    <div className="topbar topbar-interno">
       <div className="topbar-inner">
         <div>
           <Image

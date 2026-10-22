@@ -144,11 +144,13 @@ export default function NuevaSolicitudForm({ articulos, hayCorreosAlmacen }) {
       <button className="btn btn-primary" type="submit" disabled={enviando} style={{ marginTop: 16 }}>
         {enviando ? "Enviando..." : "Enviar solicitud"}
       </button>
-      <div className="hint-text" style={{ textAlign: "center", marginTop: 6 }}>
-        {hayCorreosAlmacen
-          ? "Se le avisa al almacén por correo con la lista de códigos."
-          : "Todavía no hay un correo del almacén configurado (Administración › Solicitudes al almacén) -- la solicitud se guarda igual, pero no se le avisa a nadie."}
-      </div>
+      {/* V32: con correo configurado, la explicación va en el ⓘ del título. */}
+      {!hayCorreosAlmacen && (
+        <div className="hint-text" style={{ textAlign: "center", marginTop: 6 }}>
+          Todavía no hay un correo del almacén configurado (Administración › Solicitudes al almacén) -- la solicitud se
+          guarda igual, pero no se le avisa a nadie.
+        </div>
+      )}
     </form>
   );
 }

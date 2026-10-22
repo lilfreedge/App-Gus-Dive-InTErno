@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
+import ConInfo from "@/components/ConInfo";
 import AgregarEquiposForm from "./form-client";
 
 // Agregar equipo(s) a un cliente ya existente -- pedido explícito,
@@ -40,8 +41,15 @@ export default async function NuevosEquiposPage({ params }) {
             { label: "Registrar equipo de cliente" },
           ]}
         />
-        <h1 className="page-title">Registrar equipo de {cliente.nombre}</h1>
-        <p className="page-subtitle">Puedes registrar varios de una vez -- usa &quot;+ Agregar otro equipo&quot; para sumar más filas.</p>
+        {/* V32: el subtítulo pasa al botón ⓘ junto al título. */}
+        <ConInfo
+          style={{ marginBottom: 16 }}
+          texto="Puedes registrar varios de una vez -- usa &quot;+ Agregar otro equipo&quot; para sumar más filas."
+        >
+          <h1 className="page-title" style={{ margin: 0 }}>
+            Registrar equipo de {cliente.nombre}
+          </h1>
+        </ConInfo>
 
         <AgregarEquiposForm clienteId={cliente.id} />
       </div>

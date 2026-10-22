@@ -139,8 +139,8 @@ export default function EditarEquipoForm({ equipo }) {
 
       {tipoEquipo === "Tanques" ? (
         <>
-          <label htmlFor="marca">Fabricante</label>
-          <input id="marca" type="text" value={marca} onChange={(e) => setMarca(e.target.value)} placeholder="Opcional" />
+          {/* V32 (pedido explícito): orden No. de serie, Tamaño, Material,
+              Fabricante. */}
           <label htmlFor="serie">No. Serie</label>
           <input id="serie" type="text" value={serie} onChange={(e) => setSerie(e.target.value)} placeholder="Opcional" />
           {/* Tamaño/Material, editables (feedback en vivo, 30-sep-2026,
@@ -163,6 +163,8 @@ export default function EditarEquipoForm({ equipo }) {
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
+          <label htmlFor="marca">Fabricante</label>
+          <input id="marca" type="text" value={marca} onChange={(e) => setMarca(e.target.value)} placeholder="Opcional" />
         </>
       ) : (
         tipoEquipo && (

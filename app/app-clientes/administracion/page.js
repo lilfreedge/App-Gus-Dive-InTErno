@@ -8,6 +8,7 @@ import PermisosClientes, { SECCIONES } from "./permisos-client";
 import RolesAdmin from "@/components/RolesAdmin";
 import FormatearRegistrosClientes from "./formatear-registros-client";
 import ProcesosOrdenesClientes from "./procesos-ordenes-client";
+import ConInfo from "@/components/ConInfo";
 
 // Administración de App Clientes (23-sep-2026, pedido explícito del
 // usuario: "creame sen settings una seccion similar a la de app interno
@@ -46,9 +47,15 @@ export default async function AdministracionClientesPage() {
         </Link>
         <Breadcrumb items={[{ label: "App Equipos de clientes", href: "/app-clientes" }, { label: "Administración" }]} />
 
-        <div className="section-title" style={{ marginTop: 0 }}>
-          Permisos
-        </div>
+        {/* V32: el texto "Toca a una persona..." pasa al botón ⓘ. */}
+        <ConInfo
+          style={{ marginBottom: 12 }}
+          texto="Toca a una persona para ver y cambiar su rol y sus permisos en esta app. Los cambios se guardan al momento."
+        >
+          <div className="section-title" style={{ margin: 0 }}>
+            Permisos
+          </div>
+        </ConInfo>
         <PermisosClientes perfiles={perfiles} miId={user.id} roles={roles || []} />
 
         {/* V31: Roles de esta app (migration_61.sql). */}

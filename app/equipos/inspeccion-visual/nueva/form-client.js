@@ -65,7 +65,7 @@ export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) 
       return;
     }
 
-    // La próxima inspección (+1 año) de cada tanque ya no se actualiza
+    // La próxima inspección (+2 años desde V32) de cada tanque ya no se actualiza
     // desde aquí: desde V29 la pone la base de datos al registrar
     // (migration_53.sql). Antes, a quien no tenía permiso de editar el
     // catálogo de tanques la fecha no se le movía (sin dar error).

@@ -19,6 +19,7 @@ import {
 } from "@/lib/holds";
 import { useDenegado } from "@/lib/useDenegado";
 import { IconLock, IconCheck } from "@/components/icons";
+import ConInfo from "@/components/ConInfo";
 
 const VERIFICADO_POR = ["Pipe", "Gugi"];
 const MEDIOS_NOTIFICACION = ["Llamada", "WhatsApp", "Correo", "Otro"];
@@ -75,6 +76,8 @@ export default function EditarSeguimientoForm({
   requiereVerificacion = true,
   piezas = [],
   puedeEditarHold = false,
+  // V32: quién hace el cambio, para la bitácora de la cotización.
+  nombreUsuario = "",
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -453,6 +456,65 @@ export default function EditarSeguimientoForm({
   }
 
   // ---------------------------------------------------------------
+  // V32 -- No. de cotización (pedido explícito, opción C de la maqueta):
+  // un enlace discreto "+ Agregar No. de cotización"; ya puesto se ve
+  // "Cotización: X · Editar · Quitar" (Quitar pide confirmar, sin motivo).
+  // Se ve en la ficha de la orden y, al cerrar, la Factura sale ya
+  // escrita con este número. Cada vez que se agrega, cambia o quita queda
+  // anotado en la bitácora de la orden con la fecha y quién lo hizo.
+  // Siempre disponible, con o sin Hold (no es parte de la cadena).
+  // ---------------------------------------------------------------
+  const [cotizacionModo, setCotizacionModo] = useState(null); // null | "editar" | "quitar"
+  const [draftCotizacion, setDraftCotizacion] = useState("");
+  const [guardandoCotizacion, setGuardandoCotizacion] = useState(false);
+  const [errorCotizacion, setErrorCotizacion] = useState("");
+
+  function abrirCotizacion() {
+    setDraftCotizacion(ordenLocal.cotizacion || "");
+    setErrorCotizacion("");
+    setCotizacionModo("editar");
+  }
+
+  async function guardarCotizacion(valor) {
+    const anterior = (ordenLocal.cotizacion || "").trim();
+    const nuevo = (valor || "").trim();
+    if (cotizacionModo === "editar" && !nuevo) {
+      setErrorCotizacion("Escribe el No. de cotización.");
+      return;
+    }
+    if (nuevo === anterior) {
+      setCotizacionModo(null);
+      return;
+    }
+    const texto = !anterior
+      ? `Cotización agregada: ${nuevo}`
+      : !nuevo
+      ? `Cotización quitada: ${anterior}`
+      : `Cotización cambiada: ${anterior} → ${nuevo}`;
+    setGuardandoCotizacion(true);
+    setErrorCotizacion("");
+    try {
+      await guardarCampos({
+        cotizacion: nuevo || null,
+        bitacora_orden: [
+          { fecha: hoyISO(), tipo: "cotizacion", texto, usuario: nombreUsuario || null },
+          ...(ordenLocal.bitacora_orden || []),
+        ],
+      });
+      setCotizacionModo(null);
+      // Si todavía no se cerró la orden, la Factura del Cierre sigue a la
+      // cotización (mientras nadie haya escrito otra cosa ahí).
+      if (!ordenLocal.factura) {
+        setDraftFactura((f) => (!f.trim() || f.trim() === anterior ? nuevo : f));
+      }
+    } catch (e) {
+      setErrorCotizacion(mensajeError(e));
+    } finally {
+      setGuardandoCotizacion(false);
+    }
+  }
+
+  // ---------------------------------------------------------------
   // Cadena de pasos (item 34). "Hecho" se lee directo de ordenLocal --
   // no hace falta una bandera aparte: si el campo tiene valor, el paso
   // ya está guardado.
@@ -688,7 +750,9 @@ export default function EditarSeguimientoForm({
   // ---------------------------------------------------------------
   const [draftEntrega, setDraftEntrega] = useState(ordenLocal.fecha_entrega_cliente || hoyISO());
   const [draftRecibe, setDraftRecibe] = useState(ordenLocal.nombre_recibe || "");
-  const [draftFactura, setDraftFactura] = useState(ordenLocal.factura || "");
+  // V32: si la orden tiene No. de cotización, la Factura sale ya escrita
+  // con ese número (se puede cambiar).
+  const [draftFactura, setDraftFactura] = useState(ordenLocal.factura || ordenLocal.cotizacion || "");
   const [cierreEditando, setCierreEditando] = useState(false);
   const [guardandoCierre, setGuardandoCierre] = useState(false);
   const [erroresCierre, setErroresCierre] = useState({});
@@ -701,7 +765,7 @@ export default function EditarSeguimientoForm({
   function abrirEdicionCierre() {
     setDraftEntrega(ordenLocal.fecha_entrega_cliente || "");
     setDraftRecibe(ordenLocal.nombre_recibe || "");
-    setDraftFactura(ordenLocal.factura || "");
+    setDraftFactura(ordenLocal.factura || ordenLocal.cotizacion || "");
     setErroresCierre({});
     setConfirmandoCierreSinCodigos(false);
     setCierreEditando(true);
@@ -1038,7 +1102,10 @@ export default function EditarSeguimientoForm({
           padding: 14,
         }}
       >
-        <label style={{ marginTop: 0, fontWeight: 700, color: "var(--azul-claro)" }}>CÓDIGOS A COBRAR</label>
+        {/* V32: la letra chica "Si no se usó ninguno..." pasa al botón ⓘ. */}
+        <ConInfo texto="Si no se usó ninguno, puedes dejarlo vacío -- se pedirá confirmar al cerrar la orden.">
+          <label style={{ margin: 0, fontWeight: 700, color: "var(--azul-claro)" }}>CÓDIGOS A COBRAR</label>
+        </ConInfo>
         {repuestos.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8, marginBottom: 10 }}>
             {repuestos.map((r, i) => (
@@ -1110,15 +1177,6 @@ export default function EditarSeguimientoForm({
             <option key={p.id} value={etiquetaPieza(p)} />
           ))}
         </datalist>
-        {repuestos.length === 0 && (
-          // Ya no bloquea el cierre (item 7.1, pedido explícito: permitir
-          // cerrar con esto vacío, con una advertencia al guardar en vez
-          // de un bloqueo duro) -- solo un aviso suave aquí; la
-          // confirmación real aparece al guardar el Cierre de la orden.
-          <div className="hint-text">
-            Si no se usó ninguno, puedes dejarlo vacío -- se pedirá confirmar al cerrar la orden.
-          </div>
-        )}
         {errorCodigoNoRegistrado && (
           <div className="error-box" style={{ marginTop: 8 }}>
             {errorCodigoNoRegistrado}
@@ -1126,6 +1184,108 @@ export default function EditarSeguimientoForm({
         )}
         {errorRepuestos && <div className="error-msg">⚠ {errorRepuestos}</div>}
       </div>
+
+      {/* V32 -- No. de cotización (ver guardarCotizacion arriba). */}
+      <div style={{ marginTop: 10 }}>
+        {cotizacionModo === "editar" ? (
+          <div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="text"
+                value={draftCotizacion}
+                onChange={(e) => {
+                  setDraftCotizacion(e.target.value);
+                  setErrorCotizacion("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    guardarCotizacion(draftCotizacion);
+                  }
+                }}
+                placeholder="No. de cotización"
+                autoFocus
+                disabled={guardandoCotizacion}
+                style={{ marginTop: 0 }}
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => guardarCotizacion(draftCotizacion)}
+                disabled={guardandoCotizacion}
+                style={{ marginTop: 0, width: "auto" }}
+              >
+                {guardandoCotizacion ? "..." : "Guardar"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCotizacionModo(null)}
+                disabled={guardandoCotizacion}
+                style={{ background: "none", border: "none", color: "var(--texto-suave)", cursor: "pointer", fontSize: 12.5, padding: 0, whiteSpace: "nowrap" }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : ordenLocal.cotizacion ? (
+          <div style={{ fontSize: 13.5, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <span>
+              Cotización: <b>{ordenLocal.cotizacion}</b>
+            </span>
+            <button
+              type="button"
+              onClick={abrirCotizacion}
+              style={{ background: "none", border: "none", color: "var(--azul-claro)", cursor: "pointer", fontSize: 12.5, fontWeight: 600, padding: 0 }}
+            >
+              Editar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setErrorCotizacion("");
+                setCotizacionModo("quitar");
+              }}
+              style={{ background: "none", border: "none", color: "var(--rojo)", cursor: "pointer", fontSize: 12.5, padding: 0 }}
+            >
+              Quitar
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={abrirCotizacion}
+            style={{ background: "none", border: "none", color: "var(--azul-claro)", cursor: "pointer", fontSize: 13, fontWeight: 600, padding: 0 }}
+          >
+            + Agregar No. de cotización
+          </button>
+        )}
+        {errorCotizacion && cotizacionModo !== "quitar" && <div className="error-msg">⚠ {errorCotizacion}</div>}
+      </div>
+
+      {cotizacionModo === "quitar" && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !guardandoCotizacion) setCotizacionModo(null);
+          }}
+        >
+          <div className="modal-panel">
+            <div className="modal-title">¿Quitar la cotización {ordenLocal.cotizacion}?</div>
+            <div style={{ fontSize: 13, marginTop: 6, color: "var(--texto-suave)" }}>
+              Queda anotado en la bitácora de la orden.
+            </div>
+            {errorCotizacion && <div className="error-msg">⚠ {errorCotizacion}</div>}
+            <div className="modal-actions">
+              <button className="btn secondary" type="button" onClick={() => setCotizacionModo(null)} disabled={guardandoCotizacion}>
+                Cancelar
+              </button>
+              <button className="btn danger" type="button" onClick={() => guardarCotizacion("")} disabled={guardandoCotizacion}>
+                {guardandoCotizacion ? "Quitando..." : "Quitar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {repuestoAEliminar !== null && (
         <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) cancelarEliminarRepuesto(); }}>
@@ -1557,6 +1717,9 @@ export default function EditarSeguimientoForm({
               Factura de repuesto o servicio <span className="req">*</span>
             </label>
             <input type="text" value={draftFactura} onChange={(e) => setDraftFactura(e.target.value)} />
+            {ordenLocal.cotizacion && draftFactura.trim() === ordenLocal.cotizacion.trim() && (
+              <div className="hint-text">Viene de la cotización. Si se facturó con otro número, cámbialo aquí.</div>
+            )}
             {erroresCierre.factura && <div className="error-msg">⚠ {erroresCierre.factura}</div>}
 
             {/* Advertencia en vez de bloqueo (item 7.1, pedido explícito)

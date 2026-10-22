@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ConInfo from "@/components/ConInfo";
 
 // V31 — Administración › Roles (migration_61.sql), uno por app.
 //
@@ -12,7 +13,17 @@ import { createClient } from "@/lib/supabase/client";
 // Administrador; el rol manda (quien lo tiene tiene exactamente esos
 // accesos); cambiar un rol cambia a todos los que lo tienen (lo hace la
 // base de datos); editar y anular siguen siendo solo de Administrador, por
-// eso esas casillas no salen aquí; los roles no se borran.
+// eso esas casillas no salen aquí.
+//
+// V32 (pedido explícito: "permíteme poder borrar y editar roles en ambos
+// apps"; maqueta aprobada):
+// - "Borrar rol" al abrir un rol: solo si nadie lo tiene (si alguien lo
+//   tiene, avisa quiénes); si nadie, pide confirmar. La base de datos lo
+//   vuelve a revisar (migration_64.sql). Administrador no es un rol de
+//   esta lista: no se puede borrar ni cambiar.
+// - El texto de explicación pasa al botón ⓘ junto a "Roles" (sin la frase
+//   "Los roles no se borran").
+// - Solo se ve el botón "+ Crear rol"; el nombre se pide al tocarlo.
 //
 // `secciones`: la misma lista de Usuarios y permisos de esa app.
 // `conInicio`: App Interno -- "Pantalla de inicio: normal / solo llenados".
@@ -24,6 +35,9 @@ export default function RolesAdmin({ app, roles, secciones, perfiles = [], conIn
   const [error, setError] = useState("");
   const [nombreNuevo, setNombreNuevo] = useState("");
   const [nombres, setNombres] = useState({});
+  const [creandoAbierto, setCreandoAbierto] = useState(false);
+  // Rol que se está por borrar: { rol, gente: [nombres] }.
+  const [borrando, setBorrando] = useState(null);
 
   const seccionesRol = secciones
     .map((s) => ({ ...s, items: s.items.filter((it) => !it.soloAdmin && !s.soloAdmin) }))
@@ -61,7 +75,32 @@ export default function RolesAdmin({ app, roles, secciones, perfiles = [], conIn
     setGuardando(null);
     if (err) return setError(mensaje(err));
     setNombreNuevo("");
+    setCreandoAbierto(false);
     setAbierto(data?.id || null);
+    router.refresh();
+  }
+
+  function genteConRol(rol) {
+    return perfiles.filter((p) => p[campoRol] === rol.id && !p.is_admin && !p.es_titular);
+  }
+
+  function pedirBorrar(rol) {
+    setError("");
+    setBorrando({ rol, gente: genteConRol(rol).map((p) => p.full_name || "Sin nombre") });
+  }
+
+  async function borrar() {
+    if (!borrando || borrando.gente.length > 0) return;
+    setGuardando(borrando.rol.id);
+    setError("");
+    const { error: err } = await supabase.from("roles_app").delete().eq("id", borrando.rol.id);
+    setGuardando(null);
+    if (err) {
+      setBorrando(null);
+      return setError(err.message || "No se pudo borrar el rol.");
+    }
+    setBorrando(null);
+    setAbierto(null);
     router.refresh();
   }
 
@@ -71,11 +110,14 @@ export default function RolesAdmin({ app, roles, secciones, perfiles = [], conIn
 
   return (
     <div>
-      <p className="hint-text" style={{ marginTop: 0, marginBottom: 10 }}>
-        Crea un rol con su nombre y sus accesos, y después asígnaselo a cada persona en Usuarios y permisos. Quien tiene
-        un rol tiene exactamente esos accesos. Si cambias un rol, cambia para todos los que lo tienen. Editar y anular
-        registros sigue siendo solo de Administrador. Los roles no se borran: se pueden renombrar y cambiar.
-      </p>
+      <ConInfo
+        style={{ marginBottom: 10 }}
+        texto={`Crea un rol con su nombre y sus accesos, y después asígnaselo a cada persona en ${
+          app === "interno" ? "Usuarios y permisos" : "Permisos"
+        }. Quien tiene un rol tiene exactamente esos accesos. Si cambias un rol, cambia para todos los que lo tienen. Editar y anular registros sigue siendo solo de Administrador.`}
+      >
+        <div style={{ fontWeight: 700, color: "var(--azul-texto)", fontSize: 14.5 }}>Roles</div>
+      </ConInfo>
 
       {error && <div className="error-box" style={{ marginTop: 0, marginBottom: 10 }}>{error}</div>}
 
@@ -85,7 +127,7 @@ export default function RolesAdmin({ app, roles, secciones, perfiles = [], conIn
           const estaAbierto = abierto === rol.id;
           const permisos = permisosDe(rol);
           const cuantos = claves.filter((c) => permisos[c]).length;
-          const gente = perfiles.filter((p) => p[campoRol] === rol.id && !p.is_admin && !p.es_titular).length;
+          const gente = genteConRol(rol).length;
           const nombreEditado = nombres[rol.id] ?? rol.nombre;
           return (
             <div key={rol.id} className="list-item">
@@ -189,6 +231,18 @@ export default function RolesAdmin({ app, roles, secciones, perfiles = [], conIn
                       })}
                     </div>
                   ))}
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      disabled={guardando === rol.id}
+                      onClick={() => pedirBorrar(rol)}
+                      style={{ marginTop: 0, width: "auto", color: "var(--rojo)", borderColor: "var(--rojo)" }}
+                    >
+                      Borrar rol
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -196,18 +250,90 @@ export default function RolesAdmin({ app, roles, secciones, perfiles = [], conIn
         })}
       </div>
 
-      <form onSubmit={crear} style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <input
-          type="text"
-          value={nombreNuevo}
-          onChange={(e) => setNombreNuevo(e.target.value)}
-          placeholder="Nombre del rol nuevo (ej. Técnico)"
-          style={{ marginTop: 0, flex: 1, minWidth: 0 }}
-        />
-        <button className="btn btn-primary" type="submit" disabled={guardando === "nuevo"} style={{ marginTop: 0, width: "auto" }}>
-          {guardando === "nuevo" ? "Creando..." : "+ Crear rol"}
+      {borrando && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setBorrando(null);
+          }}
+        >
+          <div className="modal-panel">
+            {borrando.gente.length > 0 ? (
+              <>
+                <div className="modal-title">No se puede borrar &quot;{borrando.rol.nombre}&quot;</div>
+                <div className="error-box" style={{ marginTop: 10 }}>
+                  Lo tiene{borrando.gente.length === 1 ? "" : "n"} {borrando.gente.length} persona
+                  {borrando.gente.length === 1 ? "" : "s"} ({borrando.gente.join(", ")}). Cámbia
+                  {borrando.gente.length === 1 ? "la" : "las"} de rol primero en{" "}
+                  {app === "interno" ? "Usuarios y permisos" : "Permisos"}.
+                </div>
+                <div className="modal-actions">
+                  <button className="btn secondary" type="button" onClick={() => setBorrando(null)}>
+                    Entendido
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="modal-title">¿Borrar el rol &quot;{borrando.rol.nombre}&quot;?</div>
+                <div style={{ fontSize: 13.5, marginTop: 8, color: "var(--texto-suave)" }}>
+                  Nadie lo tiene. Esto no se puede deshacer.
+                </div>
+                <div className="modal-actions">
+                  <button className="btn secondary" type="button" onClick={() => setBorrando(null)} disabled={guardando === borrando.rol.id}>
+                    Cancelar
+                  </button>
+                  <button className="btn danger" type="button" onClick={borrar} disabled={guardando === borrando.rol.id}>
+                    {guardando === borrando.rol.id ? "Borrando..." : "Borrar"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {creandoAbierto ? (
+        <form onSubmit={crear} style={{ marginTop: 12 }}>
+          <label style={{ marginTop: 0 }}>Nombre del rol nuevo</label>
+          <input
+            type="text"
+            value={nombreNuevo}
+            onChange={(e) => setNombreNuevo(e.target.value)}
+            placeholder="Ej. Técnico"
+            autoFocus
+            style={{ marginTop: 0 }}
+          />
+          <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center" }}>
+            <button className="btn btn-primary" type="submit" disabled={guardando === "nuevo"} style={{ marginTop: 0, width: "auto" }}>
+              {guardando === "nuevo" ? "Creando..." : "Crear"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCreandoAbierto(false);
+                setNombreNuevo("");
+                setError("");
+              }}
+              style={{ background: "none", border: "none", color: "var(--texto-suave)", cursor: "pointer", fontSize: 13, padding: 0 }}
+            >
+              Cancelar ✕
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button
+          className="btn btn-primary"
+          type="button"
+          onClick={() => {
+            setError("");
+            setCreandoAbierto(true);
+          }}
+          style={{ marginTop: 12, width: "auto" }}
+        >
+          + Crear rol
         </button>
-      </form>
+      )}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { hoyISO, sumarDias, sumarMeses } from "@/lib/fechas";
 import { estadoAvisos, MAX_AVISOS, DIAS_ENTRE_AVISOS } from "@/lib/avisos-clientes";
 import { BotonWhatsApp, DeshacerAviso } from "./acciones-client";
+import ConInfo from "@/components/ConInfo";
 
 // "Clientes por contactar" -- a quién llamar.
 //
@@ -160,10 +161,13 @@ function TarjetaCliente({ cliente, badge, badgeClase, motivo, estado, mostrarBot
   );
 }
 
+// V32 (aprobado en maqueta): flechita ▸/▾ para que se note que se abre.
+// El ▸/▾ lo pone el CSS (.plegable-flecha, globals.css) según esté abierto.
 function Plegable({ titulo, cantidad, ayuda, children }) {
   return (
-    <details style={{ marginTop: 18 }}>
-      <summary className="section-title" style={{ cursor: "pointer", listStyle: "revert" }}>
+    <details className="plegable" style={{ marginTop: 18 }}>
+      <summary className="section-title" style={{ cursor: "pointer", listStyle: "none", justifyContent: "flex-start", gap: 8 }}>
+        <span className="plegable-flecha" aria-hidden="true" />
         {titulo} ({cantidad})
       </summary>
       {ayuda && (
@@ -232,7 +236,6 @@ export default async function ClientesPorContactarPage() {
 
   const vencidos = [];
   const proximos = [];
-  const masAdelante = [];
   const esperando = [];
   const descartados = [];
   const reaparecidos = new Set();
@@ -245,7 +248,7 @@ export default async function ClientesPorContactarPage() {
     else if (estado.esperandoHasta) esperando.push(grupo);
     else if (fecha < hoy) vencidos.push(grupo);
     else if (fecha <= limiteProximos) proximos.push(grupo);
-    else masAdelante.push(grupo);
+    // (V32) Más de 30 días: todavía no se muestra.
   }
 
   // 2) Sin visitas hace más de 12 meses: última orden (fecha de ingreso)
@@ -314,8 +317,10 @@ export default async function ClientesPorContactarPage() {
     </TarjetaCliente>
   );
 
-  const nada =
-    vencidos.length + proximos.length + sinVisita.length + masAdelante.length + esperando.length + descartados.length === 0;
+  // V32: "Le toca más adelante" se quitó (pedido explícito: "no hace
+  // sentido"). Esos clientes no salen en ninguna lista hasta que les falten
+  // 30 días; ahí pasan solos a "Le toca en los próximos 30 días".
+  const nada = vencidos.length + proximos.length + sinVisita.length + esperando.length + descartados.length === 0;
 
   return (
     <div>
@@ -324,21 +329,26 @@ export default async function ClientesPorContactarPage() {
         <Link href="/app-clientes/mas" className="back-link">
           ← Volver
         </Link>
-        <Breadcrumb items={[{ label: "Más", href: "/app-clientes/mas" }, { label: "Clientes por contactar" }]} />
-        <p className="page-subtitle">
-          A quién llamar: clientes con un mantenimiento recomendado vencido o por llegar, y clientes que no vienen hace
-          más de {MESES_SIN_VISITA} meses.
-        </p>
+        {/* V32 (pedido explícito): sin el subtítulo "A quién llamar...", y la
+            regla de los avisos detrás del botón ⓘ junto al título; al
+            tocarlo se abre justo debajo del título. */}
+        <ConInfo
+          filaStyle={{ gap: 10 }}
+          texto={
+            <>
+              Los clientes serán contactados hasta {MAX_AVISOS} veces, con {DIAS_ENTRE_AVISOS} días entre un aviso y otro.
+              Si después del {MAX_AVISOS}er aviso no vienen, desaparecerán de la lista y volverán a aparecer después de 1
+              año en &quot;Sin venir +{MESES_SIN_VISITA} meses&quot;. Si el cliente trae su equipo y se le registra una
+              orden, el conteo vuelve a empezar.
+            </>
+          }
+        >
+          <div className="titulo-con-info">
+            <Breadcrumb items={[{ label: "Más", href: "/app-clientes/mas" }, { label: "Clientes por contactar" }]} />
+          </div>
+        </ConInfo>
 
-        {/* Regla de los avisos, en la misma pantalla (pedido explícito). */}
-        <div style={{ fontSize: 12.5, lineHeight: 1.5, marginBottom: 14, padding: "10px 12px", borderRadius: 8, background: "var(--superficie-suave)", border: "1px solid var(--borde)" }}>
-          Los clientes serán contactados hasta {MAX_AVISOS} veces, con {DIAS_ENTRE_AVISOS} días entre un aviso y otro.
-          Si después del {MAX_AVISOS}er aviso no vienen, desaparecerán de la lista y volverán a aparecer después de 1
-          año en &quot;Sin venir +{MESES_SIN_VISITA} meses&quot;. Si el cliente trae su equipo y se le registra una orden,
-          el conteo vuelve a empezar.
-        </div>
-
-        <div className="stat-row" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+        <div className="stat-row" style={{ gridTemplateColumns: "repeat(3, 1fr)", marginTop: 14 }}>
           <div className="stat-card">
             <div className="stat-value" style={{ color: "var(--rojo)" }}>{vencidos.length}</div>
             <div className="stat-label">Mantenimiento vencido</div>
@@ -350,10 +360,6 @@ export default async function ClientesPorContactarPage() {
           <div className="stat-card">
             <div className="stat-value">{sinVisita.length}</div>
             <div className="stat-label">Sin venir +{MESES_SIN_VISITA} meses</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value" style={{ color: "var(--azul-claro)" }}>{masAdelante.length}</div>
-            <div className="stat-label">Le toca más adelante</div>
           </div>
         </div>
 
@@ -385,18 +391,6 @@ export default async function ClientesPorContactarPage() {
               })
             )}
           </>
-        )}
-
-        {/* "Más adelante" ahora es una sección con su título y su contador
-            arriba (antes era una línea chiquita que confundía). */}
-        {masAdelante.length > 0 && (
-          <Plegable
-            titulo={`Le toca más adelante (después de ${DIAS_PROXIMOS} días)`}
-            cantidad={masAdelante.length}
-            ayuda="Todavía no hay que avisarles: su mantenimiento recomendado es en más de 30 días. Pasan solos a la lista de arriba cuando falten 30 días."
-          >
-            {masAdelante.map((g) => tarjeta(g, { badge: formatFechaDDMMAAAADeDate(g.fecha), badgeClase: "badge-azul" }))}
-          </Plegable>
         )}
 
         {esperando.length > 0 && (

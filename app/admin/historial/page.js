@@ -85,6 +85,7 @@ function tituloRegistro(tabla) {
   if (tabla === "inspecciones_visuales") return "Inspección visual";
   if (tabla === "mantenimientos_reguladores") return "Mantenimiento de regulador";
   if (tabla === "pruebas_hidrostaticas") return "Prueba hidrostática";
+  if (tabla === "envios_hidrostatica") return "Envío a prueba hidrostática";
   return "Cambio de nombre";
 }
 
@@ -92,7 +93,7 @@ function tituloRegistro(tabla) {
 // y otras femenino ("la salida", "la inspección") — decide qué terminación
 // usar para "borrado/a" y "editado/a" en las tarjetas genéricas de abajo.
 function esMasculino(tabla) {
-  return ["llenados_tanques", "mantenimientos_reguladores", "tanques_alquiler", "reguladores_alquiler"].includes(
+  return ["llenados_tanques", "mantenimientos_reguladores", "tanques_alquiler", "reguladores_alquiler", "envios_hidrostatica"].includes(
     tabla
   );
 }
@@ -428,6 +429,11 @@ function contenido(tabla, d) {
   }
   if (tabla === "inspecciones_visuales") {
     return `${d.tanque_codigo_snapshot || "?"} · ${d.resultado || "?"}${d.nota ? ` · ${d.nota}` : ""}`;
+  }
+  if (tabla === "envios_hidrostatica") {
+    return `${d.tanque_codigo_snapshot || "?"} · enviado el ${d.fecha_envio ? formatFechaDDMMAAAADeDate(d.fecha_envio) : "?"}${
+      d.nota ? ` · ${d.nota}` : ""
+    }`;
   }
   if (tabla === "pruebas_hidrostaticas") {
     return `${d.tanque_codigo_snapshot || "?"} · ${d.fecha_prueba ? formatMesAnio(d.fecha_prueba) : "?"} · ${

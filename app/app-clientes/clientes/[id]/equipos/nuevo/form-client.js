@@ -178,14 +178,8 @@ export default function AgregarEquiposForm({ clienteId }) {
 
           {f.tipo_equipo === "Tanques" ? (
             <>
-              <label htmlFor={`marca_${f.key}`}>Fabricante</label>
-              <input
-                id={`marca_${f.key}`}
-                type="text"
-                value={f.marca}
-                onChange={(e) => actualizarFila(f.key, "marca", e.target.value)}
-                placeholder="Opcional"
-              />
+              {/* V32 (pedido explícito): orden No. de serie, Tamaño,
+                  Material, Fabricante. */}
               <label htmlFor={`serie_${f.key}`}>No. Serie</label>
               <input
                 id={`serie_${f.key}`}
@@ -216,6 +210,14 @@ export default function AgregarEquiposForm({ clienteId }) {
                   <option key={m} value={m}>{m}</option>
                 ))}
               </select>
+              <label htmlFor={`marca_${f.key}`}>Fabricante</label>
+              <input
+                id={`marca_${f.key}`}
+                type="text"
+                value={f.marca}
+                onChange={(e) => actualizarFila(f.key, "marca", e.target.value)}
+                placeholder="Opcional"
+              />
             </>
           ) : (
             f.tipo_equipo && (

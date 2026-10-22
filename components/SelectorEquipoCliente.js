@@ -218,8 +218,8 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
           // Fabricante (mismo campo "marca" de la base de datos, solo
           // relabelado) y No. Serie.
           <>
-            <label htmlFor="equipo_nuevo_marca">Fabricante</label>
-            <input id="equipo_nuevo_marca" type="text" value={marcaNueva} onChange={(e) => setMarcaNueva(e.target.value)} placeholder="Opcional" />
+            {/* V32 (pedido explícito): orden No. de serie, Tamaño, Material,
+                Fabricante. */}
             <label htmlFor="equipo_nuevo_serie">No. Serie</label>
             <input id="equipo_nuevo_serie" type="text" value={serieNueva} onChange={(e) => setSerieNueva(e.target.value)} placeholder="Opcional" />
             <label htmlFor="equipo_nuevo_tamano">Tamaño</label>
@@ -236,6 +236,8 @@ export default function SelectorEquipoCliente({ equipos, clienteId, valor, onCha
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
+            <label htmlFor="equipo_nuevo_marca">Fabricante</label>
+            <input id="equipo_nuevo_marca" type="text" value={marcaNueva} onChange={(e) => setMarcaNueva(e.target.value)} placeholder="Opcional" />
           </>
         ) : (
           <>

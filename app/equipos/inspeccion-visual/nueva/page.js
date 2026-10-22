@@ -15,7 +15,7 @@ export default async function NuevaInspeccionPage() {
 
   const { profile } = await getProfileYUser(supabase);
 
-  if (!user || !tieneAcceso(profile, "registrar_inspeccion")) {
+  if (!user || !tieneAcceso(profile, "inspeccion_registrar")) {
     redirect("/equipos/inspeccion-visual");
   }
 

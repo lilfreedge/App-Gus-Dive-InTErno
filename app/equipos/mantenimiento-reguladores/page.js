@@ -10,7 +10,8 @@ import { hoyISO, sumarDias } from "@/lib/fechas";
 export default async function MantenimientoReguladoresPage({ searchParams }) {
   const supabase = createClient();
   const { profile } = await requireInterno(supabase, "registrar_mantenimiento");
-  const puedeRegistrar = tieneAcceso(profile, "registrar_mantenimiento");
+  // V32: "registrar_mantenimiento" es para ver; registrar pide "mantenimiento_registrar".
+  const puedeRegistrar = tieneAcceso(profile, "mantenimiento_registrar");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
 
   const reguladorId = searchParams?.regulador || null;

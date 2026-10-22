@@ -110,7 +110,11 @@ export default async function BitacoraOrdenPage({ params }) {
                     {Math.floor((new Date(e.fecha).getTime() - new Date(e.fecha_inicio_hold).getTime()) / (1000 * 60 * 60 * 24)) === 1 ? "" : "s"} en Hold)
                   </div>
                 )}
-                <div className="hint-text" style={{ marginTop: 6 }}>{formatFechaDDMMAAAADeDate(e.fecha)}</div>
+                <div className="hint-text" style={{ marginTop: 6 }}>
+                  {formatFechaDDMMAAAADeDate(e.fecha)}
+                  {/* V32: quién lo hizo (las entradas de la cotización lo guardan). */}
+                  {e.usuario ? ` · ${e.usuario}` : ""}
+                </div>
               </div>
             );
           })

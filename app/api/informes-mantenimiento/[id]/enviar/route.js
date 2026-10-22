@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
-import { construirPDFOrdenCliente, enviarReporteOrdenPorCorreo } from "@/lib/reportes-clientes";
-import { filasInformeMantenimiento } from "@/lib/informe-mantenimiento";
+import { enviarReporteOrdenPorCorreo } from "@/lib/reportes-clientes";
+import {
+  construirPDFInformeMantenimiento,
+  htmlInformeMantenimiento,
+  textoInformeMantenimiento,
+} from "@/lib/informe-documento";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -11,6 +15,11 @@ const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 
 // "Enviar por correo" el Informe de mantenimiento (item 36) -- mismo
 // patrón que app/api/reportes-clientes/[id]/enviar/route.js.
+//
+// V32 (pedido explícito, maqueta aprobada): el correo ya no manda la tabla
+// Campo/Valor. El cliente ve el informe DENTRO del correo con el mismo
+// diseño del app, y además le llega el PDF adjunto (hoja carta) con ese
+// mismo diseño. Ver lib/informe-documento.js.
 export async function POST(request, { params }) {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
@@ -38,30 +47,26 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: "Todavía no se ha generado el informe de esta orden." }, { status: 400 });
   }
 
-  let serie = null;
-  if (o.equipo_id) {
-    const { data: equipo } = await supabase
-      .from("equipos_del_cliente")
-      .select("serie")
-      .eq("id", o.equipo_id)
-      .maybeSingle();
-    serie = equipo?.serie || null;
-  }
-
-  const filas = filasInformeMantenimiento(o, o.informe_mantenimiento, { serie });
+  const informe = o.informe_mantenimiento;
   const numero = o.no_orden_fisico ?? o.folio;
-  const pdfBuffer = await construirPDFOrdenCliente({
-    titulo: `Informe de mantenimiento — Orden #${numero}`,
-    subtitulo: `${o.cliente_nombre_snapshot || ""}`,
-    filas,
-  });
+  // El logo del correo se toma de la misma dirección del app (los correos
+  // no muestran imágenes incrustadas).
+  const logoUrl = `${new URL(request.url).origin}/logo-gus-icon.png`;
+
+  let pdfBuffer;
+  try {
+    pdfBuffer = await construirPDFInformeMantenimiento(o, informe);
+  } catch (e) {
+    return NextResponse.json({ error: "No se pudo armar el PDF: " + (e?.message || "error") }, { status: 500 });
+  }
 
   const { error } = await enviarReporteOrdenPorCorreo({
     correoDestino: correo,
     tituloCorreo: `Informe de mantenimiento — Orden #${numero} — Gus Dive`,
     pdfBuffer,
     nombreArchivo: `informe-mantenimiento-${numero}.pdf`,
-    mensaje: "Adjunto va el informe de mantenimiento de tu equipo, generado desde la app.",
+    html: htmlInformeMantenimiento(o, informe, { logoUrl }),
+    texto: textoInformeMantenimiento(o, informe),
   });
 
   if (error) {

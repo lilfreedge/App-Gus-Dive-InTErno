@@ -69,27 +69,25 @@ export default function NuevaPruebaHidrostaticaForm({ userId, nombreUsuario, tan
 
     setLoading(true);
 
-    const registros = filas.map((f) => {
-      const tanque = tanques.find((t) => t.id === f.tanqueId);
-      return {
-        user_id: userId,
-        nombre_usuario_snapshot: nombreUsuario,
-        tanque_id: f.tanqueId,
-        tanque_codigo_snapshot: tanque?.codigo || null,
-        fecha_prueba: `${f.fecha}-01`,
-        resultado: f.resultado,
-        nota: f.nota.trim() || null,
-      };
-    });
-
-    const { error } = await supabase.from("pruebas_hidrostaticas").insert(registros);
+    // V32: una por una con registrar_prueba_hidrostatica() (anota también
+    // la inspección visual si sale aprobada, e inactiva el tanque si sale
+    // rechazada).
+    for (const f of filas) {
+      const { error } = await supabase.rpc("registrar_prueba_hidrostatica", {
+        p_tanque_id: f.tanqueId,
+        p_fecha_prueba: `${f.fecha}-01`,
+        p_resultado: f.resultado,
+        p_nota: f.nota.trim() || null,
+      });
+      if (error) {
+        setLoading(false);
+        setError(error.message || "No se pudo guardar. Intenta de nuevo.");
+        router.refresh();
+        return;
+      }
+    }
 
     setLoading(false);
-
-    if (error) {
-      setError("No se pudo guardar. Intenta de nuevo.");
-      return;
-    }
 
     router.push("/equipos/pruebas-hidrostaticas");
     router.refresh();

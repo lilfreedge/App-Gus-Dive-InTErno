@@ -135,6 +135,7 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
           requiereVerificacion={requiereVerificacion}
           piezas={piezas || []}
           puedeEditarHold={puedeEditarHold}
+          nombreUsuario={profile?.full_name || ""}
         />
       </div>
     </div>

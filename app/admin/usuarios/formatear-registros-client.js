@@ -32,7 +32,7 @@ const CATEGORIAS = [
   {
     clave: "hidrostaticas",
     label: "Pruebas hidrostáticas",
-    detalle: "Borra todos los registros de pruebas hidrostáticas de tanques.",
+    detalle: "Borra todos los registros de pruebas hidrostáticas de tanques y los envíos a PH.",
   },
   {
     clave: "mantenimientos",
@@ -43,6 +43,13 @@ const CATEGORIAS = [
     clave: "compresores",
     label: "Compresores",
     detalle: "Borra todos los registros de mantenimiento de compresores.",
+  },
+  // V32 (pedido explícito: "agregame botón en la zona de peligro para poder
+  // borrar las solicitudes"). migration_63.sql.
+  {
+    clave: "solicitudes",
+    label: "Solicitudes al almacén",
+    detalle: "Borra todas las solicitudes al almacén (con sus códigos) y reinicia su numeración.",
   },
 ];
 
@@ -81,6 +88,7 @@ export default function FormatearRegistros() {
       p_borrar_hidrostaticas: !!marcadas.hidrostaticas,
       p_borrar_mantenimientos: !!marcadas.mantenimientos,
       p_borrar_compresores: !!marcadas.compresores,
+      p_borrar_solicitudes: !!marcadas.solicitudes,
     });
 
     setLoading(false);
