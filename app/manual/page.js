@@ -111,7 +111,7 @@ export default async function ManualPage() {
       key: "registrar-hidrostatica",
       title: "Enviar tanques a prueba hidrostática y registrar el regreso",
       searchText:
-        "prueba hidrostática enviar tanques ph afuera días regreso aprobado rechazado inactivo 5 años próxima vencida por vencer",
+        "prueba hidrostática enviar tanques ph afuera días regreso varios aprobado rechazado inactivo reactivar código 5 años próxima vencida por vencer",
       body: (
         <div className="card">
           En Equipos → Pruebas hidrostáticas → &quot;Enviar tanques a
@@ -122,7 +122,13 @@ export default async function ManualPage() {
           de regreso, el mes y año de la prueba y el resultado. Con eso queda
           la prueba (la próxima, a 5 años, se calcula sola) y, si salió
           aprobada, también la inspección visual. Si salió rechazada, el
-          tanque se inactiva solo. Para pruebas viejas, de antes de usar el
+          tanque se inactiva solo. Si volvieron varios el mismo día, usa
+          &quot;Registrar regreso de varios&quot;: marcas los que volvieron,
+          pones la fecha y el mes de la prueba una sola vez, y el resultado
+          de cada uno. Para reactivar un tanque rechazado (Titular o
+          Administrador), el app pregunta si su código se va a usar en otro
+          tanque (se crea uno nuevo y el viejo se queda con su historial) o
+          si es el mismo tanque. Para pruebas viejas, de antes de usar el
           app, usa el enlace &quot;Anotar una prueba ya hecha&quot;.
         </div>
       ),
@@ -163,7 +169,9 @@ export default async function ManualPage() {
           enviarla, al almacén le llega un correo con la lista. Cuando la
           mercancía llega a la tienda, marca cada código como
           &quot;Recibido&quot; (o &quot;Llegó todo&quot;); la solicitud
-          pasa a &quot;Recibidas&quot; cuando todos sus códigos llegaron.
+          pasa a &quot;Recibidas&quot; cuando todos sus códigos llegaron. Los
+          correos del almacén se configuran en Administración → Correos
+          automáticos.
         </div>
       ),
     });

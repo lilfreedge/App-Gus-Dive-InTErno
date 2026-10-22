@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V33",
+    fecha: "22 de octubre, 2026",
+    titulo: "App Interno en gris grafito, el operario entra directo, recibir varios tanques de PH a la vez, \"Correos automáticos\", reactivar tanques rechazados y botón de Hold en rojo",
+    descripcion:
+      "La barra de App Interno pasa de verde a gris grafito (el verde se confunde con el nitrox); los botones y todo lo de adentro siguen en el azul de siempre. En \"¿A dónde quieres entrar?\" ya no hay barra de color arriba, y cada app tiene su color en su tarjeta: App Equipos de clientes azul, App Interno gris grafito y Viajes/Buceos celeste. El operario (rol con Inicio \"solo llenados\") entra directo a su pantalla al iniciar sesión, aunque también tenga la otra app; para cambiar de app usa ⚙ › Cambiar de app. En Pruebas hidrostáticas hay un botón nuevo, \"Registrar regreso de varios\": se marcan los tanques que volvieron, la fecha de regreso y el mes de la prueba se ponen una sola vez, y el resultado y la nota son por tanque (si uno falla, no se guarda ninguno). En Administración, la sección nueva \"Correos automáticos\" junta los reportes automáticos de cada lunes y el aviso de solicitudes al almacén; los reportes automáticos siguen también en Reportes para quien tenga el permiso, con la misma configuración. Reactivar un tanque rechazado en prueba hidrostática (Titular o Administrador) ahora pregunta qué hacer: usar su código en otro tanque (se crea uno nuevo y el viejo se queda con su historial) o reactivar el mismo revisando sus datos. En App Equipos de clientes, el botón \"Poner en Hold\" ahora es rojo suave, con su ícono de pausa.",
+  },
+  {
     version: "V32",
     fecha: "21 de octubre, 2026",
     titulo: "Envíos de nuestros tanques a prueba hidrostática, ficha de cada tanque, Informe por correo igual que en el app, No. de cotización, borrar roles, botón ⓘ y barra verde en App Interno",

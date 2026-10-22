@@ -11,6 +11,8 @@ import { SECCIONES } from "./lista-client";
 import FormatearRegistros from "./formatear-registros-client";
 import RespaldoDatos from "./respaldo-client";
 import CorreosAlmacen from "./correos-almacen-client";
+import ReporteCorreoConfig from "@/app/reportes/reporte-correo-client";
+import { IconPackage } from "@/components/icons";
 
 // Administración: solo el Titular puede entrar (ni siquiera los
 // administradores comunes). No está en el nav de arriba, solo en el
@@ -24,7 +26,7 @@ export default async function UsuariosPage() {
   // V31: sin las cuentas eliminadas (migration_62.sql).
   const [{ data: perfilesTodos }, { data: config }, { data: roles }] = await Promise.all([
     supabase.from("profiles").select("*").order("full_name"),
-    supabase.from("app_config").select("solicitudes_correos").maybeSingle(),
+    supabase.from("app_config").select("solicitudes_correos, reporte_configs").maybeSingle(),
     supabase.from("roles_app").select("*").eq("app", "interno").order("nombre"),
   ]);
   const perfiles = (perfilesTodos || []).filter((p) => !p.eliminado_en);
@@ -50,9 +52,21 @@ export default async function UsuariosPage() {
           </div>
         </SeccionColapsable>
 
-        {/* V29 -- correos del almacén para el aviso de Solicitudes al
-            almacén (ver app/solicitudes y migration_52.sql). */}
-        <SeccionColapsable titulo="Solicitudes al almacén">
+        {/* V33 (pedido explícito, opción 1 de la maqueta): "Correos
+            automáticos" junta los dos correos que el app manda solo: los
+            reportes automáticos de cada lunes (los mismos de Más › Reportes,
+            que se quedan también allá para quien tenga el permiso "Correos
+            semanales") y el aviso de Solicitudes al almacén (V29, antes su
+            propia sección aquí; ver app/solicitudes y migration_52.sql). */}
+        <SeccionColapsable titulo="Correos automáticos">
+          <ReporteCorreoConfig enviosIniciales={config?.reporte_configs || []} esTitular enAdministracion />
+          <div style={{ borderTop: "1px solid var(--borde)", margin: "22px 0 14px" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+            <div style={{ color: "var(--azul)", display: "flex" }}>
+              <IconPackage size={15} />
+            </div>
+            <div style={{ fontWeight: 700, fontSize: 14.5, color: "var(--azul-texto)" }}>Aviso de solicitudes al almacén</div>
+          </div>
           <CorreosAlmacen correosIniciales={config?.solicitudes_correos || []} />
         </SeccionColapsable>
 

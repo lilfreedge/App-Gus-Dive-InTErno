@@ -15,6 +15,7 @@ export default async function CatalogoTanquesPage() {
   const { profile } = await requireInterno(supabase, "catalogo");
   const puedeAdministrar = tieneAcceso(profile, "catalogo_tanque");
   const esTitular = !!profile?.es_titular;
+  const esAdmin = !!profile?.is_admin;
 
   const { data: tanques } = await supabase
     .from("tanques_alquiler")
@@ -42,6 +43,7 @@ export default async function CatalogoTanquesPage() {
             tanques={tanques || []}
             puedeAdministrar={puedeAdministrar}
             esTitular={esTitular}
+            esAdmin={esAdmin}
           />
         </div>
       </div>

@@ -14,12 +14,15 @@ import { IconUsers, IconWrench, IconDivingMask } from "@/components/icons";
 // No reemplaza /dashboard -- solo se muestra una vez al entrar; desde
 // dentro de App Interno se puede volver aquí con "Cambiar de app" en el
 // menú de ajustes (ver components/TopbarClient.js).
-export default async function EspacioPage() {
+export default async function EspacioPage({ searchParams }) {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
   // Operativo (V30): no elige app -- entra directo a su única pantalla.
-  // V31: salvo que también tenga acceso a App Equipos de clientes.
-  if (esOperativo(profile) && !tieneAcceso(profile, "equipos_clientes")) redirect("/dashboard");
+  // V33 (pedido explícito: "que el operario entre directo a su área"): ahora
+  // SIEMPRE, aunque también tenga acceso a App Equipos de clientes (en V31 a
+  // ese le salía primero este selector). Si tiene las dos apps, cambia con
+  // ⚙ › "Cambiar de app", que llega aquí con ?elegir=1.
+  if (esOperativo(profile) && searchParams?.elegir !== "1") redirect("/dashboard");
   const nombreCompleto = profile?.full_name || "";
   const nombre = nombreCompleto.split(" ")[0] || "";
 
@@ -134,6 +137,7 @@ export default async function EspacioPage() {
       <HeaderSimple
         nombre={nombre}
         etiqueta="Selecciona tu espacio"
+        sinBarra
         esTitular={!!profile?.es_titular}
         pendientesAprobacion={pendientesAprobacion}
       />
@@ -156,7 +160,7 @@ export default async function EspacioPage() {
         >
           {tieneClientes && (
             <Link href="/app-clientes" className="card espacio-card">
-              <div className="espacio-icon">
+              <div className="espacio-icon espacio-icon-clientes">
                 <IconUsers size={22} />
               </div>
               <div className="espacio-title">App Equipos de clientes</div>
@@ -176,7 +180,7 @@ export default async function EspacioPage() {
 
           {tieneInterno && (
             <Link href="/dashboard" className="card espacio-card">
-              <div className="espacio-icon">
+              <div className="espacio-icon espacio-icon-interno">
                 <IconWrench size={22} />
               </div>
               <div className="espacio-title">App Interno</div>
@@ -202,7 +206,7 @@ export default async function EspacioPage() {
               solo una idea, ver comentario al inicio de este archivo).
               Lleva a /viajes-buceos, una pantalla de "Próximamente". */}
           <Link href="/viajes-buceos" className="card espacio-card">
-            <div className="espacio-icon">
+            <div className="espacio-icon espacio-icon-viajes">
               <IconDivingMask size={22} />
             </div>
             <div className="espacio-title">Viajes/Buceos</div>

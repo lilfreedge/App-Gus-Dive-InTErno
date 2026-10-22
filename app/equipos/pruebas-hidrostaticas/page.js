@@ -133,6 +133,17 @@ export default async function PruebasHidrostaticasPage() {
             Afuera en prueba hidrostática ({afuera.length})
           </div>
         </ConInfo>
+        {/* V33 (pedido explícito: "que se puedan recibir varios tanques, no
+            de uno en uno"): registrar el regreso de varios a la vez. El
+            "Registrar regreso" de cada uno se queda, para cuando vuelve uno
+            solo. */}
+        {puedeRegistrar && afuera.length > 1 && (
+          <Link href="/equipos/pruebas-hidrostaticas/regreso-varios">
+            <button className="btn btn-primary" type="button" style={{ marginTop: 0, marginBottom: 12 }}>
+              Registrar regreso de varios
+            </button>
+          </Link>
+        )}
         <div className="card">
           {afuera.length === 0 ? (
             <div className="empty">No hay tanques afuera ahora mismo.</div>

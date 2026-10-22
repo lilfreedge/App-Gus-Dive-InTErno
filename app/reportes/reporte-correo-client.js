@@ -227,7 +227,12 @@ function EnvioCard({ envio, numero, indice, onChange, onRemove, disabled, guarda
 // aprobada (Design canvas) -- ya no vive detrás de un acordeón colapsado,
 // lleva su propio badge/encabezado, y cada tarjeta tiene "Enviar solo esto
 // ahora" además del botón general "Reporte instantáneo".
-export default function ReporteCorreoConfig({ enviosIniciales, esTitular }) {
+// V33: `enAdministracion` -- la misma configuración se muestra también en
+// App Interno › Administración › Correos automáticos (pedido explícito, opción
+// 1 de la maqueta: en los dos lugares, para que quien tenga el permiso
+// "Correos semanales" la siga manejando desde Reportes). Allá no hace falta
+// el aviso de "solo visible para…".
+export default function ReporteCorreoConfig({ enviosIniciales, esTitular, enAdministracion = false }) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -311,15 +316,17 @@ export default function ReporteCorreoConfig({ enviosIniciales, esTitular }) {
   const hayDestinatarios = envios.some((e) => e.destinatarios.length > 0);
 
   return (
-    <div style={{ marginTop: 22 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-        <div style={{ color: "var(--rojo)", display: "flex" }}>
-          <IconLock size={14} />
+    <div style={{ marginTop: enAdministracion ? 0 : 22 }}>
+      {!enAdministracion && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+          <div style={{ color: "var(--rojo)", display: "flex" }}>
+            <IconLock size={14} />
+          </div>
+          <div style={{ fontSize: 11.5, fontWeight: 800, color: "var(--rojo)", textTransform: "uppercase", letterSpacing: 0.3 }}>
+            {esTitular ? "Solo visible para ti (Titular)" : "Solo visible para quienes tienen este permiso"}
+          </div>
         </div>
-        <div style={{ fontSize: 11.5, fontWeight: 800, color: "var(--rojo)", textTransform: "uppercase", letterSpacing: 0.3 }}>
-          {esTitular ? "Solo visible para ti (Titular)" : "Solo visible para quienes tienen este permiso"}
-        </div>
-      </div>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
         <div style={{ color: "var(--azul)", display: "flex" }}>
@@ -329,6 +336,7 @@ export default function ReporteCorreoConfig({ enviosIniciales, esTitular }) {
       </div>
       <p style={{ fontSize: 11.5, color: "var(--texto-suave)", marginTop: 0, marginBottom: 14 }}>
         Cada envío tiene su propio destinatario y sus propias secciones — así una persona puede recibir solo Salidas y otra solo Llenados, por ejemplo.
+        {!enAdministracion && " Es la misma configuración que en Administración › Correos automáticos: lo que cambies aquí cambia allá."}
       </p>
 
       {envios.length === 0 && (

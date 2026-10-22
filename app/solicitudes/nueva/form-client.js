@@ -147,7 +147,7 @@ export default function NuevaSolicitudForm({ articulos, hayCorreosAlmacen }) {
       {/* V32: con correo configurado, la explicación va en el ⓘ del título. */}
       {!hayCorreosAlmacen && (
         <div className="hint-text" style={{ textAlign: "center", marginTop: 6 }}>
-          Todavía no hay un correo del almacén configurado (Administración › Solicitudes al almacén) -- la solicitud se
+          Todavía no hay un correo del almacén configurado (Administración › Correos automáticos) -- la solicitud se
           guarda igual, pero no se le avisa a nadie.
         </div>
       )}

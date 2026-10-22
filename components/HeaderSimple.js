@@ -20,7 +20,12 @@ import { IconGear, IconLogout, IconLock, IconCheck } from "./icons";
 // rojo de cuántas cuentas están esperando aprobación (pendientesAprobacion,
 // calculado en app/espacio/page.js) para que el Titular no tenga que
 // entrar a revisar si no hay nada nuevo.
-export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAprobacion = 0 }) {
+//
+// V33: `sinBarra` -- "¿A dónde quieres entrar?" va sin barra de color (opción
+// C de la maqueta, pedido explícito: "el azul no es el color principal del
+// app, me gustaría cambiar el azul de arriba"). Las demás pantallas que usan
+// este header no cambian.
+export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAprobacion = 0, sinBarra = false }) {
   const router = useRouter();
   const supabase = createClient();
   const [open, setOpen] = useState(false);
@@ -41,7 +46,7 @@ export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAp
   }
 
   return (
-    <div className="topbar" style={{ paddingBottom: 14 }}>
+    <div className={sinBarra ? "header-sin-barra" : "topbar"} style={sinBarra ? undefined : { paddingBottom: 14 }}>
       <div className="topbar-inner">
         <div>
           <Image
@@ -86,7 +91,7 @@ export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAp
           )}
         </div>
       </div>
-      {etiqueta && <div className="topbar-appname">{etiqueta}</div>}
+      {etiqueta && !sinBarra && <div className="topbar-appname">{etiqueta}</div>}
     </div>
   );
 }

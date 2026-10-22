@@ -8,7 +8,9 @@ import MesAnioSelector, { mesAnioCompleto } from "@/components/MesAnioSelector";
 import ConInfo from "@/components/ConInfo";
 import { finDeMesMasMeses, mesAnioMenosMeses, MESES_INSPECCION_TANQUE, MESES_HIDROSTATICA } from "@/lib/fechas";
 
-export default function EditarTanqueForm({ tanque }) {
+// V33: `reactivar` -- ver page.js. Al guardar, además de los datos, el
+// tanque vuelve a quedar activo.
+export default function EditarTanqueForm({ tanque, reactivar = false }) {
   const router = useRouter();
   const supabase = createClient();
   const [codigo, setCodigo] = useState(tanque.codigo || "");
@@ -55,6 +57,11 @@ export default function EditarTanqueForm({ tanque }) {
     if (ultimaHidro !== inicialHidro) {
       cambios.proxima_hidrostatica = ultimaHidro ? finDeMesMasMeses(ultimaHidro, MESES_HIDROSTATICA) : null;
     }
+    if (reactivar) {
+      cambios.activo = true;
+      cambios.inactivado_en = null;
+      cambios.motivo_inactivo = null;
+    }
 
     await registrarCambio(supabase, {
       tabla: "tanques_alquiler",
@@ -69,7 +76,11 @@ export default function EditarTanqueForm({ tanque }) {
 
     if (error) {
       if (error.message.toLowerCase().includes("duplicate")) {
-        setError("Ya hay otro tanque ACTIVO con ese código.");
+        setError(
+          reactivar
+            ? `Ya hay otro tanque activo con el código ${codigoLimpio}. Cámbiale el código a uno de los dos antes de reactivarlo.`
+            : "Ya hay otro tanque ACTIVO con ese código."
+        );
       } else {
         setError("No se pudo guardar. Intenta de nuevo.");
       }
@@ -82,6 +93,12 @@ export default function EditarTanqueForm({ tanque }) {
 
   return (
     <form onSubmit={handleSubmit} className="card">
+      {reactivar && (
+        <div className="aviso-box" style={{ marginTop: 0, marginBottom: 14 }}>
+          <b>{tanque.codigo}</b> está inactivo{tanque.motivo_inactivo ? `: ${tanque.motivo_inactivo.toLowerCase()}` : ""}.
+          Revisa sus datos y guarda para reactivarlo. Su historial (con el rechazo) se queda igual.
+        </div>
+      )}
       <label htmlFor="codigo" style={{ marginTop: 0 }}>
         Código <span className="req">*</span>
       </label>
@@ -140,7 +157,7 @@ export default function EditarTanqueForm({ tanque }) {
 
       {error && <div className="error-box">{error}</div>}
       <button className="btn btn-primary" style={{ marginTop: 20 }} type="submit" disabled={loading}>
-        {loading ? "Guardando..." : "Guardar cambios"}
+        {loading ? "Guardando..." : reactivar ? "Guardar y reactivar" : "Guardar cambios"}
       </button>
     </form>
   );

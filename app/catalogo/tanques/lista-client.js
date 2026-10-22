@@ -20,13 +20,26 @@ import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 //   sutil").
 // - Un código se puede repetir si el otro tanque está inactivo (opción B):
 //   al reactivar, si ya hay uno activo con ese código, avisa.
-export default function ListaTanques({ tanques, puedeAdministrar, esTitular }) {
+//
+// V33 (pedido explícito, maqueta V33 sección 6, "ok"): en un tanque que se
+// inactivó por rechazo en prueba hidrostática, "Reactivar" pregunta qué
+// hacer: usar su código en OTRO tanque (recomendado: se crea uno nuevo y el
+// viejo se queda con su historial) o reactivar este mismo (pide revisar sus
+// datos). Lo pueden hacer el Titular y los Administradores ("esto solo lo
+// podré hacer yo y el administrador"). Inactivar/Reactivar los demás sigue
+// siendo solo del Titular.
+function rechazadoEnPH(t) {
+  return !t.activo && (t.motivo_inactivo || "").startsWith("Rechazado en prueba hidrostática");
+}
+
+export default function ListaTanques({ tanques, puedeAdministrar, esTitular, esAdmin = false }) {
   const router = useRouter();
   const supabase = createClient();
   const [loadingId, setLoadingId] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [verInactivos, setVerInactivos] = useState(false);
   const [errores, setErrores] = useState({});
+  const [preguntando, setPreguntando] = useState(null); // tanque rechazado en PH a reactivar
 
   async function toggleActivo(tanque) {
     setLoadingId(tanque.id);
@@ -84,10 +97,10 @@ export default function ListaTanques({ tanques, puedeAdministrar, esTitular }) {
                 <IconEdit size={15} />
               </Link>
             )}
-            {esTitular && (
+            {(esTitular || (esAdmin && rechazadoEnPH(t))) && (
               <button
                 type="button"
-                onClick={() => toggleActivo(t)}
+                onClick={() => (rechazadoEnPH(t) ? setPreguntando(t) : toggleActivo(t))}
                 disabled={loadingId === t.id}
                 style={{
                   fontSize: 11.5,
@@ -173,6 +186,51 @@ export default function ListaTanques({ tanques, puedeAdministrar, esTitular }) {
           </button>
           {verInactivos && inactivos.map(fila)}
         </>
+      )}
+
+      {preguntando && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPreguntando(null);
+          }}
+        >
+          <div className="modal-panel">
+            <div className="modal-title">
+              {preguntando.codigo} fue {preguntando.motivo_inactivo.replace("Rechazado", "rechazado")}
+            </div>
+            <div style={{ fontSize: 13, marginTop: 6, color: "var(--texto-suave)" }}>¿Qué quieres hacer?</div>
+            <button
+              type="button"
+              onClick={() => router.push(`/catalogo/tanques/nuevo?de=${preguntando.id}`)}
+              className="card"
+              style={{ display: "block", width: "100%", textAlign: "left", margin: "12px 0 8px", padding: "12px 14px", border: "2px solid var(--azul-claro)", cursor: "pointer", font: "inherit", color: "inherit" }}
+            >
+              <b style={{ color: "var(--azul-texto)" }}>Usar el código {preguntando.codigo} en otro tanque</b>
+              <span className="badge" style={{ marginLeft: 6 }}>Recomendado</span>
+              <div className="hint-text">
+                Se crea un tanque nuevo {preguntando.codigo} con sus datos. El {preguntando.codigo} viejo se queda inactivo con su
+                historial (el rechazo incluido), y la ficha del nuevo tiene el enlace para verlo.
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push(`/catalogo/tanques/${preguntando.id}/editar?reactivar=1`)}
+              className="card"
+              style={{ display: "block", width: "100%", textAlign: "left", margin: 0, padding: "12px 14px", cursor: "pointer", font: "inherit", color: "inherit" }}
+            >
+              <b style={{ color: "var(--azul-texto)" }}>Reactivar este mismo tanque</b>
+              <div className="hint-text">
+                Solo si el rechazo fue un error. Pide revisar sus datos antes de reactivarlo, y su historial sigue con el rechazo.
+              </div>
+            </button>
+            <div className="modal-actions">
+              <button className="btn secondary" type="button" onClick={() => setPreguntando(null)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

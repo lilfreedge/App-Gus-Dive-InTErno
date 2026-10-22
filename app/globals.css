@@ -166,9 +166,57 @@ button {
 /* V32: App Interno con su propio color de barra, para saber en qué app
    estás de un vistazo (App Equipos de clientes se queda azul). Solo la
    barra: --azul no cambia, así que membretes, botones y el Informe siguen
-   igual. */
+   igual.
+   V33 (pedido explícito): el verde se cambió por gris grafito, porque "el
+   verde se relaciona con nitrox" (App Interno es donde se registran los
+   llenados de aire y nitrox). Idea del usuario: "la parte de arriba sea
+   gris pero que los botones sigan siendo azul". */
 .topbar-interno {
-  background: #0e6660;
+  background: #36454f;
+}
+
+/* V33 -- botón "Poner en Hold" en rojo suave (opción B de la maqueta). */
+.btn.secondary.btn-hold {
+  background: #fdeeee;
+  border: 1px solid #e79a9a;
+  color: #b23a3a;
+}
+.btn.secondary.btn-hold:hover {
+  background: #fbe2e2;
+}
+html[data-theme="dark"] .btn.secondary.btn-hold {
+  background: rgba(214, 69, 69, 0.14);
+  border-color: #a94444;
+  color: #f2a3a3;
+}
+
+/* V33 -- colores de cada app, para las tarjetas de "¿A dónde quieres
+   entrar?" (App Equipos de clientes azul marino, App Interno gris grafito,
+   Viajes/Buceos celeste #4EBAE8, reservado para ese app desde la V32). */
+.espacio-icon-clientes {
+  background: var(--azul);
+}
+.espacio-icon-interno {
+  background: #36454f;
+}
+.espacio-icon-viajes {
+  background: #4ebae8;
+}
+
+/* V33 -- "¿A dónde quieres entrar?" sin barra de color arriba (opción C de
+   la maqueta): esa pantalla no es de ninguna app, así que no lleva el color
+   de ninguna. El logo y el ⚙ van sobre el fondo de la pantalla. */
+.header-sin-barra {
+  padding: 16px 16px 0;
+}
+.header-sin-barra .topbar-sub {
+  color: var(--texto-suave);
+  opacity: 1;
+}
+.header-sin-barra .gear-btn {
+  color: var(--texto);
+  border-color: var(--borde);
+  background: var(--tarjeta);
 }
 
 .topbar-inner {

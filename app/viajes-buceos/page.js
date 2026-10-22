@@ -34,7 +34,7 @@ export default async function ViajesBuceosPage() {
         pendientesAprobacion={pendientesAprobacion}
       />
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href="/espacio" className="back-link">
+        <Link href="/espacio?elegir=1" className="back-link">
           ← Volver
         </Link>
         <h1 className="page-title">Viajes/Buceos</h1>
@@ -52,7 +52,7 @@ export default async function ViajesBuceosPage() {
           </div>
         </div>
 
-        <Link href="/espacio" className="btn secondary" style={{ display: "inline-flex", width: "auto", padding: "10px 16px", marginTop: 4 }}>
+        <Link href="/espacio?elegir=1" className="btn secondary" style={{ display: "inline-flex", width: "auto", padding: "10px 16px", marginTop: 4 }}>
           <IconArrowLeft size={16} /> Volver a tus apps
         </Link>
       </div>

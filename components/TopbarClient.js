@@ -77,10 +77,11 @@ export default function TopbarClient({
   const verChangelog = esTitular || permisos?.changelog;
   const verManual = esTitular || permisos?.manual;
 
-  // V32: barra verde solo en App Interno (pedido explícito: "Me gustó mucho
-  // el verde que utilizaste... vamos a ponérselo al app interno", y "Por el
-  // momento, dejemos el verde"). Solo el fondo de la barra: los membretes de
-  // reportes/Informe/PDF siguen con --azul.
+  // V32: barra de color propio solo en App Interno (antes verde). V33: gris
+  // grafito, porque "el verde se relaciona con nitrox"; idea del usuario: "la
+  // parte de arriba sea gris pero que los botones sigan siendo azul". Solo el
+  // fondo de la barra (.topbar-interno): los membretes de reportes/Informe/
+  // PDF y los botones siguen con --azul.
   return (
     <div className="topbar topbar-interno">
       <div className="topbar-inner">
@@ -143,7 +144,9 @@ export default function TopbarClient({
               )}
               <hr />
               {(!operativo || permisos?.equipos_clientes) && (
-                <Link href="/espacio" className="settings-menu-link" onClick={() => setOpen(false)}>
+                // V33: ?elegir=1 -- el Operativo entra directo a llenados al
+                // iniciar sesión; aquí sí quiere ver el selector.
+                <Link href="/espacio?elegir=1" className="settings-menu-link" onClick={() => setOpen(false)}>
                   <IconShuffle size={15} /> Cambiar de app
                 </Link>
               )}

@@ -919,7 +919,14 @@ export default function EditarSeguimientoForm({
           {guardandoNotas ? "Guardando..." : "← Regresar a ficha de orden"}
         </button>
         {!hold && (
-          <button type="button" className="btn secondary" onClick={abrirHoldModal} style={{ marginTop: 0, width: "auto" }}>
+          // V33 (pedido explícito: "cambiémosle el color al botón de poner en
+          // hold... algo que llame la atención pero que sea suave" → "rojo",
+          // opción B de la maqueta): rojo suave, con el ícono de pausa.
+          <button type="button" className="btn secondary btn-hold" onClick={abrirHoldModal} style={{ marginTop: 0, width: "auto" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ marginRight: 6, verticalAlign: -2 }}>
+              <rect x="6" y="5" width="4" height="14" rx="1" />
+              <rect x="14" y="5" width="4" height="14" rx="1" />
+            </svg>
             Poner en Hold
           </button>
         )}

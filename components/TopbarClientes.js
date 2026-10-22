@@ -121,7 +121,7 @@ export default function TopbarClientes({
                 </Link>
               )}
               <hr />
-              <Link href="/espacio" className="settings-menu-link" onClick={() => setOpen(false)}>
+              <Link href="/espacio?elegir=1" className="settings-menu-link" onClick={() => setOpen(false)}>
                 <IconShuffle size={15} /> Cambiar de app
               </Link>
               <button className="settings-menu-link settings-menu-danger" onClick={salir}>
