@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso, tieneAcceso } from "@/lib/roles";
+import { requirePermiso, tieneAcceso, esTecnico } from "@/lib/roles";
+import AsignarOrden from "@/components/AsignarOrden";
+import { tecnicosConCarga } from "@/lib/tecnicos";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
-import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { formatFecha, formatFechaDDMMAAAADeDate, formatFechaDDMMAAAA } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
 import { requiereVerificacion } from "@/lib/procesos-ordenes";
@@ -62,10 +64,16 @@ export default async function FichaOrdenPage({ params }) {
   // ediciones) más holds resueltos y repuestos autorizados eliminados,
   // ese link se quitó de esta ficha -- ya no hacía falta tener los dos.
   const puedeVerBitacoraOrden = tieneAcceso(profile, "equipos_clientes_bitacora_orden");
+  // V34 -- "Técnico asignado · Cambiar" (maqueta-v34.html, parte B).
+  const puedeAsignar = tieneAcceso(profile, "equipos_clientes_asignar");
+  // V34 -- el técnico no tiene Registro de Órdenes en su menú: "Volver" lo
+  // lleva a sus órdenes.
+  const tecnico = esTecnico(profile);
 
-  const [{ data: o }, { data: ajustes }] = await Promise.all([
+  const [{ data: o }, { data: ajustes }, tecnicos] = await Promise.all([
     supabase.from("ordenes_equipos_con_nombre").select("*").eq("id", params.id).single(),
     supabase.from("ajustes_app_clientes").select("*").eq("id", true).maybeSingle(),
+    puedeAsignar ? tecnicosConCarga(supabase) : Promise.resolve([]),
   ]);
 
   if (!o) notFound();
@@ -137,13 +145,15 @@ export default async function FichaOrdenPage({ params }) {
             ordenes solo se usa para quienes quieran hacer una consulta
             general de todo" -- ese listado sigue disponible aparte, desde
             "Más"). */}
-        <Link href="/app-clientes/ordenes" className="back-link">
+        <Link href={tecnico ? "/app-clientes" : "/app-clientes/ordenes"} className="back-link">
           ← Volver
         </Link>
         <Breadcrumb
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
-            { label: "Registro de Órdenes", href: "/app-clientes/ordenes" },
+            tecnico
+              ? { label: "Mis órdenes", href: "/app-clientes" }
+              : { label: "Registro de Órdenes", href: "/app-clientes/ordenes" },
             { label: `No. ${o.no_orden_fisico ?? o.folio}` },
           ]}
         />
@@ -263,6 +273,32 @@ export default async function FichaOrdenPage({ params }) {
                   {o.estado}
                 </span>
               </Campo>
+              {/* V34 -- Técnico asignado (maqueta-v34.html, parte B). Sale si
+                  la orden tiene técnico, o si quien la ve puede asignar. */}
+              {(o.tecnico_asignado_id || (puedeAsignar && o.estado !== "Entregado")) && (
+                <Campo etiqueta="Técnico asignado">
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    {o.tecnico_asignado_id ? (
+                      <b>{o.tecnico_nombre || "—"}</b>
+                    ) : (
+                      <span style={{ color: "#b5691f", fontWeight: 700 }}>Sin asignar</span>
+                    )}
+                    {puedeAsignar && o.estado !== "Entregado" && (
+                      <AsignarOrden
+                        ordenId={o.id}
+                        numero={o.no_orden_fisico ?? o.folio}
+                        tecnicoActualId={o.tecnico_asignado_id}
+                        tecnicos={tecnicos}
+                      />
+                    )}
+                  </span>
+                  {o.tecnico_asignado_id && o.asignada_en && (
+                    <div className="hint-text" style={{ marginTop: 2 }}>
+                      La asignó {o.asignada_por_nombre || "—"} el {formatFechaDDMMAAAA(o.asignada_en)}
+                    </div>
+                  )}
+                </Campo>
+              )}
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -590,7 +626,7 @@ export default async function FichaOrdenPage({ params }) {
               tabla="ordenes_equipos"
               registro={o}
               editHref={`/app-clientes/ordenes/${o.id}/editar-datos`}
-              afterDelete="/app-clientes/historial"
+              afterDelete="/app-clientes/ordenes"
               mostrarEditar={puedeEditar}
               mostrarAnular={puedeAnular}
             />

@@ -34,6 +34,12 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
   // explícito: "pon el permiso en administración") -- exclusivo de
   // Administradores, mismo patrón que editar_orden/editar_cliente.
   const puedeEditarHold = tieneAcceso(profile, "equipos_clientes_editar_hold");
+  // V34 (pedido explícito: "Bloquéale el acceso al técnico de manipular
+  // 'notificaciones al cliente' así como está 'cierre de la orden', eso le
+  // corresponde a tienda"): cada uno con su permiso. La base de datos
+  // también lo revisa (migration_66.sql).
+  const puedeNotificar = tieneAcceso(profile, "equipos_clientes_notificar");
+  const puedeCerrar = tieneAcceso(profile, "equipos_clientes_cerrar_orden");
 
   const { data: orden } = await supabase
     .from("ordenes_equipos")
@@ -78,7 +84,8 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
   // mostraba siempre "Listado de órdenes" sin importar de cuál se vino.
   // Arreglo: el atajo de Registro de Órdenes ahora agrega ?from=registro a
   // su link, y esta página arma la miga según eso.
-  const vieneDeRegistro = searchParams?.from === "registro";
+  // V34: desde "Mis órdenes asignadas" (el técnico).
+  const vieneDeMisOrdenes = searchParams?.from === "mis-ordenes";
 
   return (
     <div>
@@ -90,9 +97,11 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
         <Breadcrumb
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
-            vieneDeRegistro
-              ? { label: "Registro de Órdenes", href: "/app-clientes/ordenes" }
-              : { label: "Historial de órdenes", href: "/app-clientes/historial" },
+            vieneDeMisOrdenes
+              ? { label: "Mis órdenes", href: "/app-clientes" }
+              : // V34: el Historial ahora solo tiene las entregadas; una orden
+                // que se está actualizando está abierta, así que vive en Registro.
+                { label: "Registro de Órdenes", href: "/app-clientes/ordenes" },
             { label: `No. ${orden.no_orden_fisico ?? orden.folio}`, href: `/app-clientes/ordenes/${params.id}` },
             { label: "Actualizar estado de orden" },
           ]}
@@ -135,6 +144,8 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
           requiereVerificacion={requiereVerificacion}
           piezas={piezas || []}
           puedeEditarHold={puedeEditarHold}
+          puedeNotificar={puedeNotificar}
+          puedeCerrar={puedeCerrar}
           nombreUsuario={profile?.full_name || ""}
         />
       </div>

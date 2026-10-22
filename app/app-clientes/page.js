@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso, tieneAcceso } from "@/lib/roles";
+import { requirePermiso, tieneAcceso, esTecnico } from "@/lib/roles";
+import InicioTecnico from "./inicio-tecnico";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
@@ -42,7 +43,12 @@ const BADGE_ESTADO = {
 // para no aparecer duplicadas -- ya tienen su propia sección más abajo.
 export default async function AppClientesPage() {
   const supabase = createClient();
-  const { profile } = await requirePermiso(supabase, "equipos_clientes");
+  const { user, profile } = await requirePermiso(supabase, "equipos_clientes");
+  // V34: el técnico (rol con Pantalla de inicio "Mis órdenes asignadas")
+  // tiene su propia pantalla.
+  if (esTecnico(profile)) {
+    return <InicioTecnico supabase={supabase} profile={profile} userId={user.id} />;
+  }
   // Botón "+ Registrar orden" -- había pasado a ser fijo (item 14,
   // feedback sobre v40: "quita el toggle... pon un botón fijo de
   // Registrar orden en Inicio"), pero volvió a ser opcional además del

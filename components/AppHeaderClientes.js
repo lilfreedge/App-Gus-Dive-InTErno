@@ -22,6 +22,7 @@ export default async function AppHeaderClientes() {
       nombreCompleto={nombreCompleto}
       correo={user.email}
       esTitular={!!profile?.es_titular}
+      isAdmin={!!profile?.is_admin}
       permisos={profile?.permisos || {}}
       ordenMenuClientes={profile?.orden_menu_clientes}
       menuPersonalizadoClientes={profile?.menu_personalizado_clientes}

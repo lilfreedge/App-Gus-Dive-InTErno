@@ -6,13 +6,13 @@ import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import EditarCompresorForm from "./form-client";
 
-// Editar un compresor del catálogo. Gateado por el permiso "compresores"
-// (el mismo que gatea toda la sección). El cambio queda en el historial
+// Editar un compresor del catálogo. V34: gateado por "Registrar y editar
+// compresor" (registrar_compresor); antes bastaba con "compresores". El cambio queda en el historial
 // de ediciones (Administración > Historial), pedido explícito del
 // usuario, 23-sep-2026.
 export default async function EditarCompresorPage({ params }) {
   const supabase = createClient();
-  await requireInterno(supabase, "compresores");
+  await requireInterno(supabase, "registrar_compresor");
 
   const { data: compresor } = await supabase.from("compresores").select("*").eq("id", params.id).single();
 

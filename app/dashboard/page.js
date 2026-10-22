@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser, tieneAcceso, esOperativo } from "@/lib/roles";
+import { getProfileYUser, tieneAcceso, esOperativo, esRolEquipos } from "@/lib/roles";
 import { seccionesVisibles } from "@/lib/nav";
 import { obtenerPendientesInterno } from "@/lib/notificaciones";
 import AppHeader from "@/components/AppHeader";
@@ -33,6 +33,11 @@ export default async function DashboardPage({ searchParams }) {
   // su Inicio es otra pantalla, la única que tiene.
   if (esOperativo(profile)) {
     return <InicioOperativo profile={profile} />;
+  }
+  // V34: rol con Pantalla de inicio "Equipos (para rol técnico)": su Inicio
+  // es Equipos.
+  if (esRolEquipos(profile)) {
+    redirect("/equipos");
   }
 
   // V30 (pedido explícito: "si alguien no tiene permiso de registrar

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { tieneAlguno, requireInterno, PERMISOS_EQUIPOS } from "@/lib/roles";
+import { tieneAlguno, requireInterno, PERMISOS_EQUIPOS, esRolEquipos } from "@/lib/roles";
+import { obtenerPendientesInterno } from "@/lib/notificaciones";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
-import { IconTankFill, IconEye, IconGauge, IconRegulator, IconCompressor } from "@/components/icons";
+import { IconTankFill, IconEye, IconGauge, IconRegulator, IconCompressor, IconAlert } from "@/components/icons";
 
 // Grupo "Tanques": llenados, inspección visual y pruebas hidrostáticas, todo lo relacionado
 // a los tanques de alquiler, agrupado bajo un mismo encabezado.
@@ -63,12 +64,41 @@ export default async function EquiposPage() {
   const tanques = GRUPO_TANQUES.filter((o) => tieneAlguno(profile, o.permisos));
   const otras = OTRAS_OPCIONES.filter((o) => tieneAlguno(profile, o.permisos));
 
+  // V34: para el rol con Pantalla de inicio "Equipos (para rol técnico)"
+  // esta es su Inicio, así que aquí le salen los avisos que en el Inicio
+  // normal salen arriba (solo los de lo que puede ver).
+  const conAvisos = esRolEquipos(profile);
+  const avisos = [];
+  if (conAvisos) {
+    const p = await obtenerPendientesInterno(supabase, profile);
+    if (p.tanquesVencidos > 0)
+      avisos.push({ href: "/equipos/inspeccion-visual", texto: `${p.tanquesVencidos} tanque${p.tanquesVencidos === 1 ? "" : "s"} con inspección vencida`, clase: "error-box" });
+    if (p.reguladoresVencidos > 0)
+      avisos.push({ href: "/equipos/mantenimiento-reguladores", texto: `${p.reguladoresVencidos} regulador${p.reguladoresVencidos === 1 ? "" : "es"} con mantenimiento vencido`, clase: "error-box" });
+    if (p.hidroVencidas > 0)
+      avisos.push({ href: "/equipos/pruebas-hidrostaticas", texto: `${p.hidroVencidas} tanque${p.hidroVencidas === 1 ? "" : "s"} con prueba hidrostática vencida`, clase: "error-box" });
+    if (p.hidroPorVencer > 0)
+      avisos.push({ href: "/equipos/pruebas-hidrostaticas", texto: `${p.hidroPorVencer} tanque${p.hidroPorVencer === 1 ? "" : "s"} con prueba hidrostática por vencer (2 meses o menos)`, clase: "aviso-box" });
+  }
+
   return (
     <div>
       <AppHeader />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
         <h1 className="page-title">Equipos</h1>
+
+        {avisos.map((a) => (
+          <Link
+            key={a.texto}
+            href={a.href}
+            className={a.clase}
+            style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", marginBottom: 12 }}
+          >
+            <IconAlert size={18} />
+            {a.texto}
+          </Link>
+        ))}
 
         {tanques.length > 0 && (
           <div className="section-title" style={{ marginTop: 0 }}>
@@ -89,8 +119,10 @@ export default async function EquiposPage() {
           </Link>
         ))}
 
-        {otras.length > 0 && (
-          <div className="section-title" style={{ marginTop: tanques.length > 0 ? 24 : 0 }}>
+        {/* "Otros" solo si arriba está "Tanques" (V34: el técnico que solo
+            tiene reguladores y compresores no necesita el título). */}
+        {otras.length > 0 && tanques.length > 0 && (
+          <div className="section-title" style={{ marginTop: 24 }}>
             Otros
           </div>
         )}

@@ -48,6 +48,7 @@ export const PERMISOS_DEFAULT = {
   catalogo_regulador: false,
   catalogo_tanque: false,
   compresores: false,
+  compresor_mantenimiento_registrar: false,
   registrar_compresor: false,
   correos_semanales: false,
   equipos_clientes: false,
@@ -93,8 +94,18 @@ export const SECCIONES = [
       },
       { clave: "registrar_mantenimiento", label: "Mantenimiento de reguladores", sub: "Ver los mantenimientos", Icono: IconRegulator },
       { clave: "mantenimiento_registrar", label: "Registrar mantenimiento de regulador", Icono: IconEdit, sub_de: true },
-      { clave: "compresores", label: "Compresores", Icono: IconCompressor },
-      { clave: "registrar_compresor", label: "Registrar compresor", Icono: IconCompressor, sub_de: true },
+      // V34 (pedido explícito: "ok sí, créame ese acceso separado"): igual
+      // que reguladores, arriba VER y abajo REGISTRAR. "Registrar compresor"
+      // ahora también deja cambiar los datos del compresor.
+      { clave: "compresores", label: "Compresores", sub: "Ver los compresores y sus mantenimientos", Icono: IconCompressor },
+      { clave: "compresor_mantenimiento_registrar", label: "Registrar mantenimiento de compresor", Icono: IconEdit, sub_de: true },
+      {
+        clave: "registrar_compresor",
+        label: "Registrar y editar compresor",
+        sub: "Agregar compresores nuevos y cambiar sus datos",
+        Icono: IconCompressor,
+        sub_de: true,
+      },
     ],
   },
   {
@@ -267,8 +278,11 @@ export default function ListaUsuarios({ perfiles, miId, roles = [] }) {
                         {deRol ? (
                           <div className="hint-text" style={{ marginTop: 8 }}>
                             Sus accesos los manda el rol <b>{deRol.nombre}</b>
-                            {deRol.inicio === "llenados" ? " (Inicio: solo llenados)" : ""}. Para cambiarlos, edita el
+                            {deRol.inicio === "llenados" ? " (Inicio: solo llenados)" : ""}
+                            {deRol.inicio === "equipos" ? " (Inicio: Equipos, para rol técnico)" : ""}. Para cambiarlos, edita el
                             rol en <b>Roles</b> (cambia para todos los que lo tienen) o pásalo a Usuario.
+                            {/* V34: roles vinculados (maqueta-v34-4.html). */}
+                            {deRol.vinculado_id ? " Rol vinculado: también tiene su rol de App Equipos de clientes." : ""}
                           </div>
                         ) : null}
                         {(

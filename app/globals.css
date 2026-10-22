@@ -14,6 +14,11 @@
   /* Ver comentario junto a la redefinición en modo oscuro más abajo. */
   --azul-texto: var(--azul);
 
+  /* V34: color de los membretes de reportes. Azul marino en App Equipos de
+     clientes (como su PDF); en App Interno, gris grafito (ver
+     body:has(.topbar-interno) más abajo). */
+  --azul-reporte: #0a3d62;
+
   /* Tokens de superficie secundaria (fondos "suaves" de hover/chips/inputs) */
   --superficie-suave: #eef3f6;
   --superficie-suave-hover: #f0f3f6;
@@ -175,6 +180,32 @@ button {
   background: #36454f;
 }
 
+/* V34 (maqueta-v34.html, decidido: "todo gris grafito"): todo App Interno
+   en gris grafito, no solo la barra -- botones, pestañas, números, títulos
+   y enlaces. Se cambian las variables de color en las páginas que tienen
+   la barra de App Interno (.topbar-interno); App Equipos de clientes y
+   "¿A dónde quieres entrar?" no la tienen, así que siguen igual. Los
+   membretes de los reportes de App Interno también van en grafito (pedido
+   explícito: "Cambia los membretes de los reportes de app interno, ponlos
+   como está el app, gris grafito"); los de App Equipos de clientes siguen
+   en azul marino. */
+body:has(.topbar-interno) {
+  --azul-reporte: #36454f;
+  --azul: #36454f;
+  --azul-claro: #57707f;
+  --azul-brillante: #57707f;
+  --azul-texto: #2b3840;
+}
+html[data-theme="dark"] body:has(.topbar-interno) {
+  --azul: #4b5f6b;
+  --azul-claro: #a9bcc8;
+  --azul-brillante: #a9bcc8;
+  --azul-texto: #c3d0d8;
+}
+html[data-theme="dark"] body:has(.topbar-interno) .topbar-interno {
+  background: #36454f;
+}
+
 /* V33 -- botón "Poner en Hold" en rojo suave (opción B de la maqueta). */
 .btn.secondary.btn-hold {
   background: #fdeeee;
@@ -193,13 +224,15 @@ html[data-theme="dark"] .btn.secondary.btn-hold {
 /* V33 -- colores de cada app, para las tarjetas de "¿A dónde quieres
    entrar?" (App Equipos de clientes azul marino, App Interno gris grafito,
    Viajes/Buceos celeste #4EBAE8, reservado para ese app desde la V32). */
-.espacio-icon-clientes {
+/* (Con dos clases para ganarle a .espacio-icon, que está más abajo en este
+   archivo -- con una sola clase no se aplicaba el color.) */
+.espacio-icon.espacio-icon-clientes {
   background: var(--azul);
 }
-.espacio-icon-interno {
+.espacio-icon.espacio-icon-interno {
   background: #36454f;
 }
-.espacio-icon-viajes {
+.espacio-icon.espacio-icon-viajes {
   background: #4ebae8;
 }
 
@@ -1566,7 +1599,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 14px;
-  background: var(--azul);
+  background: var(--azul-reporte);
   border-radius: 14px 14px 0 0;
   padding: 18px 20px;
 }
@@ -1596,7 +1629,7 @@ textarea {
 }
 
 .reporte-preview-tabla th {
-  background: var(--azul);
+  background: var(--azul-reporte);
   color: #fff;
   text-align: left;
   padding: 8px 8px;

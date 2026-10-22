@@ -33,7 +33,7 @@ const OPCIONES = [
     // V30: renombrado (pedido explícito: "Renombrar 'listado de ordenes' a
     // 'historial de ordenes'") -- la ruta y el permiso siguen iguales.
     titulo: "Historial de órdenes",
-    descripcion: "Todas las órdenes registradas, incluidas las ya entregadas.",
+    descripcion: "Las órdenes ya entregadas, con buscador y filtros.",
     Icono: IconHistory,
     // Permiso granular propio (28-sep-2026, pedido explícito) -- antes se
     // veía con solo tener acceso base a la app, igual que "Listado de

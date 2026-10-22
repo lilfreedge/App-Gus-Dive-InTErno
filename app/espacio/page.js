@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { getProfileYUser, tieneAcceso, esOperativo } from "@/lib/roles";
+import { getProfileYUser, tieneAcceso, esOperativo, esTecnico } from "@/lib/roles";
 import { obtenerPendientesInterno, obtenerPendientesClientes } from "@/lib/notificaciones";
 import HeaderSimple from "@/components/HeaderSimple";
-import { IconUsers, IconWrench, IconDivingMask } from "@/components/icons";
+import { IconUsers, IconTiendaTanque, IconDivingMask } from "@/components/icons";
 
 // Ítem 7 del backlog (22-sep-2026): pantalla que aparece justo después de
 // iniciar sesión, para elegir en qué espacio entrar -- "App Clientes"
@@ -23,6 +23,12 @@ export default async function EspacioPage({ searchParams }) {
   // ese le salía primero este selector). Si tiene las dos apps, cambia con
   // ⚙ › "Cambiar de app", que llega aquí con ?elegir=1.
   if (esOperativo(profile) && searchParams?.elegir !== "1") redirect("/dashboard");
+  // V34: el técnico también entra directo a "Mis órdenes asignadas",
+  // mientras solo tenga App Equipos de clientes (el día que tenga App
+  // Interno, le sale este selector para escoger).
+  if (esTecnico(profile) && !tieneAcceso(profile, "acceso_app_interno") && searchParams?.elegir !== "1") {
+    redirect("/app-clientes");
+  }
   const nombreCompleto = profile?.full_name || "";
   const nombre = nombreCompleto.split(" ")[0] || "";
 
@@ -59,34 +65,50 @@ export default async function EspacioPage({ searchParams }) {
   // trabajar/por despachar; ahora se agregan las 3 secciones que ya
   // existían en el hub de Inicio (en espera, prueba hidrostática,
   // reparación) pero nunca se reflejaban acá.
+  // V34 -- "N órdenes asignadas a ti" (maqueta-v34.html, parte D). Al
+  // técnico solo le sale esta línea; a los demás, además de las de siempre.
+  let asignadasAMi = 0;
+  if (tieneClientes && profile?.id) {
+    const { count } = await supabase
+      .from("ordenes_equipos")
+      .select("id", { count: "exact", head: true })
+      .eq("tecnico_asignado_id", profile.id)
+      .neq("estado", "Entregado");
+    asignadasAMi = count || 0;
+  }
+  const soloAsignadas = esTecnico(profile);
+
   const lineasClientes = [];
-  if (ordenesPorTrabajar > 0) {
+  if (asignadasAMi > 0) {
+    lineasClientes.push(`${asignadasAMi} orden${asignadasAMi === 1 ? "" : "es"} asignada${asignadasAMi === 1 ? "" : "s"} a ti`);
+  }
+  if (!soloAsignadas && ordenesPorTrabajar > 0) {
     lineasClientes.push(
       `${ordenesPorTrabajar} orden${ordenesPorTrabajar === 1 ? "" : "es"} pendiente${
         ordenesPorTrabajar === 1 ? "" : "s"
       } por trabajar`
     );
   }
-  if (ordenesPorDespachar > 0) {
+  if (!soloAsignadas && ordenesPorDespachar > 0) {
     lineasClientes.push(
       `${ordenesPorDespachar} orden${ordenesPorDespachar === 1 ? "" : "es"} pendiente${
         ordenesPorDespachar === 1 ? "" : "s"
       } por despachar`
     );
   }
-  if (ordenesEnEspera > 0) {
+  if (!soloAsignadas && ordenesEnEspera > 0) {
     // "en Hold" (pedido explícito, ronda grande de feedback, 27-sep-2026:
     // renombrar "En espera" a "En Hold" en toda la app).
     lineasClientes.push(
       `${ordenesEnEspera} orden${ordenesEnEspera === 1 ? "" : "es"} en Hold`
     );
   }
-  if (ordenesEnHidrostatica > 0) {
+  if (!soloAsignadas && ordenesEnHidrostatica > 0) {
     lineasClientes.push(
       `${ordenesEnHidrostatica} orden${ordenesEnHidrostatica === 1 ? "" : "es"} en prueba hidrostática`
     );
   }
-  if (ordenesEnReparacion > 0) {
+  if (!soloAsignadas && ordenesEnReparacion > 0) {
     lineasClientes.push(
       `${ordenesEnReparacion} orden${ordenesEnReparacion === 1 ? "" : "es"} enviada${
         ordenesEnReparacion === 1 ? "" : "s"
@@ -181,7 +203,7 @@ export default async function EspacioPage({ searchParams }) {
           {tieneInterno && (
             <Link href="/dashboard" className="card espacio-card">
               <div className="espacio-icon espacio-icon-interno">
-                <IconWrench size={22} />
+                <IconTiendaTanque size={22} />
               </div>
               <div className="espacio-title">App Interno</div>
               <div className="espacio-notif">

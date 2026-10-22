@@ -5,6 +5,8 @@ import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import { estadoSolicitud } from "@/lib/solicitudes";
 import SolicitudCard from "./solicitud-card";
+import CorreosAlmacen from "@/app/admin/usuarios/correos-almacen-client";
+import { IconLock, IconMail } from "@/components/icons";
 
 // "Solicitudes al almacén" (App Interno, V29). Pedido explícito: un
 // usuario de la tienda le pide códigos al almacén ("la pide al almacen
@@ -18,6 +20,15 @@ export default async function SolicitudesPage({ searchParams }) {
   const { user, profile } = await requireInterno(supabase, "solicitudes_almacen");
   const tab = searchParams?.tab === "recibidas" ? "recibidas" : "pendientes";
   const creada = searchParams?.creada || "";
+
+  const esTitular = !!profile?.es_titular;
+  // V34 (pedido explícito: "ponme que las solicitudes también las pueda
+  // manipular en Solicitudes al almacén directo, así como está en reportes
+  // ... esto solo lo puede ver el titular"): abajo, los correos que reciben
+  // el aviso. Misma configuración que Administración › Correos automáticos.
+  const { data: config } = esTitular
+    ? await supabase.from("app_config").select("solicitudes_correos").maybeSingle()
+    : { data: null };
 
   const { data } = await supabase
     .from("solicitudes_almacen")
@@ -73,6 +84,25 @@ export default async function SolicitudesPage({ searchParams }) {
           lista.map((s) => (
             <SolicitudCard key={s.id} solicitud={s} userId={user.id} nombreUsuario={profile?.full_name || user.email} />
           ))
+        )}
+
+        {esTitular && (
+          <div className="card" style={{ marginTop: 22 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+              <IconLock size={13} style={{ color: "var(--rojo)" }} />
+              <span style={{ fontSize: 11.5, fontWeight: 800, color: "var(--rojo)", textTransform: "uppercase", letterSpacing: 0.3 }}>
+                Solo visible para ti (Titular)
+              </span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+              <IconMail size={15} style={{ color: "var(--azul)" }} />
+              <div style={{ fontWeight: 700, fontSize: 14.5, color: "var(--azul-texto)" }}>Aviso por correo al almacén</div>
+            </div>
+            <CorreosAlmacen
+              correosIniciales={config?.solicitudes_correos || []}
+              nota="A estos correos les llega el aviso cada vez que alguien hace una solicitud. Es la misma configuración que en Administración › Correos automáticos: lo que cambies aquí cambia allá."
+            />
+          </div>
         )}
       </div>
     </div>

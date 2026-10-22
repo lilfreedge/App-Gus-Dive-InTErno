@@ -6,6 +6,8 @@ import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { IconRefresh } from "@/components/icons";
 import { coincideOrden } from "@/lib/buscar-orden";
+import AsignarOrden from "@/components/AsignarOrden";
+import { nombreCorto } from "@/lib/tecnicos";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -80,6 +82,9 @@ const CRITERIOS = {
   en_hold: (o) => o.en_espera,
   hidrostatica: (o) => o.fecha_envio_hidrostatica && !o.fecha_retorno_tienda,
   reparacion: (o) => o.fecha_envio && !o.fecha_retorno_tienda,
+  // V34: las abiertas que todavía no tienen técnico (solo la ve quien puede
+  // asignar).
+  sin_asignar: (o) => !o.tecnico_asignado_id,
 };
 
 // Cola de trabajo de "Registro" (23-sep-2026, pedido explícito tras
@@ -88,7 +93,14 @@ const CRITERIOS = {
 // cliente, todo combinado (tab Y búsqueda a la vez). `puedeRegistrar`
 // nueva (v42/28-sep, ver nota arriba) -- antes vivía solo en page.js, para
 // el botón "+ Registrar orden" que ahora también se arma acá.
-export default function RegistroClient({ ordenes, cerradas = [], puedeActualizarEstado = true, puedeRegistrar = false }) {
+export default function RegistroClient({
+  ordenes,
+  cerradas = [],
+  puedeActualizarEstado = true,
+  puedeRegistrar = false,
+  puedeAsignar = false,
+  tecnicos = [],
+}) {
   const [tab, setTab] = useState("por_trabajar");
   const [q, setQ] = useState("");
   // Default "no_orden" (30-sep-2026) -- antes "fecha_asc", pero esa opción
@@ -107,6 +119,7 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
       en_hold: ordenes.filter(CRITERIOS.en_hold).length,
       hidrostatica: ordenes.filter(CRITERIOS.hidrostatica).length,
       reparacion: ordenes.filter(CRITERIOS.reparacion).length,
+      sin_asignar: ordenes.filter(CRITERIOS.sin_asignar).length,
       cerradas: Math.min(cerradas.length, CERRADAS_EN_PESTANA),
     }),
     [ordenes, cerradas]
@@ -179,6 +192,18 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
             {t.label} ({conteos[t.clave]})
           </button>
         ))}
+        {/* V34 (maqueta-v34.html, parte B): pestaña "Sin asignar", a lo
+            ancho, solo para quien puede asignar. */}
+        {puedeAsignar && (
+          <button
+            type="button"
+            className={`period-btn ${tab === "sin_asignar" ? "period-btn-active" : ""}`}
+            onClick={() => setTab("sin_asignar")}
+            style={{ flex: "1 1 100%" }}
+          >
+            Sin asignar ({conteos.sin_asignar})
+          </button>
+        )}
       </div>
 
       {/* Búsqueda y orden al mismo nivel, con el control de orden más chico
@@ -242,9 +267,10 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
                   derecho de la fila. Ahora el título ocupa todo el espacio
                   libre y el grupo [botón + sello] queda siempre pegado a la
                   derecha, uno junto al otro. */}
+              <div style={{ flex: 1, minWidth: 0 }}>
               <Link
                 href={`/app-clientes/ordenes/${o.id}`}
-                style={{ display: "block", flex: 1, minWidth: 0, textDecoration: "none", color: "inherit" }}
+                style={{ display: "block", textDecoration: "none", color: "inherit" }}
               >
                 <span className="list-item-title">
                   <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
@@ -258,6 +284,30 @@ export default function RegistroClient({ ordenes, cerradas = [], puedeActualizar
                   <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
                 </div>
               </Link>
+              {/* V34 -- técnico asignado (maqueta-v34.html, parte B).
+                  "Asignar ▾" / "Cambiar" solo con el permiso; los demás ven
+                  a quién está asignada. Las entregadas no se asignan. */}
+              {o.estado !== "Entregado" && (o.tecnico_asignado_id || puedeAsignar) && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3, fontSize: 12 }}>
+                  {o.tecnico_asignado_id ? (
+                    <span style={{ color: "var(--texto-suave)" }}>
+                      Técnico: <b style={{ color: "var(--texto)" }}>{nombreCorto(o.tecnico_nombre)}</b>
+                    </span>
+                  ) : (
+                    <span style={{ color: "#b5691f", fontWeight: 700 }}>Sin asignar</span>
+                  )}
+                  {puedeAsignar && (
+                    <AsignarOrden
+                      ordenId={o.id}
+                      numero={o.no_orden_fisico ?? o.folio}
+                      tecnicoActualId={o.tecnico_asignado_id}
+                      tecnicos={tecnicos}
+                      estilo="chip"
+                    />
+                  )}
+                </div>
+              )}
+              </div>
               {/* Shortcut a "Actualizar estado de orden" (item 11, pedido
                   explícito, 25-sep-2026: "poner boton aqui tipo shortcut
                   para llegar a 'Actualizar estado de orden', en cada

@@ -10,7 +10,7 @@ import { coincideOrden } from "@/lib/buscar-orden";
 const POR_PAGINA = 100;
 
 const TIPOS = ["Tanques", "Reguladores", "BC", "Computadora", "Otro"];
-const ESTADOS = ["Pendiente por trabajar", "En proceso", "Pendiente por despachar", "En Hold", "Entregado"];
+// V34: sin filtro "Estado" -- el Historial ahora solo trae las entregadas.
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
   "En proceso": "badge-amarillo",
@@ -29,7 +29,6 @@ export default function HistorialClient({ ordenes, clientes }) {
   const [visibles, setVisibles] = useState(POR_PAGINA);
   const [tipo, setTipo] = useState("");
   const [clienteId, setClienteId] = useState("");
-  const [estado, setEstado] = useState("");
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
 
@@ -38,19 +37,17 @@ export default function HistorialClient({ ordenes, clientes }) {
       if (!coincideOrden(o, q)) return false;
       if (tipo && o.tipo_equipo !== tipo) return false;
       if (clienteId && o.cliente_id !== clienteId) return false;
-      if (estado && o.estado !== estado) return false;
       if (desde && o.fecha < desde) return false;
       if (hasta && o.fecha > hasta) return false;
       return true;
     });
-  }, [ordenes, q, tipo, clienteId, estado, desde, hasta]);
+  }, [ordenes, q, tipo, clienteId, desde, hasta]);
 
-  const hayFiltros = tipo || clienteId || estado || desde || hasta;
+  const hayFiltros = tipo || clienteId || desde || hasta;
 
   function limpiarFiltros() {
     setTipo("");
     setClienteId("");
-    setEstado("");
     setDesde("");
     setHasta("");
   }
@@ -91,16 +88,6 @@ export default function HistorialClient({ ordenes, clientes }) {
             </select>
           </div>
           <div>
-            <label htmlFor="f_estado">Estado</label>
-            <select id="f_estado" value={estado} onChange={(e) => setEstado(e.target.value)}>
-              <option value="">Todos</option>
-              {ESTADOS.map((e) => (
-                <option key={e} value={e}>{e}</option>
-              ))}
-            </select>
-          </div>
-          <div />
-          <div>
             <label htmlFor="f_desde">Desde</label>
             <input id="f_desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
           </div>
@@ -120,7 +107,7 @@ export default function HistorialClient({ ordenes, clientes }) {
         {filtrados.length === 0 ? (
           <div className="empty">
             {ordenes.length === 0
-              ? "Aún no hay órdenes registradas."
+              ? "Todavía no hay órdenes entregadas."
               : q.trim()
                 ? "Ninguna orden coincide con esa búsqueda."
                 : "Ninguna orden coincide con esos filtros."}
@@ -141,7 +128,10 @@ export default function HistorialClient({ ordenes, clientes }) {
                 <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
               </div>
               <div className="list-item-bottom">
-                <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>
+                <div className="list-item-meta">
+                  Ingresó {formatFechaDDMMAAAADeDate(o.fecha)}
+                  {o.fecha_entrega_cliente ? ` · Entregada ${formatFechaDDMMAAAADeDate(o.fecha_entrega_cliente)}` : ""}
+                </div>
                 <div className="folio-discreto">folio #{o.folio}</div>
               </div>
             </Link>

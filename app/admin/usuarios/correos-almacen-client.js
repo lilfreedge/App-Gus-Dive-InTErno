@@ -9,7 +9,9 @@ import { createClient } from "@/lib/supabase/client";
 // algun lado del app") -- se guardan en app_config.solicitudes_correos
 // (migration_52.sql). Solo el Titular entra a Administración, y la
 // política de app_config solo le deja guardar a él.
-export default function CorreosAlmacen({ correosIniciales }) {
+// V34: `nota` reemplaza el texto de arriba (lo usa Más › Solicitudes al
+// almacén, que agrega "es la misma configuración que en Administración").
+export default function CorreosAlmacen({ correosIniciales, nota = null }) {
   const router = useRouter();
   const supabase = createClient();
   const [correos, setCorreos] = useState(correosIniciales || []);
@@ -49,9 +51,8 @@ export default function CorreosAlmacen({ correosIniciales }) {
   return (
     <div>
       <p className="hint-text" style={{ marginTop: 0, marginBottom: 12 }}>
-        A estos correos les llega el aviso cada vez que alguien hace una solicitud de códigos. Mientras el dominio
-        gusdivecenter.com no esté verificado en Resend, el aviso solo puede llegarle al correo dueño de la cuenta de
-        Resend.
+        {nota ||
+          "A estos correos les llega el aviso cada vez que alguien hace una solicitud de códigos. Mientras el dominio gusdivecenter.com no esté verificado en Resend, el aviso solo puede llegarle al correo dueño de la cuenta de Resend."}
       </p>
 
       {correos.length === 0 ? (

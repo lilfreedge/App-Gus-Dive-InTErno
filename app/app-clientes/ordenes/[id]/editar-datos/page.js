@@ -55,7 +55,7 @@ export default async function EditarDatosOrdenPage({ params }) {
         <Breadcrumb
           items={[
             { label: "App Equipos de clientes", href: "/app-clientes" },
-            { label: "Historial de órdenes", href: "/app-clientes/historial" },
+            { label: "Registro de Órdenes", href: "/app-clientes/ordenes" },
             { label: `No. ${orden.no_orden_fisico ?? orden.folio}`, href: `/app-clientes/ordenes/${params.id}` },
             { label: "Editar orden" },
           ]}

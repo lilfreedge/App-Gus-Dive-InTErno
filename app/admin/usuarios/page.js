@@ -7,6 +7,7 @@ import SeccionColapsable from "@/components/SeccionColapsable";
 import ListaUsuarios from "./lista-client";
 import RolesInfo from "./roles-info";
 import RolesAdmin from "@/components/RolesAdmin";
+import { INICIO_INTERNO } from "@/lib/roles-inicio";
 import { SECCIONES } from "./lista-client";
 import FormatearRegistros from "./formatear-registros-client";
 import RespaldoDatos from "./respaldo-client";
@@ -24,10 +25,12 @@ export default async function UsuariosPage() {
   // "*" (y no una lista de columnas) para que la pantalla siga abriendo
   // aunque todavía no se haya corrido migration_61.sql (rol_interno_id).
   // V31: sin las cuentas eliminadas (migration_62.sql).
-  const [{ data: perfilesTodos }, { data: config }, { data: roles }] = await Promise.all([
+  const [{ data: perfilesTodos }, { data: config }, { data: roles }, { data: rolesClientes }] = await Promise.all([
     supabase.from("profiles").select("*").order("full_name"),
     supabase.from("app_config").select("solicitudes_correos, reporte_configs").maybeSingle(),
     supabase.from("roles_app").select("*").eq("app", "interno").order("nombre"),
+    // V34: los roles de la otra app, para "Vinculado con".
+    supabase.from("roles_app").select("id, nombre").eq("app", "clientes").order("nombre"),
   ]);
   const perfiles = (perfilesTodos || []).filter((p) => !p.eliminado_en);
 
@@ -48,7 +51,7 @@ export default async function UsuariosPage() {
         <SeccionColapsable titulo="Roles">
           <RolesInfo />
           <div style={{ marginTop: 14 }}>
-            <RolesAdmin app="interno" roles={roles || []} secciones={SECCIONES} perfiles={perfiles} conInicio />
+            <RolesAdmin app="interno" roles={roles || []} secciones={SECCIONES} perfiles={perfiles} opcionesInicio={INICIO_INTERNO} rolesOtraApp={rolesClientes || []} />
           </div>
         </SeccionColapsable>
 

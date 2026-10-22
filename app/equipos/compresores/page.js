@@ -26,7 +26,9 @@ import { hoyISO, sumarDias } from "@/lib/fechas";
 export default async function CompresoresPage() {
   const supabase = createClient();
   const { profile } = await requireInterno(supabase, "compresores");
-  const puedeRegistrar = tieneAcceso(profile, "compresores");
+  // V34: registrar mantenimientos tiene su propio permiso (antes bastaba
+  // con "compresores", que ahora es solo ver).
+  const puedeRegistrar = tieneAcceso(profile, "compresor_mantenimiento_registrar");
   const puedeRegistrarCompresor = tieneAcceso(profile, "registrar_compresor");
 
   const { data: compresores } = await supabase

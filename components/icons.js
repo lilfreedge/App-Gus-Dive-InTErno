@@ -383,3 +383,39 @@ export function IconClipboard(props) {
     </Base>
   );
 }
+
+// V34 -- "Notificaciones al cliente" (permiso nuevo en Roles/Permisos).
+export function IconBell(props) {
+  return (
+    <Base {...props}>
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    </Base>
+  );
+}
+
+// V34 -- ícono de App Interno (maqueta-v34-3.html, opción 4C-1 "fachada
+// plana", elegida por el usuario: "icono: 4c-1"): la tienda con un tanque
+// en la vitrina, sin toldo ("no me gusta el toldo que se le ve").
+export function IconTiendaTanque(props) {
+  return (
+    <Base {...props}>
+      <rect x="3" y="4" width="18" height="3.6" rx="0.8" />
+      <path d="M5 7.6V20h14V7.6" />
+      <rect x="6.9" y="13.6" width="3.6" height="6.4" rx="1.8" />
+      <path d="M8.7 13.6v-1.6" />
+      <path d="M7.9 12h1.6" />
+      <path d="M13.5 20v-6h3.5v6" />
+    </Base>
+  );
+}
+
+// V34 -- "Vinculado con" (roles vinculados entre las dos apps).
+export function IconLink(props) {
+  return (
+    <Base {...props}>
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </Base>
+  );
+}

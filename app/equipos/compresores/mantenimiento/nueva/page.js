@@ -15,7 +15,8 @@ export default async function NuevoMantenimientoCompresorPage({ searchParams }) 
 
   const { profile } = await getProfileYUser(supabase);
 
-  if (!user || !tieneAcceso(profile, "compresores")) {
+  // V34: registrar mantenimientos tiene su propio permiso.
+  if (!user || !tieneAcceso(profile, "compresor_mantenimiento_registrar")) {
     redirect("/equipos/compresores");
   }
 

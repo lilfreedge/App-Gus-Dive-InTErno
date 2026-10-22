@@ -73,6 +73,8 @@ export default function NuevaOrdenForm({
   puedeEditarCliente = false,
   puedeAgregarEquipo = true,
   noOrdenSugerido = "",
+  puedeAsignar = false,
+  tecnicos = [],
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -108,6 +110,8 @@ export default function NuevaOrdenForm({
   const [danosVisibles, setDanosVisibles] = useState("");
   const [problemasReportados, setProblemasReportados] = useState("");
   const [notas, setNotas] = useState("");
+  // V34 -- "Asignar a (opcional)" (solo con el permiso "Asignar órdenes").
+  const [asignarA, setAsignarA] = useState("");
   const [foto, setFoto] = useState(null);
 
   const [historialCliente, setHistorialCliente] = useState([]);
@@ -446,6 +450,13 @@ export default function NuevaOrdenForm({
 
     await sincronizarDetalleEquipoSiCambio();
 
+    // V34: si se escogió técnico, se asigna (queda en la bitácora). Si
+    // fallara, la orden ya quedó registrada y se puede asignar desde su ficha.
+    if (puedeAsignar && asignarA) {
+      const { error: errAsig } = await supabase.rpc("asignar_orden", { p_orden: data.id, p_tecnico: asignarA });
+      if (errAsig) console.error("No se pudo asignar la orden:", errAsig);
+    }
+
     router.push(`/app-clientes/ordenes/${data.id}`);
     router.refresh();
   }
@@ -734,6 +745,23 @@ export default function NuevaOrdenForm({
         <div style={{ marginTop: 14 }}>
           <CampoFoto id="foto" label="Foto del equipo" file={foto} onChange={setFoto} />
         </div>
+
+        {/* V34 (maqueta-v34.html, parte B; "se puede al registrarla, seremos
+            flexibles con eso"): opcional, se puede asignar o cambiar después. */}
+        {puedeAsignar && (
+          <>
+            <label htmlFor="asignar_a" style={{ marginTop: 14 }}>Asignar a (opcional)</label>
+            <select id="asignar_a" value={asignarA} onChange={(e) => setAsignarA(e.target.value)}>
+              <option value="">Sin asignar</option>
+              {tecnicos.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.full_name} — {t.abiertas} abierta{t.abiertas === 1 ? "" : "s"}
+                </option>
+              ))}
+            </select>
+            <div className="hint-text">Se puede asignar o cambiar después, desde la orden.</div>
+          </>
+        )}
 
         {error && <div className="error-box" style={{ marginTop: 14 }}>{error}</div>}
         {ordenAbierta && (

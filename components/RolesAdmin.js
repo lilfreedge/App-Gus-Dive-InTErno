@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ConInfo from "@/components/ConInfo";
+import { IconLink } from "@/components/icons";
 
 // V31 — Administración › Roles (migration_61.sql), uno por app.
 //
@@ -26,8 +27,20 @@ import ConInfo from "@/components/ConInfo";
 // - Solo se ve el botón "+ Crear rol"; el nombre se pide al tocarlo.
 //
 // `secciones`: la misma lista de Usuarios y permisos de esa app.
-// `conInicio`: App Interno -- "Pantalla de inicio: normal / solo llenados".
-export default function RolesAdmin({ app, roles, secciones, perfiles = [], conInicio = false }) {
+// `opcionesInicio` (V34; antes `conInicio`, solo App Interno): las
+// opciones de "Pantalla de inicio" del rol en esta app --
+// [{ valor, label, ayuda }]. App Interno: Normal / Solo llenados (el
+// operario) / Equipos (para rol técnico). App Equipos de clientes: Normal /
+// Mis órdenes asignadas (el técnico).
+//
+// `rolesOtraApp` (V34, roles vinculados -- pedido explícito: "Debe de haber
+// una manera de que esos roles estén vinculados a través de ambos
+// espacios"; maqueta-v34-4.html): los roles de la otra app, para "Vinculado
+// con". Al ponerle un rol vinculado a alguien se le pone también el otro
+// (lo hace la base de datos, migration_66.sql).
+export default function RolesAdmin({ app, roles, secciones, perfiles = [], opcionesInicio = [], rolesOtraApp = [] }) {
+  const otraApp = app === "interno" ? "App Equipos de clientes" : "App Interno";
+  const conInicio = opcionesInicio.length > 0;
   const router = useRouter();
   const supabase = createClient();
   const [abierto, setAbierto] = useState(null);
@@ -55,6 +68,15 @@ export default function RolesAdmin({ app, roles, secciones, perfiles = [], conIn
     setGuardando(rol.id);
     setError("");
     const { error: err } = await supabase.from("roles_app").update(cambios).eq("id", rol.id);
+    setGuardando(null);
+    if (err) setError(mensaje(err));
+    router.refresh();
+  }
+
+  async function vincular(rol, otroId) {
+    setGuardando(rol.id);
+    setError("");
+    const { error: err } = await supabase.rpc("vincular_rol", { p_rol: rol.id, p_otro: otroId || null });
     setGuardando(null);
     if (err) setError(mensaje(err));
     router.refresh();
@@ -136,9 +158,18 @@ export default function RolesAdmin({ app, roles, secciones, perfiles = [], conIn
                 onClick={() => setAbierto(estaAbierto ? null : rol.id)}
                 style={{ cursor: "pointer" }}
               >
-                <span className="list-item-title">{rol.nombre}</span>
+                <span className="list-item-title">
+                  {rol.nombre}
+                  {rol.vinculado_id && (
+                    <span className="hint-text" style={{ margin: "0 0 0 8px", fontWeight: 600, whiteSpace: "nowrap" }}>
+                      ↔ {otraApp}
+                    </span>
+                  )}
+                </span>
                 <span className="hint-text" style={{ margin: 0, whiteSpace: "nowrap" }}>
-                  {conInicio && rol.inicio === "llenados" ? "Inicio: llenados · " : ""}
+                  {conInicio && rol.inicio && rol.inicio !== "normal"
+                    ? `Inicio: ${(opcionesInicio.find((o) => o.valor === rol.inicio)?.corto || rol.inicio)} · `
+                    : ""}
                   {cuantos} acceso{cuantos === 1 ? "" : "s"} · {gente} persona{gente === 1 ? "" : "s"}
                   <span style={{ marginLeft: 6 }}>{estaAbierto ? "▴" : "▾"}</span>
                 </span>
@@ -175,17 +206,43 @@ export default function RolesAdmin({ app, roles, secciones, perfiles = [], conIn
                         disabled={guardando === rol.id}
                         onChange={(e) => actualizar(rol, { inicio: e.target.value })}
                       >
-                        <option value="normal">Normal</option>
-                        <option value="llenados">Solo llenados (formulario de llenado y resumen de la semana)</option>
+                        {opcionesInicio.map((o) => (
+                          <option key={o.valor} value={o.valor}>
+                            {o.label}
+                          </option>
+                        ))}
                       </select>
-                      {rol.inicio === "llenados" && (
+                      {opcionesInicio.find((o) => o.valor === (rol.inicio || "normal"))?.ayuda && (
                         <div className="hint-text" style={{ marginTop: 4 }}>
-                          Su Inicio es la pantalla de llenados. En el menú solo le salen las secciones extra que marques
-                          abajo.
+                          {opcionesInicio.find((o) => o.valor === (rol.inicio || "normal")).ayuda}
                         </div>
                       )}
                     </>
                   )}
+
+                  {/* V34 -- Vinculado con (maqueta-v34-4.html). */}
+                  <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <IconLink size={14} /> Vinculado con
+                  </label>
+                  <select
+                    value={rol.vinculado_id || ""}
+                    disabled={guardando === rol.id}
+                    onChange={(e) => vincular(rol, e.target.value)}
+                  >
+                    <option value="">Ninguno</option>
+                    {rolesOtraApp.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {otraApp} › {o.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="hint-text" style={{ marginTop: 4 }}>
+                    {rol.vinculado_id
+                      ? `Al ponerle este rol a alguien, también se le pone "${
+                          rolesOtraApp.find((o) => o.id === rol.vinculado_id)?.nombre || "el otro"
+                        }" en ${otraApp}. Al quitárselo, se le quita en las dos. Para entrar a cada app igual hace falta su acceso en Accesos a apps.`
+                      : `Si lo vinculas con un rol de ${otraApp}, al ponérselo a alguien se le pone en las dos apps.`}
+                  </div>
 
                   {seccionesRol.map((sec) => (
                     <div key={sec.titulo}>
@@ -215,7 +272,14 @@ export default function RolesAdmin({ app, roles, secciones, perfiles = [], conIn
                           >
                             <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                               {it.Icono && <it.Icono size={15} style={{ color: "var(--texto-suave)", flexShrink: 0 }} />}
-                              <span>{it.label}</span>
+                              <span>
+                                {it.label}
+                                {it.sub && (
+                                  <span className="hint-text" style={{ display: "block", marginTop: 1 }}>
+                                    {it.sub}
+                                  </span>
+                                )}
+                              </span>
                             </span>
                             <input
                               type="checkbox"

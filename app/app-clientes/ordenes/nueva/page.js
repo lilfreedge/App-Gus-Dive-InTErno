@@ -4,6 +4,7 @@ import { requirePermisoClientes, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevaOrdenForm from "./form-client";
+import { tecnicosConCarga } from "@/lib/tecnicos";
 
 // Registrar orden -- App Equipos Clientes (23-sep-2026, primera versión
 // real). Si viene ?cliente=<id> (desde la ficha de un cliente), llega
@@ -21,6 +22,11 @@ export default async function NuevaOrdenPage({ searchParams }) {
   // ficha del cliente (equipos_clientes_editar_cliente, exclusivo de
   // Administradores/Titular).
   const puedeEditarCliente = tieneAcceso(profile, "equipos_clientes_editar_cliente");
+  // V34 -- "Asignar a (opcional)" al registrar (pedido explícito: "se puede
+  // al registrarla, seremos flexibles con eso porque habrá órdenes que no
+  // tendrán que ser asignadas"). Solo con el permiso "Asignar órdenes".
+  const puedeAsignar = tieneAcceso(profile, "equipos_clientes_asignar");
+  const tecnicos = puedeAsignar ? await tecnicosConCarga(supabase) : [];
 
   const [{ data: clientes }, { data: equipos }, { data: servicios }, { data: ultimaOrden }] = await Promise.all([
     supabase.from("clientes_equipos").select("id, nombre, telefono").order("nombre"),
@@ -84,6 +90,8 @@ export default async function NuevaOrdenPage({ searchParams }) {
           puedeEditarCliente={puedeEditarCliente}
           puedeAgregarEquipo={puedeAgregarEquipo}
           noOrdenSugerido={noOrdenSugerido}
+          puedeAsignar={puedeAsignar}
+          tecnicos={tecnicos}
         />
       </div>
     </div>

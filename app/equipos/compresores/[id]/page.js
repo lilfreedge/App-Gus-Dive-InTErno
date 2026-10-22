@@ -16,7 +16,11 @@ import EstadoCompresor from "./estado-client";
 export default async function FichaCompresorPage({ params }) {
   const supabase = createClient();
   const { profile } = await requireInterno(supabase, "compresores");
-  const puedeAdministrar = tieneAcceso(profile, "compresores");
+  // V34 (pedido explícito: "créame ese acceso separado"): registrar
+  // mantenimientos y editar los datos del compresor, cada uno con su
+  // permiso ("compresores" ahora es solo ver).
+  const puedeRegistrarMantenimiento = tieneAcceso(profile, "compresor_mantenimiento_registrar");
+  const puedeEditar = tieneAcceso(profile, "registrar_compresor");
   const esTitular = !!profile?.es_titular;
 
   const [{ data: compresor }, { data: mantenimientos }] = await Promise.all([
@@ -119,14 +123,14 @@ export default async function FichaCompresorPage({ params }) {
                 Historial
               </button>
             </Link>
-            {puedeAdministrar && (
+            {puedeRegistrarMantenimiento && (
               <Link href={`/equipos/compresores/mantenimiento/nueva?compresor=${compresor.id}`}>
                 <button className="btn btn-primary" type="button">
                   + Registrar mantenimiento
                 </button>
               </Link>
             )}
-            {puedeAdministrar && (
+            {puedeEditar && (
               <Link href={`/equipos/compresores/${compresor.id}/editar`}>
                 <button className="btn secondary" type="button">
                   Editar

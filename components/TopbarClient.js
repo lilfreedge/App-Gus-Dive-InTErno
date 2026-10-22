@@ -143,9 +143,11 @@ export default function TopbarClient({
                 </Link>
               )}
               <hr />
-              {(!operativo || permisos?.equipos_clientes) && (
-                // V33: ?elegir=1 -- el Operativo entra directo a llenados al
-                // iniciar sesión; aquí sí quiere ver el selector.
+              {/* V34 (pedido explícito: "quita que se pueda cambiar de app.
+                  El operario solo tendrá el acceso de app interno"): el
+                  Operativo ya no ve "Cambiar de app". ?elegir=1 muestra el
+                  selector aunque la persona entre directo a su área. */}
+              {!operativo && (
                 <Link href="/espacio?elegir=1" className="settings-menu-link" onClick={() => setOpen(false)}>
                   <IconShuffle size={15} /> Cambiar de app
                 </Link>

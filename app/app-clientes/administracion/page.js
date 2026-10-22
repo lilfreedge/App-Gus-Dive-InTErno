@@ -6,6 +6,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import SeccionColapsable from "@/components/SeccionColapsable";
 import PermisosClientes, { SECCIONES } from "./permisos-client";
 import RolesAdmin from "@/components/RolesAdmin";
+import { INICIO_CLIENTES } from "@/lib/roles-inicio";
 import FormatearRegistrosClientes from "./formatear-registros-client";
 import ProcesosOrdenesClientes from "./procesos-ordenes-client";
 import ConInfo from "@/components/ConInfo";
@@ -24,9 +25,11 @@ export default async function AdministracionClientesPage() {
   const { user } = await requireTitular(supabase);
 
   // "*" para que abra aunque falte migration_61.sql; sin cuentas eliminadas.
-  const [{ data: perfilesTodos }, { data: roles }] = await Promise.all([
+  const [{ data: perfilesTodos }, { data: roles }, { data: rolesInterno }] = await Promise.all([
     supabase.from("profiles").select("*").order("full_name"),
     supabase.from("roles_app").select("*").eq("app", "clientes").order("nombre"),
+    // V34: los roles de la otra app, para "Vinculado con".
+    supabase.from("roles_app").select("id, nombre").eq("app", "interno").order("nombre"),
   ]);
   const perfiles = (perfilesTodos || []).filter((p) => !p.eliminado_en);
 
@@ -60,7 +63,7 @@ export default async function AdministracionClientesPage() {
 
         {/* V31: Roles de esta app (migration_61.sql). */}
         <SeccionColapsable titulo="Roles">
-          <RolesAdmin app="clientes" roles={roles || []} secciones={SECCIONES} perfiles={perfiles} />
+          <RolesAdmin app="clientes" roles={roles || []} secciones={SECCIONES} perfiles={perfiles} opcionesInicio={INICIO_CLIENTES} rolesOtraApp={rolesInterno || []} />
         </SeccionColapsable>
 
         <div className="section-title">Procesos órdenes</div>

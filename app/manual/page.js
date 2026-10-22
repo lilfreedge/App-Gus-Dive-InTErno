@@ -327,9 +327,9 @@ export default async function ManualPage() {
   if (verRolYPermisos) {
     topics.push({
       key: "admin-rol",
-      title: "Cambiar el rol de una persona (Usuario, Administrador u Operativo)",
+      title: "Cambiar el rol de una persona (Usuario, Administrador, Operativo o Técnico)",
       searchText:
-        "dar quitar rol administrador operativo ajustes administración usuario titular llenados",
+        "dar quitar rol administrador operativo tecnico técnico equipos pantalla de inicio ajustes administración usuario titular llenados",
       body: (
         <>
           <div className="card">
@@ -344,7 +344,23 @@ export default async function ManualPage() {
             <b>Operativo:</b> solo registra llenados de tanque. Entra
             directo a una sola pantalla, sin botones en el menú de arriba:
             el formulario de llenado, el resumen de la semana (lunes a
-            sábado) y los llenados de hoy de todos.
+            sábado) y los llenados de hoy de todos. No tiene &quot;Cambiar de
+            app&quot;: solo usa App Interno.
+          </div>
+          <div className="card">
+            <b>Técnico:</b> su rol tiene la Pantalla de inicio &quot;Equipos
+            (para rol técnico)&quot;. Entra directo a Equipos, solo con lo que
+            tenga marcado (por ejemplo, mantenimiento de reguladores y de
+            compresores), y en el menú no le sale &quot;Inicio&quot;. Para que
+            entre a App Interno hay que darle App Interno en Accesos a apps. La
+            Pantalla de inicio de cada rol se cambia en Administración › Roles.
+          </div>
+          <div className="card">
+            <b>Roles vinculados:</b> en Administración › Roles, &quot;Vinculado
+            con&quot; une un rol de App Interno con uno de App Equipos de
+            clientes (como los dos &quot;Técnico&quot;). Al ponérselo a alguien
+            en una app, se le pone en las dos; al quitárselo, se le quita en las
+            dos. Cada parte se edita en el Roles de su app.
           </div>
         </>
       ),
@@ -365,6 +381,14 @@ export default async function ManualPage() {
           ella. Son aparte del rol: sin importar esas casillas, editar,
           anular e inactivar solo lo ven Titular y Administrador. La
           entrada a cada app se da en Accesos a apps.
+          <br />
+          <br />
+          En Equipos, varios van en dos partes: arriba el de <b>ver</b> y
+          debajo el de <b>registrar</b> (inspección visual, pruebas
+          hidrostáticas, mantenimiento de reguladores y, desde la V34,
+          compresores: &quot;Registrar mantenimiento de compresor&quot;).
+          &quot;Registrar y editar compresor&quot; deja agregar compresores
+          nuevos y cambiar sus datos.
         </div>
       ),
     });

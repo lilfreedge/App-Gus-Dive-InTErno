@@ -29,6 +29,10 @@ const PERMISOS_DEFAULT = {
   equipos_clientes_historial: false,
   equipos_clientes_reportes: false,
   equipos_clientes_actualizar_estado: false,
+  // V34 (migration_66.sql).
+  equipos_clientes_notificar: false,
+  equipos_clientes_cerrar_orden: false,
+  equipos_clientes_asignar: false,
   equipos_clientes_editar_cliente: false,
   equipos_clientes_editar_orden: false,
   equipos_clientes_editar_mantenimiento_compresor: false,
@@ -175,6 +179,13 @@ export default function PermisosClientes({ perfiles, miId, roles = [] }) {
                           <div className="hint-text" style={{ marginTop: 8 }}>
                             Sus accesos los manda el rol <b>{deRol.nombre}</b>. Para cambiarlos, edita el rol en{" "}
                             <b>Roles</b> (cambia para todos los que lo tienen) o pásalo a Usuario.
+                            {/* V34: roles vinculados (maqueta-v34-4.html). */}
+                            {deRol.vinculado_id && (
+                              <>
+                                {" "}
+                                Rol vinculado: también tiene su rol de App Interno.
+                              </>
+                            )}
                           </div>
                         )}
 
@@ -200,6 +211,9 @@ export default function PermisosClientes({ perfiles, miId, roles = [] }) {
                                     alignItems: "center",
                                     gap: 10,
                                     padding: "9px 0",
+                                    // V34: sub-ítems (Notificaciones al cliente y
+                                    // Cerrar orden, debajo de Actualizar estado).
+                                    paddingLeft: it.sub_de ? 22 : 0,
                                     borderBottom: "1px solid var(--borde)",
                                     margin: 0,
                                     fontWeight: 500,
@@ -213,6 +227,11 @@ export default function PermisosClientes({ perfiles, miId, roles = [] }) {
                                     <it.Icono size={15} style={{ color: "var(--texto-suave)", flexShrink: 0 }} />
                                     <span>
                                       {it.label}
+                                      {it.sub && (
+                                        <span className="hint-text" style={{ display: "block", marginTop: 1 }}>
+                                          {it.sub}
+                                        </span>
+                                      )}
                                       {it.soloAdmin && !esAdmin && (
                                         <span className="hint-text" style={{ display: "block", marginTop: 1 }}>
                                           Solo Administradores

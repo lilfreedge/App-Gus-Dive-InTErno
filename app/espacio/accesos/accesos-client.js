@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconUsers, IconWrench } from "@/components/icons";
+import { IconUsers, IconTiendaTanque } from "@/components/icons";
 
 const PERMISOS_DEFAULT_LOCAL = {
   equipos_clientes: false,
@@ -39,7 +39,7 @@ export default function AccesosClient({ perfiles, miId }) {
               Equipos de clientes
             </th>
             <th title="App Interno">
-              <IconWrench size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+              <IconTiendaTanque size={15} style={{ display: "block", margin: "0 auto 3px" }} />
               App Interno
             </th>
           </tr>

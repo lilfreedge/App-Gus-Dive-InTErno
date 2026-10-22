@@ -67,6 +67,10 @@ function mensajeError(e) {
 export default function EditarSeguimientoForm({
   orden,
   puedeVerificar = true,
+  // V34: "Notificaciones al cliente" y "Cierre de la orden" son de la
+  // tienda -- cada uno con su permiso (el técnico los ve con candado).
+  puedeNotificar = true,
+  puedeCerrar = true,
   // "Procesos órdenes" (28-sep-2026, pedido explícito: "agrega una
   // seccion de 'procesos ordenes' para quitar el paso de 'verificado
   // por' en los equipos que le quite el check") -- por tipo de equipo,
@@ -1590,7 +1594,20 @@ export default function EditarSeguimientoForm({
               dos disponibles en cuanto está Verificado. Es una lista, no
               un valor único, así que no usa el patrón bloqueado/activo/
               hecho de PasoWizard -- solo su candado cuando corresponde. */}
-          {!notifCierreDesbloqueado ? (
+          {!puedeNotificar ? (
+            <PasoBloqueado
+              id="notif"
+              label="Notificaciones al cliente"
+              mensaje={`Avisarle al cliente le toca a la tienda (permiso "Notificaciones al cliente").${
+                notificaciones.length > 0
+                  ? ` Ya hay ${notificaciones.length} anotada${notificaciones.length === 1 ? "" : "s"}.`
+                  : ""
+              }`}
+              denegado={denegado}
+              explicado={explicado}
+              onClick={clickBloqueado}
+            />
+          ) : !notifCierreDesbloqueado ? (
             <PasoBloqueado
               id="notif"
               label="Notificaciones al cliente"
@@ -1682,15 +1699,17 @@ export default function EditarSeguimientoForm({
           <PasoWizard
             id="cierre"
             label="Cierre de la orden"
-            locked={!cierreHecho && !notifCierreDesbloqueado}
+            locked={!cierreHecho && (!notifCierreDesbloqueado || !puedeCerrar)}
             mensajeBloqueo={
-              requiereVerificacion
+              !puedeCerrar
+                ? 'La entrega al cliente la hace la tienda (permiso "Cerrar orden").'
+                : requiereVerificacion
                 ? "Aún no puedes cerrar la orden porque falta verificarla."
                 : "Aún no puedes cerrar la orden porque falta la fecha de listo para entrega."
             }
             hecho={cierreHecho}
             editando={cierreEditando}
-            onEditar={abrirEdicionCierre}
+            onEditar={puedeCerrar ? abrirEdicionCierre : null}
             preview={
               <>
                 Entregado el {formatFechaDDMMAAAADeDate(ordenLocal.fecha_entrega_cliente)}

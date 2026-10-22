@@ -23,6 +23,7 @@ export default function TopbarClientes({
   nombreCompleto,
   correo,
   esTitular,
+  isAdmin = false,
   permisos,
   ordenMenuClientes,
   menuPersonalizadoClientes,
@@ -72,6 +73,18 @@ export default function TopbarClientes({
   }
 
   const rolLabel = esTitular ? "Titular" : "Usuario";
+  // V34 -- el técnico (rol con Pantalla de inicio "Mis órdenes asignadas"):
+  // en el menú solo lo que va a usar (pedido explícito: "Solo debe de tener
+  // lo que vaya a usar. Quítale el botón de inicio... Lo que sí puedes
+  // dejarle es el listado de órdenes"; maqueta-v34-2.html, opción A): "Mis
+  // órdenes" (su pantalla) e "Historial de órdenes" (si tiene el permiso).
+  // Sin arrastrar. Y "Cambiar de app" solo si también tiene App Interno.
+  const tecnico = !esTitular && !isAdmin && !!permisos?.rol_tecnico;
+  const linksTecnico = [
+    { href: "/app-clientes", label: "Mis órdenes" },
+    ...(permisos?.equipos_clientes_listado_ordenes ? [{ href: "/app-clientes/historial", label: "Historial de órdenes" }] : []),
+  ];
+  const verCambiarApp = !tecnico || !!permisos?.acceso_app_interno;
   // Changelog en el menú de ajustes (pedido explícito, 23-sep-2026:
   // "ponme acceso del changelog también, para que lo vea quien yo
   // decida") -- mismo permiso "changelog" que ya usa App Interno, no
@@ -121,9 +134,11 @@ export default function TopbarClientes({
                 </Link>
               )}
               <hr />
-              <Link href="/espacio?elegir=1" className="settings-menu-link" onClick={() => setOpen(false)}>
-                <IconShuffle size={15} /> Cambiar de app
-              </Link>
+              {verCambiarApp && (
+                <Link href="/espacio?elegir=1" className="settings-menu-link" onClick={() => setOpen(false)}>
+                  <IconShuffle size={15} /> Cambiar de app
+                </Link>
+              )}
               <button className="settings-menu-link settings-menu-danger" onClick={salir}>
                 <IconLogout size={15} /> Cerrar sesión
               </button>
@@ -132,6 +147,15 @@ export default function TopbarClientes({
         </div>
       </div>
       <div className="topbar-appname">App Equipos de clientes</div>
+      {tecnico ? (
+        <nav className="topnav">
+          {linksTecnico.map((l) => (
+            <Link key={l.href} href={l.href} className={"topnav-link" + (pathname === l.href ? " topnav-link-active" : "")}>
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+      ) : (
       <nav className="topnav" onClickCapture={onNavClickCapture}>
         {links
           .filter((l) => puedeVerSeccionClientes(l, { esTitular, permisos }))
@@ -167,6 +191,7 @@ export default function TopbarClientes({
           );
         })}
       </nav>
+      )}
     </div>
   );
 }

@@ -16,7 +16,9 @@ export default function NavArrowsClientes({ esTitular, permisos }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const secciones = NAV_SECTIONS_CLIENTES.filter((s) => puedeVerSeccionClientes(s, { esTitular, permisos }));
+  // V34: el técnico tiene su propio menú corto, sin flechas.
+  const tecnico = !esTitular && !!permisos?.rol_tecnico;
+  const secciones = tecnico ? [] : NAV_SECTIONS_CLIENTES.filter((s) => puedeVerSeccionClientes(s, { esTitular, permisos }));
   const idx = secciones.findIndex((s) =>
     s.href === "/app-clientes" ? pathname === "/app-clientes" : pathname.startsWith(s.href)
   );
