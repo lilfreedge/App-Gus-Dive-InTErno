@@ -83,8 +83,8 @@ export default async function MasPage() {
                 <o.Icono size={20} />
               </div>
               <div>
+                {/* V38: sin la descripción debajo ("vamos a quitar las letricas"). */}
                 <div className="hub-link-title">{o.titulo}</div>
-                <div className="hub-link-desc">{o.descripcion}</div>
               </div>
             </div>
           </Link>

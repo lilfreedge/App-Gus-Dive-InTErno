@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import BotonAvisarWhatsApp from "@/components/BotonAvisarWhatsApp";
 
 // V34 -- "Asignar órdenes" (maqueta-v34.html, parte B; aprobado). Botón
 // que abre la ventana "Asignar la orden No. X": las personas con rol de
@@ -13,19 +14,31 @@ import { createClient } from "@/lib/supabase/client";
 //
 // `estilo`: "chip" (Registro de Órdenes: "Asignar ▾" / "Cambiar", chiquito)
 // o "link" (ficha de la orden: "Asignar" / "Cambiar").
-export default function AsignarOrden({ ordenId, numero, tecnicoActualId = null, tecnicos = [], estilo = "link" }) {
+// V37: después de asignar, sale el botón verde para avisarle al técnico por
+// WhatsApp (plan-v37.html 2A, aprobado). `orden` trae los datos del mensaje.
+export default function AsignarOrden({
+  ordenId,
+  numero,
+  tecnicoActualId = null,
+  tecnicos = [],
+  estilo = "link",
+  orden = null,
+  miNombre = "",
+}) {
   const router = useRouter();
   const supabase = createClient();
   const [abierto, setAbierto] = useState(false);
   const [sel, setSel] = useState(tecnicoActualId || "");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
+  const [asignadoA, setAsignadoA] = useState(null);
 
   function abrir(e) {
     e.preventDefault();
     e.stopPropagation();
     setSel(tecnicoActualId || "");
     setError("");
+    setAsignadoA(null);
     setAbierto(true);
   }
 
@@ -35,8 +48,10 @@ export default function AsignarOrden({ ordenId, numero, tecnicoActualId = null, 
     const { error: err } = await supabase.rpc("asignar_orden", { p_orden: ordenId, p_tecnico: sel || null });
     setGuardando(false);
     if (err) return setError(err.message || "No se pudo asignar.");
-    setAbierto(false);
     router.refresh();
+    const t = sel ? tecnicos.find((x) => x.id === sel) : null;
+    if (t) setAsignadoA(t);
+    else setAbierto(false);
   }
 
   const texto = tecnicoActualId ? "Cambiar" : estilo === "chip" ? "Asignar ▾" : "Asignar";
@@ -69,6 +84,24 @@ export default function AsignarOrden({ ordenId, numero, tecnicoActualId = null, 
         >
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
             <div className="modal-title">Asignar la orden No. {numero}</div>
+            {asignadoA ? (
+              <>
+                <div className="success-box">
+                  Listo: asignada a <b>{asignadoA.full_name}</b>.
+                </div>
+                <BotonAvisarWhatsApp
+                  orden={{ id: ordenId, ...(orden || {}), no_orden_fisico: orden?.no_orden_fisico ?? numero }}
+                  tecnico={asignadoA}
+                  miNombre={miNombre}
+                />
+                <div className="modal-actions">
+                  <button className="btn secondary" type="button" onClick={() => setAbierto(false)}>
+                    Cerrar
+                  </button>
+                </div>
+              </>
+            ) : (
+            <>
             {tecnicos.length === 0 && (
               <div className="aviso-box" style={{ marginTop: 10 }}>
                 Todavía nadie tiene un rol de técnico. En Administración › Roles, el rol tiene que tener la Pantalla de
@@ -132,6 +165,8 @@ export default function AsignarOrden({ ordenId, numero, tecnicoActualId = null, 
                 {guardando ? "Guardando..." : "Asignar"}
               </button>
             </div>
+            </>
+            )}
           </div>
         </div>
       )}

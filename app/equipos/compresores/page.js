@@ -5,7 +5,9 @@ import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import { IconCompressor } from "@/components/icons";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
-import { hoyISO, sumarDias } from "@/lib/fechas";
+import { hoyISO } from "@/lib/fechas";
+import { cargarRecordatorios, lineaRecordatorio } from "@/lib/recordatorios";
+import BotonRecordatorioHecho from "@/components/BotonRecordatorioHecho";
 
 // Listado de compresores: tarjetas horizontales con foto, 3 por fila
 // (spec del usuario, 23-sep-2026). Se muestran todos (activos e
@@ -31,17 +33,21 @@ export default async function CompresoresPage() {
   const puedeRegistrar = tieneAcceso(profile, "compresor_mantenimiento_registrar");
   const puedeRegistrarCompresor = tieneAcceso(profile, "registrar_compresor");
 
-  const { data: compresores } = await supabase
+  // V35: si la consulta falla, se avisa (antes decía "Todavía no hay
+  // compresores registrados" aunque sí los hubiera -- reportado 23-oct-2026:
+  // le faltaba a la base la columna proxima_inspeccion, ver migration_68.sql).
+  const { data: compresores, error: errorCompresores } = await supabase
     .from("compresores")
     .select("id, codigo, descripcion, foto_url, activo, proxima_inspeccion")
     .order("codigo");
 
   const hoy = hoyISO();
-  const limite = sumarDias(hoy, 14);
-  const activos = (compresores || []).filter((c) => c.activo);
-  const compresoresPorInspeccionar = activos
-    .filter((c) => !c.proxima_inspeccion || c.proxima_inspeccion <= limite)
-    .sort((a, b) => (a.proxima_inspeccion || "0") < (b.proxima_inspeccion || "0") ? -1 : 1);
+  // V37: el aviso de "Inspecciones" ahora sale de los Recordatorios
+  // (el de cada 14 días es el primero; migration_70.sql). A cada quien le
+  // salen los suyos.
+  const { items: recordatorios } = await cargarRecordatorios(supabase, { usuarioId: profile?.id, hoy });
+  const esAdmin = !!profile?.es_titular || !!profile?.is_admin;
+  const puedeVerHistorial = tieneAcceso(profile, "compresores_historial");
 
   return (
     <div>
@@ -52,24 +58,38 @@ export default async function CompresoresPage() {
         </Link>
         <Breadcrumb items={[{ label: "Equipos", href: "/equipos" }, { label: "Compresores" }]} />
 
-        {compresoresPorInspeccionar.length > 0 && (
+        {(recordatorios.length > 0 || esAdmin) && (
           <div className="card">
-            <div className="section-title" style={{ marginTop: 0 }}>Inspecciones</div>
-            {compresoresPorInspeccionar.map((c) => {
-              const vencida = !c.proxima_inspeccion || c.proxima_inspeccion < hoy;
+            <div className="section-title" style={{ marginTop: 0 }}>Recordatorios</div>
+            {recordatorios.length === 0 && <div className="empty">No tienes recordatorios.</div>}
+            {recordatorios.map((it) => {
+              const color =
+                it.estado === "vencido" ? "var(--rojo)" : it.estado === "pronto" ? "#b5691f" : undefined;
               return (
-                <div className="list-item" key={c.id}>
-                  <div className="list-item-top">
-                    <span className="list-item-title" style={vencida ? { color: "var(--rojo)" } : undefined}>
-                      Hacer inspección de {c.codigo}
+                <div className="list-item" key={`${it.recordatorio.id}-${it.compresor?.id || "x"}`}>
+                  <div className="list-item-top" style={{ gap: 10 }}>
+                    <span className="list-item-title" style={color ? { color } : undefined}>
+                      {lineaRecordatorio(it, formatFechaDDMMAAAADeDate)}
                     </span>
-                    <span className="list-item-qty" style={vencida ? { color: "var(--rojo)" } : undefined}>
-                      {c.proxima_inspeccion ? formatFechaDDMMAAAADeDate(c.proxima_inspeccion) : "Nunca inspeccionado"}
-                    </span>
+                    {it.recordatorio.reinicia === "hecho" && it.estado !== "ok" && (
+                      <BotonRecordatorioHecho
+                        recordatorioId={it.recordatorio.id}
+                        compresorId={it.compresor?.id || null}
+                        nombre={profile?.full_name || ""}
+                      />
+                    )}
                   </div>
                 </div>
               );
             })}
+            {esAdmin && (
+              <Link
+                href="/equipos/compresores/recordatorios"
+                style={{ display: "inline-block", marginTop: 10, color: "var(--azul-claro)", fontWeight: 700, fontSize: 13, textDecoration: "none" }}
+              >
+                Administrar recordatorios ›
+              </Link>
+            )}
           </div>
         )}
 
@@ -81,11 +101,13 @@ export default async function CompresoresPage() {
               </button>
             </Link>
           )}
-          <Link href="/equipos/compresores/historial">
-            <button className="btn secondary" type="button" style={{ marginTop: 0 }}>
-              Historial de mantenimientos
-            </button>
-          </Link>
+          {puedeVerHistorial && (
+            <Link href="/equipos/compresores/historial">
+              <button className="btn secondary" type="button" style={{ marginTop: 0 }}>
+                Historial de mantenimientos
+              </button>
+            </Link>
+          )}
           {puedeRegistrarCompresor && (
             <Link
               href="/equipos/compresores/nuevo"
@@ -102,7 +124,11 @@ export default async function CompresoresPage() {
           )}
         </div>
 
-        {compresores && compresores.length > 0 ? (
+        {errorCompresores ? (
+          <div className="error-box">
+            No se pudieron cargar los compresores ({errorCompresores.message}). Avísale al Titular.
+          </div>
+        ) : compresores && compresores.length > 0 ? (
           <div className="compresor-grid">
             {compresores.map((c) => (
               <Link

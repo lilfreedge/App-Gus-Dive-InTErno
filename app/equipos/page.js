@@ -73,6 +73,10 @@ export default async function EquiposPage() {
     const p = await obtenerPendientesInterno(supabase, profile);
     if (p.tanquesVencidos > 0)
       avisos.push({ href: "/equipos/inspeccion-visual", texto: `${p.tanquesVencidos} tanque${p.tanquesVencidos === 1 ? "" : "s"} con inspección vencida`, clase: "error-box" });
+    if (p.recordatoriosVencidos > 0)
+      avisos.push({ href: "/equipos/compresores", texto: `${p.recordatoriosVencidos} recordatorio${p.recordatoriosVencidos === 1 ? "" : "s"} de compresores vencido${p.recordatoriosVencidos === 1 ? "" : "s"}`, clase: "error-box" });
+    if (p.recordatoriosPronto > 0)
+      avisos.push({ href: "/equipos/compresores", texto: `${p.recordatoriosPronto} recordatorio${p.recordatoriosPronto === 1 ? "" : "s"} de compresores por vencer`, clase: "aviso-box" });
     if (p.reguladoresVencidos > 0)
       avisos.push({ href: "/equipos/mantenimiento-reguladores", texto: `${p.reguladoresVencidos} regulador${p.reguladoresVencidos === 1 ? "" : "es"} con mantenimiento vencido`, clase: "error-box" });
     if (p.hidroVencidas > 0)
@@ -112,8 +116,8 @@ export default async function EquiposPage() {
                 <o.Icono size={22} />
               </span>
               <div>
+                {/* V38: sin la descripción debajo ("vamos a quitar las letricas"). */}
                 <div className="hub-link-title">{o.titulo}</div>
-                <div className="hub-link-desc">{o.descripcion}</div>
               </div>
             </div>
           </Link>
@@ -133,8 +137,8 @@ export default async function EquiposPage() {
                 <o.Icono size={22} />
               </span>
               <div>
+                {/* V38: sin la descripción debajo ("vamos a quitar las letricas"). */}
                 <div className="hub-link-title">{o.titulo}</div>
-                <div className="hub-link-desc">{o.descripcion}</div>
               </div>
             </div>
           </Link>

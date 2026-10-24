@@ -5,6 +5,7 @@ import AppHeaderClientes from "@/components/AppHeaderClientes";
 import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
 import RegistroClient from "./registro-client";
 import { tecnicosConCarga } from "@/lib/tecnicos";
+import { ultimosAvisos } from "@/lib/avisos-tecnicos";
 
 // "Registro" (23-sep-2026, feedback en vivo tras probar v24): dejó de ser
 // directo al formulario "Registrar orden" -- ahora es la cola de trabajo,
@@ -33,7 +34,7 @@ export default async function RegistroPage() {
   // En prueba hidrostática, Enviadas a reparación), por eso necesita estos
   // campos extra para poder filtrar igual que allá.
   const CAMPOS =
-    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, en_espera, tecnico_asignado_id, tecnico_nombre";
+    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, en_espera, tecnico_asignado_id, tecnico_nombre, asignada_en, equipo_marca_snapshot, equipo_modelo_snapshot, que_se_hara";
 
   // V31: las cerradas se traen todas (de a 1000) para que el buscador por
   // cliente o No. de orden encuentre también las viejas; la pestaña
@@ -50,6 +51,9 @@ export default async function RegistroPage() {
     ),
     puedeAsignar ? tecnicosConCarga(supabase) : Promise.resolve([]),
   ]);
+
+  // V37: si al técnico ya se le avisó por WhatsApp (avisos_tecnicos).
+  const avisos = await ultimosAvisos(supabase, ordenes || []);
 
   return (
     <div>
@@ -69,6 +73,8 @@ export default async function RegistroPage() {
           puedeRegistrar={puedeRegistrar}
           puedeAsignar={puedeAsignar}
           tecnicos={tecnicos}
+          avisos={avisos}
+          miNombre={profile?.full_name || ""}
         />
       </div>
     </div>

@@ -6,6 +6,8 @@ import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { hoyISO, sumarDias } from "@/lib/fechas";
+import BuscadorLista from "@/components/BuscadorLista";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 
 export default async function MantenimientoReguladoresPage({ searchParams }) {
   const supabase = createClient();
@@ -16,12 +18,13 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
 
   const reguladorId = searchParams?.regulador || null;
 
-  let query = supabase.from("mantenimientos_con_nombre").select("*").limit(200);
-  if (reguladorId) {
-    query = query.eq("regulador_id", reguladorId);
-  }
-  const [{ data: mantenimientos }, { data: reguladores }] = await Promise.all([
-    query,
+  // V35 (buscador en los historiales): todos, no solo los últimos 200.
+  const [mantenimientos, { data: reguladores }] = await Promise.all([
+    todasLasFilas(supabase, "mantenimientos_con_nombre", (q) => {
+      let consulta = q.select("*");
+      if (reguladorId) consulta = consulta.eq("regulador_id", reguladorId);
+      return consulta.order("created_at", { ascending: false }).order("id");
+    }),
     // Ítem 14 del feedback (23-sep-2026): mismo aviso que ya existe en
     // Inspección visual, ahora también para reguladores -- solo se pide
     // en la vista general (sin filtrar por un regulador puntual).
@@ -67,10 +70,11 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
           </Link>
         )}
 
+        <BuscadorLista placeholder="Buscar regulador o persona...">
         <div className="card">
           {mantenimientos && mantenimientos.length > 0 ? (
             mantenimientos.map((m) => (
-              <div className="list-item" key={m.id}>
+              <div className="list-item" key={m.id} data-buscar="">
                 <div className="list-item-top">
                   <span className="list-item-title">
                     <span className="folio-tag">#{m.folio}</span>
@@ -106,6 +110,7 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
             <div className="empty">Aún no hay mantenimientos registrados.</div>
           )}
         </div>
+        </BuscadorLista>
 
         {reguladoresPendientes.length > 0 && (
           <>

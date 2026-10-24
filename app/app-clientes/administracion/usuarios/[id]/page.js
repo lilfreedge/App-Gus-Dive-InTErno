@@ -8,6 +8,8 @@ import Breadcrumb from "@/components/Breadcrumb";
 import BotonEliminarCuenta from "@/components/BotonEliminarCuenta";
 import { formatFecha } from "@/lib/format";
 import { SECCIONES_CLIENTES } from "@/lib/permisos-clientes";
+import EditarTelefono from "@/components/EditarTelefono";
+import { fechaHoraRD } from "@/lib/avisos-tecnicos";
 
 // V32 -- Ficha de un usuario en App Equipos de clientes (pedido explícito:
 // "ponme que yo pueda darle click a cada usuario y ver sus stats y poder
@@ -58,6 +60,27 @@ export default async function FichaUsuarioClientesPage({ params }) {
     contar(supabase, "equipos_del_cliente", params.id),
     contar(supabase, "avisos_clientes", params.id),
   ]);
+
+  // V37: avisos por WhatsApp que ha recibido como técnico (plan-v37-ronda3,
+  // opción C). Si la tabla no existe todavía, no sale.
+  const recibidos = await supabase
+    .from("avisos_tecnicos")
+    .select("created_at, avisado_por_nombre, orden_id", { count: "exact" })
+    .eq("tecnico_id", params.id)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const avisosRecibidos = recibidos.error ? 0 : recibidos.count || 0;
+  const ultimoRecibido = recibidos.error ? null : recibidos.data?.[0] || null;
+  let ordenUltimo = null;
+  if (ultimoRecibido) {
+    const { data: o } = await supabase
+      .from("ordenes_equipos")
+      .select("folio, no_orden_fisico")
+      .eq("id", ultimoRecibido.orden_id)
+      .maybeSingle();
+    ordenUltimo = o;
+  }
+  const esTecnicoPerfil = !!perfil.permisos?.rol_tecnico;
 
   let nombreRol = null;
   if (perfil.rol_clientes_id) {
@@ -160,6 +183,38 @@ export default async function FichaUsuarioClientesPage({ params }) {
           Ver sus movimientos en órdenes →
         </Link>
 
+        {(esTecnicoPerfil || avisosRecibidos > 0) && (
+          <div className="card" style={{ marginTop: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
+              <span>Avisos de órdenes asignadas (WhatsApp)</span>
+              <b style={{ fontSize: 18 }}>{avisosRecibidos}</b>
+            </div>
+            {ultimoRecibido && (
+              <div className="hint-text" style={{ marginTop: 4 }}>
+                Último: {fechaHoraRD(ultimoRecibido.created_at)}
+                {ordenUltimo ? ` · orden No. ${ordenUltimo.no_orden_fisico ?? ordenUltimo.folio}` : ""}
+                {ultimoRecibido.avisado_por_nombre ? ` · lo avisó ${ultimoRecibido.avisado_por_nombre.split(" ")[0]}` : ""}
+              </div>
+            )}
+            {esTecnicoPerfil && (
+              <Link
+                href={`/tecnico?como=${params.id}`}
+                style={{ display: "inline-block", marginTop: 6, marginRight: 14, fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
+              >
+                Ver su menú de técnico ›
+              </Link>
+            )}
+            {avisosRecibidos > 0 && (
+              <Link
+                href={`/app-clientes/administracion/bitacora-movimientos?ver=avisos&tecnico=${params.id}`}
+                style={{ display: "inline-block", marginTop: 6, fontSize: 12.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
+              >
+                Ver todos sus avisos ›
+              </Link>
+            )}
+          </div>
+        )}
+
         {!perfil.es_titular && (
           <>
             <div className="section-title">Permisos activos</div>
@@ -185,6 +240,12 @@ export default async function FichaUsuarioClientesPage({ params }) {
         <div className="section-title">Cuenta</div>
         <table className="table-mini">
           <tbody>
+            <tr>
+              <td>WhatsApp</td>
+              <td>
+                <EditarTelefono perfilId={perfil.id} telefono={perfil.telefono || ""} />
+              </td>
+            </tr>
             <tr>
               <td>Último acceso</td>
               <td>{ultimoAcceso ? formatFecha(ultimoAcceso) : "No disponible"}</td>

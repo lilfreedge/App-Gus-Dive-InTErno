@@ -7,6 +7,8 @@ import { registrarCambio } from "@/lib/audit-client";
 import SelectorBusqueda from "@/components/SelectorBusqueda";
 import CampoFoto from "@/components/CampoFoto";
 import { subirFoto } from "@/lib/storage-client";
+import { formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { NIVELES_ACEITE } from "@/lib/compresores";
 
 const TIPOS = ["Inspección", "Mantenimiento preventivo", "Mantenimiento correctivo"];
 const RESPONSABLES = ["Gugi", "Pipe", "Frederick", "Alexander", "Danny"];
@@ -40,12 +42,17 @@ export default function EditarMantenimientoCompresorForm({ mantenimiento: m, com
   const [compresorId, setCompresorId] = useState(m.compresor_id || "");
   const [tipo, setTipo] = useState(m.tipo_mantenimiento || "");
   const [responsable, setResponsable] = useState(m.responsable || "");
-  const [fecha, setFecha] = useState(m.fecha || "");
   const [horometro, setHorometro] = useState(String(m.horometro ?? ""));
   const [fotoHorometro, setFotoHorometro] = useState(null);
   const [notas, setNotas] = useState(m.notas || "");
 
   const [nivelAceite, setNivelAceite] = useState(m.nivel_aceite || "");
+  const [aceiteEchado, setAceiteEchado] = useState(
+    m.aceite_echado === null || m.aceite_echado === undefined ? null : !!m.aceite_echado
+  );
+  // V37: si el registro es de antes (texto escrito a mano), se deja como
+  // opción para no perderlo.
+  const aceiteViejo = m.nivel_aceite && !NIVELES_ACEITE.some((n) => n.valor === m.nivel_aceite) ? m.nivel_aceite : null;
   const [limpiezaCompresor, setLimpiezaCompresor] = useState(m.limpieza_compresor || "");
   const [estadoManguera, setEstadoManguera] = useState(m.estado_manguera || "");
   const [estadoFiltroPrincipal, setEstadoFiltroPrincipal] = useState(m.estado_filtro_principal || "");
@@ -76,11 +83,10 @@ export default function EditarMantenimientoCompresorForm({ mantenimiento: m, com
     if (!compresorId) return setError("Selecciona un compresor.");
     if (!tipo) return setError("Selecciona el tipo de mantenimiento.");
     if (!responsable) return setError("Selecciona el responsable.");
-    if (!fecha) return setError("Selecciona la fecha.");
     if (!horometro.toString().trim()) return setError("Completa el horómetro.");
 
     if (esInspeccion) {
-      if (!nivelAceite.trim()) return setError("Completa el nivel de aceite.");
+      if (!nivelAceite.trim()) return setError("Selecciona el nivel de aceite.");
       if (!limpiezaCompresor) return setError("Selecciona la limpieza del compresor.");
       if (!estadoManguera) return setError("Selecciona el estado de la manguera.");
       if (!estadoFiltroPrincipal) return setError("Selecciona el estado del filtro principal.");
@@ -124,11 +130,13 @@ export default function EditarMantenimientoCompresorForm({ mantenimiento: m, com
       compresor_codigo_snapshot: compresor?.codigo || m.compresor_codigo_snapshot,
       tipo_mantenimiento: tipo,
       responsable,
-      fecha,
+      // V37: la fecha no se cambia (la pone la base de datos al registrar;
+      // migration_70.sql tampoco deja cambiarla).
       horometro: Number(horometro),
       foto_horometro_url: fotoHorometroUrl,
       notas: notas.trim() || null,
       nivel_aceite: esInspeccion ? nivelAceite.trim() || null : null,
+      aceite_echado: esInspeccion ? aceiteEchado : null,
       limpieza_compresor: esInspeccion ? limpiezaCompresor || null : null,
       estado_manguera: esInspeccion ? estadoManguera || null : null,
       estado_filtro_principal: esInspeccion ? estadoFiltroPrincipal || null : null,
@@ -195,10 +203,10 @@ export default function EditarMantenimientoCompresorForm({ mantenimiento: m, com
         ))}
       </select>
 
-      <label htmlFor="fecha">
-        Fecha <span className="req">*</span>
-      </label>
-      <input id="fecha" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+      <label>Fecha</label>
+      <div className="hint-text" style={{ marginTop: 4 }}>
+        {formatFechaDDMMAAAADeDate(m.fecha)} · la puso el app al registrarlo y no se puede cambiar.
+      </div>
 
       <label htmlFor="horometro">
         Horómetro <span className="req">*</span>
@@ -221,7 +229,31 @@ export default function EditarMantenimientoCompresorForm({ mantenimiento: m, com
           <label htmlFor="nivel_aceite">
             Nivel de aceite <span className="req">*</span>
           </label>
-          <input id="nivel_aceite" type="text" value={nivelAceite} onChange={(e) => setNivelAceite(e.target.value)} />
+          <select id="nivel_aceite" value={nivelAceite} onChange={(e) => setNivelAceite(e.target.value)}>
+            <option value="">Selecciona...</option>
+            {NIVELES_ACEITE.map((n) => (
+              <option key={n.valor} value={n.valor}>{n.label}</option>
+            ))}
+            {aceiteViejo && <option value={aceiteViejo}>Como estaba: {aceiteViejo}</option>}
+          </select>
+
+          <label>¿Se le echó aceite?</label>
+          <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+            {[
+              [false, "No"],
+              [true, "Sí"],
+            ].map(([v, t]) => (
+              <button
+                key={t}
+                type="button"
+                className={aceiteEchado === v ? "btn btn-primary" : "btn secondary"}
+                style={{ marginTop: 0, width: "auto", padding: "8px 22px" }}
+                onClick={() => setAceiteEchado(v)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
 
           <SelectorEstado id="limpieza_compresor" label="Limpieza compresor" valor={limpiezaCompresor} onChange={setLimpiezaCompresor} required />
           <SelectorEstado id="estado_manguera" label="Estado de manguera" valor={estadoManguera} onChange={setEstadoManguera} required />

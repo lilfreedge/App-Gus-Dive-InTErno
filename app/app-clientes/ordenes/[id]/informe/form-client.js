@@ -39,7 +39,10 @@ const TEXTO_SUTIL_ESTILO = { fontSize: 13, color: "var(--texto-suave)" };
 // estado de orden" (que sí tiene validación en cadena), esto es un
 // formulario normal de un solo bloque -- el mockup no pedía pasos
 // bloqueados aquí, solo el botón final "Generar informe (PDF)".
-export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido = "" }) {
+// V38 -- `volver` ({ href, texto }): al guardar el informe sale un aviso con
+// un botón para regresar a donde se abrió (el menú del técnico o
+// Actualizar estado de orden).
+export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido = "", volver = null }) {
   const supabase = createClient();
 
   const [informe, setInforme] = useState(() => ({
@@ -47,6 +50,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
     ...(orden.informe_mantenimiento || {}),
   }));
   const [yaGenerado, setYaGenerado] = useState(!!orden.informe_mantenimiento);
+  const [recienGuardado, setRecienGuardado] = useState(false);
   const [vista, setVista] = useState("formulario");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
@@ -131,6 +135,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
 
       setInforme(informeFinal);
       setYaGenerado(true);
+      setRecienGuardado(true);
       setVista("preview");
     } catch (e) {
       setError("No se pudo guardar. Intenta de nuevo.");
@@ -143,6 +148,16 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
 
   return (
     <div className="card">
+      {recienGuardado && volver && (
+        <div className="success-box no-print" style={{ marginTop: 0, marginBottom: 12 }}>
+          <b>✓ Informe guardado.</b>
+          <a href={volver.href} style={{ display: "block", marginTop: 8 }}>
+            <button type="button" className="btn btn-primary" style={{ marginTop: 0, width: "auto" }}>
+              {volver.texto}
+            </button>
+          </a>
+        </div>
+      )}
       {/* Arreglo de impresión (feedback sobre v40, pedido explícito) -- a
           esta barra de pestañas le faltaba "no-print": se imprimía junto
           con el informe (vista "Informe (cliente)"), empujando el

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser } from "@/lib/roles";
+import { redirect } from "next/navigation";
+import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import HeaderSimple from "@/components/HeaderSimple";
 import { IconArrowLeft } from "@/components/icons";
 
@@ -13,6 +14,9 @@ import { IconArrowLeft } from "@/components/icons";
 export default async function ViajesBuceosPage() {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
+  // V35: solo con el acceso a Viajes/Buceos (migration_69.sql).
+  if (!profile) redirect("/login");
+  if (!tieneAcceso(profile, "acceso_viajes")) redirect("/espacio?elegir=1");
   const nombreCompleto = profile?.full_name || "";
   const nombre = nombreCompleto.split(" ")[0] || "";
 

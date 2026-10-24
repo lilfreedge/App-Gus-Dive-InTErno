@@ -7,6 +7,8 @@ import HistorialDeleteButton from "@/components/HistorialDeleteButton";
 import HistorialRestoreButton from "@/components/HistorialRestoreButton";
 import BorrarTodoHistorialButton from "@/components/BorrarTodoHistorialButton";
 import { formatFecha, formatFechaDDMMAAAADeDate, formatMesAnio } from "@/lib/format";
+import BuscadorLista from "@/components/BuscadorLista";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 
 export default async function HistorialCambiosPage() {
   const supabase = createClient();
@@ -19,11 +21,10 @@ export default async function HistorialCambiosPage() {
   // (23-sep-2026). La política RLS de cambios_historial ya las oculta a
   // administradores comunes; este filtro además evita que aparezcan sin
   // formato ("Cambio de nombre" por defecto) para el Titular acá.
-  const { data: cambios } = await supabase
-    .from("historial_con_nombre")
-    .select("*")
-    .neq("tabla", "ordenes_equipos")
-    .limit(300);
+  // V35 (buscador en los historiales): todo, no solo los últimos 300.
+  const cambios = await todasLasFilas(supabase, "historial_con_nombre", (q) =>
+    q.select("*").neq("tabla", "ordenes_equipos").order("created_at", { ascending: false }).order("id")
+  );
 
   const anulados = (cambios || []).filter((c) => c.accion === "borrar");
   const ediciones = (cambios || []).filter((c) => c.accion === "editar");
@@ -35,6 +36,9 @@ export default async function HistorialCambiosPage() {
         <NavArrowsServer />
         <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Anulaciones y ediciones" }]} />
 
+        {/* V35: buscador (pedido explícito: "un search bar en los
+            historiales, todos"). Busca en anulaciones y ediciones. */}
+        <BuscadorLista placeholder="Buscar persona, motivo o registro...">
         <div className="section-title">Movimientos anulados</div>
         {/* Botones separados de "Borrar todo" (28-sep-2026, pedido
             explícito: "en app interno, agregame boton para borrar todo
@@ -73,9 +77,28 @@ export default async function HistorialCambiosPage() {
         ) : (
           <div className="empty">No hay ediciones registradas.</div>
         )}
+        </BuscadorLista>
       </div>
     </div>
   );
+}
+
+// V35 -- texto extra para el buscador: quién lo hizo, el motivo y los
+// códigos del registro (aunque no salgan escritos en la tarjeta).
+function textoBuscar(cambio) {
+  const d = cambio.datos_anteriores || {};
+  return [
+    cambio.full_name,
+    cambio.motivo,
+    d.folio ? `#${d.folio}` : "",
+    d.articulo,
+    d.tanque_codigo_snapshot,
+    d.regulador_codigo_snapshot,
+    d.codigo,
+    d.nombre,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function tituloRegistro(tabla) {
@@ -102,7 +125,7 @@ function TarjetaAnulado({ cambio, esTitular, esAdmin }) {
   const d = cambio.datos_anteriores || {};
   const esRestaurable = cambio.tabla !== "profiles";
   return (
-    <div className="card anulado">
+    <div className="card anulado" data-buscar={textoBuscar(cambio)}>
       <div className="list-item-top">
         <div className="list-item-title">
           {tituloRegistro(cambio.tabla)} {esMasculino(cambio.tabla) ? "borrado" : "borrada"}
@@ -302,7 +325,7 @@ function TarjetaEdicion({ cambio, esTitular }) {
   // Después aunque la edición sea de antes de esta entrega.
   if (cambio.tabla === "profiles") {
     return (
-      <div className="card edicion">
+      <div className="card edicion" data-buscar={textoBuscar(cambio)}>
         <div className="list-item-top">
           <div className="list-item-title">Cambio de nombre</div>
           {esTitular && <HistorialDeleteButton cambioId={cambio.id} />}
@@ -339,7 +362,7 @@ function TarjetaEdicion({ cambio, esTitular }) {
 
   if (armarFilas) {
     return (
-      <div className="card edicion">
+      <div className="card edicion" data-buscar={textoBuscar(cambio)}>
         <div className="list-item-top">
           <div className="list-item-title">{tituloEdicion(cambio.tabla)}</div>
           {esTitular && <HistorialDeleteButton cambioId={cambio.id} />}
@@ -377,7 +400,7 @@ function TarjetaEdicion({ cambio, esTitular }) {
   // Genérico -- por si algún día aparece una tabla nueva que aún no
   // tenga su propio detalle de filas arriba.
   return (
-    <div className="card edicion">
+    <div className="card edicion" data-buscar={textoBuscar(cambio)}>
       <div className="list-item-top">
         <div className="list-item-title">
           {tituloRegistro(cambio.tabla)} {esMasculino(cambio.tabla) ? "editado" : "editada"}

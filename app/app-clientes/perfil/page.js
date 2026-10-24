@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import EditarTelefono from "@/components/EditarTelefono";
 import { getProfileYUser } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import PreferenciasApariencia from "@/components/PreferenciasApariencia";
@@ -66,6 +67,17 @@ export default async function PerfilClientesPage() {
         <h1 className="page-title">Mi Perfil</h1>
 
         <PerfilForm userId={user.id} nombreActual={profile?.full_name || ""} correo={user.email} />
+
+        {/* V37: WhatsApp de la persona (también lo puede poner el Titular en
+            su ficha). V38: los avisos de órdenes van al grupo, pero el número
+            se queda ("no lo quites, déjalo... por si en un futuro hace falta"). */}
+        <div className="card" style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--texto-suave)", marginBottom: 4 }}>WhatsApp</div>
+          <EditarTelefono perfilId={user.id} telefono={profile?.telefono || ""} />
+          <div className="hint-text" style={{ marginTop: 6 }}>
+            Tu número, por si hace falta contactarte. Los avisos de órdenes van al grupo del taller.
+          </div>
+        </div>
 
         <div style={{ marginTop: 16 }}>
           <MiActividadClientes actividad={actividad} />

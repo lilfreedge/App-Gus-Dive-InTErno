@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import RegistroActions from "@/components/RegistroActions";
 import FacturacionToggle from "@/components/FacturacionToggle";
 import { formatFecha } from "@/lib/format";
+import BuscadorLista from "@/components/BuscadorLista";
+import { IconReceipt } from "@/components/icons";
 
 // Lista de llenados (V5). Además del control de facturación por fila
 // (FacturacionToggle), quien tiene el permiso "facturacion" puede activar
@@ -24,6 +26,7 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, pue
   const [facturaNoError, setFacturaNoError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [soloPendientes, setSoloPendientes] = useState(false);
+  const [errorVarios, setErrorVarios] = useState("");
 
   function activarModoSeleccion() {
     setModoSeleccion(true);
@@ -45,6 +48,7 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, pue
     if (seleccionados.length === 0) return;
     setFacturaNo("");
     setFacturaNoError(false);
+    setErrorVarios("");
     setModalAbierto(true);
   }
 
@@ -61,13 +65,21 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, pue
     }
 
     setLoading(true);
+    setErrorVarios("");
 
-    await supabase
+    // V35: si la base de datos no deja guardar, ahora se avisa (antes no
+    // decía nada -- ver migration_67.sql).
+    const { data, error } = await supabase
       .from("llenados_tanques")
       .update({ facturado: true, factura_no: facturaNoLimpio })
-      .in("id", seleccionados);
+      .in("id", seleccionados)
+      .select("id");
 
     setLoading(false);
+    if (error) return setErrorVarios(error.message || "No se pudo guardar.");
+    if (!data || data.length === 0) {
+      return setErrorVarios("No se guardó: no tienes permiso para facturar llenados. Pídeselo al Titular.");
+    }
     setModalAbierto(false);
     setModoSeleccion(false);
     setSeleccionados([]);
@@ -99,19 +111,28 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, pue
               }
               onClick={() => setSoloPendientes((v) => !v)}
             >
-              Por facturar
+              Por facturar ({noFacturados.length})
+            </button>
+          )}
+          {/* V35 (maqueta-facturar-buscadores.html, opción A): "Facturar
+              varios" pasa a ser un botón, junto a "Por facturar" (antes era
+              un chip chiquito más abajo). */}
+          {puedeFacturar && noFacturados.length > 0 && !modoSeleccion && (
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={activarModoSeleccion}
+              style={{ width: "auto", margin: 0, display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <IconReceipt size={15} /> Facturar varios
             </button>
           )}
         </div>
       )}
 
-      {puedeFacturar && noFacturados.length > 0 && (
+      {puedeFacturar && noFacturados.length > 0 && modoSeleccion && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
-          {!modoSeleccion ? (
-            <button type="button" className="chip-btn" onClick={activarModoSeleccion}>
-              Facturar varios
-            </button>
-          ) : (
+          {(
             <>
               <button type="button" className="chip-btn" onClick={cancelarModoSeleccion}>
                 Cancelar selección
@@ -131,10 +152,12 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, pue
         </div>
       )}
 
+      {/* V35: buscador (pedido explícito: "un search bar en los historiales, todos"). */}
+      <BuscadorLista placeholder="Buscar No., persona, nota o No. de factura...">
       <div className="card">
         {visibles && visibles.length > 0 ? (
           visibles.map((t) => (
-            <div className="list-item" key={t.id}>
+            <div className="list-item" key={t.id} data-buscar={`#${t.folio} ${t.factura_no || ""}`}>
               <div className="list-item-top">
                 <span className="list-item-title" style={{ display: "flex", alignItems: "center" }}>
                   {modoSeleccion && !t.facturado && (
@@ -151,7 +174,6 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, pue
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span className="list-item-qty">{t.cantidad} tanque(s)</span>
-                  {puedeFacturar && !modoSeleccion && <FacturacionToggle registro={t} />}
                   {puedeEditar && (
                     <RegistroActions
                       tabla="llenados_tanques"
@@ -165,12 +187,15 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, pue
                 {t.full_name} · {formatFecha(t.created_at)}
               </div>
               {t.nota && <div className="list-item-note">{t.nota}</div>}
+              {/* V35 (opción A): la facturación va en su propia línea, abajo. */}
+              {puedeFacturar && !modoSeleccion && <FacturacionToggle registro={t} />}
             </div>
           ))
         ) : (
           <div className="empty">Aún no hay llenados registrados.</div>
         )}
       </div>
+      </BuscadorLista>
 
       {modalAbierto && (
         <div
@@ -200,6 +225,7 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, pue
                 <div className="error-msg">⚠ Este campo es obligatorio</div>
               )}
             </div>
+            {errorVarios && <div className="error-box" style={{ marginTop: 10 }}>{errorVarios}</div>}
             <div className="modal-actions">
               <button className="btn secondary" onClick={cerrarModal} disabled={loading} type="button">
                 Cancelar

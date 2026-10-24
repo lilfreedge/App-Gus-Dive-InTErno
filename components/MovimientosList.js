@@ -3,6 +3,7 @@
 import { useState } from "react";
 import RegistroActions from "./RegistroActions";
 import { formatFecha } from "@/lib/format";
+import BuscadorLista from "./BuscadorLista";
 import { IconPackage, IconTank, IconAlert, IconGear } from "./icons";
 
 const FILTROS = [
@@ -38,6 +39,8 @@ export default function MovimientosList({ movimientos, puedeEditar }) {
         ))}
       </div>
 
+      {/* V35: buscador (pedido explícito: "un search bar en los historiales, todos"). */}
+      <BuscadorLista placeholder="Buscar código, tanque, regulador o persona...">
       <div className="card">
         {filtrados.length === 0 ? (
           <div className="empty">No hay movimientos que mostrar.</div>
@@ -45,7 +48,7 @@ export default function MovimientosList({ movimientos, puedeEditar }) {
           filtrados.map((m) => {
             if (m.tipo === "salida") {
               return (
-                <div className="list-item" key={"salida-" + m.id}>
+                <div className="list-item" data-buscar="" key={"salida-" + m.id}>
                   <div className="list-item-top">
                     <span className="list-item-title">
                       <IconPackage size={14} />
@@ -75,7 +78,7 @@ export default function MovimientosList({ movimientos, puedeEditar }) {
 
             if (m.tipo === "llenado") {
               return (
-                <div className="list-item" key={"llenado-" + m.id}>
+                <div className="list-item" data-buscar="" key={"llenado-" + m.id}>
                   <div className="list-item-top">
                     <span className="list-item-title">
                       <IconTank size={14} />
@@ -104,7 +107,7 @@ export default function MovimientosList({ movimientos, puedeEditar }) {
 
             if (m.tipo === "inspeccion") {
               return (
-                <div className="list-item" key={"inspeccion-" + m.id}>
+                <div className="list-item" data-buscar="" key={"inspeccion-" + m.id}>
                   <div className="list-item-top">
                     <span className="list-item-title">
                       <IconAlert size={14} />
@@ -135,7 +138,7 @@ export default function MovimientosList({ movimientos, puedeEditar }) {
 
             // mantenimiento
             return (
-              <div className="list-item" key={"mantenimiento-" + m.id}>
+              <div className="list-item" data-buscar="" key={"mantenimiento-" + m.id}>
                 <div className="list-item-top">
                   <span className="list-item-title">
                     <IconGear size={14} />
@@ -162,6 +165,7 @@ export default function MovimientosList({ movimientos, puedeEditar }) {
           })
         )}
       </div>
+      </BuscadorLista>
     </div>
   );
 }

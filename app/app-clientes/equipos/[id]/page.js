@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso, tieneAcceso } from "@/lib/roles";
+import { requirePermiso, tieneAcceso, esTecnico } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
@@ -20,7 +20,7 @@ const BADGE_ESTADO = {
 // ha hecho cada vez que ha ido un mismo equipo a la tienda" -- cada visita
 // (orden) de este equipo, sin importar cuántas veces haya venido, listada
 // como botón hacia su propia ficha (no acordeón).
-export default async function FichaEquipoPage({ params }) {
+export default async function FichaEquipoPage({ params, searchParams }) {
   const supabase = createClient();
   const { profile } = await requirePermiso(supabase, "equipos_clientes");
   const puedeRegistrar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_registrar;
@@ -33,6 +33,11 @@ export default async function FichaEquipoPage({ params }) {
   // forma de llegar directo a sus ediciones (cambios de marca/modelo/
   // serie/etc.).
   const puedeVerHistorial = tieneAcceso(profile, "equipos_clientes_historial");
+  // V38 -- el técnico llega aquí desde su ficha de la orden ("Ver lo que se
+  // le ha hecho antes"): "Volver" lo regresa a esa orden y no se le enseñan
+  // links a la ficha del cliente (no ve el contacto del cliente).
+  const tecnico = esTecnico(profile);
+  const ordenDeVuelta = /^[0-9a-f-]{36}$/i.test(searchParams?.orden || "") ? searchParams.orden : null;
 
   // BUG corregido (feedback en vivo, 29-sep-2026: "le di a editar equipo a
   // un tanque que agregué mientras registraba la orden, y no aparecen los
@@ -66,25 +71,46 @@ export default async function FichaEquipoPage({ params }) {
     <div>
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href={`/app-clientes/clientes/${equipo.cliente_id}`} className="back-link">
+        <Link
+          href={
+            tecnico
+              ? ordenDeVuelta
+                ? `/app-clientes/ordenes/${ordenDeVuelta}`
+                : "/app-clientes"
+              : `/app-clientes/clientes/${equipo.cliente_id}`
+          }
+          className="back-link"
+        >
           ← Volver
         </Link>
         <Breadcrumb
-          items={[
-            { label: "App Equipos de clientes", href: "/app-clientes" },
-            { label: "Listado de clientes", href: "/app-clientes/clientes" },
-            { label: cliente?.nombre || "Cliente", href: `/app-clientes/clientes/${equipo.cliente_id}` },
-            { label: tipoLabel },
-          ]}
+          items={
+            tecnico
+              ? [
+                  { label: "App Equipos de clientes", href: "/app-clientes" },
+                  { label: "Mis órdenes", href: "/app-clientes" },
+                  { label: tipoLabel },
+                ]
+              : [
+                  { label: "App Equipos de clientes", href: "/app-clientes" },
+                  { label: "Listado de clientes", href: "/app-clientes/clientes" },
+                  { label: cliente?.nombre || "Cliente", href: `/app-clientes/clientes/${equipo.cliente_id}` },
+                  { label: tipoLabel },
+                ]
+          }
         />
         <h1 className="page-title">{marcaModelo ? `${tipoLabel} — ${marcaModelo}` : tipoLabel}</h1>
 
         <div className="card">
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Campo etiqueta="Cliente">
-              <Link href={`/app-clientes/clientes/${equipo.cliente_id}`} className="breadcrumb-crumb">
-                {cliente?.nombre || "—"}
-              </Link>
+              {tecnico ? (
+                cliente?.nombre || "—"
+              ) : (
+                <Link href={`/app-clientes/clientes/${equipo.cliente_id}`} className="breadcrumb-crumb">
+                  {cliente?.nombre || "—"}
+                </Link>
+              )}
             </Campo>
             <Campo etiqueta="Tipo de equipo" valor={tipoLabel} />
             <Campo etiqueta={equipo.tipo_equipo === "Tanques" ? "Fabricante" : "Marca"} valor={equipo.marca || "—"} />

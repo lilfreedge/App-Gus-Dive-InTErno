@@ -52,7 +52,7 @@ export default function SolicitudCard({ solicitud, userId, nombreUsuario }) {
   }
 
   return (
-    <div className="card">
+    <div className="card" data-buscar={`#${solicitud.folio}`}>
       <div className="list-item-top">
         <div>
           <div className="list-item-title">Solicitud #{solicitud.folio}</div>

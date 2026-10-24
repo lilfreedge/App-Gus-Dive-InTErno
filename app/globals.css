@@ -235,6 +235,10 @@ html[data-theme="dark"] .btn.secondary.btn-hold {
 .espacio-icon.espacio-icon-viajes {
   background: #4ebae8;
 }
+.espacio-icon.espacio-icon-alquiler {
+  /* V37: rojo GUS (pedido explícito: "intentemos con el rojo de gus"). */
+  background: #cd392a;
+}
 
 /* V33 -- "¿A dónde quieres entrar?" sin barra de color arriba (opción C de
    la maqueta): esa pantalla no es de ninguna app, así que no lleva el color
@@ -2097,3 +2101,196 @@ label .req {
     font-size: 10px;
   }
 }
+
+
+/* ---------------------------------------------------------------
+   V37 -- Historial de compresores ampliado
+   --------------------------------------------------------------- */
+.page.page-ancha {
+  max-width: 1200px;
+}
+.muted {
+  color: var(--texto-suave);
+}
+.pastillas {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pastilla {
+  border: 1px solid var(--borde);
+  background: var(--tarjeta);
+  color: var(--texto);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.pastilla-activa {
+  background: var(--azul-claro);
+  border-color: var(--azul-claro);
+  color: #fff;
+}
+.resumen-compresor {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.resumen-compresor .stat-value {
+  font-size: 20px;
+}
+.tarjetas-compresores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.tarjeta-compresor {
+  margin: 0;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 1px solid var(--borde);
+}
+.filtros-historial {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0 12px;
+}
+.tabla-historial-wrap {
+  overflow-x: auto;
+  background: var(--tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 4px 8px;
+}
+.tabla-historial {
+  border-collapse: collapse;
+  font-size: 13px;
+  width: 100%;
+}
+.tabla-historial th {
+  text-align: left;
+  padding: 8px 7px;
+  font-size: 11.5px;
+  color: var(--texto-suave);
+  white-space: nowrap;
+  font-weight: 700;
+}
+.tabla-historial td {
+  padding: 8px 7px;
+  border-top: 1px solid var(--borde);
+  white-space: nowrap;
+  vertical-align: top;
+}
+.tabla-historial td.celda-texto {
+  white-space: normal;
+  min-width: 150px;
+  max-width: 280px;
+}
+.tabla-historial .fila-click {
+  cursor: pointer;
+}
+.tabla-historial .fila-click:hover td {
+  background: var(--superficie-suave-hover);
+}
+.solo-cel {
+  display: none;
+}
+@media (max-width: 700px) {
+  .solo-pc {
+    display: none;
+  }
+  .solo-cel {
+    display: block;
+  }
+  .resumen-compresor {
+    grid-template-columns: 1fr 1fr;
+  }
+  .filtros-historial {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ============================================================
+   V38 -- Menú del técnico (app/tecnico, maqueta-v38-3.html, opción A):
+   letras y botones grandes, colores que dicen algo (rojo te toca, ámbar
+   pronto o esperando, verde listo), pasos numerados.
+   ============================================================ */
+.tec { font-size: 16px; }
+.tec-hola { font-size: 23px; font-weight: 800; color: var(--texto); margin: 2px 0 2px; }
+.tec-sub { font-size: 15px; color: var(--texto-suave); margin: 0 0 14px; }
+.tec-banner { background: var(--edicion-fondo); border: 1px solid var(--edicion-borde); border-radius: 12px; padding: 10px 12px; font-size: 14px; margin-bottom: 14px; }
+.tec-sec { font-size: 13.5px; font-weight: 800; color: var(--texto-suave); letter-spacing: 0.04em; margin: 20px 4px 8px; text-transform: uppercase; }
+.tec-sec:first-of-type { margin-top: 4px; }
+.tec-card { background: var(--tarjeta); border-radius: 18px; border: 1px solid var(--borde); margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(10, 61, 98, 0.05); }
+.tec-card.rojo { border-left: 7px solid var(--rojo); }
+.tec-card.ambar { border-left: 7px solid #d98a1c; }
+.tec-card.verde { border-left: 7px solid var(--verde); }
+.tec-card-top { padding: 14px; display: flex; gap: 12px; align-items: center; width: 100%; background: none; border: none; text-align: left; font-family: inherit; color: inherit; cursor: pointer; }
+.tec-card-top.fijo { cursor: default; }
+.tec-icono { width: 44px; height: 44px; border-radius: 22px; background: var(--superficie-suave); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tec-icono.rojo { color: var(--rojo); } .tec-icono.ambar { color: #b5691f; } .tec-icono.verde { color: var(--verde); } .tec-icono.azul { color: var(--azul-claro); border-radius: 12px; }
+.tec-card-main { flex: 1; min-width: 0; }
+.tec-titulo { font-size: 17.5px; font-weight: 800; line-height: 1.2; color: var(--texto); }
+.tec-linea { font-size: 14px; font-weight: 700; margin-top: 3px; }
+.tec-linea.rojo { color: var(--rojo); } .tec-linea.ambar { color: #b5691f; } .tec-linea.verde { color: var(--verde); } .tec-linea.gris { color: var(--texto-suave); font-weight: 600; }
+.tec-flecha { color: var(--texto-suave); flex-shrink: 0; display: flex; }
+.tec-open { border-top: 1px solid var(--borde); padding: 14px; background: var(--superficie-suave); }
+.tec-dijo { background: var(--acento-fondo); border-radius: 12px; padding: 10px 12px; font-size: 15px; color: var(--texto); }
+.tec-dijo-t { font-size: 12px; font-weight: 800; color: var(--acento-texto); margin-bottom: 2px; letter-spacing: 0.03em; }
+.tec-paso { display: flex; gap: 10px; margin-top: 18px; align-items: flex-start; }
+.tec-paso-n { width: 30px; height: 30px; border-radius: 15px; background: var(--azul); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; }
+.tec-paso-n.ok { background: var(--verde); }
+.tec-paso-body { flex: 1; min-width: 0; }
+.tec-paso-t { font-size: 16.5px; font-weight: 800; color: var(--texto); margin: 4px 0 8px; }
+.tec-paso-t small { font-weight: 600; color: var(--texto-suave); font-size: 14px; }
+.tec-chip { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 11px 12px; font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.tec-chip.ok { border-color: var(--exito-borde); background: var(--exito-fondo); color: var(--verde); }
+.tec-quitar { background: none; border: none; color: var(--rojo); font-weight: 700; font-size: 13.5px; padding: 4px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.tec-btn { width: 100%; border: none; border-radius: 14px; padding: 16px 14px; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: inherit; cursor: pointer; text-decoration: none; }
+.tec-btn:disabled { opacity: 0.6; cursor: default; }
+.tec-btn.azul { background: var(--azul); color: #fff; }
+.tec-btn.verde { background: #1f8f4e; color: #fff; font-size: 18.5px; padding: 19px 14px; }
+.tec-btn.borde { background: var(--tarjeta); color: var(--azul-texto); border: 2px solid var(--azul-claro); }
+.tec-btn.hold { background: var(--tarjeta); color: var(--rojo); border: 2px solid var(--error-borde); font-size: 16px; }
+.tec-btn.rojo { background: #c23b3b; color: #fff; }
+.tec-btn.gris { background: var(--superficie-suave); color: var(--texto); font-size: 15.5px; border: 1px solid var(--borde); }
+.tec-btn.bloqueado { background: var(--superficie-suave); color: var(--texto-suave); border: 1px dashed var(--borde); cursor: not-allowed; }
+.tec-btn.chico { width: auto; padding: 12px 16px; font-size: 15.5px; flex-shrink: 0; }
+.tec-area { width: 100%; border: 1px solid var(--borde); border-radius: 12px; padding: 12px; font-size: 16px; min-height: 80px; background: var(--tarjeta); color: var(--texto); font-family: inherit; margin: 0; }
+.tec-input { width: 100%; border: 2px solid var(--borde); border-radius: 14px; padding: 13px 14px; font-size: 17px; background: var(--tarjeta); color: var(--texto); font-family: inherit; margin: 0; }
+.tec-hint { font-size: 13.5px; color: var(--texto-suave); margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+.tec-aviso { font-size: 14px; color: #a8650f; font-weight: 700; margin-top: 6px; }
+.tec-error { font-size: 14.5px; color: var(--rojo); font-weight: 700; margin-top: 8px; }
+.tec-plegado { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 16px; padding: 14px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 16px; color: var(--texto); width: 100%; font-family: inherit; cursor: pointer; text-align: left; }
+.tec-pie { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+.tec-hoja-fondo { position: fixed; inset: 0; background: rgba(10, 30, 45, 0.45); z-index: 60; display: flex; align-items: flex-end; justify-content: center; }
+.tec-hoja { background: var(--tarjeta); border-radius: 22px 22px 0 0; padding: 10px 16px 22px; width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; }
+.tec-hoja-raya { width: 44px; height: 5px; border-radius: 3px; background: var(--borde); margin: 0 auto 12px; }
+.tec-hoja-t { font-size: 20px; font-weight: 800; margin-bottom: 4px; color: var(--texto); }
+.tec-cod { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 4px; border-bottom: 1px solid var(--borde); width: 100%; background: none; border-left: none; border-right: none; border-top: none; font-family: inherit; color: var(--texto); cursor: pointer; text-align: left; }
+.tec-cod b { font-size: 16px; display: block; }
+.tec-cod span.d { font-size: 13.5px; color: var(--texto-suave); }
+.tec-cod-mas { width: 44px; height: 44px; border-radius: 22px; background: var(--azul); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tec-cod-mas.ok { background: #1f8f4e; }
+.tec-ok { text-align: center; padding: 14px 10px 6px; }
+.tec-ok-c { width: 76px; height: 76px; border-radius: 38px; background: #1f8f4e; color: #fff; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+.tec-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tec-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.tec-op { border: 2px solid var(--borde); background: var(--tarjeta); border-radius: 14px; padding: 13px 6px; text-align: center; font-size: 15.5px; font-weight: 800; color: var(--texto); font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 52px; }
+.tec-op.sel { border-color: var(--azul-claro); background: var(--edicion-fondo); color: var(--azul-texto); box-shadow: inset 0 0 0 1px var(--azul-claro); }
+.tec-dot { width: 12px; height: 12px; border-radius: 6px; display: inline-block; flex-shrink: 0; }
+.tec-item { margin-top: 12px; }
+.tec-item-t { font-size: 15.5px; font-weight: 700; margin-bottom: 6px; color: var(--texto); }
+.tec-foto { border: 2px dashed var(--borde); border-radius: 16px; padding: 18px; text-align: center; color: var(--azul-texto); font-weight: 800; font-size: 17px; background: var(--superficie-suave); display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin: 0; }
+.tec-leido { background: var(--exito-fondo); border: 1px solid var(--exito-borde); border-radius: 14px; padding: 12px; margin-top: 8px; }
+.tec-estado { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; border-radius: 999px; padding: 5px 11px; }
+.tec-estado.rojo { background: var(--error-fondo); color: var(--rojo); } .tec-estado.ambar { background: var(--acento-fondo); color: #b5691f; } .tec-estado.verde { background: var(--exito-fondo); color: var(--verde); }
+.tec-dato { display: flex; justify-content: space-between; gap: 10px; font-size: 14.5px; padding: 5px 0; color: var(--texto-suave); }
+.tec-dato b { color: var(--texto); text-align: right; }
+.tec-volver { font-size: 15px; font-weight: 800; color: var(--azul-claro); text-decoration: none; display: inline-block; margin-bottom: 6px; }

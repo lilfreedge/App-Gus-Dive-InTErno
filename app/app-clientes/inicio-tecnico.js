@@ -132,6 +132,10 @@ export default async function InicioTecnico({ supabase, profile, userId }) {
     <div>
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
+        {/* V38: de vuelta al menú del técnico. */}
+        <Link href="/tecnico" className="back-link">
+          ← Mi menú
+        </Link>
         <h1 className="page-title">Mis órdenes asignadas</h1>
 
         <div className="stat-row" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>

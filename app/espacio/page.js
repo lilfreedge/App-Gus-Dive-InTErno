@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getProfileYUser, tieneAcceso, esOperativo, esTecnico } from "@/lib/roles";
 import { obtenerPendientesInterno, obtenerPendientesClientes } from "@/lib/notificaciones";
 import HeaderSimple from "@/components/HeaderSimple";
-import { IconUsers, IconTiendaTanque, IconDivingMask } from "@/components/icons";
+import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler } from "@/components/icons";
 
 // Ítem 7 del backlog (22-sep-2026): pantalla que aparece justo después de
 // iniciar sesión, para elegir en qué espacio entrar -- "App Clientes"
@@ -14,6 +14,9 @@ import { IconUsers, IconTiendaTanque, IconDivingMask } from "@/components/icons"
 // No reemplaza /dashboard -- solo se muestra una vez al entrar; desde
 // dentro de App Interno se puede volver aquí con "Cambiar de app" en el
 // menú de ajustes (ver components/TopbarClient.js).
+// V37: íconos de las tarjetas más grandes (antes 22), todos iguales.
+const TAM_ICONO = 30;
+
 export default async function EspacioPage({ searchParams }) {
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
@@ -26,9 +29,13 @@ export default async function EspacioPage({ searchParams }) {
   // V34: el técnico también entra directo a "Mis órdenes asignadas",
   // mientras solo tenga App Equipos de clientes (el día que tenga App
   // Interno, le sale este selector para escoger).
-  if (esTecnico(profile) && !tieneAcceso(profile, "acceso_app_interno") && searchParams?.elegir !== "1") {
-    redirect("/app-clientes");
+  // V38 (pedido explícito: "que su menú principal sea diferente y contenga
+  // todo lo que le corresponde"): el técnico entra directo a su menú, tenga
+  // o no App Interno. Desde ahí, "Entrar al app completo" lo trae aquí.
+  if (esTecnico(profile) && searchParams?.elegir !== "1") {
+    redirect("/tecnico");
   }
+  const tecnico = esTecnico(profile);
   const nombreCompleto = profile?.full_name || "";
   const nombre = nombreCompleto.split(" ")[0] || "";
 
@@ -38,6 +45,11 @@ export default async function EspacioPage({ searchParams }) {
   // los dos, vía tieneAcceso). Se controla desde /espacio/accesos.
   const tieneClientes = tieneAcceso(profile, "equipos_clientes");
   const tieneInterno = tieneAcceso(profile, "acceso_app_interno");
+  // V35 (migration_69.sql): Viajes/Buceos ya no le sale a todo el mundo,
+  // solo a quien tenga el acceso (el Titular siempre).
+  const tieneViajes = tieneAcceso(profile, "acceso_viajes");
+  // V37: Alquiler, mismo patrón (migration_70.sql).
+  const tieneAlquiler = tieneAcceso(profile, "acceso_alquiler");
 
   // Conteo de cuentas esperando aprobación (item 10, 1-oct-2026) -- solo
   // le hace falta al Titular, para el badge del menú de ajustes.
@@ -55,8 +67,15 @@ export default async function EspacioPage({ searchParams }) {
   // inspecciones y mantenimientos vencidos -- con la misma consulta que
   // usa app/dashboard/page.js (lib/notificaciones.js), para que ambas
   // pantallas siempre digan lo mismo.
-  const { pendientesFacturar, tanquesVencidos, reguladoresVencidos, hidroVencidas, hidroPorVencer } =
-    await obtenerPendientesInterno(supabase, profile);
+  const {
+    pendientesFacturar,
+    tanquesVencidos,
+    reguladoresVencidos,
+    hidroVencidas,
+    hidroPorVencer,
+    recordatoriosVencidos,
+    recordatoriosPronto,
+  } = await obtenerPendientesInterno(supabase, profile);
   const { ordenesPorTrabajar, ordenesPorDespachar, ordenesEnEspera, ordenesEnHidrostatica, ordenesEnReparacion } =
     await obtenerPendientesClientes(supabase, profile);
 
@@ -117,6 +136,11 @@ export default async function EspacioPage({ searchParams }) {
   }
 
   const lineasInterno = [];
+  // V37: recordatorios de compresores ("2 recordatorios de compresores").
+  const recordatoriosTotal = (recordatoriosVencidos || 0) + (recordatoriosPronto || 0);
+  if (recordatoriosTotal > 0) {
+    lineasInterno.push(`${recordatoriosTotal} recordatorio${recordatoriosTotal === 1 ? "" : "s"} de compresores`);
+  }
   if (pendientesFacturar > 0) {
     lineasInterno.push(
       `${pendientesFacturar} llenado${pendientesFacturar === 1 ? "" : "s"} pendiente${
@@ -151,7 +175,8 @@ export default async function EspacioPage({ searchParams }) {
   // explícito: "todos con acceso al selector") -- por eso ya no hace
   // falta el caso aparte de "sin acceso a ninguna app": ahora siempre hay
   // al menos esa tarjeta para mostrar.
-  const totalTarjetas = (tieneClientes ? 1 : 0) + (tieneInterno ? 1 : 0) + 1;
+  // V35: Viajes/Buceos ahora también depende de su acceso.
+  const totalTarjetas = (tieneClientes ? 1 : 0) + (tieneInterno ? 1 : 0) + (tieneViajes ? 1 : 0) + (tieneAlquiler ? 1 : 0);
   const soloUna = totalTarjetas === 1;
 
   return (
@@ -162,18 +187,32 @@ export default async function EspacioPage({ searchParams }) {
         sinBarra
         esTitular={!!profile?.es_titular}
         pendientesAprobacion={pendientesAprobacion}
+        enlaces={profile?.es_titular || profile?.is_admin ? [{ href: "/tecnico", texto: "Ver el menú del técnico" }] : []}
       />
       <div className="page" style={{ paddingTop: 24 }}>
+        {/* V38: el técnico vuelve a su menú desde aquí. */}
+        {tecnico && (
+          <Link href="/tecnico" className="btn btn-primary" style={{ display: "flex", justifyContent: "center", marginBottom: 16, textDecoration: "none" }}>
+            ← Volver a mi menú
+          </Link>
+        )}
         <h1 className="page-title">¿A dónde quieres entrar?</h1>
 
         {/* Mensaje de "sin acceso a las apps principales" (26-sep-2026,
             pedido explícito) -- ya no reemplaza toda la pantalla, porque
             siempre hay al menos la tarjeta de Viajes/Buceos para mostrar
             debajo; se deja como aviso aparte arriba del grid. */}
-        {!tieneClientes && !tieneInterno && (
+        {totalTarjetas === 0 ? (
           <div className="card" style={{ marginTop: 18 }}>
-            <div className="empty">Todavía no tienes acceso a las apps principales. Habla con el Titular.</div>
+            <div className="empty">Todavía no tienes acceso a ninguna app. Habla con el Titular.</div>
           </div>
+        ) : (
+          !tieneClientes &&
+          !tieneInterno && (
+            <div className="card" style={{ marginTop: 18 }}>
+              <div className="empty">Todavía no tienes acceso a las apps principales. Habla con el Titular.</div>
+            </div>
+          )
         )}
 
         <div
@@ -183,7 +222,7 @@ export default async function EspacioPage({ searchParams }) {
           {tieneClientes && (
             <Link href="/app-clientes" className="card espacio-card">
               <div className="espacio-icon espacio-icon-clientes">
-                <IconUsers size={22} />
+                <IconUsers size={TAM_ICONO} />
               </div>
               <div className="espacio-title">App Equipos de clientes</div>
               <div className="espacio-notif">
@@ -203,7 +242,7 @@ export default async function EspacioPage({ searchParams }) {
           {tieneInterno && (
             <Link href="/dashboard" className="card espacio-card">
               <div className="espacio-icon espacio-icon-interno">
-                <IconTiendaTanque size={22} />
+                <IconTiendaTanque size={TAM_ICONO} />
               </div>
               <div className="espacio-title">App Interno</div>
               <div className="espacio-notif">
@@ -227,14 +266,30 @@ export default async function EspacioPage({ searchParams }) {
               (mismo patrón que tuvo "App Equipos de clientes" cuando era
               solo una idea, ver comentario al inicio de este archivo).
               Lleva a /viajes-buceos, una pantalla de "Próximamente". */}
-          <Link href="/viajes-buceos" className="card espacio-card">
-            <div className="espacio-icon espacio-icon-viajes">
-              <IconDivingMask size={22} />
-            </div>
-            <div className="espacio-title">Viajes/Buceos</div>
-            <div className="espacio-badge">Próximamente</div>
-            <div className="espacio-notif">Aún en construcción.</div>
-          </Link>
+          {tieneViajes && (
+            <Link href="/viajes-buceos" className="card espacio-card">
+              <div className="espacio-icon espacio-icon-viajes">
+                <IconBuzos size={TAM_ICONO} />
+              </div>
+              <div className="espacio-title">Viajes/Buceos</div>
+              <div className="espacio-badge">Próximamente</div>
+              <div className="espacio-notif">Aún en construcción.</div>
+            </Link>
+          )}
+
+          {/* V37 -- "Alquiler" (pedido explícito: "debajo de app interno...
+              ponlo coming soon"): queda debajo de App Interno porque va
+              después de Viajes en la cuadrícula de 2. Rojo GUS (#CD392A). */}
+          {tieneAlquiler && (
+            <Link href="/alquiler" className="card espacio-card">
+              <div className="espacio-icon espacio-icon-alquiler">
+                <IconAlquiler size={TAM_ICONO} />
+              </div>
+              <div className="espacio-title">Alquiler</div>
+              <div className="espacio-badge">Próximamente</div>
+              <div className="espacio-notif">Aún en construcción.</div>
+            </Link>
+          )}
         </div>
       </div>
     </div>

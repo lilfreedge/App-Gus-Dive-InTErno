@@ -50,6 +50,7 @@ export const PERMISOS_DEFAULT = {
   compresores: false,
   compresor_mantenimiento_registrar: false,
   registrar_compresor: false,
+  compresores_historial: false,
   correos_semanales: false,
   equipos_clientes: false,
   solicitudes_almacen: false,
@@ -98,6 +99,16 @@ export const SECCIONES = [
       // que reguladores, arriba VER y abajo REGISTRAR. "Registrar compresor"
       // ahora también deja cambiar los datos del compresor.
       { clave: "compresores", label: "Compresores", sub: "Ver los compresores y sus mantenimientos", Icono: IconCompressor },
+      // V37 (pedido explícito: "ponme para yo poder dar acceso a los usuarios
+      // a que vean el historial de compresores o no"; migration_70.sql:
+      // arrancó encendido solo para los administradores).
+      {
+        clave: "compresores_historial",
+        label: "Ver historial de mantenimientos",
+        sub: "La pantalla del historial, la gráfica y la tabla",
+        Icono: IconEye,
+        sub_de: true,
+      },
       { clave: "compresor_mantenimiento_registrar", label: "Registrar mantenimiento de compresor", Icono: IconEdit, sub_de: true },
       {
         clave: "registrar_compresor",

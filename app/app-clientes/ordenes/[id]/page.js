@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermiso, tieneAcceso, esTecnico } from "@/lib/roles";
 import AsignarOrden from "@/components/AsignarOrden";
 import { tecnicosConCarga } from "@/lib/tecnicos";
+import { ultimosAvisos, fechaHoraRD, dondeAviso } from "@/lib/avisos-tecnicos";
+import BotonAvisarWhatsApp from "@/components/BotonAvisarWhatsApp";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
@@ -15,6 +17,8 @@ import { holdActivo, diasEnHold, labelTipoHold, detalleHold } from "@/lib/holds"
 import { edicionesDeLaOrden } from "@/lib/bitacora-orden";
 import FotoLightbox from "@/components/FotoLightbox";
 import { IconRefresh } from "@/components/icons";
+import FichaOrdenTecnico from "./ficha-tecnico";
+import { hoyISO } from "@/lib/fechas";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -78,6 +82,9 @@ export default async function FichaOrdenPage({ params }) {
 
   if (!o) notFound();
 
+  // V37: último aviso por WhatsApp al técnico que la tiene ahora.
+  const aviso = (await ultimosAvisos(supabase, [o]))[o.id] || null;
+
   // Contador de "Ver bitácora de la orden (N)" -- mismo total que muestra
   // esa pantalla: entradas de bitacora_orden + ediciones con algún cambio
   // real (feedback sobre v52, pedido explícito: "la cantidad que aparece
@@ -131,6 +138,44 @@ export default async function FichaOrdenPage({ params }) {
     o.tipo_equipo === "Compresor" ? "equipos_clientes_editar_mantenimiento_compresor" : "equipos_clientes_editar_orden"
   );
   const puedeAnular = esTitular || !!profile?.is_admin;
+
+  // V38 -- el rol Técnico ve una ficha más sencilla (ficha-tecnico.js,
+  // maqueta-v38 opción A): solo lo de su trabajo y sin el contacto del
+  // cliente. El No. de serie se busca en el equipo del cliente.
+  if (tecnico) {
+    let serie = null;
+    if (o.equipo_id) {
+      const { data: eq } = await supabase.from("equipos_del_cliente").select("serie").eq("id", o.equipo_id).maybeSingle();
+      serie = eq?.serie || null;
+    }
+    return (
+      <div>
+        <AppHeaderClientes />
+        <div className="page" style={{ paddingTop: 24 }}>
+          <Link href="/app-clientes" className="back-link">
+            ← Volver
+          </Link>
+          <Breadcrumb
+            items={[
+              { label: "App Equipos de clientes", href: "/app-clientes" },
+              { label: "Mis órdenes", href: "/app-clientes" },
+              { label: `No. ${o.no_orden_fisico ?? o.folio}` },
+            ]}
+          />
+          <FichaOrdenTecnico
+            o={o}
+            miId={profile?.id}
+            hoy={hoyISO()}
+            hold={hold}
+            serie={serie}
+            codigosLista={codigosLista}
+            puedeActualizarEstado={puedeActualizarEstado}
+            puedeVerInforme={puedeVerInforme}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -289,12 +334,41 @@ export default async function FichaOrdenPage({ params }) {
                         numero={o.no_orden_fisico ?? o.folio}
                         tecnicoActualId={o.tecnico_asignado_id}
                         tecnicos={tecnicos}
+                        orden={o}
+                        miNombre={profile?.full_name || ""}
                       />
                     )}
                   </span>
                   {o.tecnico_asignado_id && o.asignada_en && (
                     <div className="hint-text" style={{ marginTop: 2 }}>
                       La asignó {o.asignada_por_nombre || "—"} el {formatFechaDDMMAAAA(o.asignada_en)}
+                    </div>
+                  )}
+                  {/* V37: aviso por WhatsApp (por si hay que volver a avisarle). */}
+                  {o.tecnico_asignado_id && o.estado !== "Entregado" && (
+                    <div className="hint-text" style={{ marginTop: 2, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      {aviso ? (
+                        <span style={{ color: "var(--verde)" }}>
+                          Avisado {dondeAviso(aviso.medio)} el {fechaHoraRD(aviso.created_at)}
+                          {aviso.avisado_por_nombre ? ` (lo avisó ${aviso.avisado_por_nombre.split(" ")[0]})` : ""}
+                        </span>
+                      ) : (
+                        <span style={{ color: "#b5691f", fontWeight: 700 }}>Sin avisar</span>
+                      )}
+                      {puedeAsignar && (
+                        <BotonAvisarWhatsApp
+                          estilo="link"
+                          texto={aviso ? "Volver a avisar" : "Avisar en el grupo"}
+                          orden={o}
+                          tecnico={
+                            tecnicos.find((t) => t.id === o.tecnico_asignado_id) || {
+                              id: o.tecnico_asignado_id,
+                              full_name: o.tecnico_nombre,
+                            }
+                          }
+                          miNombre={profile?.full_name || ""}
+                        />
+                      )}
                     </div>
                   )}
                 </Campo>

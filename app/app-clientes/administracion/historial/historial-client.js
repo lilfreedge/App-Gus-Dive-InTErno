@@ -9,6 +9,24 @@ import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { filasOrden, filasCliente } from "@/lib/historial-ordenes";
 import { esCambioVisible } from "@/lib/cambios";
 import { filasDetalleComponentes } from "@/lib/regulador-detalle";
+import BuscadorLista from "@/components/BuscadorLista";
+
+// V35 -- texto extra para el buscador: quién lo hizo, el motivo, el No. de
+// orden y el cliente (aunque no salgan escritos en la tarjeta).
+function textoBuscar(cambio, clientesPorId = {}) {
+  const d = cambio.datos_anteriores || {};
+  return [
+    cambio.full_name,
+    cambio.motivo,
+    d.no_orden_fisico ? `No. ${d.no_orden_fisico}` : "",
+    d.cliente_nombre_snapshot,
+    d.nombre,
+    d.serie,
+    clientesPorId[d.cliente_id],
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
 
 // Pestañas por categoría (item 21, feedback sobre v40, pedido explícito:
 // "reorganiza historial en botones por categoria, ejemplo ordenes,
@@ -90,6 +108,9 @@ export default function HistorialClient({ ordenId, equipoId, cambios: cambiosTod
         ))}
       </div>
 
+      {/* V35: buscador (pedido explícito: "un search bar en los historiales,
+          todos"). Busca dentro de la pestaña que esté abierta. */}
+      <BuscadorLista placeholder="Buscar persona, No. de orden, cliente o motivo...">
       {activos.length > 0 ? (
         activos.map((c) =>
           tab === "anulados" ? (
@@ -103,6 +124,7 @@ export default function HistorialClient({ ordenId, equipoId, cambios: cambiosTod
           {tab === "anulados" ? "No hay movimientos anulados." : "Todavía no hay ediciones registradas en esta categoría."}
         </div>
       )}
+      </BuscadorLista>
     </div>
   );
 }
@@ -117,7 +139,7 @@ function TarjetaAnulado({ cambio }) {
   const d = cambio.datos_anteriores || {};
   const esOrden = cambio.tabla === "ordenes_equipos";
   return (
-    <div className="card anulado">
+    <div className="card anulado" data-buscar={textoBuscar(cambio)}>
       <div className="list-item-top">
         <div className="list-item-title">{tituloTabla(cambio.tabla)} anulada</div>
         <HistorialDeleteButton cambioId={cambio.id} />
@@ -240,7 +262,7 @@ function TarjetaEdicion({ cambio, clientesPorId = {} }) {
       : `${tipoEquipoLabel(d.tipo_equipo, d.tipo_equipo_otro) || "Equipo"} editado${marcaModelo ? ` — ${marcaModelo}` : ""}`;
 
   return (
-    <div className="card edicion">
+    <div className="card edicion" data-buscar={textoBuscar(cambio, clientesPorId)}>
       <div className="list-item-top">
         <div className="list-item-title">{titulo}</div>
         <HistorialDeleteButton cambioId={cambio.id} />

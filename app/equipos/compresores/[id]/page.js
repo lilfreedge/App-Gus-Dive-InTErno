@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { cargarRecordatorios, proximaInspeccionDe } from "@/lib/recordatorios";
+import { hoyISO } from "@/lib/fechas";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { tieneAcceso, requireInterno } from "@/lib/roles";
@@ -22,6 +24,7 @@ export default async function FichaCompresorPage({ params }) {
   const puedeRegistrarMantenimiento = tieneAcceso(profile, "compresor_mantenimiento_registrar");
   const puedeEditar = tieneAcceso(profile, "registrar_compresor");
   const esTitular = !!profile?.es_titular;
+  const puedeVerHistorial = tieneAcceso(profile, "compresores_historial");
 
   const [{ data: compresor }, { data: mantenimientos }] = await Promise.all([
     supabase.from("compresores").select("*").eq("id", params.id).single(),
@@ -35,6 +38,11 @@ export default async function FichaCompresorPage({ params }) {
   ]);
 
   if (!compresor) notFound();
+
+  // V37: la próxima inspección sale de los Recordatorios (el de cada 14
+  // días, que ahora se puede cambiar); si no hay ninguno, la de antes.
+  const { items: recordatorios } = await cargarRecordatorios(supabase, { hoy: hoyISO() });
+  const inspeccion = proximaInspeccionDe(recordatorios, compresor.id);
 
   const historial = mantenimientos || [];
   const ultimoMantenimiento = historial[0] || null;
@@ -88,7 +96,15 @@ export default async function FichaCompresorPage({ params }) {
               )}
             </Campo>
             <Campo etiqueta="Próxima inspección">
-              {compresor.proxima_inspeccion ? (
+              {inspeccion ? (
+                inspeccion.nunca ? (
+                  <span style={{ color: "var(--rojo)" }}>Nunca inspeccionado</span>
+                ) : (
+                  <span style={inspeccion.estado === "vencido" ? { color: "var(--rojo)" } : undefined}>
+                    {formatFechaDDMMAAAADeDate(inspeccion.proxima)}
+                  </span>
+                )
+              ) : compresor.proxima_inspeccion ? (
                 formatFechaDDMMAAAADeDate(compresor.proxima_inspeccion)
               ) : (
                 <span className="hint-text" style={{ margin: 0 }}>Sin inspecciones registradas aún</span>
@@ -118,11 +134,13 @@ export default async function FichaCompresorPage({ params }) {
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 24 }}>
-            <Link href={`/equipos/compresores/historial?compresor=${compresor.id}`}>
-              <button className="btn secondary" type="button">
-                Historial
-              </button>
-            </Link>
+            {puedeVerHistorial && (
+              <Link href={`/equipos/compresores/historial?compresor=${compresor.id}`}>
+                <button className="btn secondary" type="button">
+                  Historial
+                </button>
+              </Link>
+            )}
             {puedeRegistrarMantenimiento && (
               <Link href={`/equipos/compresores/mantenimiento/nueva?compresor=${compresor.id}`}>
                 <button className="btn btn-primary" type="button">

@@ -25,7 +25,9 @@ import { IconGear, IconLogout, IconLock, IconCheck } from "./icons";
 // C de la maqueta, pedido explícito: "el azul no es el color principal del
 // app, me gustaría cambiar el azul de arriba"). Las demás pantallas que usan
 // este header no cambian.
-export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAprobacion = 0, sinBarra = false }) {
+// V38: `enlaces` ([{ href, texto }]) -- links extra en el menú de ajustes
+// (el menú del técnico pone "Mi perfil" y "Entrar al app completo").
+export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAprobacion = 0, sinBarra = false, enlaces = [] }) {
   const router = useRouter();
   const supabase = createClient();
   const [open, setOpen] = useState(false);
@@ -57,7 +59,7 @@ export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAp
             className="topbar-logo"
             priority
           />
-          <div className="topbar-sub">Hola, {nombre}</div>
+          {nombre && <div className="topbar-sub">Hola, {nombre}</div>}
         </div>
 
         <div className="gear-wrap" ref={menuRef}>
@@ -81,6 +83,11 @@ export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAp
                   {pendientesAprobacion > 0 && <span className="badge badge-rojo">{pendientesAprobacion}</span>}
                 </Link>
               )}
+              {enlaces.map((e) => (
+                <Link key={e.href} href={e.href} className="settings-menu-link" onClick={() => setOpen(false)}>
+                  {e.texto}
+                </Link>
+              ))}
               <button
                 className="settings-menu-link settings-menu-danger"
                 onClick={salir}

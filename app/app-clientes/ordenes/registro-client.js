@@ -8,6 +8,8 @@ import { IconRefresh } from "@/components/icons";
 import { coincideOrden } from "@/lib/buscar-orden";
 import AsignarOrden from "@/components/AsignarOrden";
 import { nombreCorto } from "@/lib/tecnicos";
+import BotonAvisarWhatsApp from "@/components/BotonAvisarWhatsApp";
+import { textoAvisado } from "@/lib/avisos-tecnicos";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -100,6 +102,8 @@ export default function RegistroClient({
   puedeRegistrar = false,
   puedeAsignar = false,
   tecnicos = [],
+  avisos = {},
+  miNombre = "",
 }) {
   const [tab, setTab] = useState("por_trabajar");
   const [q, setQ] = useState("");
@@ -288,7 +292,7 @@ export default function RegistroClient({
                   "Asignar ▾" / "Cambiar" solo con el permiso; los demás ven
                   a quién está asignada. Las entregadas no se asignan. */}
               {o.estado !== "Entregado" && (o.tecnico_asignado_id || puedeAsignar) && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3, fontSize: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3, fontSize: 12, flexWrap: "wrap" }}>
                   {o.tecnico_asignado_id ? (
                     <span style={{ color: "var(--texto-suave)" }}>
                       Técnico: <b style={{ color: "var(--texto)" }}>{nombreCorto(o.tecnico_nombre)}</b>
@@ -303,8 +307,34 @@ export default function RegistroClient({
                       tecnicoActualId={o.tecnico_asignado_id}
                       tecnicos={tecnicos}
                       estilo="chip"
+                      orden={o}
+                      miNombre={miNombre}
                     />
                   )}
+                  {/* V37: si al técnico ya se le avisó por WhatsApp. */}
+                  {o.tecnico_asignado_id &&
+                    (avisos[o.id] ? (
+                      <span style={{ color: "var(--verde)", fontWeight: 700 }}>
+                        · {textoAvisado(avisos[o.id].created_at, avisos[o.id].medio)} ✓
+                      </span>
+                    ) : (
+                      <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                        <span style={{ color: "#b5691f", fontWeight: 700 }}>· Sin avisar</span>
+                        {puedeAsignar && (
+                          <BotonAvisarWhatsApp
+                            estilo="link"
+                            orden={o}
+                            tecnico={
+                              tecnicos.find((t) => t.id === o.tecnico_asignado_id) || {
+                                id: o.tecnico_asignado_id,
+                                full_name: o.tecnico_nombre,
+                              }
+                            }
+                            miNombre={miNombre}
+                          />
+                        )}
+                      </span>
+                    ))}
                 </div>
               )}
               </div>

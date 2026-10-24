@@ -8,6 +8,8 @@ import ConInfo from "@/components/ConInfo";
 import { formatFecha, formatFechaDDMMAAAADeDate, formatMesAnio } from "@/lib/format";
 import { hoyISO, sumarMeses } from "@/lib/fechas";
 import { enviosAbiertos, claseDiasAfuera, diasEntreFechas } from "@/lib/envios-hidrostatica";
+import BuscadorLista from "@/components/BuscadorLista";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 
 // Pruebas hidrostáticas de NUESTROS tanques (V29; rehecha en V32).
 //
@@ -35,8 +37,11 @@ export default async function PruebasHidrostaticasPage() {
   const puedeRegistrar = tieneAcceso(profile, "hidrostatica_registrar");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
 
-  const [{ data: pruebas }, { data: tanques }, afuera, { data: enviosCerrados }] = await Promise.all([
-    supabase.from("pruebas_hidrostaticas_con_nombre").select("*").limit(200),
+  // V35 (buscador en los historiales): todas las pruebas, no solo las últimas 200.
+  const [pruebas, { data: tanques }, afuera, { data: enviosCerrados }] = await Promise.all([
+    todasLasFilas(supabase, "pruebas_hidrostaticas_con_nombre", (q) =>
+      q.select("*").order("created_at", { ascending: false }).order("id")
+    ),
     supabase
       .from("tanques_alquiler")
       .select("id, codigo, proxima_hidrostatica")
@@ -189,6 +194,7 @@ export default async function PruebasHidrostaticasPage() {
         <div className="section-title" style={{ marginTop: 24 }}>
           Pruebas registradas
         </div>
+        <BuscadorLista placeholder="Buscar tanque, resultado o persona...">
         <div className="card">
           {pruebas && pruebas.length > 0 ? (
             pruebas.map((p) => {
@@ -198,7 +204,7 @@ export default async function PruebasHidrostaticasPage() {
               const { full_name, ...registro } = p;
               const envio = envioPorPrueba.get(p.id);
               return (
-                <div className="list-item" key={p.id}>
+                <div className="list-item" key={p.id} data-buscar="">
                   <div className="list-item-top">
                     <span className="list-item-title">
                       <span className="folio-tag">#{p.folio}</span>
@@ -239,6 +245,7 @@ export default async function PruebasHidrostaticasPage() {
             <div className="empty">Aún no hay pruebas hidrostáticas registradas.</div>
           )}
         </div>
+        </BuscadorLista>
 
         {puedeRegistrar && (
           <div style={{ textAlign: "center", marginTop: 4 }}>

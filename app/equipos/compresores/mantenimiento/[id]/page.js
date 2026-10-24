@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { claseAceite, formatHoras, horometroCorregido } from "@/lib/compresores";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, requireInterno } from "@/lib/roles";
@@ -77,11 +78,32 @@ export default async function FichaMantenimientoCompresorPage({ params }) {
             </Campo>
             <Campo etiqueta="Responsable" valor={m.responsable} />
             <Campo etiqueta="Fecha del mantenimiento" valor={formatFechaDDMMAAAADeDate(m.fecha)} />
-            <Campo etiqueta="Horómetro" valor={`${m.horometro} h`} />
+            <Campo etiqueta="Horómetro">
+              {formatHoras(m.horometro)} h
+              {/* V37: si se cambió a mano lo que leyó la foto, se marca. */}
+              {horometroCorregido(m) && (
+                <span style={{ color: "#b5691f", fontSize: 13, marginLeft: 6 }}>
+                  ✎ cambiado a mano (la foto decía {formatHoras(m.horometro_leido)} h)
+                </span>
+              )}
+            </Campo>
 
             {esInspeccion && (
               <>
-                <Campo etiqueta="Nivel de aceite" valor={m.nivel_aceite || "—"} />
+                <Campo etiqueta="Nivel de aceite">
+                  {m.nivel_aceite ? (
+                    claseAceite(m.nivel_aceite) ? (
+                      <span className={`badge ${claseAceite(m.nivel_aceite)}`}>{m.nivel_aceite}</span>
+                    ) : (
+                      m.nivel_aceite
+                    )
+                  ) : (
+                    "—"
+                  )}
+                </Campo>
+                {m.aceite_echado !== null && m.aceite_echado !== undefined && (
+                  <Campo etiqueta="¿Se le echó aceite?" valor={m.aceite_echado ? "Sí" : "No"} />
+                )}
                 <Campo etiqueta="Limpieza compresor" valor={m.limpieza_compresor || "—"} />
                 <Campo etiqueta="Estado de manguera" valor={m.estado_manguera || "—"} />
                 <Campo etiqueta="Estado de filtro principal" valor={m.estado_filtro_principal || "—"} />

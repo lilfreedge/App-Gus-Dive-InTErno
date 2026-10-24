@@ -3,11 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconUsers, IconTiendaTanque } from "@/components/icons";
+import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler } from "@/components/icons";
 
 const PERMISOS_DEFAULT_LOCAL = {
   equipos_clientes: false,
   acceso_app_interno: false,
+  // V35: acceso a Viajes/Buceos (migration_69.sql).
+  acceso_viajes: false,
+  // V37: acceso a Alquiler (migration_70.sql).
+  acceso_alquiler: false,
 };
 
 // Tabla de accesos por app (26-sep-2026) -- mismo patrón de togglePermiso
@@ -42,6 +46,14 @@ export default function AccesosClient({ perfiles, miId }) {
               <IconTiendaTanque size={15} style={{ display: "block", margin: "0 auto 3px" }} />
               App Interno
             </th>
+            <th title="Viajes/Buceos">
+              <IconBuzos size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+              Viajes/Buceos
+            </th>
+            <th title="Alquiler">
+              <IconAlquiler size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+              Alquiler
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -53,6 +65,8 @@ export default function AccesosClient({ perfiles, miId }) {
                     {p.full_name}
                     <span className="role-tag role-tag-titular">Titular</span>
                   </td>
+                  <td>—</td>
+                  <td>—</td>
                   <td>—</td>
                   <td>—</td>
                 </tr>
@@ -80,6 +94,22 @@ export default function AccesosClient({ perfiles, miId }) {
                     checked={!!permisos.acceso_app_interno}
                     disabled={loadingId === p.id}
                     onChange={(e) => togglePermiso(p, "acceso_app_interno", e.target.checked)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={!!permisos.acceso_viajes}
+                    disabled={loadingId === p.id}
+                    onChange={(e) => togglePermiso(p, "acceso_viajes", e.target.checked)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={!!permisos.acceso_alquiler}
+                    disabled={loadingId === p.id}
+                    onChange={(e) => togglePermiso(p, "acceso_alquiler", e.target.checked)}
                   />
                 </td>
               </tr>

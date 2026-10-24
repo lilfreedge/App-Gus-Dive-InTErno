@@ -4,6 +4,7 @@ import { requirePermisoClientes } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import HistorialClient from "./historial-client";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 
 // "Historial" consolidado de App Equipos de clientes (item 31, pedido
 // explícito, 27-sep-2026: "en mas, crea un boton de historial y ahi
@@ -52,17 +53,13 @@ export default async function HistorialAdministracionPage({ searchParams }) {
 
   // "clientes_equipos" sumada (feature "Editar cliente") -- ver
   // filasCliente() en historial-client.js.
-  let query = supabase
-    .from("historial_con_nombre")
-    .select("*")
-    .in("tabla", ["ordenes_equipos", "equipos_del_cliente", "clientes_equipos"])
-    .order("created_at", { ascending: false })
-    .limit(300);
-
-  if (ordenId) query = query.eq("tabla", "ordenes_equipos").eq("registro_id", ordenId);
-  else if (equipoId) query = query.eq("tabla", "equipos_del_cliente").eq("registro_id", equipoId);
-
-  const { data: cambios } = await query;
+  // V35 (buscador en los historiales): todo, no solo los últimos 300.
+  const cambios = await todasLasFilas(supabase, "historial_con_nombre", (q) => {
+    let consulta = q.select("*").in("tabla", ["ordenes_equipos", "equipos_del_cliente", "clientes_equipos"]);
+    if (ordenId) consulta = consulta.eq("tabla", "ordenes_equipos").eq("registro_id", ordenId);
+    else if (equipoId) consulta = consulta.eq("tabla", "equipos_del_cliente").eq("registro_id", equipoId);
+    return consulta.order("created_at", { ascending: false }).order("id");
+  });
 
   // Nombre del cliente para las tarjetas de "Equipo editado" (28-sep-2026,
   // pedido explícito: "que en la parte de afuera del boton, aparezca el

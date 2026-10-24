@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermisoClientes } from "@/lib/roles";
+import { requirePermisoClientes, esTecnico } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import InformeMantenimientoForm from "./form-client";
@@ -13,7 +13,7 @@ import InformeMantenimientoForm from "./form-client";
 // trabajo realizado, presión, observación, aprobado/no aprobado) y que
 // se convierte en el informe/PDF que se entrega al cliente. Por ahora
 // solo Reguladores, mismo alcance que ya tenía Reportes.
-export default async function InformeMantenimientoPage({ params }) {
+export default async function InformeMantenimientoPage({ params, searchParams }) {
   const supabase = createClient();
   const { profile } = await requirePermisoClientes(
     supabase,
@@ -59,7 +59,18 @@ export default async function InformeMantenimientoPage({ params }) {
             funciona bien (ver reportes/[id]/page.js): sin ellas, "←
             Volver", la miga de pan y el título también se imprimían junto
             con el informe, empujando el contenido real a una 2da página. */}
-        <Link href={`/app-clientes/ordenes/${params.id}`} className="back-link no-print">
+        {/* V38: "Volver" regresa a donde se abrió el informe: el menú del
+            técnico (?from=tecnico) o Actualizar estado (?from=actualizar). */}
+        <Link
+          href={
+            searchParams?.from === "tecnico"
+              ? `/tecnico?abrir=${params.id}${/^[0-9a-f-]{36}$/i.test(searchParams?.como || "") ? `&como=${searchParams.como}` : ""}`
+              : searchParams?.from === "actualizar"
+                ? `/app-clientes/ordenes/${params.id}/editar`
+                : `/app-clientes/ordenes/${params.id}`
+          }
+          className="back-link no-print"
+        >
           ← Volver
         </Link>
         <div className="no-print">
@@ -74,7 +85,20 @@ export default async function InformeMantenimientoPage({ params }) {
         </div>
         <h1 className="page-title no-print">Informe de mantenimiento</h1>
 
-        <InformeMantenimientoForm orden={orden} serie={serie} tecnicoSugerido={profile?.full_name || ""} />
+        {/* V38: el técnico no ve el contacto del cliente ("cliente no debe
+            de ver contacto"), ni siquiera en el formulario del Informe. */}
+        <InformeMantenimientoForm
+          orden={esTecnico(profile) ? { ...orden, cliente_telefono: null } : orden}
+          serie={serie}
+          tecnicoSugerido={profile?.full_name || ""}
+          volver={
+            searchParams?.from === "tecnico"
+              ? { href: `/tecnico?abrir=${params.id}${/^[0-9a-f-]{36}$/i.test(searchParams?.como || "") ? `&como=${searchParams.como}` : ""}`, texto: "← Volver a mis trabajos" }
+              : searchParams?.from === "actualizar"
+                ? { href: `/app-clientes/ordenes/${params.id}/editar`, texto: "← Volver a Actualizar estado" }
+                : null
+          }
+        />
       </div>
     </div>
   );

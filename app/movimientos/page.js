@@ -4,6 +4,7 @@ import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import MovimientosList from "@/components/MovimientosList";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 
 // "Movimientos" combina salidas, llenados de tanques, inspecciones
 // visuales y mantenimientos de reguladores en una sola lista (con filtro
@@ -17,23 +18,16 @@ export default async function MovimientosPage() {
   // justamente a partir de estos mismos movimientos.
   const puedeCrearReporte = tieneAcceso(profile, "reportes");
 
-  const [
-    { data: salidas },
-    { data: llenados },
-    { data: inspecciones },
-    { data: mantenimientos },
-  ] = await Promise.all([
-    supabase.from("salidas_con_nombre").select("*").order("created_at", { ascending: false }).limit(200),
-    supabase.from("llenados_con_nombre").select("*").order("created_at", { ascending: false }).limit(200),
-    // inspecciones_con_nombre/mantenimientos_con_nombre pueden no existir
-    // todavía si migration_06.sql no se ha corrido — no se deja tumbar la
-    // pantalla completa por eso.
-    supabase.from("inspecciones_con_nombre").select("*").order("created_at", { ascending: false }).limit(200)
-      .then((r) => (r.error ? { data: [] } : r))
-      .catch(() => ({ data: [] })),
-    supabase.from("mantenimientos_con_nombre").select("*").order("created_at", { ascending: false }).limit(200)
-      .then((r) => (r.error ? { data: [] } : r))
-      .catch(() => ({ data: [] })),
+  // V35 (buscador en los historiales): todos los registros, no solo los
+  // últimos 200 de cada tipo. Si una consulta falla (por ejemplo, una vista
+  // que todavía no existe), esa lista queda vacía y la pantalla sigue.
+  const todos = (vista) =>
+    todasLasFilas(supabase, vista, (q) => q.select("*").order("created_at", { ascending: false }).order("id")).catch(() => []);
+  const [salidas, llenados, inspecciones, mantenimientos] = await Promise.all([
+    todos("salidas_con_nombre"),
+    todos("llenados_con_nombre"),
+    todos("inspecciones_con_nombre"),
+    todos("mantenimientos_con_nombre"),
   ]);
 
   const movimientos = [

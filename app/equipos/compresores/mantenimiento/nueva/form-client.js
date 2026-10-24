@@ -7,6 +7,10 @@ import SelectorBusqueda from "@/components/SelectorBusqueda";
 import CampoFoto from "@/components/CampoFoto";
 import { subirFoto } from "@/lib/storage-client";
 import { hoyISO } from "@/lib/fechas";
+import { formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { NIVELES_ACEITE, formatHoras } from "@/lib/compresores";
+import { leerHorometro } from "@/lib/leer-horometro";
+import { IconCalendar } from "@/components/icons";
 
 const TIPOS = ["Inspección", "Mantenimiento preventivo", "Mantenimiento correctivo"];
 const RESPONSABLES = ["Gugi", "Pipe", "Frederick", "Alexander", "Danny"];
@@ -30,20 +34,47 @@ function SelectorEstado({ id, label, valor, onChange, required }) {
   );
 }
 
-export default function NuevoMantenimientoCompresorForm({ userId, nombreUsuario, compresores, compresorPreseleccionado }) {
+// V37 (plan-v37.html, todo aprobado):
+// - Sin campo de fecha: la pone la base de datos al guardar (opción A,
+//   "para evitar que registren cosas falsas"; migration_70.sql).
+// - Foto del horómetro primero: la IA lee el número y lo pone en el campo;
+//   se puede corregir, y si se cambia queda guardado lo que leyó la foto
+//   (horometro_leido) y en el historial sale ✎.
+// - Avisa cuántas horas van desde el último registro del compresor y no
+//   deja poner un número menor (la base de datos también lo revisa).
+// - Nivel de aceite con lista + "¿Se le echó aceite?".
+const MENSAJES_LECTURA = {
+  sin_llave: "",
+  no_se_lee: "No se pudo leer el número en la foto. Escríbelo tú (o toma otra foto de frente y de cerca).",
+  foto: "No se pudo abrir la foto para leerla. Escribe el número.",
+  tiempo: "La lectura tardó demasiado. Escribe el número.",
+};
+
+export default function NuevoMantenimientoCompresorForm({
+  userId,
+  nombreUsuario,
+  compresores,
+  compresorPreseleccionado,
+  ultimos = {},
+  esTitular = false,
+  lecturaDisponible = false,
+}) {
   const router = useRouter();
   const supabase = createClient();
 
   const [compresorId, setCompresorId] = useState(compresorPreseleccionado || compresores[0]?.id || "");
   const [tipo, setTipo] = useState("");
   const [responsable, setResponsable] = useState("");
-  const [fecha, setFecha] = useState(hoyISO());
   const [horometro, setHorometro] = useState("");
+  const [horometroLeido, setHorometroLeido] = useState(null);
+  const [leyendo, setLeyendo] = useState(false);
+  const [avisoLectura, setAvisoLectura] = useState("");
   const [fotoHorometro, setFotoHorometro] = useState(null);
   const [notas, setNotas] = useState("");
 
   // Inspección
   const [nivelAceite, setNivelAceite] = useState("");
+  const [aceiteEchado, setAceiteEchado] = useState(null);
   const [limpiezaCompresor, setLimpiezaCompresor] = useState("");
   const [estadoManguera, setEstadoManguera] = useState("");
   const [estadoFiltroPrincipal, setEstadoFiltroPrincipal] = useState("");
@@ -62,6 +93,27 @@ export default function NuevoMantenimientoCompresorForm({ userId, nombreUsuario,
 
   const esInspeccion = tipo === "Inspección";
   const esPreventivoCorrectivo = tipo === "Mantenimiento preventivo" || tipo === "Mantenimiento correctivo";
+  const compresor = compresores.find((c) => c.id === compresorId);
+  const ultimo = compresorId ? ultimos[compresorId] : null;
+  const valor = horometro.toString().trim() === "" ? null : Number(horometro);
+  const diferencia = ultimo && valor !== null && !Number.isNaN(valor) ? valor - ultimo.horometro : null;
+  const corregido = horometroLeido !== null && valor !== null && valor !== horometroLeido;
+
+  async function alElegirFoto(file) {
+    setFotoHorometro(file);
+    setAvisoLectura("");
+    if (!file || !lecturaDisponible) return;
+    setLeyendo(true);
+    const r = await leerHorometro(file);
+    setLeyendo(false);
+    if (r?.ok) {
+      setHorometroLeido(r.horas);
+      setHorometro(String(r.horas));
+    } else {
+      setHorometroLeido(null);
+      setAvisoLectura(MENSAJES_LECTURA[r?.motivo] ?? "No se pudo leer el número de la foto. Escríbelo tú.");
+    }
+  }
 
   async function subir(file, carpeta) {
     if (!file) return null;
@@ -75,12 +127,18 @@ export default function NuevoMantenimientoCompresorForm({ userId, nombreUsuario,
     if (!compresorId) return setError("Selecciona un compresor.");
     if (!tipo) return setError("Selecciona el tipo de mantenimiento.");
     if (!responsable) return setError("Selecciona el responsable.");
-    if (!fecha) return setError("Selecciona la fecha.");
-    if (!horometro.toString().trim()) return setError("Completa el horómetro.");
     if (!fotoHorometro) return setError("Adjunta la foto del horómetro.");
+    if (!horometro.toString().trim()) return setError("Completa el horómetro.");
+    if (Number.isNaN(valor) || valor < 0) return setError("El horómetro tiene que ser un número.");
+    if (!esTitular && ultimo && valor < ultimo.horometro) {
+      return setError(
+        `El horómetro no puede ser menor que el último registrado de este compresor (${formatHoras(ultimo.horometro)} h).`
+      );
+    }
 
     if (esInspeccion) {
-      if (!nivelAceite.trim()) return setError("Completa el nivel de aceite.");
+      if (!nivelAceite) return setError("Selecciona el nivel de aceite.");
+      if (aceiteEchado === null) return setError("Marca si se le echó aceite.");
       if (!limpiezaCompresor) return setError("Selecciona la limpieza del compresor.");
       if (!estadoManguera) return setError("Selecciona el estado de la manguera.");
       if (!estadoFiltroPrincipal) return setError("Selecciona el estado del filtro principal.");
@@ -92,8 +150,6 @@ export default function NuevoMantenimientoCompresorForm({ userId, nombreUsuario,
       if (!procesoPiezas.trim()) return setError("Completa el proceso y piezas utilizadas.");
       if (!fotoReparacion) return setError("Adjunta la foto de la reparación.");
     }
-
-    const compresor = compresores.find((c) => c.id === compresorId);
 
     setLoading(true);
 
@@ -121,11 +177,14 @@ export default function NuevoMantenimientoCompresorForm({ userId, nombreUsuario,
       compresor_codigo_snapshot: compresor?.codigo || null,
       tipo_mantenimiento: tipo,
       responsable,
-      fecha,
-      horometro: Number(horometro),
+      // La base de datos la cambia por la de hoy de todas formas.
+      fecha: hoyISO(),
+      horometro: valor,
+      horometro_leido: horometroLeido,
       foto_horometro_url: fotoHorometroUrl,
       notas: notas.trim() || null,
-      nivel_aceite: esInspeccion ? nivelAceite.trim() || null : null,
+      nivel_aceite: esInspeccion ? nivelAceite || null : null,
+      aceite_echado: esInspeccion ? aceiteEchado : null,
       limpieza_compresor: esInspeccion ? limpiezaCompresor || null : null,
       estado_manguera: esInspeccion ? estadoManguera || null : null,
       estado_filtro_principal: esInspeccion ? estadoFiltroPrincipal || null : null,
@@ -141,17 +200,19 @@ export default function NuevoMantenimientoCompresorForm({ userId, nombreUsuario,
     setLoading(false);
 
     if (error) {
-      setError("No se pudo guardar. Intenta de nuevo.");
+      setError(
+        /horómetro/i.test(error.message || "")
+          ? error.message
+          : "No se pudo guardar. Intenta de nuevo."
+      );
       return;
     }
-
-    // La próxima inspección del compresor (+14 días si fue una Inspección)
-    // la pone ahora la base de datos (migration_66.sql): quien solo
-    // registra mantenimientos ya no puede cambiar los datos del compresor.
 
     router.push(`/equipos/compresores/${compresorId}`);
     router.refresh();
   }
+
+  const estiloSiNo = { marginTop: 0, width: "auto", padding: "8px 22px" };
 
   return (
     <form onSubmit={handleSubmit} className="card">
@@ -190,10 +251,34 @@ export default function NuevoMantenimientoCompresorForm({ userId, nombreUsuario,
         ))}
       </select>
 
-      <label htmlFor="fecha">
-        Fecha <span className="req">*</span>
-      </label>
-      <input id="fecha" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+      <div style={{ marginTop: 14 }}>
+        <CampoFoto id="foto_horometro" label="Foto del horómetro" file={fotoHorometro} onChange={alElegirFoto} required />
+        {lecturaDisponible && !fotoHorometro && (
+          <div className="hint-text" style={{ marginTop: 4 }}>
+            Primero la foto: la app lee el número sola. De frente, de cerca y sin reflejo.
+          </div>
+        )}
+      </div>
+
+      {leyendo && (
+        <div className="aviso-box" style={{ marginTop: 10 }}>
+          Leyendo el horómetro de la foto...
+        </div>
+      )}
+      {!leyendo && horometroLeido !== null && (
+        <div className="success-box" style={{ marginTop: 10 }}>
+          <b>Leído de la foto: {formatHoras(horometroLeido)} h</b>
+          <br />
+          <span style={{ color: "var(--texto-suave)" }}>
+            Revísalo. Si lo cambias a mano, queda marcado en el historial.
+          </span>
+        </div>
+      )}
+      {!leyendo && avisoLectura && (
+        <div className="aviso-box" style={{ marginTop: 10 }}>
+          {avisoLectura}
+        </div>
+      )}
 
       <label htmlFor="horometro">
         Horómetro <span className="req">*</span>
@@ -203,14 +288,30 @@ export default function NuevoMantenimientoCompresorForm({ userId, nombreUsuario,
         type="number"
         step="0.1"
         min="0"
+        inputMode="decimal"
         value={horometro}
         onChange={(e) => setHorometro(e.target.value)}
         placeholder="Ej: 1245.5"
       />
-
-      <div style={{ marginTop: 14 }}>
-        <CampoFoto id="foto_horometro" label="Foto del horómetro" file={fotoHorometro} onChange={setFotoHorometro} required />
-      </div>
+      {ultimo && (
+        <div className="hint-text" style={{ marginTop: 6 }}>
+          Último registro del {compresor?.codigo}: {formatHoras(ultimo.horometro)} h ({formatFechaDDMMAAAADeDate(ultimo.fecha)})
+          {diferencia !== null && (
+            <>
+              {" "}→{" "}
+              <b style={diferencia < 0 ? { color: "var(--rojo)" } : undefined}>
+                {diferencia >= 0 ? "+" : ""}
+                {formatHoras(Math.round(diferencia * 10) / 10)} h
+              </b>
+            </>
+          )}
+        </div>
+      )}
+      {corregido && (
+        <div className="hint-text" style={{ marginTop: 4, color: "#b5691f" }}>
+          ✎ Cambiado a mano (la foto decía {formatHoras(horometroLeido)} h).
+        </div>
+      )}
 
       {esInspeccion && (
         <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px dashed var(--borde)" }}>
@@ -219,13 +320,39 @@ export default function NuevoMantenimientoCompresorForm({ userId, nombreUsuario,
           <label htmlFor="nivel_aceite">
             Nivel de aceite <span className="req">*</span>
           </label>
-          <input
-            id="nivel_aceite"
-            type="text"
-            value={nivelAceite}
-            onChange={(e) => setNivelAceite(e.target.value)}
-            placeholder="Ej: Correcto, o cuánto se le rellenó"
-          />
+          <div className="hint-text" style={{ marginTop: 0 }}>
+            Como lo encontraste en la mirilla, antes de echarle.
+          </div>
+          <select id="nivel_aceite" value={nivelAceite} onChange={(e) => setNivelAceite(e.target.value)}>
+            <option value="">Selecciona...</option>
+            {NIVELES_ACEITE.map((n) => (
+              <option key={n.valor} value={n.valor}>
+                {n.label}
+              </option>
+            ))}
+          </select>
+
+          <label>
+            ¿Se le echó aceite? <span className="req">*</span>
+          </label>
+          <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+            <button
+              type="button"
+              className={aceiteEchado === false ? "btn btn-primary" : "btn secondary"}
+              style={estiloSiNo}
+              onClick={() => setAceiteEchado(false)}
+            >
+              No
+            </button>
+            <button
+              type="button"
+              className={aceiteEchado === true ? "btn btn-primary" : "btn secondary"}
+              style={estiloSiNo}
+              onClick={() => setAceiteEchado(true)}
+            >
+              Sí
+            </button>
+          </div>
 
           <SelectorEstado id="limpieza_compresor" label="Limpieza compresor" valor={limpiezaCompresor} onChange={setLimpiezaCompresor} required />
           <SelectorEstado id="estado_manguera" label="Estado de manguera" valor={estadoManguera} onChange={setEstadoManguera} required />
@@ -278,9 +405,23 @@ export default function NuevoMantenimientoCompresorForm({ userId, nombreUsuario,
       </label>
       <textarea id="notas" value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Cualquier detalle extra (opcional)" />
 
+      <div
+        style={{ marginTop: 16, display: "flex", gap: 8, alignItems: "center", color: "var(--texto-suave)", fontSize: 13 }}
+      >
+        <IconCalendar size={16} />
+        <span>
+          Fecha: <b style={{ color: "var(--texto)" }}>hoy, {formatFechaDDMMAAAADeDate(hoyISO())}</b>. Se guarda sola.
+        </span>
+      </div>
+
       {error && <div className="error-box">{error}</div>}
 
-      <button className="btn btn-primary" type="submit" disabled={loading || compresores.length === 0} style={{ marginTop: 20 }}>
+      <button
+        className="btn btn-primary"
+        type="submit"
+        disabled={loading || leyendo || compresores.length === 0}
+        style={{ marginTop: 16 }}
+      >
         {loading ? "Guardando..." : "Registrar mantenimiento"}
       </button>
     </form>

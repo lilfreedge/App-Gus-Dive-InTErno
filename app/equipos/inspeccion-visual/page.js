@@ -6,6 +6,8 @@ import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { hoyISO, sumarDias } from "@/lib/fechas";
+import BuscadorLista from "@/components/BuscadorLista";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 
 export default async function InspeccionVisualPage() {
   const supabase = createClient();
@@ -14,8 +16,11 @@ export default async function InspeccionVisualPage() {
   const puedeRegistrar = tieneAcceso(profile, "inspeccion_registrar");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
 
-  const [{ data: inspecciones }, { data: tanques }] = await Promise.all([
-    supabase.from("inspecciones_con_nombre").select("*").limit(200),
+  // V35 (buscador en los historiales): todas, no solo las últimas 200.
+  const [inspecciones, { data: tanques }] = await Promise.all([
+    todasLasFilas(supabase, "inspecciones_con_nombre", (q) =>
+      q.select("*").order("created_at", { ascending: false }).order("id")
+    ),
     // Ítem 14 del feedback de v16 (22-sep-2026): abajo de la lista de
     // inspecciones registradas, dos avisos aparte -- tanques que necesitan
     // inspección (nunca tuvieron una, o la tienen vencida) y tanques a los
@@ -53,10 +58,11 @@ export default async function InspeccionVisualPage() {
           </Link>
         )}
 
+        <BuscadorLista placeholder="Buscar tanque, resultado o persona...">
         <div className="card">
           {inspecciones && inspecciones.length > 0 ? (
             inspecciones.map((i) => (
-              <div className="list-item" key={i.id}>
+              <div className="list-item" key={i.id} data-buscar="">
                 <div className="list-item-top">
                   <span className="list-item-title">
                     <span className="folio-tag">#{i.folio}</span>
@@ -91,6 +97,7 @@ export default async function InspeccionVisualPage() {
             <div className="empty">Aún no hay inspecciones registradas.</div>
           )}
         </div>
+        </BuscadorLista>
 
         {tanquesPendientes.length > 0 && (
           <>

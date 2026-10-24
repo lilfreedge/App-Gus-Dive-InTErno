@@ -82,6 +82,15 @@ export default function EditarSeguimientoForm({
   puedeEditarHold = false,
   // V32: quién hace el cambio, para la bitácora de la cotización.
   nombreUsuario = "",
+  // V38 (pedido explícito: "dentro ponlo simplificado. Puedes quitar las
+  // otras secciones que el técnico no llena, no le aporta en nada que esté
+  // ahí"; maqueta-v38-2.html): al rol Técnico no le salen No. de
+  // cotización, Verificado por, Notificaciones al cliente ni Cierre de la
+  // orden (antes le salían con candado).
+  esTecnico = false,
+  // V38 -- quien puede abrir el Informe de mantenimiento (para el botón
+  // "Llenar el informe" de los reguladores).
+  puedeVerInforme = false,
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -89,6 +98,14 @@ export default function EditarSeguimientoForm({
 
   const esHidrostatica = esServicioHidrostatica(orden.que_se_hara);
   const esReparacion = esServicioReparacion(orden.que_se_hara);
+  // V38 -- Informe de mantenimiento obligatorio en los reguladores (pedido
+  // explícito: "quiero incentivarlo a que lo haga... que no le deje poner
+  // fecha de listo si no ha hecho el informe"; propuesta aprobada con "ya
+  // puedes trabajar en el código"): el técnico no puede poner "listo" sin
+  // informe; el Titular y los administradores ven un aviso, pero pueden.
+  const esRegulador = orden.tipo_equipo === "Reguladores";
+  const tieneInforme = !!orden.informe_mantenimiento;
+  const faltaInforme = esRegulador && !tieneInforme;
 
   // `ordenLocal` es la única fuente de verdad de lo que YA está guardado
   // en la base de datos -- se actualiza justo después de cada guardado
@@ -532,8 +549,27 @@ export default function EditarSeguimientoForm({
   else if (esHidrostatica) retornoDesbloqueado = envioHidrostaticaHecho;
   const retornoHecho = !!ordenLocal.fecha_retorno_tienda;
 
-  const listoDesbloqueado = muestraRetorno ? retornoHecho : true;
+  const listoDesbloqueadoNormal = muestraRetorno ? retornoHecho : true;
+  // V38 -- el técnico no ve el envío a taller ni el retorno ("solo lo que
+  // él llena": la fecha de listo). En una reparación que nunca salió al
+  // taller, puede poner "listo" igual: al guardarlo queda marcado "Se
+  // trabajó en tienda" (si la terminó él sin enviarla, se trabajó aquí). Si
+  // la tienda ya la envió al taller (o es una prueba hidrostática), espera a
+  // que la tienda ponga la fecha de retorno.
+  const listoEnTiendaPorTecnico =
+    esTecnico && esReparacion && !esHidrostatica && !ordenLocal.fecha_envio && !ordenLocal.fecha_retorno_tienda;
+  const listoDesbloqueado = listoDesbloqueadoNormal || listoEnTiendaPorTecnico;
   const listoHecho = !!ordenLocal.fecha_listo_entrega;
+  // V38 -- el botón del técnico dice qué terminó en vez de "Guardar"
+  // (pedido explícito: "en vez de 'guardar' pon 'Mantenimiento listo'. o
+  // qué propones?" → según el servicio: Mantenimiento / Reparación /
+  // Trabajo).
+  const servicioSinTildes = (orden.que_se_hara || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const textoListoTecnico = esReparacion
+    ? "✓ Reparación lista"
+    : servicioSinTildes.includes("mantenimiento")
+      ? "✓ Mantenimiento listo"
+      : "✓ Trabajo listo";
 
   // `editando !== "listo"` agregado (28-sep-2026, feedback en vivo, item 13:
   // "que no permita poner 'verificado por' si aun no tiene 'fecha de listo
@@ -602,6 +638,10 @@ export default function EditarSeguimientoForm({
   }
 
   function guardarListo() {
+    if (faltaInforme && esTecnico) {
+      setErroresPaso((e) => ({ ...e, listo: "Primero llena el Informe de mantenimiento." }));
+      return;
+    }
     const valor = draftDe("listo", ordenLocal.fecha_listo_entrega || hoyISO()).trim();
     if (!valor) {
       setErroresPaso((e) => ({ ...e, listo: "Indica la fecha de listo para entrega." }));
@@ -615,7 +655,12 @@ export default function EditarSeguimientoForm({
       setErroresPaso((e) => ({ ...e, listo: "No puede ser anterior a la fecha de retorno a tienda." }));
       return;
     }
-    guardarPasoSimple("listo", { fecha_listo_entrega: valor });
+    guardarPasoSimple(
+      "listo",
+      listoEnTiendaPorTecnico && !listoDesbloqueadoNormal
+        ? { fecha_listo_entrega: valor, reparacion_en_tienda: true }
+        : { fecha_listo_entrega: valor }
+    );
   }
 
   // Permite borrar la fecha de listo ya guardada (28-sep-2026, feedback en
@@ -1099,6 +1144,50 @@ export default function EditarSeguimientoForm({
         </div>
       )}
 
+      {/* V38 -- Informe de mantenimiento de los reguladores, a la vista. */}
+      {esRegulador && (
+        <div
+          style={{
+            marginTop: 16,
+            borderRadius: 10,
+            padding: 12,
+            border: `2px solid ${tieneInforme ? "var(--exito-borde)" : "var(--error-borde)"}`,
+            background: tieneInforme ? "var(--exito-fondo)" : "var(--error-fondo)",
+          }}
+        >
+          <div style={{ fontSize: 12, fontWeight: 800, color: tieneInforme ? "var(--verde)" : "var(--rojo)" }}>
+            INFORME DE MANTENIMIENTO
+          </div>
+          {tieneInforme ? (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--verde)" }}>✓ Informe listo</span>
+              {puedeVerInforme && (
+                <a
+                  href={`/app-clientes/ordenes/${orden.id}/informe?from=actualizar`}
+                  style={{ fontSize: 13, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none" }}
+                >
+                  Ver o cambiar
+                </a>
+              )}
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 14, margin: "4px 0 8px" }}>
+                Todavía no se ha hecho.
+                {esTecnico ? " Sin el informe no se puede poner listo." : ""}
+              </div>
+              {puedeVerInforme && (
+                <a href={`/app-clientes/ordenes/${orden.id}/informe?from=actualizar`}>
+                  <button type="button" className="btn btn-primary" style={{ marginTop: 0, width: "auto" }}>
+                    Llenar el informe
+                  </button>
+                </a>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {/* "Códigos a cobrar" -- siempre disponible (item 31), con o sin
           Hold activo. Renombrado de "Repuestos utilizados" (feedback
           sobre v40, pedido explícito: "pon 'códigos a cobrar'"). La
@@ -1196,7 +1285,8 @@ export default function EditarSeguimientoForm({
         {errorRepuestos && <div className="error-msg">⚠ {errorRepuestos}</div>}
       </div>
 
-      {/* V32 -- No. de cotización (ver guardarCotizacion arriba). */}
+      {/* V32 -- No. de cotización (ver guardarCotizacion arriba). V38: no al técnico. */}
+      {!esTecnico && (
       <div style={{ marginTop: 10 }}>
         {cotizacionModo === "editar" ? (
           <div>
@@ -1272,6 +1362,7 @@ export default function EditarSeguimientoForm({
         )}
         {errorCotizacion && cotizacionModo !== "quitar" && <div className="error-msg">⚠ {errorCotizacion}</div>}
       </div>
+      )}
 
       {cotizacionModo === "quitar" && (
         <div
@@ -1342,6 +1433,11 @@ export default function EditarSeguimientoForm({
               el seguimiento, que uno tenga que darle click") -- antes se
               veía siempre expandido de una vez al entrar a la pantalla;
               mismo patrón de acordeón que "Ver mi actividad" (Mi Perfil). */}
+          {/* V38: el técnico solo llena una cosa (la fecha de listo), así
+              que no le sale el botón "Seguimiento" (pedido explícito:
+              "puedes quitar lo que dice 'seguimiento', al final solo tendrá
+              que llenar una cosa"). */}
+          {!esTecnico && (
           <button
             type="button"
             className="btn secondary"
@@ -1351,10 +1447,11 @@ export default function EditarSeguimientoForm({
             <span>Seguimiento</span>
             <span style={{ transform: seguimientoAbierto ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>▾</span>
           </button>
+          )}
 
-          {seguimientoAbierto && (
+          {(seguimientoAbierto || esTecnico) && (
             <>
-          {esReparacion && (
+          {esReparacion && !esTecnico && (
             <div style={{ marginTop: 6, marginBottom: 4 }}>
               <label className="check-label" style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
                 <input
@@ -1369,7 +1466,7 @@ export default function EditarSeguimientoForm({
               {erroresPaso.reparacion_en_tienda && <div className="error-box" style={{ marginTop: 6 }}>{erroresPaso.reparacion_en_tienda}</div>}
             </div>
           )}
-          {esReparacion && !trabajadoEnTienda && (
+          {esReparacion && !trabajadoEnTienda && !esTecnico && (
             <PasoWizard
               id="envio_reparacion"
               label="Fecha de envío a taller o proveedor"
@@ -1405,7 +1502,7 @@ export default function EditarSeguimientoForm({
             </PasoWizard>
           )}
 
-          {esHidrostatica && (
+          {esHidrostatica && !esTecnico && (
             <PasoWizard
               id="envio_hidrostatica"
               label="Fecha de envío a prueba hidrostática"
@@ -1441,7 +1538,7 @@ export default function EditarSeguimientoForm({
             </PasoWizard>
           )}
 
-          {muestraRetorno && (
+          {muestraRetorno && !esTecnico && (
             <PasoWizard
               id="retorno"
               label="Fecha de retorno a tienda"
@@ -1496,11 +1593,23 @@ export default function EditarSeguimientoForm({
             </PasoWizard>
           )}
 
+          {/* V38: al Titular y a los administradores solo se les avisa. */}
+          {faltaInforme && !esTecnico && !listoHecho && (
+            <div className="aviso-box" style={{ marginTop: 10, marginBottom: 0 }}>
+              Ojo: este regulador todavía no tiene Informe de mantenimiento.
+            </div>
+          )}
           <PasoWizard
             id="listo"
             label="Fecha de listo para entrega"
-            locked={!listoHecho && !listoDesbloqueado}
-            mensajeBloqueo="Aún no puedes poner la fecha de listo porque falta la fecha de retorno a tienda."
+            locked={!listoHecho && (!listoDesbloqueado || (esTecnico && faltaInforme))}
+            mensajeBloqueo={
+              esTecnico && faltaInforme && listoDesbloqueado
+                ? "Primero llena el Informe de mantenimiento (arriba)."
+                : esTecnico
+                ? "Este equipo salió de la tienda. Se llena cuando vuelva: la tienda pone la fecha de retorno."
+                : "Aún no puedes poner la fecha de listo porque falta la fecha de retorno a tienda."
+            }
             hecho={listoHecho}
             editando={editando === "listo"}
             onEditar={editarListo}
@@ -1512,6 +1621,7 @@ export default function EditarSeguimientoForm({
             explicado={explicado}
             onClickBloqueado={clickBloqueado}
             pasoAnterior={pasoAnteriorListo}
+            labelGuardar={esTecnico ? textoListoTecnico : undefined}
             suprimido={!listoHecho && !!editando}
           >
             <input
@@ -1541,7 +1651,7 @@ export default function EditarSeguimientoForm({
               explícito). Con requiereVerificacion=false, el paso ni se
               muestra -- Notificaciones/Cierre pasan a depender de "listo"
               directamente (ver notifCierreDesbloqueado arriba). */}
-          {requiereVerificacion && (
+          {requiereVerificacion && !esTecnico && (
             <PasoWizard
               id="verificado"
               label="Verificado por"
@@ -1594,7 +1704,7 @@ export default function EditarSeguimientoForm({
               dos disponibles en cuanto está Verificado. Es una lista, no
               un valor único, así que no usa el patrón bloqueado/activo/
               hecho de PasoWizard -- solo su candado cuando corresponde. */}
-          {!puedeNotificar ? (
+          {esTecnico ? null : !puedeNotificar ? (
             <PasoBloqueado
               id="notif"
               label="Notificaciones al cliente"
@@ -1696,6 +1806,7 @@ export default function EditarSeguimientoForm({
 
           {/* Cierre de la orden: Fecha de entrega + Nombre de quien
               recibe + Factura, unidos en un solo paso (item 43). */}
+          {!esTecnico && (
           <PasoWizard
             id="cierre"
             label="Cierre de la orden"
@@ -1777,6 +1888,7 @@ export default function EditarSeguimientoForm({
               </div>
             )}
           </PasoWizard>
+          )}
 
           {/* Notas del técnico sobre el regulador -- siempre disponible
               dentro del Seguimiento, sin gatear nada. **Nota (30-sep-2026,

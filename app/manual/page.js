@@ -204,14 +204,17 @@ export default async function ManualPage() {
         "marcar llenado facturado factura número por facturar facturar varios",
       body: (
         <div className="card">
-          En Tanques, junto a cada llenado sin facturar hay una etiqueta
-          roja &quot;Facturar&quot; — tócala, escribe el número de
-          factura y guarda. &quot;Por facturar&quot; filtra la lista
-          para ver solo los pendientes, y &quot;Facturar varios&quot; te
-          deja seleccionar varios llenados y marcarlos todos con un
-          mismo número de factura. El número se puede corregir después
-          las veces que haga falta, tocando la etiqueta
-          &quot;Facturado&quot;.
+          En Equipos › Llenados de tanque, cada llenado sin facturar tiene
+          abajo la etiqueta roja &quot;Pendiente por facturar&quot; y el
+          botón &quot;Facturar&quot;: tócalo, escribe el No. de factura y
+          guarda. &quot;Por facturar&quot; filtra la lista para ver solo
+          los pendientes (dice cuántos hay), y &quot;Facturar varios&quot;
+          te deja seleccionar varios llenados y marcarlos todos con un mismo
+          número de factura. Ya facturado sale en verde, con
+          &quot;Cambiar&quot; para corregir el número. Lo puede hacer quien
+          tenga el permiso &quot;Facturación de llenado&quot;; si no se
+          puede guardar, sale el aviso. Arriba de la lista hay un buscador
+          (por No., persona, nota o No. de factura).
         </div>
       ),
     });
@@ -390,6 +393,92 @@ export default async function ManualPage() {
           &quot;Registrar y editar compresor&quot; deja agregar compresores
           nuevos y cambiar sus datos.
         </div>
+      ),
+    });
+  }
+
+  // V37 -- Compresores: fecha automática, horómetro por foto, aceite,
+  // historial ampliado y recordatorios.
+  if (esTitular || !!permisos.compresores) {
+    topics.push({
+      key: "compresores-v37",
+      title: "Compresores: registrar mantenimiento, historial y recordatorios",
+      searchText:
+        "compresor mantenimiento horómetro foto lee número fecha automática aceite mirilla lleno bien bajo muy bajo echó historial gráfica recordatorio inspección 14 días hecho",
+      body: (
+        <>
+          <div className="card">
+            Al registrar un mantenimiento ya no se escoge la fecha: la pone el app al guardar y no se puede cambiar,
+            ni al editar. Primero se toma la foto del horómetro y el app lee el número (de frente, de cerca y sin
+            reflejo); se puede corregir, y si se cambia, en el historial sale ✎ con lo que decía la foto. El
+            horómetro no puede ser menor que el último registrado de ese compresor. El nivel de aceite se escoge de
+            la lista, como se encontró en la mirilla antes de echarle, y se marca si se le echó aceite.
+          </div>
+          <div className="card">
+            En el Historial (con el permiso &quot;Ver historial de mantenimientos&quot;) se escoge el compresor arriba:
+            salen los cuadritos de resumen, la gráfica del aceite y la tabla con todo; en &quot;Todos&quot;, una
+            tarjetita por compresor y todos los registros juntos. El Titular y los administradores pueden escoger
+            qué columnas ver con &quot;Personalizar vista&quot;.
+          </div>
+          <div className="card">
+            Recordatorios: el Titular y los administradores los crean en Compresores › Administrar recordatorios.
+            Cada uno dice qué hay que hacer, cada cuántos días (u horas del horómetro), a qué compresores, con qué se
+            reinicia (al registrar ese mantenimiento, o con el botón &quot;Hecho&quot;) y a quién le sale. Salen en
+            Compresores, en Inicio y en la tarjeta de App Interno al entrar: en rojo los vencidos y en ámbar los que
+            están por vencer.
+          </div>
+        </>
+      ),
+    });
+  }
+
+  // V37 -- Avisar al técnico por WhatsApp. V38: el aviso va al grupo.
+  if (esTitular || !!permisos.equipos_clientes_asignar) {
+    topics.push({
+      key: "whatsapp-tecnico",
+      title: "Avisarle al técnico por WhatsApp (en el grupo)",
+      searchText: "whatsapp técnico asignar orden aviso avisado sin avisar bitácora grupo",
+      body: (
+        <>
+          <div className="card">
+            Al asignar una orden sale el botón verde &quot;Avisar en el grupo por WhatsApp&quot;: abre WhatsApp con el
+            mensaje ya escrito (&quot;Hola Dany, tienes una orden asignada…&quot;). Escoges el grupo del taller, que sale
+            arriba en los recientes, y le das Enviar. Sale desde el WhatsApp de quien asigna. Un link de WhatsApp no
+            puede abrir un grupo directo, por eso hay que tocar el grupo.
+          </div>
+          <div className="card">
+            Cada aviso queda anotado: en Registro de Órdenes cada orden asignada dice &quot;Avisado en el grupo&quot; o
+            &quot;Sin avisar&quot; (con el botón para avisar), en la Bitácora de órdenes está la pestaña &quot;Avisos a
+            técnicos&quot;, y en la ficha del técnico cuántos ha recibido. Si se reasigna la orden, hay que volver a
+            avisar. El app sabe que se abrió WhatsApp, no si de verdad se le dio Enviar.
+          </div>
+        </>
+      ),
+    });
+  }
+
+  // V38 -- Menú del técnico.
+  if (esTitular || esAdmin) {
+    topics.push({
+      key: "menu-tecnico",
+      title: "El menú del técnico",
+      searchText: "técnico menú lo que te toca informe compresores regulador listo hold",
+      body: (
+        <>
+          <div className="card">
+            Quien tiene el rol Técnico entra directo a su menú, &quot;Lo que te toca&quot;: sus órdenes asignadas, los
+            recordatorios de compresores que le salen a él y las órdenes esperando al cliente. Cada orden se abre ahí
+            mismo y se trabaja en pasos: el informe (en reguladores), los códigos, la nota y &quot;Mantenimiento
+            listo&quot;. Desde ahí también registra el mantenimiento de un compresor o de un regulador de la tienda, con
+            botones grandes. Le sale según sus permisos.
+          </div>
+          <div className="card">
+            En los reguladores, el técnico no puede poner listo sin el Informe de mantenimiento; a ti y a los
+            administradores solo les sale un aviso. El técnico no ve el teléfono del cliente. Para verlo como lo ve él:
+            ⚙ › &quot;Ver el menú del técnico&quot; en &quot;¿A dónde quieres entrar?&quot;, o &quot;Ver su menú de
+            técnico&quot; en su ficha. Lo que hagas ahí queda a tu nombre.
+          </div>
+        </>
       ),
     });
   }

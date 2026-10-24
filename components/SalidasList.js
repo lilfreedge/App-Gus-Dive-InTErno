@@ -11,7 +11,7 @@ export default function SalidasList({ salidas, puedeEditar }) {
   return (
     <div>
       {salidas.map((s) => (
-        <div className="list-item" key={s.id}>
+        <div className="list-item" key={s.id} data-buscar="">
           <div className="list-item-top">
             <span className="list-item-title">
               <span className="folio-tag">#{s.folio}</span>

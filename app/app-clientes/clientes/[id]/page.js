@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermiso, tieneAcceso } from "@/lib/roles";
+import { requirePermiso, tieneAcceso, esTecnico } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
@@ -93,7 +93,8 @@ export default async function FichaClientePage({ params }) {
 
         <div className="card">
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Campo etiqueta="Número de contacto" valor={cliente.telefono || "—"} />
+            {/* V38: el técnico no ve el contacto del cliente. */}
+            {!esTecnico(profile) && <Campo etiqueta="Número de contacto" valor={cliente.telefono || "—"} />}
             <Campo etiqueta="Cliente desde" valor={formatFecha(cliente.created_at)} />
           </div>
         </div>

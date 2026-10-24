@@ -1,0 +1,716 @@
+"use client";
+
+import { Fragment, useState } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import FotoLightbox from "@/components/FotoLightbox";
+import { tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { holdActivo, resumenHold, diasEnHold } from "@/lib/holds";
+import {
+  guardarOrden,
+  codigosDe,
+  camposCodigos,
+  etiquetaPieza,
+  piezasDelEquipo,
+  motivoNoListo,
+  cambiosListo,
+  cambiosHold,
+  textoListo,
+} from "@/lib/orden-tecnico";
+import { ICheck, IPlus, IX, IFlecha, IAbajo, IMic, IDoc, ILlave, IComp, IReg, ILock, IPausa, IAlarma } from "./iconos";
+
+// V38 -- Menú del técnico, "Lo que te toca" (maqueta-v38-3.html, opción A).
+// Todo se hace aquí mismo: la orden se abre en la lista y se trabaja en
+// pasos (informe, códigos, nota, listo); poner en Hold y agregar códigos
+// salen en una hoja desde abajo. Siempre pregunta antes de "listo".
+
+const DIA_MS = 24 * 60 * 60 * 1000;
+const ATRASO_DIAS = 5; // igual que "Mis órdenes asignadas"
+
+const sinTildes = (t) =>
+  String(t || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+
+function diasDesde(iso, hoy) {
+  if (!iso) return null;
+  const n = Math.round((Date.parse(`${hoy}T00:00:00Z`) - Date.parse(`${String(iso).slice(0, 10)}T00:00:00Z`)) / DIA_MS);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+function equipoDe(o) {
+  return [tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro), o.equipo_marca_snapshot, o.equipo_modelo_snapshot]
+    .filter((x) => x && String(x).trim())
+    .join(" ");
+}
+
+const numero = (o) => o.no_orden_fisico ?? o.folio;
+
+export default function TecnicoInicio({
+  nombre,
+  nombreQuienHace = "",
+  ordenesIniciales = [],
+  piezas = [],
+  recordatorios = [],
+  accesos = {},
+  hoy,
+  abrirId = null,
+  como = null,
+}) {
+  const supabase = createClient();
+  const [ordenes, setOrdenes] = useState(ordenesIniciales);
+  const [recs, setRecs] = useState(recordatorios);
+  const [abierta, setAbierta] = useState(abrirId);
+  const [hoja, setHoja] = useState(null); // { tipo: "codigo" | "listo" | "ok" | "hold", id }
+  const [notas, setNotas] = useState(() =>
+    Object.fromEntries(ordenesIniciales.map((o) => [o.id, o.notas_tecnico_regulador || ""]))
+  );
+  const [guardando, setGuardando] = useState(null);
+  const [errores, setErrores] = useState({});
+  const [verListos, setVerListos] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+  const [consulta, setConsulta] = useState("");
+  const [codigoHold, setCodigoHold] = useState("");
+  const [errorHoja, setErrorHoja] = useState("");
+  const [tiendaAuto, setTiendaAuto] = useState({}); // órdenes a las que "listo" les puso "Se trabajó en tienda"
+
+  const qComo = como ? `como=${como}` : "";
+  const conComo = (href) => (como ? `${href}${href.includes("?") ? "&" : "?"}${qComo}` : href);
+
+  const ordenPorId = (id) => ordenes.find((o) => o.id === id);
+
+  async function cambiar(orden, cambios, clave) {
+    setGuardando(clave || orden.id);
+    setErrores((e) => ({ ...e, [orden.id]: "" }));
+    try {
+      const nueva = await guardarOrden(supabase, orden, cambios);
+      setOrdenes((prev) => prev.map((o) => (o.id === nueva.id ? nueva : o)));
+      return nueva;
+    } catch (e) {
+      const msg = e?.message ? `No se pudo guardar: ${e.message}` : "No se pudo guardar. Intenta de nuevo.";
+      setErrores((er) => ({ ...er, [orden.id]: msg }));
+      setErrorHoja(msg);
+      return null;
+    } finally {
+      setGuardando(null);
+    }
+  }
+
+  function abrirHoja(tipo, id) {
+    setErrorHoja("");
+    setBusqueda("");
+    setConsulta("");
+    setCodigoHold("");
+    setHoja({ tipo, id });
+  }
+
+  async function marcarHecho(r) {
+    setGuardando(r.key);
+    setErrores((e) => ({ ...e, [r.key]: "" }));
+    const { error } = await supabase
+      .from("recordatorios_hechos")
+      .insert({ recordatorio_id: r.recordatorioId, compresor_id: r.compresorId, nombre_usuario: nombreQuienHace || null });
+    setGuardando(null);
+    if (error) return setErrores((e) => ({ ...e, [r.key]: "No se pudo anotar. Intenta de nuevo." }));
+    setRecs((prev) => prev.filter((x) => x.key !== r.key));
+  }
+
+  async function guardarNota(o) {
+    const texto = (notas[o.id] || "").trim();
+    await cambiar(o, { notas_tecnico_regulador: texto || null }, `nota-${o.id}`);
+  }
+
+  async function agregarCodigo(o, pieza) {
+    const lista = codigosDe(o);
+    const etiqueta = etiquetaPieza(pieza);
+    if (lista.some((r) => r.nombre === etiqueta)) return;
+    await cambiar(o, camposCodigos([...lista, { nombre: etiqueta, origen: "manual" }]), `cod-${pieza.id}`);
+  }
+
+  async function quitarCodigo(o, i) {
+    const lista = codigosDe(o);
+    await cambiar(o, camposCodigos(lista.filter((_, idx) => idx !== i)), `quitar-${o.id}-${i}`);
+  }
+
+  async function confirmarListo(o) {
+    const cambios = cambiosListo(o);
+    const texto = (notas[o.id] || "").trim();
+    if (texto !== (o.notas_tecnico_regulador || "").trim()) cambios.notas_tecnico_regulador = texto || null;
+    const nueva = await cambiar(o, cambios, "listo");
+    if (!nueva) return;
+    setTiendaAuto((t) => ({ ...t, [o.id]: !!cambios.reparacion_en_tienda }));
+    setAbierta(null);
+    setHoja({ tipo: "ok", id: o.id });
+  }
+
+  async function deshacerListo(o) {
+    const cambios = { fecha_listo_entrega: null };
+    if (tiendaAuto[o.id]) cambios.reparacion_en_tienda = false;
+    const nueva = await cambiar(o, cambios, `deshacer-${o.id}`);
+    if (!nueva) return;
+    setHoja(null);
+    setAbierta(o.id);
+  }
+
+  async function ponerHold(o) {
+    if (!consulta.trim()) return setErrorHoja("Escribe qué hay que preguntarle al cliente.");
+    const nueva = await cambiar(o, cambiosHold(o, { consulta, codigo: codigoHold }), "hold");
+    if (!nueva) return;
+    setHoja(null);
+    setAbierta(null);
+  }
+
+  // ---------------------------------------------------------------- listas
+  const porHacer = ordenes.filter((o) => !holdActivo(o.holds) && !o.fecha_listo_entrega);
+  const enHold = ordenes.filter((o) => holdActivo(o.holds));
+  const listosHoy = ordenes.filter((o) => !holdActivo(o.holds) && o.fecha_listo_entrega === hoy);
+  const recVencidos = recs.filter((r) => r.estado === "vencido");
+  const recPronto = recs.filter((r) => r.estado === "pronto");
+  const total = porHacer.length + recs.length;
+
+  // ---------------------------------------------------------------- piezas
+  // Ojo: estas piezas se llaman como funciones ({orden(o)}), no como
+  // <Orden />, para que el teclado no se cierre al escribir (si fueran
+  // componentes declarados aquí adentro, React los volvería a crear en cada
+  // letra).
+  function recordatorio(r) {
+    const color = r.estado === "vencido" ? "rojo" : "ambar";
+    let accion = null;
+    if (r.reinicia === "hecho") {
+      accion = (
+        <button type="button" className="tec-btn verde chico" disabled={guardando === r.key} onClick={() => marcarHecho(r)}>
+          <ICheck size={20} /> {guardando === r.key ? "..." : "Hecho"}
+        </button>
+      );
+    } else if (r.compresorId && accesos.registrarCompresor) {
+      accion = (
+        <Link
+          href={conComo(`/tecnico/compresores/${r.compresorId}?tipo=${encodeURIComponent(r.reinicia)}`)}
+          className="tec-btn azul chico"
+        >
+          Registrar
+        </Link>
+      );
+    }
+    return (
+      <div className={`tec-card ${color}`}>
+        <div className="tec-card-top fijo">
+          <span className={`tec-icono ${color}`}>{r.compresorId ? <IComp /> : <IAlarma />}</span>
+          <div className="tec-card-main">
+            <div className="tec-titulo">{r.titulo}</div>
+            <div className={`tec-linea ${color}`}>{r.texto}</div>
+            {errores[r.key] && <div className="tec-error">{errores[r.key]}</div>}
+          </div>
+          {accion}
+        </div>
+      </div>
+    );
+  }
+
+  function lineaOrden(o) {
+    const dias = diasDesde(o.fecha, hoy);
+    const partes = [o.que_se_hara || "Sin servicio"];
+    if (dias === 0) partes.push("llegó hoy");
+    else if (dias !== null && dias > ATRASO_DIAS) partes.push(`lleva ${dias} días, atrasada`);
+    else if (dias !== null) partes.push(`llegó hace ${dias} día${dias === 1 ? "" : "s"}`);
+    if (o.tipo_equipo === "Reguladores") partes.push(o.informe_mantenimiento ? "informe listo ✓" : "falta el informe");
+    return partes.join(" · ");
+  }
+
+  function ordenAbierta(o) {
+    const lista = codigosDe(o);
+    const esRegulador = o.tipo_equipo === "Reguladores";
+    const motivo = motivoNoListo(o);
+    const notaCambiada = (notas[o.id] || "").trim() !== (o.notas_tecnico_regulador || "").trim();
+    let n = 0;
+    return (
+      <div className="tec-open">
+        {o.notas && (
+          <div className="tec-dijo">
+            <div className="tec-dijo-t">LO QUE DIJO EL CLIENTE</div>
+            {o.notas}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 10 }}>
+          {o.foto_url && <FotoLightbox src={o.foto_url} alt="Foto del equipo" thumbSize={86} />}
+          <div style={{ fontSize: 14.5, color: "var(--texto-suave)", lineHeight: 1.45 }}>
+            No. {numero(o)}
+            <br />
+            Cliente: <b style={{ color: "var(--texto)" }}>{o.cliente_nombre_snapshot || "—"}</b>
+            {o.serie && (
+              <>
+                <br />
+                Serie {o.serie}
+              </>
+            )}
+          </div>
+        </div>
+        {o.autorizacion_cliente && (
+          <div className="tec-hint" style={{ fontSize: 14.5 }}>
+            Autorización del cliente: <b style={{ color: "var(--texto)" }}>{o.autorizacion_cliente}</b>
+          </div>
+        )}
+
+        {esRegulador && (
+          <div className="tec-paso">
+            <div className={`tec-paso-n${o.informe_mantenimiento ? " ok" : ""}`}>{++n}</div>
+            <div className="tec-paso-body">
+              <div className="tec-paso-t">Informe de mantenimiento</div>
+              {o.informe_mantenimiento ? (
+                <div className="tec-chip ok">
+                  <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <ICheck size={20} /> Informe listo
+                  </span>
+                  {accesos.informe && (
+                    <Link
+                      href={conComo(`/app-clientes/ordenes/${o.id}/informe?from=tecnico`)}
+                      style={{ color: "var(--azul-claro)", fontSize: 14, fontWeight: 800, textDecoration: "none" }}
+                    >
+                      Ver o cambiar
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div style={{ marginBottom: 8 }}>
+                    <span className="tec-estado rojo">Falta el informe</span>
+                  </div>
+                  {accesos.informe && (
+                    <Link href={conComo(`/app-clientes/ordenes/${o.id}/informe?from=tecnico`)} className="tec-btn azul">
+                      <IDoc /> Llenar el informe
+                    </Link>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="tec-paso">
+          <div className="tec-paso-n">{++n}</div>
+          <div className="tec-paso-body">
+            <div className="tec-paso-t">¿Qué códigos usaste?</div>
+            {lista.map((r, i) => (
+              <div className="tec-chip" key={`${r.nombre}-${i}`}>
+                <span>
+                  {r.nombre}
+                  {r.origen === "autorizado" && (
+                    <span style={{ marginLeft: 6, fontSize: 12, color: "var(--azul-claro)" }}>(autorizado)</span>
+                  )}
+                </span>
+                {accesos.actualizar && r.origen !== "autorizado" && (
+                  <button
+                    type="button"
+                    className="tec-quitar"
+                    disabled={guardando === `quitar-${o.id}-${i}`}
+                    onClick={() => quitarCodigo(o, i)}
+                  >
+                    <IX size={15} /> Quitar
+                  </button>
+                )}
+              </div>
+            ))}
+            {accesos.actualizar && (
+              <button type="button" className="tec-btn borde" onClick={() => abrirHoja("codigo", o.id)}>
+                <IPlus /> Agregar código
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="tec-paso">
+          <div className="tec-paso-n">{++n}</div>
+          <div className="tec-paso-body">
+            <div className="tec-paso-t">
+              Nota <small>(si hace falta)</small>
+            </div>
+            <textarea
+              className="tec-area"
+              value={notas[o.id] || ""}
+              onChange={(e) => setNotas((x) => ({ ...x, [o.id]: e.target.value }))}
+              placeholder="Escribe aquí…"
+              disabled={!accesos.actualizar}
+            />
+            <div className="tec-hint">
+              <IMic size={17} /> Puedes hablar: toca el micrófono del teclado.
+            </div>
+            {accesos.actualizar && notaCambiada && (
+              <button
+                type="button"
+                className="tec-btn borde"
+                style={{ marginTop: 8 }}
+                disabled={guardando === `nota-${o.id}`}
+                onClick={() => guardarNota(o)}
+              >
+                {guardando === `nota-${o.id}` ? "Guardando..." : "Guardar la nota"}
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="tec-paso">
+          <div className="tec-paso-n">{++n}</div>
+          <div className="tec-paso-body">
+            <div className="tec-paso-t">¿Terminaste?</div>
+            {!accesos.actualizar ? (
+              <div className="tec-aviso">No tienes el permiso para ponerla lista.</div>
+            ) : motivo ? (
+              <>
+                <button type="button" className="tec-btn bloqueado" aria-disabled="true">
+                  <ILock /> {textoListo(o)}
+                </button>
+                <div className="tec-aviso">{motivo}</div>
+              </>
+            ) : (
+              <button type="button" className="tec-btn verde" onClick={() => abrirHoja("listo", o.id)}>
+                <ICheck /> {textoListo(o)}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {errores[o.id] && <div className="tec-error">{errores[o.id]}</div>}
+
+        <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 8 }}>
+          {accesos.actualizar && (
+            <button type="button" className="tec-btn hold" onClick={() => abrirHoja("hold", o.id)}>
+              <IPausa /> Hay que preguntarle algo al cliente
+            </button>
+          )}
+          <Link
+            href={`/app-clientes/ordenes/${o.id}`}
+            style={{ textAlign: "center", fontSize: 14.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none", padding: 6 }}
+          >
+            Ver la orden completa ›
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  function orden(o) {
+    const abiertaEsta = abierta === o.id;
+    return (
+      <div className="tec-card rojo">
+        <button type="button" className="tec-card-top" onClick={() => setAbierta(abiertaEsta ? null : o.id)} aria-expanded={abiertaEsta}>
+          <span className="tec-icono rojo">
+            <ILlave />
+          </span>
+          <div className="tec-card-main">
+            <div className="tec-titulo">{equipoDe(o)}</div>
+            <div className="tec-linea rojo">{lineaOrden(o)}</div>
+          </div>
+          <span className="tec-flecha">{abiertaEsta ? <IAbajo /> : <IFlecha />}</span>
+        </button>
+        {abiertaEsta && ordenAbierta(o)}
+      </div>
+    );
+  }
+
+  function esperando(o) {
+    const h = holdActivo(o.holds);
+    const dias = h ? diasEnHold(h) : null;
+    return (
+      <Link href={`/app-clientes/ordenes/${o.id}`} className="tec-card ambar" style={{ display: "block", textDecoration: "none" }}>
+        <div className="tec-card-top">
+          <span className="tec-icono ambar">
+            <IPausa />
+          </span>
+          <div className="tec-card-main">
+            <div className="tec-titulo">{equipoDe(o)}</div>
+            <div className="tec-linea ambar">
+              {resumenHold(h)}
+              {dias === null ? "" : dias === 0 ? " · desde hoy" : ` · hace ${dias} día${dias === 1 ? "" : "s"}`}
+            </div>
+          </div>
+          <span className="tec-flecha">
+            <IFlecha />
+          </span>
+        </div>
+      </Link>
+    );
+  }
+
+  function grande({ href, icono, titulo, sub }) {
+    return (
+      <Link href={href} className="tec-card" style={{ display: "block", textDecoration: "none" }}>
+        <div className="tec-card-top">
+          <span className="tec-icono azul">{icono}</span>
+          <div className="tec-card-main">
+            <div className="tec-titulo" style={{ fontSize: 16.5 }}>
+              {titulo}
+            </div>
+            {sub && <div className="tec-linea gris">{sub}</div>}
+          </div>
+          <span className="tec-flecha">
+            <IFlecha />
+          </span>
+        </div>
+      </Link>
+    );
+  }
+
+  // ---------------------------------------------------------------- hojas
+  function hoja_() {
+    if (!hoja) return null;
+    const o = ordenPorId(hoja.id);
+    if (!o) return null;
+    const cerrar = () => {
+      if (!guardando) setHoja(null);
+    };
+    let contenido = null;
+
+    if (hoja.tipo === "codigo") {
+      const lista = codigosDe(o);
+      const ya = new Set(lista.map((r) => r.nombre));
+      const b = sinTildes(busqueda.trim());
+      const opciones = piezasDelEquipo(piezas, o.tipo_equipo)
+        .filter((p) => !b || b.split(/\s+/).every((pal) => sinTildes(`${p.codigo || ""} ${p.nombre}`).includes(pal)))
+        .slice(0, 80);
+      contenido = (
+        <>
+          <div className="tec-hoja-t">Agregar código</div>
+          <div style={{ fontSize: 14.5, color: "var(--texto-suave)" }}>
+            {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)} · No. {numero(o)}
+          </div>
+          <input
+            className="tec-input"
+            style={{ margin: "10px 0" }}
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar código o pieza…"
+          />
+          {opciones.length === 0 && <div className="tec-hint">No hay códigos con eso.</div>}
+          {opciones.map((p) => {
+            const agregado = ya.has(etiquetaPieza(p));
+            return (
+              <button
+                type="button"
+                key={p.id}
+                className="tec-cod"
+                disabled={!!guardando}
+                onClick={() => !agregado && agregarCodigo(o, p)}
+              >
+                <span>
+                  <b>{p.codigo || p.nombre}</b>
+                  {p.codigo && <span className="d">{p.nombre}</span>}
+                </span>
+                <span className={`tec-cod-mas${agregado ? " ok" : ""}`}>
+                  {guardando === `cod-${p.id}` ? "…" : agregado ? <ICheck /> : <IPlus />}
+                </span>
+              </button>
+            );
+          })}
+          {errorHoja && <div className="tec-error">{errorHoja}</div>}
+          <button type="button" className="tec-btn azul" style={{ marginTop: 14 }} onClick={cerrar}>
+            Listo
+          </button>
+        </>
+      );
+    }
+
+    if (hoja.tipo === "listo") {
+      const lista = codigosDe(o);
+      contenido = (
+        <>
+          <div className="tec-hoja-t">¿Ya está listo?</div>
+          <div style={{ fontSize: 16, margin: "6px 0 4px" }}>
+            {equipoDe(o)} · No. {numero(o)}
+          </div>
+          {lista.length > 0 ? (
+            <div style={{ fontSize: 14.5, color: "var(--texto-suave)" }}>Códigos: {lista.map((r) => r.nombre).join(", ")}</div>
+          ) : (
+            <div className="tec-aviso">No pusiste ningún código a cobrar. Si no usaste ninguno, puedes seguir.</div>
+          )}
+          {errorHoja && <div className="tec-error">{errorHoja}</div>}
+          <button type="button" className="tec-btn verde" style={{ marginTop: 16 }} disabled={!!guardando} onClick={() => confirmarListo(o)}>
+            <ICheck /> {guardando === "listo" ? "Guardando..." : "Sí, está listo"}
+          </button>
+          <button type="button" className="tec-btn gris" style={{ marginTop: 8 }} onClick={cerrar}>
+            No, todavía
+          </button>
+        </>
+      );
+    }
+
+    if (hoja.tipo === "ok") {
+      contenido = (
+        <div className="tec-ok">
+          <div className="tec-ok-c">
+            <ICheck size={40} />
+          </div>
+          <div style={{ fontSize: 21, fontWeight: 800 }}>¡Listo!</div>
+          <div style={{ fontSize: 15, color: "var(--texto-suave)", marginTop: 4 }}>
+            El {numero(o)} pasó a “Listos hoy”.
+            <br />
+            La tienda le avisa al cliente.
+          </div>
+          {errorHoja && <div className="tec-error">{errorHoja}</div>}
+          <button type="button" className="tec-btn azul" style={{ marginTop: 16 }} onClick={cerrar}>
+            Seguir
+          </button>
+          <button
+            type="button"
+            className="tec-quitar"
+            style={{ marginTop: 12, color: "var(--azul-claro)", fontSize: 14.5 }}
+            disabled={!!guardando}
+            onClick={() => deshacerListo(o)}
+          >
+            {guardando === `deshacer-${o.id}` ? "Deshaciendo..." : "Me equivoqué, deshacer"}
+          </button>
+        </div>
+      );
+    }
+
+    if (hoja.tipo === "hold") {
+      contenido = (
+        <>
+          <div className="tec-hoja-t">¿Qué hay que preguntarle al cliente?</div>
+          <div style={{ fontSize: 14.5, color: "var(--texto-suave)" }}>
+            {equipoDe(o)} · No. {numero(o)}
+          </div>
+          <textarea
+            className="tec-area"
+            style={{ marginTop: 12, minHeight: 100 }}
+            value={consulta}
+            onChange={(e) => {
+              setConsulta(e.target.value);
+              setErrorHoja("");
+            }}
+            placeholder="Ej: la manguera está rota, ¿se la cambiamos?"
+          />
+          <div className="tec-hint">
+            <IMic size={17} /> Puedes hablar: toca el micrófono del teclado.
+          </div>
+          <div className="tec-item-t" style={{ marginTop: 12 }}>
+            Si hace falta una pieza, ¿cuál? <small style={{ fontWeight: 600, color: "var(--texto-suave)" }}>(si sabes)</small>
+          </div>
+          <input className="tec-input" value={codigoHold} onChange={(e) => setCodigoHold(e.target.value)} placeholder="Código o nombre de la pieza" />
+          {errorHoja && <div className="tec-error">{errorHoja}</div>}
+          <button type="button" className="tec-btn rojo" style={{ marginTop: 14 }} disabled={!!guardando} onClick={() => ponerHold(o)}>
+            <IPausa /> {guardando === "hold" ? "Guardando..." : "Poner en Hold"}
+          </button>
+          <button type="button" className="tec-btn gris" style={{ marginTop: 8 }} onClick={cerrar}>
+            Cancelar
+          </button>
+          <div className="tec-hint" style={{ justifyContent: "center", marginTop: 10 }}>
+            La orden se pausa y la tienda llama al cliente.
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <div className="tec-hoja-fondo" onClick={(e) => e.target === e.currentTarget && cerrar()}>
+        <div className="tec-hoja" role="dialog" aria-modal="true">
+          <div className="tec-hoja-raya" />
+          {contenido}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="tec-hola">Hola, {nombre}</div>
+      <div className="tec-sub">
+        {total === 0 ? "No tienes nada pendiente. ¡Buen trabajo!" : total === 1 ? "Hoy te toca 1 cosa." : `Hoy te tocan ${total} cosas.`}
+      </div>
+
+      <div className="tec-sec">Lo que te toca</div>
+      {total === 0 && (
+        <div className="tec-card">
+          <div className="tec-card-top fijo">
+            <span className="tec-icono verde">
+              <ICheck />
+            </span>
+            <div className="tec-card-main">
+              <div className="tec-titulo" style={{ fontSize: 16 }}>
+                Nada por ahora
+              </div>
+              <div className="tec-linea gris">Cuando te asignen algo, sale aquí.</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {recVencidos.map((r) => (
+        <Fragment key={r.key}>{recordatorio(r)}</Fragment>
+      ))}
+      {porHacer.map((o) => (
+        <Fragment key={o.id}>{orden(o)}</Fragment>
+      ))}
+      {recPronto.map((r) => (
+        <Fragment key={r.key}>{recordatorio(r)}</Fragment>
+      ))}
+
+      {enHold.length > 0 && (
+        <>
+          <div className="tec-sec">Esperando al cliente</div>
+          {enHold.map((o) => (
+            <Fragment key={o.id}>{esperando(o)}</Fragment>
+          ))}
+        </>
+      )}
+
+      {(accesos.compresores || accesos.reguladores || listosHoy.length > 0) && <div className="tec-sec">También puedes</div>}
+      {accesos.compresores && (
+        grande({ href: conComo("/tecnico/compresores"), icono: <IComp />, titulo: "Compresores", sub: "Ver cómo están y registrar mantenimiento" })
+      )}
+      {accesos.reguladores && (
+        grande({
+          href: conComo("/tecnico/regulador"),
+          icono: <IReg />,
+          titulo: "Mantenimiento de regulador de la tienda",
+          sub: "Los reguladores de alquiler",
+        })
+      )}
+      {listosHoy.length > 0 && (
+        <>
+          <button type="button" className="tec-plegado" onClick={() => setVerListos((v) => !v)} aria-expanded={verListos}>
+            <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <span style={{ color: "var(--verde)", display: "flex" }}>
+                <ICheck />
+              </span>
+              Listos hoy ({listosHoy.length})
+            </span>
+            {verListos ? <IAbajo /> : <IFlecha />}
+          </button>
+          {verListos &&
+            listosHoy.map((o) => (
+              <div key={o.id} className="tec-card verde" style={{ marginTop: 10 }}>
+                <div className="tec-card-top fijo">
+                  <div className="tec-card-main">
+                    <div className="tec-titulo" style={{ fontSize: 16 }}>
+                      {equipoDe(o)}
+                    </div>
+                    <div className="tec-linea verde">No. {numero(o)} · listo hoy</div>
+                    {errores[o.id] && <div className="tec-error">{errores[o.id]}</div>}
+                  </div>
+                  {accesos.actualizar && (
+                    <button
+                      type="button"
+                      className="tec-btn gris chico"
+                      style={{ fontSize: 14 }}
+                      disabled={guardando === `deshacer-${o.id}`}
+                      onClick={() => deshacerListo(o)}
+                    >
+                      {guardando === `deshacer-${o.id}` ? "..." : "No está listo"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+        </>
+      )}
+
+      <div className="tec-pie">
+        <Link href="/espacio?elegir=1" className="tec-btn gris">
+          Entrar al app completo
+        </Link>
+      </div>
+
+      {hoja_()}
+    </>
+  );
+}

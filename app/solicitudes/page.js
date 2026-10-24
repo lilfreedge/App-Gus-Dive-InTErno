@@ -6,6 +6,8 @@ import Breadcrumb from "@/components/Breadcrumb";
 import { estadoSolicitud } from "@/lib/solicitudes";
 import SolicitudCard from "./solicitud-card";
 import CorreosAlmacen from "@/app/admin/usuarios/correos-almacen-client";
+import BuscadorLista from "@/components/BuscadorLista";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 import { IconLock, IconMail } from "@/components/icons";
 
 // "Solicitudes al almacén" (App Interno, V29). Pedido explícito: un
@@ -30,13 +32,10 @@ export default async function SolicitudesPage({ searchParams }) {
     ? await supabase.from("app_config").select("solicitudes_correos").maybeSingle()
     : { data: null };
 
-  const { data } = await supabase
-    .from("solicitudes_almacen")
-    .select("*, items:solicitudes_almacen_items(*)")
-    .order("created_at", { ascending: false })
-    .limit(300);
-
-  const todas = data || [];
+  // V35 (buscador en los historiales): todas, no solo las últimas 300.
+  const todas = await todasLasFilas(supabase, "solicitudes_almacen", (q) =>
+    q.select("*, items:solicitudes_almacen_items(*)").order("created_at", { ascending: false }).order("id")
+  );
   // "Pendientes" = falta al menos un código por llegar (incluye las que
   // llegaron en parte); "Recibidas" = llegó todo.
   const pendientes = todas.filter((s) => estadoSolicitud(s.items) !== "recibida");
@@ -81,9 +80,11 @@ export default async function SolicitudesPage({ searchParams }) {
             </div>
           </div>
         ) : (
-          lista.map((s) => (
-            <SolicitudCard key={s.id} solicitud={s} userId={user.id} nombreUsuario={profile?.full_name || user.email} />
-          ))
+          <BuscadorLista placeholder="Buscar No. de solicitud, persona o código...">
+            {lista.map((s) => (
+              <SolicitudCard key={s.id} solicitud={s} userId={user.id} nombreUsuario={profile?.full_name || user.email} />
+            ))}
+          </BuscadorLista>
         )}
 
         {esTitular && (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requirePermisoClientes, tieneAcceso } from "@/lib/roles";
+import { requirePermisoClientes, tieneAcceso, esTecnico } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
@@ -147,6 +147,8 @@ export default async function EditarSeguimientoPage({ params, searchParams }) {
           puedeNotificar={puedeNotificar}
           puedeCerrar={puedeCerrar}
           nombreUsuario={profile?.full_name || ""}
+          esTecnico={esTecnico(profile)}
+          puedeVerInforme={tieneAcceso(profile, "equipos_clientes_informe_mantenimiento")}
         />
       </div>
     </div>

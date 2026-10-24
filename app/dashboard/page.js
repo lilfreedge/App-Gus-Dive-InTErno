@@ -98,7 +98,8 @@ export default async function DashboardPage({ searchParams }) {
     0
   );
   const totalPendientesFacturar = pendientes.pendientesFacturar;
-  const { tanquesVencidos, reguladoresVencidos, hidroVencidas, hidroPorVencer } = pendientes;
+  const { tanquesVencidos, reguladoresVencidos, hidroVencidas, hidroPorVencer, recordatoriosVencidos, recordatoriosPronto } =
+    pendientes;
 
   const topArticulos = calcularTopArticulos(salidasRes.data || []).slice(0, 3);
 
@@ -178,6 +179,29 @@ export default async function DashboardPage({ searchParams }) {
           >
             <IconAlert size={18} />
             {tanquesVencidos} tanque{tanquesVencidos === 1 ? "" : "s"} con inspección vencida
+          </Link>
+        )}
+
+        {/* V37: recordatorios de compresores (los que le salen a esta persona). */}
+        {recordatoriosVencidos > 0 && (
+          <Link
+            href="/equipos/compresores"
+            className="error-box"
+            style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
+          >
+            <IconAlert size={18} />
+            {recordatoriosVencidos} recordatorio{recordatoriosVencidos === 1 ? "" : "s"} de compresores vencido
+            {recordatoriosVencidos === 1 ? "" : "s"}
+          </Link>
+        )}
+        {recordatoriosPronto > 0 && (
+          <Link
+            href="/equipos/compresores"
+            className="aviso-box"
+            style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
+          >
+            <IconAlert size={18} />
+            {recordatoriosPronto} recordatorio{recordatoriosPronto === 1 ? "" : "s"} de compresores por vencer
           </Link>
         )}
 

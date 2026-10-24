@@ -4,6 +4,7 @@ import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import LlenadosList from "@/components/LlenadosList";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 
 export default async function TanquesPage() {
   const supabase = createClient();
@@ -12,7 +13,10 @@ export default async function TanquesPage() {
   const puedeRegistrar = tieneAcceso(profile, "registrar_llenado");
   const puedeFacturar = tieneAcceso(profile, "facturacion");
 
-  const { data: llenados } = await supabase.from("llenados_con_nombre").select("*").limit(200);
+  // V35 (buscador en los historiales): todos, no solo los últimos 200.
+  const llenados = await todasLasFilas(supabase, "llenados_con_nombre", (q) =>
+    q.select("*").order("created_at", { ascending: false }).order("id")
+  );
 
   return (
     <div>

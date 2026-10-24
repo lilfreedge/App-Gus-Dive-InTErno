@@ -4,16 +4,18 @@ import { requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import SalidasList from "@/components/SalidasList";
+import BuscadorLista from "@/components/BuscadorLista";
+import { todasLasFilas } from "@/lib/todas-las-filas";
 
 export default async function SalidasPage() {
   const supabase = createClient();
   const { profile } = await requireInterno(supabase, "registrar_salida");
   const puedeEditar = !!(profile?.is_admin || profile?.es_titular);
 
-  const { data: salidas } = await supabase
-    .from("salidas_con_nombre")
-    .select("*")
-    .limit(200);
+  // V35 (buscador en los historiales): todas, no solo las últimas 200.
+  const salidas = await todasLasFilas(supabase, "salidas_con_nombre", (q) =>
+    q.select("*").order("created_at", { ascending: false }).order("id")
+  );
 
   return (
     <div>
@@ -28,9 +30,11 @@ export default async function SalidasPage() {
           </button>
         </Link>
 
-        <div className="card">
-          <SalidasList salidas={salidas} puedeEditar={puedeEditar} />
-        </div>
+        <BuscadorLista placeholder="Buscar código, artículo, persona o nota...">
+          <div className="card">
+            <SalidasList salidas={salidas} puedeEditar={puedeEditar} />
+          </div>
+        </BuscadorLista>
       </div>
     </div>
   );
