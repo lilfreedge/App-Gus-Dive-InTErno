@@ -27,6 +27,7 @@ export default function TopbarClientes({
   permisos,
   ordenMenuClientes,
   menuPersonalizadoClientes,
+  inicio = "/app-clientes",
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -95,14 +96,19 @@ export default function TopbarClientes({
     <div className="topbar">
       <div className="topbar-inner">
         <div>
-          <Image
-            src="/logo-gus-icon.png"
-            alt="Gus Dive"
-            width={64}
-            height={22}
-            className="topbar-logo"
-            priority
-          />
+          {/* V40: el logo lleva al inicio de donde estés (pedido explícito:
+              "el logo de Gus arriba a la izquierda, cuando uno le da click,
+              te lleva al inicio"). */}
+          <Link href={inicio} className="topbar-logo-link" aria-label="Ir al inicio">
+            <Image
+              src="/logo-gus-icon.png"
+              alt="Gus Dive"
+              width={64}
+              height={22}
+              className="topbar-logo"
+              priority
+            />
+          </Link>
           <div className="topbar-sub">Hola, {nombre}</div>
         </div>
 

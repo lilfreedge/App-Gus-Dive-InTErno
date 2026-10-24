@@ -50,3 +50,13 @@ export function sufijoComo(viendoComo, persona) {
 export function primerNombre(nombre) {
   return String(nombre || "").trim().split(/\s+/)[0] || "";
 }
+
+// V40 -- Menú de ⚙ en las pantallas del técnico. Se quitó "Entrar al app
+// completo" para el técnico (pedido explícito: "Quita opcion de entrar a
+// App completo"); el Titular o un administrador que lo está viendo "como"
+// un técnico sí la conserva, para poder volver a su app.
+export function enlacesMenu(yo) {
+  const lista = [{ href: "/app-clientes/perfil", texto: "Mi perfil" }];
+  if (!esTecnico(yo)) lista.push({ href: "/espacio?elegir=1", texto: "Entrar al app completo" });
+  return lista;
+}

@@ -5,7 +5,7 @@ import HeaderSimple from "@/components/HeaderSimple";
 import { cargarRecordatorios } from "@/lib/recordatorios";
 import { formatHoras, indiceAceite } from "@/lib/compresores";
 import { hoyISO } from "@/lib/fechas";
-import { quienEs, accesosDe, primerNombre, sufijoComo } from "../datos";
+import { quienEs, accesosDe, primerNombre, sufijoComo, enlacesMenu } from "../datos";
 import { IComp, ILlave } from "../iconos";
 
 // V38 -- Compresores en el menú del técnico (pedido explícito: "lo mismo
@@ -66,10 +66,8 @@ export default async function TecnicoCompresoresPage({ searchParams }) {
         nombre={primerNombre(yo.full_name)}
         sinBarra
         esTitular={!!yo.es_titular}
-        enlaces={[
-          { href: "/app-clientes/perfil", texto: "Mi perfil" },
-          { href: "/espacio?elegir=1", texto: "Entrar al app completo" },
-        ]}
+        enlaces={enlacesMenu(yo)}
+        inicio={`/tecnico${sufijoComo(viendoComo, persona)}`}
       />
       <div className="page tec" style={{ paddingTop: 12 }}>
         <Link href={`/tecnico${sufijo}`} className="tec-volver">

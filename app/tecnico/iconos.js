@@ -59,19 +59,12 @@ export const ILlave = (p) => (
     <path d="M14.5 6.5a4 4 0 0 0 5 5l-8 8a2.1 2.1 0 0 1-3-3l8-8a4 4 0 0 0-2-2z" />
   </Base>
 );
-export const IComp = (p) => (
-  <Base {...p}>
-    <rect x="3" y="9" width="13" height="9" rx="2" />
-    <circle cx="19" cy="9" r="2.5" />
-    <path d="M6 18v2M13 18v2M8 13h5" />
-  </Base>
-);
-export const IReg = (p) => (
-  <Base {...p}>
-    <circle cx="9" cy="9" r="5" />
-    <path d="M13 13l7 7M9 6.5v5M6.5 9h5" />
-  </Base>
-);
+// V40 -- Compresores, regulador de la tienda y órdenes de clientes llevan los
+// mismos íconos del app (pedido explícito: "Esos iconos que tienen coinciden
+// con los del app? los siento diferente"): el de "Compresores" y el de
+// "Mantenimiento de reguladores" de App Interno, y el de la tarjeta "App
+// Equipos de clientes".
+export { IconCompressor as IComp, IconRegulator as IReg, IconUsers as IClientes } from "@/components/icons";
 export const ICam = (p) => (
   <Base {...p}>
     <path d="M4 8h3l2-3h6l2 3h3v11H4z" />

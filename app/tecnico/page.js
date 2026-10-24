@@ -4,17 +4,17 @@ import HeaderSimple from "@/components/HeaderSimple";
 import { cargarRecordatorios } from "@/lib/recordatorios";
 import { tecnicosConCarga } from "@/lib/tecnicos";
 import { hoyISO } from "@/lib/fechas";
-import { quienEs, accesosDe, primerNombre } from "./datos";
+import { quienEs, accesosDe, primerNombre, enlacesMenu, sufijoComo } from "./datos";
 import TecnicoInicio from "./tecnico-client";
 
-// V38 -- Menú del técnico: "Lo que te toca" (ver datos.js).
+// V38 -- Menú del técnico: "Mis trabajos" (antes "Lo que te toca"; ver datos.js).
 // - Arriba, todo lo que le toca de las dos apps juntas: sus órdenes
 //   asignadas (la más vieja primero) y los recordatorios de compresores que
 //   le salen a él (vencidos y por vencer).
 // - "Esperando al cliente": sus órdenes en Hold.
 // - "También puedes": Compresores, Mantenimiento de regulador de la tienda y
 //   "Listos hoy" (con "deshacer").
-// - "Entrar al app completo" (y en ⚙) por si acaso.
+// - V40: sin "Entrar al app completo" para el técnico (ver enlacesMenu).
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 
@@ -121,10 +121,8 @@ export default async function TecnicoPage({ searchParams }) {
         nombre=""
         sinBarra
         esTitular={!!yo.es_titular}
-        enlaces={[
-          { href: "/app-clientes/perfil", texto: "Mi perfil" },
-          { href: "/espacio?elegir=1", texto: "Entrar al app completo" },
-        ]}
+        enlaces={enlacesMenu(yo)}
+        inicio={`/tecnico${sufijoComo(viendoComo, persona)}`}
       />
       <div className="page tec" style={{ paddingTop: 12 }}>
         {viendoComo && (
@@ -145,6 +143,7 @@ export default async function TecnicoPage({ searchParams }) {
           hoy={hoy}
           abrirId={searchParams?.abrir || null}
           como={viendoComo ? persona.id : null}
+          informeGuardado={searchParams?.informe === "ok"}
         />
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
@@ -14,7 +15,7 @@ import {
 } from "@/lib/informe-mantenimiento";
 import BotonImprimir from "@/components/BotonImprimir";
 import EnviarInformeClient from "./enviar-client";
-import { IconLock } from "@/components/icons";
+import { IconLock, IconCheck } from "@/components/icons";
 import ConInfo from "@/components/ConInfo";
 
 const SECCION_ESTILO = { background: "var(--fondo)", border: "1px solid var(--borde)", borderRadius: 10, padding: 14, marginBottom: 12 };
@@ -42,8 +43,12 @@ const TEXTO_SUTIL_ESTILO = { fontSize: 13, color: "var(--texto-suave)" };
 // V38 -- `volver` ({ href, texto }): al guardar el informe sale un aviso con
 // un botón para regresar a donde se abrió (el menú del técnico o
 // Actualizar estado de orden).
-export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido = "", volver = null }) {
+// V40 -- `sencillo` (el técnico): solo el formulario, sin pestañas, sin
+// Imprimir ni Enviar por correo, y el botón dice "Guardar informe". Al
+// guardar se va solo a `alGuardar` (su menú, Actualizar estado o la orden).
+export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido = "", volver = null, sencillo = false, alGuardar = null }) {
   const supabase = createClient();
+  const router = useRouter();
 
   const [informe, setInforme] = useState(() => ({
     ...informeDefault(orden, tecnicoSugerido, serie),
@@ -69,6 +74,10 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
   // en el wizard, pero local al formulario (se guarda junto con todo lo
   // demás al hacer clic en "Generar informe", no de inmediato).
   const [nuevoOring, setNuevoOring] = useState("");
+  // V40: respuesta del técnico a "¿Cambiaste algún o-ring?" (null = sin contestar).
+  const [respuestaOrings, setRespuestaOrings] = useState(() =>
+    (informe.orings || []).length > 0 ? "si" : orden.informe_mantenimiento ? "no" : null
+  );
   function agregarOring() {
     const valor = nuevoOring.trim();
     if (!valor) return;
@@ -91,14 +100,28 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
       setError('Indica si el regulador queda "Aprobado para su uso" o "No aprobado".');
       return;
     }
+    if (sencillo && respuestaOrings === null) {
+      setError("Contesta si cambiaste algún o-ring (No o Sí).");
+      return;
+    }
+    if (sencillo && respuestaOrings === "si" && (informe.orings || []).length === 0 && !nuevoOring.trim()) {
+      setError("Anota cuál o-ring cambiaste, o toca No.");
+      return;
+    }
     if (!informe.tecnico.trim()) {
       setError("Indica el técnico que hizo el mantenimiento.");
       return;
     }
 
     setGuardando(true);
+    let yendose = false;
     try {
-      const informeFinal = { ...informe, marca: informe.marca.trim(), modelo: informe.modelo.trim(), tecnico: informe.tecnico.trim(), actualizado_en: new Date().toISOString() };
+      // V40: lo que el técnico escribió sin tocar "+ Agregar" también cuenta;
+      // con "No", no se guardan o-rings.
+      let oringsFinal = informe.orings || [];
+      if (sencillo && respuestaOrings === "si" && nuevoOring.trim()) oringsFinal = [...oringsFinal, nuevoOring.trim()];
+      if (sencillo && respuestaOrings === "no") oringsFinal = [];
+      const informeFinal = { ...informe, orings: oringsFinal, marca: informe.marca.trim(), modelo: informe.modelo.trim(), tecnico: informe.tecnico.trim(), actualizado_en: new Date().toISOString() };
 
       await registrarCambio(supabase, {
         tabla: "ordenes_equipos",
@@ -133,6 +156,13 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
         }
       }
 
+      if (sencillo && alGuardar) {
+        // Se queda en "Guardando..." mientras se va (para que no lo toque dos veces).
+        yendose = true;
+        router.push(alGuardar);
+        router.refresh();
+        return;
+      }
       setInforme(informeFinal);
       setYaGenerado(true);
       setRecienGuardado(true);
@@ -140,8 +170,51 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
     } catch (e) {
       setError("No se pudo guardar. Intenta de nuevo.");
     } finally {
-      setGuardando(false);
+      if (!yendose) setGuardando(false);
     }
+  }
+
+  // La lista de o-rings con su campo para agregar (la usan el formulario de
+  // siempre y la pregunta del técnico).
+  function controlesOrings() {
+    return (
+      <>
+              {(informe.orings || []).length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8, marginBottom: 6 }}>
+                  {informe.orings.map((o, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5 }}>
+                      <span>{o}</span>
+                      <button
+                        type="button"
+                        onClick={() => quitarOring(i)}
+                        style={{ background: "none", border: "none", color: "var(--rojo)", cursor: "pointer", fontSize: 12.5, padding: 0 }}
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <input
+                  type="text"
+                  value={nuevoOring}
+                  onChange={(e) => setNuevoOring(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      agregarOring();
+                    }
+                  }}
+                  placeholder="Cuál o-ring, ej. '1ra etapa'"
+                  style={{ marginTop: 0 }}
+                />
+                <button type="button" className="btn secondary" onClick={agregarOring} style={{ marginTop: 0, width: "auto" }}>
+                  + Agregar
+                </button>
+              </div>
+      </>
+    );
   }
 
   const componentesTexto = componentesRecibidosTexto(orden.regulador_componentes);
@@ -162,6 +235,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
           esta barra de pestañas le faltaba "no-print": se imprimía junto
           con el informe (vista "Informe (cliente)"), empujando el
           contenido real a una 2da página. */}
+      {!sencillo && (
       <div className="no-print" style={{ display: "flex", gap: 6, background: "var(--superficie-suave)", borderRadius: 8, padding: 5, marginBottom: 16 }}>
         <button
           type="button"
@@ -198,9 +272,14 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
           Informe (cliente)
         </button>
       </div>
+      )}
 
       {vista === "formulario" ? (
         <>
+          {/* V40: el técnico solo ve lo que llena (pedido explícito: "Solo ponle
+              número de orden y el equipo"); el No. y el equipo van arriba. */}
+          {!sencillo && (
+          <>
           <div style={SECCION_ESTILO_SUTIL}>
             <div style={SECCION_LABEL_ESTILO_SUTIL}>Datos del cliente</div>
             <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}><b>Nombre:</b> {orden.cliente_nombre_snapshot || "—"}</div>
@@ -235,6 +314,8 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
             <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Problemas reportados:</b> {orden.regulador_problemas_reportados || "Ninguno reportado"}</div>
           </div>
 
+          </>
+          )}
           <div style={SECCION_ESTILO}>
             <div style={SECCION_LABEL_ESTILO}>Trabajo realizado</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
@@ -254,6 +335,39 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
             <input type="text" value={informe.presion} onChange={(e) => set("presion", e.target.value)} placeholder="Ej. 140" />
           </div>
 
+          {/* V40 -- Recordatorio de los o-rings para el técnico (pedido
+              explícito: "Los o-rings están incluidos en el mantenimiento, no
+              siempre se les cambia pero sería bueno poner un mensaje que le
+              sirva de recordatorio"; maqueta V40, opción A): tiene que
+              contestar No o Sí para poder guardar; con Sí, anota cuáles. */}
+          {sencillo && (
+            <div style={SECCION_ESTILO}>
+              <div style={SECCION_LABEL_ESTILO}>¿Cambiaste algún o-ring?</div>
+              <div style={{ fontSize: 13, color: "var(--texto-suave)", marginTop: 4 }}>Revísalos siempre. Si cambiaste alguno, anótalo.</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                {[
+                  { v: "no", label: "No" },
+                  { v: "si", label: "Sí" },
+                ].map((op) => (
+                  <button
+                    key={op.v}
+                    type="button"
+                    onClick={() => setRespuestaOrings(op.v)}
+                    style={{
+                      flex: 1, marginTop: 0, padding: "10px", borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: "pointer",
+                      border: "1px solid var(--azul-claro)",
+                      background: respuestaOrings === op.v ? "var(--azul-claro)" : "transparent",
+                      color: respuestaOrings === op.v ? "#fff" : "var(--azul-claro)",
+                    }}
+                  >
+                    {op.label}
+                  </button>
+                ))}
+              </div>
+              {respuestaOrings === "si" && controlesOrings()}
+            </div>
+          )}
+
           <div style={SECCION_ESTILO}>
             {/* Renombrada a "Nota" (1-oct-2026, pedido explícito, vinculada
                 con la "Nota" del Seguimiento -- ver informeDefault() en
@@ -261,7 +375,8 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 notas_tecnico_regulador la primera vez que se genera el
                 Informe para esta orden) -- el campo interno sigue
                 llamándose `observacion` para no tocar lo ya guardado. */}
-            <div style={SECCION_LABEL_ESTILO}>Nota</div>
+            {/* V40: para el técnico, "Nota para el cliente" (la de su menú es interna). */}
+            <div style={SECCION_LABEL_ESTILO}>{sencillo ? "Nota para el cliente" : "Nota"}</div>
             <textarea rows={3} value={informe.observacion} onChange={(e) => set("observacion", e.target.value)} style={{ marginTop: 8 }} />
             {/* Botón para traer la Nota del Seguimiento a mano (feedback
                 sobre v50, pedido explícito: "no sale en el informe") -- la
@@ -275,7 +390,8 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 botón aparece solo cuando las dos difieren, para traerla
                 con un clic sin perder la protección contra el pisado
                 silencioso. */}
-            {orden.notas_tecnico_regulador?.trim() &&
+            {!sencillo &&
+              orden.notas_tecnico_regulador?.trim() &&
               orden.notas_tecnico_regulador.trim() !== (informe.observacion || "").trim() && (
                 <button
                   type="button"
@@ -288,6 +404,8 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
               )}
           </div>
 
+          {!sencillo && (
+          <>
           {/* "Cambio de o-rings" (1-oct-2026, nueva feature, pedido
               explícito) -- lista armada de a uno, mismo patrón que
               "Códigos a cobrar" del wizard. Solo aparece en el Informe
@@ -299,41 +417,10 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
             <ConInfo texto="Opcional -- si no se cambió ninguno, déjalo vacío.">
               <div style={SECCION_LABEL_ESTILO}>Cambio de o-rings</div>
             </ConInfo>
-            {(informe.orings || []).length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8, marginBottom: 6 }}>
-                {informe.orings.map((o, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5 }}>
-                    <span>{o}</span>
-                    <button
-                      type="button"
-                      onClick={() => quitarOring(i)}
-                      style={{ background: "none", border: "none", color: "var(--rojo)", cursor: "pointer", fontSize: 12.5, padding: 0 }}
-                    >
-                      Quitar
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-              <input
-                type="text"
-                value={nuevoOring}
-                onChange={(e) => setNuevoOring(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    agregarOring();
-                  }
-                }}
-                placeholder="Cuál o-ring, ej. '1ra etapa'"
-                style={{ marginTop: 0 }}
-              />
-              <button type="button" className="btn secondary" onClick={agregarOring} style={{ marginTop: 0, width: "auto" }}>
-                + Agregar
-              </button>
-            </div>
+            {controlesOrings()}
           </div>
+          </>
+          )}
 
           {/* "Recomendación de próximo mantenimiento" (1-oct-2026, nueva
               feature, pedido explícito) -- preset de 6/12 meses (opcional).
@@ -394,23 +481,35 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
               </button>
             </div>
 
-            <div style={{ marginTop: 12, fontSize: 12.5, color: "var(--texto-suave)" }}><b>Garantía:</b> 15 días a partir de la fecha de entrega.</div>
+            {/* V40: al técnico no le salen la Garantía ni el campo Técnico (va
+                solo con su nombre); en el informe del cliente salen igual. */}
+            {!sencillo && (
+              <>
+                <div style={{ marginTop: 12, fontSize: 12.5, color: "var(--texto-suave)" }}><b>Garantía:</b> 15 días a partir de la fecha de entrega.</div>
 
-            <label style={{ marginTop: 10 }}>Técnico</label>
-            <input type="text" value={informe.tecnico} onChange={(e) => set("tecnico", e.target.value)} />
+                <label style={{ marginTop: 10 }}>Técnico</label>
+                <input type="text" value={informe.tecnico} onChange={(e) => set("tecnico", e.target.value)} />
+              </>
+            )}
           </div>
 
           {error && <div className="error-box">{error}</div>}
 
-          <ConInfo
-            style={{ marginTop: 10 }}
-            filaStyle={{ gap: 8 }}
-            texto="Se genera un PDF con este contenido para entregar al cliente."
-          >
-            <button type="button" className="btn btn-primary" onClick={generarInforme} disabled={guardando} style={{ flex: 1, width: "auto", marginTop: 0 }}>
-              {guardando ? "Guardando..." : "Generar informe (PDF)"}
+          {sencillo ? (
+            <button type="button" className="tec-btn verde" onClick={generarInforme} disabled={guardando} style={{ marginTop: 14 }}>
+              <IconCheck size={22} /> {guardando ? "Guardando..." : "Guardar informe"}
             </button>
-          </ConInfo>
+          ) : (
+            <ConInfo
+              style={{ marginTop: 10 }}
+              filaStyle={{ gap: 8 }}
+              texto="Se genera un PDF con este contenido para entregar al cliente."
+            >
+              <button type="button" className="btn btn-primary" onClick={generarInforme} disabled={guardando} style={{ flex: 1, width: "auto", marginTop: 0 }}>
+                {guardando ? "Guardando..." : "Generar informe (PDF)"}
+              </button>
+            </ConInfo>
+          )}
         </>
       ) : (
         <>

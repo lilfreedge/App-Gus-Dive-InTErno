@@ -45,33 +45,44 @@ export async function POST(request) {
   const ctrl = new AbortController();
   const corte = setTimeout(() => ctrl.abort(), 25000);
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      signal: ctrl.signal,
-      headers: {
-        "x-api-key": llave,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: process.env.ANTHROPIC_MODEL || "claude-haiku-5-5",
-        max_tokens: 20,
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: m[1], data: m[2] } },
-              { type: "text", text: INSTRUCCIONES },
-            ],
-          },
-        ],
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      console.error("horometro: respuesta de la IA", res.status, data?.error?.message);
-      return NextResponse.json({ ok: false, motivo: res.status === 401 ? "llave" : "ia" });
+    // V38 -- si el modelo no existe en la cuenta (cambian de nombre con el
+    // tiempo), se prueba el siguiente de la lista en vez de fallar.
+    const modelos = [...new Set([process.env.ANTHROPIC_MODEL, "claude-haiku-4-5", "claude-sonnet-4-5"].filter(Boolean))];
+    let data = null;
+    for (const modelo of modelos) {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        signal: ctrl.signal,
+        headers: {
+          "x-api-key": llave,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: modelo,
+          max_tokens: 20,
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "image", source: { type: "base64", media_type: m[1], data: m[2] } },
+                { type: "text", text: INSTRUCCIONES },
+              ],
+            },
+          ],
+        }),
+      });
+      const cuerpo = await res.json().catch(() => ({}));
+      if (res.ok) {
+        data = cuerpo;
+        break;
+      }
+      const sinModelo = res.status === 404 || cuerpo?.error?.type === "not_found_error" || /model/i.test(cuerpo?.error?.message || "");
+      console.error("horometro: respuesta de la IA", modelo, res.status, cuerpo?.error?.message);
+      if (res.status === 401) return NextResponse.json({ ok: false, motivo: "llave" });
+      if (!sinModelo) return NextResponse.json({ ok: false, motivo: "ia" });
     }
+    if (!data) return NextResponse.json({ ok: false, motivo: "ia" });
     const texto = (data?.content || []).map((c) => c?.text || "").join(" ").trim();
     const num = /(\d{1,6}(?:[.,]\d)?)/.exec(texto.replace(/\s+/g, ""));
     if (!num || /^NO\b/i.test(texto)) return NextResponse.json({ ok: false, motivo: "no_se_lee" });

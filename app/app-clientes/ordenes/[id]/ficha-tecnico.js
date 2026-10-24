@@ -170,6 +170,18 @@ export default function FichaOrdenTecnico({
           Tu trabajo
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* V40: primero los códigos, después el informe (igual que en su menú). */}
+          <Campo etiqueta="Códigos a cobrar">
+            {codigosLista.length > 0 ? (
+              <ul style={{ margin: 0, paddingLeft: 15, lineHeight: 1.5 }}>
+                {codigosLista.map((c, i) => (
+                  <li key={i}>{c}</li>
+                ))}
+              </ul>
+            ) : (
+              "—"
+            )}
+          </Campo>
           {/* V38: el informe de los reguladores, a la vista (sin informe no
               puede poner "listo"). */}
           {esRegulador && (
@@ -202,17 +214,6 @@ export default function FichaOrdenTecnico({
               )}
             </Campo>
           )}
-          <Campo etiqueta="Códigos a cobrar">
-            {codigosLista.length > 0 ? (
-              <ul style={{ margin: 0, paddingLeft: 15, lineHeight: 1.5 }}>
-                {codigosLista.map((c, i) => (
-                  <li key={i}>{c}</li>
-                ))}
-              </ul>
-            ) : (
-              "—"
-            )}
-          </Campo>
           <Campo etiqueta="Nota" valor={o.notas_tecnico_regulador || "—"} />
         </div>
         {/* Atajo al seguimiento también aquí abajo (pedido explícito:

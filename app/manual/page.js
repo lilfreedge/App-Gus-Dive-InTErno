@@ -462,14 +462,14 @@ export default async function ManualPage() {
     topics.push({
       key: "menu-tecnico",
       title: "El menú del técnico",
-      searchText: "técnico menú lo que te toca informe compresores regulador listo hold",
+      searchText: "técnico menú mis trabajos lo que te toca informe compresores regulador listo hold",
       body: (
         <>
           <div className="card">
-            Quien tiene el rol Técnico entra directo a su menú, &quot;Lo que te toca&quot;: sus órdenes asignadas, los
-            recordatorios de compresores que le salen a él y las órdenes esperando al cliente. Cada orden se abre ahí
-            mismo y se trabaja en pasos: el informe (en reguladores), los códigos, la nota y &quot;Mantenimiento
-            listo&quot;. Desde ahí también registra el mantenimiento de un compresor o de un regulador de la tienda, con
+            Quien tiene el rol Técnico entra directo a su menú, &quot;Mis trabajos&quot;: sus órdenes asignadas (con el número de orden en grande), los
+            recordatorios de compresores que le salen a él y las órdenes esperando al cliente. Cada orden se abre
+            en su propia pantalla y se trabaja en pasos: los códigos usados en la orden, el informe (en reguladores),
+            la nota interna (no la ve el cliente) y &quot;Mantenimiento listo&quot;. Al guardar el informe vuelve solo a la orden. Desde su menú también registra el mantenimiento de un compresor o de un regulador de la tienda, con
             botones grandes. Le sale según sus permisos.
           </div>
           <div className="card">

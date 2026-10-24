@@ -45,7 +45,7 @@ export default function MiActividad({ actividad }) {
                     <span className="list-item-title">
                       <span className="folio-tag">#{a.folio}</span>
                       Llenado de tanque
-                      <span className="badge">{a.tipo_gas}</span>
+                      <span className={a.tipo_gas === "Nitrox" ? "badge badge-nitrox" : "badge"}>{a.tipo_gas}</span>
                     </span>
                     <span className="list-item-qty">{a.cantidad} tanque(s)</span>
                   </div>

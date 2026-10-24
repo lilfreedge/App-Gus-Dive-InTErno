@@ -1,9 +1,10 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import FotoLightbox from "@/components/FotoLightbox";
+import ConInfo from "@/components/ConInfo";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { holdActivo, resumenHold, diasEnHold } from "@/lib/holds";
 import {
@@ -17,7 +18,7 @@ import {
   cambiosHold,
   textoListo,
 } from "@/lib/orden-tecnico";
-import { ICheck, IPlus, IX, IFlecha, IAbajo, IMic, IDoc, ILlave, IComp, IReg, ILock, IPausa, IAlarma } from "./iconos";
+import { ICheck, IPlus, IX, IFlecha, IAbajo, IMic, IDoc, IClientes, IComp, IReg, ILock, IPausa, IAlarma } from "./iconos";
 
 // V38 -- Menú del técnico, "Lo que te toca" (maqueta-v38-3.html, opción A).
 // Todo se hace aquí mismo: la orden se abre en la lista y se trabaja en
@@ -57,11 +58,14 @@ export default function TecnicoInicio({
   hoy,
   abrirId = null,
   como = null,
+  informeGuardado = false,
 }) {
   const supabase = createClient();
   const [ordenes, setOrdenes] = useState(ordenesIniciales);
   const [recs, setRecs] = useState(recordatorios);
   const [abierta, setAbierta] = useState(abrirId);
+  const [avisoInforme, setAvisoInforme] = useState(!!informeGuardado && !!abrirId);
+  const empujado = useRef(false);
   const [hoja, setHoja] = useState(null); // { tipo: "codigo" | "listo" | "ok" | "hold", id }
   const [notas, setNotas] = useState(() =>
     Object.fromEntries(ordenesIniciales.map((o) => [o.id, o.notas_tecnico_regulador || ""]))
@@ -79,6 +83,59 @@ export default function TecnicoInicio({
   const conComo = (href) => (como ? `${href}${href.includes("?") ? "&" : "?"}${qComo}` : href);
 
   const ordenPorId = (id) => ordenes.find((o) => o.id === id);
+
+  // V40 -- La orden se abre sola, en su propia pantalla (pedido explícito:
+  // "que cuando abra un mantenimiento sea un botón que abra eso solo, hoy se
+  // ve como un dropdown y se pueden ver las cosas de abajo, esto pudiera
+  // confundirlo"). Se anota en la dirección (?abrir=) para que el botón de
+  // atrás del celular lo devuelva a sus trabajos.
+  useEffect(() => {
+    function alVolver() {
+      const id = new URLSearchParams(window.location.search).get("abrir");
+      empujado.current = false;
+      setAbierta(id || null);
+      setAvisoInforme(false);
+      setHoja((h) => (h && h.tipo === "ok" ? h : null));
+    }
+    window.addEventListener("popstate", alVolver);
+    return () => window.removeEventListener("popstate", alVolver);
+  }, []);
+
+  function direccionCon(id) {
+    const u = new URL(window.location.href);
+    if (id) u.searchParams.set("abrir", id);
+    else u.searchParams.delete("abrir");
+    u.searchParams.delete("informe");
+    return u.pathname + u.search + u.hash;
+  }
+
+  function abrirOrden(id) {
+    setAbierta(id);
+    setAvisoInforme(false);
+    try {
+      window.history.pushState({ tecnicoOrden: id }, "", direccionCon(id));
+      empujado.current = true;
+    } catch {
+      // sin historial (no pasa en el celular), igual se abre
+    }
+    window.scrollTo(0, 0);
+  }
+
+  function cerrarOrden() {
+    setAbierta(null);
+    setAvisoInforme(false);
+    try {
+      if (empujado.current) {
+        empujado.current = false;
+        window.history.back();
+      } else {
+        window.history.replaceState(null, "", direccionCon(null));
+      }
+    } catch {
+      // nada
+    }
+    window.scrollTo(0, 0);
+  }
 
   async function cambiar(orden, cambios, clave) {
     setGuardando(clave || orden.id);
@@ -140,7 +197,7 @@ export default function TecnicoInicio({
     const nueva = await cambiar(o, cambios, "listo");
     if (!nueva) return;
     setTiendaAuto((t) => ({ ...t, [o.id]: !!cambios.reparacion_en_tienda }));
-    setAbierta(null);
+    cerrarOrden();
     setHoja({ tipo: "ok", id: o.id });
   }
 
@@ -150,7 +207,7 @@ export default function TecnicoInicio({
     const nueva = await cambiar(o, cambios, `deshacer-${o.id}`);
     if (!nueva) return;
     setHoja(null);
-    setAbierta(o.id);
+    abrirOrden(o.id);
   }
 
   async function ponerHold(o) {
@@ -158,7 +215,7 @@ export default function TecnicoInicio({
     const nueva = await cambiar(o, cambiosHold(o, { consulta, codigo: codigoHold }), "hold");
     if (!nueva) return;
     setHoja(null);
-    setAbierta(null);
+    cerrarOrden();
   }
 
   // ---------------------------------------------------------------- listas
@@ -235,8 +292,7 @@ export default function TecnicoInicio({
         <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 10 }}>
           {o.foto_url && <FotoLightbox src={o.foto_url} alt="Foto del equipo" thumbSize={86} />}
           <div style={{ fontSize: 14.5, color: "var(--texto-suave)", lineHeight: 1.45 }}>
-            No. {numero(o)}
-            <br />
+            {/* V40: el No. ya sale grande arriba, en la tarjeta. */}
             Cliente: <b style={{ color: "var(--texto)" }}>{o.cliente_nombre_snapshot || "—"}</b>
             {o.serie && (
               <>
@@ -251,6 +307,50 @@ export default function TecnicoInicio({
             Autorización del cliente: <b style={{ color: "var(--texto)" }}>{o.autorizacion_cliente}</b>
           </div>
         )}
+
+        {/* V40: primero los códigos y después el informe (pedido explícito:
+            "intercambia de lugar: Informe de mantenimiento y ¿Qué códigos
+            usaste?"). */}
+        <div className="tec-paso">
+          <div className="tec-paso-n">{++n}</div>
+          <div className="tec-paso-body">
+            {/* V40: antes "¿Qué códigos usaste?" (pedido explícito: "Cambiar ... por
+                'códigos usados en la orden'. a esto agrégale la 'i'"). */}
+            <ConInfo
+              style={{ margin: "4px 0 8px" }}
+              texto="Aquí pones los códigos que apliquen a esta orden: mangueras, piezas, kits, etc. Si no usaste ninguno, déjalo vacío."
+            >
+              <span className="tec-paso-t" style={{ margin: 0 }}>
+                Códigos usados en la orden
+              </span>
+            </ConInfo>
+            {lista.map((r, i) => (
+              <div className="tec-chip" key={`${r.nombre}-${i}`}>
+                <span>
+                  {r.nombre}
+                  {r.origen === "autorizado" && (
+                    <span style={{ marginLeft: 6, fontSize: 12, color: "var(--azul-claro)" }}>(autorizado)</span>
+                  )}
+                </span>
+                {accesos.actualizar && r.origen !== "autorizado" && (
+                  <button
+                    type="button"
+                    className="tec-quitar"
+                    disabled={guardando === `quitar-${o.id}-${i}`}
+                    onClick={() => quitarCodigo(o, i)}
+                  >
+                    <IX size={15} /> Quitar
+                  </button>
+                )}
+              </div>
+            ))}
+            {accesos.actualizar && (
+              <button type="button" className="tec-btn borde" onClick={() => abrirHoja("codigo", o.id)}>
+                <IPlus /> Agregar código
+              </button>
+            )}
+          </div>
+        </div>
 
         {esRegulador && (
           <div className="tec-paso">
@@ -290,40 +390,9 @@ export default function TecnicoInicio({
         <div className="tec-paso">
           <div className="tec-paso-n">{++n}</div>
           <div className="tec-paso-body">
-            <div className="tec-paso-t">¿Qué códigos usaste?</div>
-            {lista.map((r, i) => (
-              <div className="tec-chip" key={`${r.nombre}-${i}`}>
-                <span>
-                  {r.nombre}
-                  {r.origen === "autorizado" && (
-                    <span style={{ marginLeft: 6, fontSize: 12, color: "var(--azul-claro)" }}>(autorizado)</span>
-                  )}
-                </span>
-                {accesos.actualizar && r.origen !== "autorizado" && (
-                  <button
-                    type="button"
-                    className="tec-quitar"
-                    disabled={guardando === `quitar-${o.id}-${i}`}
-                    onClick={() => quitarCodigo(o, i)}
-                  >
-                    <IX size={15} /> Quitar
-                  </button>
-                )}
-              </div>
-            ))}
-            {accesos.actualizar && (
-              <button type="button" className="tec-btn borde" onClick={() => abrirHoja("codigo", o.id)}>
-                <IPlus /> Agregar código
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="tec-paso">
-          <div className="tec-paso-n">{++n}</div>
-          <div className="tec-paso-body">
             <div className="tec-paso-t">
-              Nota <small>(si hace falta)</small>
+              {/* V40: es interna ("la nota del técnico es interna"). */}
+              Nota interna <small>(no la ve el cliente)</small>
             </div>
             <textarea
               className="tec-area"
@@ -389,21 +458,32 @@ export default function TecnicoInicio({
     );
   }
 
-  function orden(o) {
-    const abiertaEsta = abierta === o.id;
+  // `sola`: la orden ya abierta, en su propia pantalla (la tarjeta de arriba
+  // ya no se toca para cerrarla: se vuelve con "← Mis trabajos").
+  function orden(o, sola = false) {
+    const Arriba = sola ? "div" : "button";
     return (
       <div className="tec-card rojo">
-        <button type="button" className="tec-card-top" onClick={() => setAbierta(abiertaEsta ? null : o.id)} aria-expanded={abiertaEsta}>
+        <Arriba
+          {...(sola ? { className: "tec-card-top fijo" } : { type: "button", className: "tec-card-top", onClick: () => abrirOrden(o.id) })}
+        >
           <span className="tec-icono rojo">
-            <ILlave />
+            <IClientes />
           </span>
           <div className="tec-card-main">
-            <div className="tec-titulo">{equipoDe(o)}</div>
+            {/* V40: lo principal es el número de orden ("el numero de orden
+                es lo principal"); debajo el equipo y la línea de siempre. */}
+            <div className="tec-titulo tec-no">No. {numero(o)}</div>
+            <div className="tec-equipo">{equipoDe(o)}</div>
             <div className="tec-linea rojo">{lineaOrden(o)}</div>
           </div>
-          <span className="tec-flecha">{abiertaEsta ? <IAbajo /> : <IFlecha />}</span>
-        </button>
-        {abiertaEsta && ordenAbierta(o)}
+          {!sola && (
+            <span className="tec-flecha">
+              <IFlecha />
+            </span>
+          )}
+        </Arriba>
+        {sola && ordenAbierta(o)}
       </div>
     );
   }
@@ -418,7 +498,8 @@ export default function TecnicoInicio({
             <IPausa />
           </span>
           <div className="tec-card-main">
-            <div className="tec-titulo">{equipoDe(o)}</div>
+            <div className="tec-titulo tec-no">No. {numero(o)}</div>
+            <div className="tec-equipo">{equipoDe(o)}</div>
             <div className="tec-linea ambar">
               {resumenHold(h)}
               {dias === null ? "" : dias === 0 ? " · desde hoy" : ` · hace ${dias} día${dias === 1 ? "" : "s"}`}
@@ -611,14 +692,36 @@ export default function TecnicoInicio({
     );
   }
 
+  // V40: la orden abierta va sola, en su propia pantalla.
+  const ordenSola = abierta ? ordenPorId(abierta) : null;
+  if (ordenSola) {
+    return (
+      <>
+        {/* Al guardar el informe vuelve solo aquí (?abrir=...&informe=ok). */}
+        {avisoInforme && (
+          <div className="success-box tec-guardado">
+            <ICheck size={20} /> <b>Informe guardado.</b>
+          </div>
+        )}
+        <button type="button" className="tec-volver tec-volver-btn" onClick={cerrarOrden}>
+          ← Mis trabajos
+        </button>
+        {orden(ordenSola, true)}
+        {hoja_()}
+      </>
+    );
+  }
+
   return (
     <>
       <div className="tec-hola">Hola, {nombre}</div>
+      {/* V40: "Lo que te toca" pasó a "Mis trabajos" (como el botón "Volver a
+          mis trabajos"). */}
       <div className="tec-sub">
-        {total === 0 ? "No tienes nada pendiente. ¡Buen trabajo!" : total === 1 ? "Hoy te toca 1 cosa." : `Hoy te tocan ${total} cosas.`}
+        {total === 0 ? "No tienes nada pendiente. ¡Buen trabajo!" : total === 1 ? "Tienes 1 pendiente." : `Tienes ${total} pendientes.`}
       </div>
 
-      <div className="tec-sec">Lo que te toca</div>
+      <div className="tec-sec">Mis trabajos</div>
       {total === 0 && (
         <div className="tec-card">
           <div className="tec-card-top fijo">
@@ -704,11 +807,8 @@ export default function TecnicoInicio({
         </>
       )}
 
-      <div className="tec-pie">
-        <Link href="/espacio?elegir=1" className="tec-btn gris">
-          Entrar al app completo
-        </Link>
-      </div>
+      {/* V40: se quitó "Entrar al app completo" (pedido explícito: "Quita
+          opcion de entrar a App completo"). */}
 
       {hoja_()}
     </>

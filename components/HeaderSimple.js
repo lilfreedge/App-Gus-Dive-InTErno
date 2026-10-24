@@ -27,7 +27,9 @@ import { IconGear, IconLogout, IconLock, IconCheck } from "./icons";
 // este header no cambian.
 // V38: `enlaces` ([{ href, texto }]) -- links extra en el menú de ajustes
 // (el menú del técnico pone "Mi perfil" y "Entrar al app completo").
-export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAprobacion = 0, sinBarra = false, enlaces = [] }) {
+// V40: `inicio` -- a dónde lleva el logo (por defecto, "¿A dónde quieres
+// entrar?"; el técnico ahí mismo vuelve a su menú).
+export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAprobacion = 0, sinBarra = false, enlaces = [], inicio = "/espacio" }) {
   const router = useRouter();
   const supabase = createClient();
   const [open, setOpen] = useState(false);
@@ -51,14 +53,19 @@ export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAp
     <div className={sinBarra ? "header-sin-barra" : "topbar"} style={sinBarra ? undefined : { paddingBottom: 14 }}>
       <div className="topbar-inner">
         <div>
-          <Image
-            src="/logo-gus-icon.png"
-            alt="Gus Dive"
-            width={64}
-            height={22}
-            className="topbar-logo"
-            priority
-          />
+          {/* V40: el logo lleva al inicio de donde estés (pedido explícito:
+              "el logo de Gus arriba a la izquierda, cuando uno le da click,
+              te lleva al inicio"). */}
+          <Link href={inicio} className="topbar-logo-link" aria-label="Ir al inicio">
+            <Image
+              src="/logo-gus-icon.png"
+              alt="Gus Dive"
+              width={64}
+              height={22}
+              className="topbar-logo"
+              priority
+            />
+          </Link>
           {nombre && <div className="topbar-sub">Hola, {nombre}</div>}
         </div>
 

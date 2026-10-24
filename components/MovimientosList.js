@@ -84,7 +84,7 @@ export default function MovimientosList({ movimientos, puedeEditar }) {
                       <IconTank size={14} />
                       <span className="folio-tag">#{m.folio}</span>
                       Llenados de tanque
-                      <span className="badge">{m.tipo_gas}</span>
+                      <span className={m.tipo_gas === "Nitrox" ? "badge badge-nitrox" : "badge"}>{m.tipo_gas}</span>
                     </span>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <span className="list-item-qty">{m.cantidad} tanque(s)</span>

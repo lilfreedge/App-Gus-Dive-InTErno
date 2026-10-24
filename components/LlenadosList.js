@@ -170,7 +170,7 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, pue
                   )}
                   <span className="folio-tag">#{t.folio}</span>
                   Llenados de tanque
-                  <span className="badge">{t.tipo_gas}</span>
+                  <span className={t.tipo_gas === "Nitrox" ? "badge badge-nitrox" : "badge"}>{t.tipo_gas}</span>
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span className="list-item-qty">{t.cantidad} tanque(s)</span>

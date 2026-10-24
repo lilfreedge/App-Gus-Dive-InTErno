@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser } from "@/lib/roles";
+import { getProfileYUser, esTecnico } from "@/lib/roles";
 import TopbarClient from "./TopbarClient";
 
 export default async function AppHeader() {
@@ -21,6 +21,7 @@ export default async function AppHeader() {
       permisos={profile?.permisos || {}}
       ordenMenu={profile?.orden_menu || null}
       menuPersonalizado={profile?.menu_personalizado || null}
+      inicio={esTecnico(profile) ? "/tecnico" : "/dashboard"}
     />
   );
 }

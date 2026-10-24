@@ -119,6 +119,7 @@ export default async function DashboardPage({ searchParams }) {
       created_at: t.created_at,
       full_name: t.full_name,
       titulo: "Llenado de tanque",
+      gas: t.tipo_gas || "Aire",
       cantidad: t.cantidad,
       detalle: t.nota,
     })),
@@ -338,6 +339,9 @@ export default async function DashboardPage({ searchParams }) {
                   <span className="list-item-title">
                     {a.tipo === "salida" ? <IconPackage size={14} /> : <IconTank size={14} />}{" "}
                     {a.titulo}
+                    {/* V40: el gas del llenado, con la misma etiqueta de la
+                        lista de llenados (Nitrox en verde suave). */}
+                    {a.gas && <span className={a.gas === "Nitrox" ? "badge badge-nitrox" : "badge"}>{a.gas}</span>}
                   </span>
                   <span className="list-item-qty">
                     {a.tipo === "salida" ? a.cantidad : `${a.cantidad} tanque(s)`}

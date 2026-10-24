@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermisoClientes, esTecnico } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
+import HeaderSimple from "@/components/HeaderSimple";
+import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import InformeMantenimientoForm from "./form-client";
 
 // "Informe de mantenimiento" (item 36, nueva feature, ronda grande de
@@ -40,6 +42,51 @@ export default async function InformeMantenimientoPage({ params, searchParams })
     serie = equipo?.serie || null;
   }
 
+  // "Volver": a donde se abrió el informe -- el menú del técnico
+  // (?from=tecnico), Actualizar estado (?from=actualizar) o la orden.
+  const como = /^[0-9a-f-]{36}$/i.test(searchParams?.como || "") ? searchParams.como : null;
+  const volverHref =
+    searchParams?.from === "tecnico"
+      ? `/tecnico?abrir=${params.id}${como ? `&como=${como}` : ""}`
+      : searchParams?.from === "actualizar"
+        ? `/app-clientes/ordenes/${params.id}/editar`
+        : `/app-clientes/ordenes/${params.id}`;
+
+  // V40 -- El técnico ve el informe sencillo (pedido explícito: "Quitar
+  // opcion de imprimir/guardar y enviar por correo al rol de tecnico. no le
+  // aplica" y "que cuando le de a generar informe lo mande para atras
+  // automatico"): sin el encabezado del app ni la miga de pan, sin las
+  // pestañas, sin Imprimir ni Enviar por correo; al guardar vuelve solo.
+  if (esTecnico(profile)) {
+    const equipo = [tipoEquipoLabel(orden.tipo_equipo, orden.tipo_equipo_otro), orden.equipo_marca_snapshot, orden.equipo_modelo_snapshot]
+      .filter((x) => x && String(x).trim())
+      .join(" ");
+    return (
+      <div>
+        <HeaderSimple nombre="" sinBarra inicio="/tecnico" enlaces={[{ href: "/app-clientes/perfil", texto: "Mi perfil" }]} />
+        <div className="page" style={{ paddingTop: 12 }}>
+          <Link href={volverHref} className="back-link">
+            ← Volver
+          </Link>
+          <h1 className="page-title" style={{ marginBottom: 2 }}>
+            Informe de mantenimiento
+          </h1>
+          <div style={{ fontSize: 14, color: "var(--texto-suave)", marginBottom: 12 }}>
+            No. {orden.no_orden_fisico ?? orden.folio}
+            {equipo ? ` · ${equipo}` : ""}
+          </div>
+          <InformeMantenimientoForm
+            orden={{ ...orden, cliente_telefono: null }}
+            serie={serie}
+            tecnicoSugerido={profile?.full_name || ""}
+            sencillo
+            alGuardar={searchParams?.from === "tecnico" ? `${volverHref}&informe=ok` : volverHref}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Arreglo de impresión (28-sep-2026, pedido explícito: "el informe
@@ -61,16 +108,7 @@ export default async function InformeMantenimientoPage({ params, searchParams })
             con el informe, empujando el contenido real a una 2da página. */}
         {/* V38: "Volver" regresa a donde se abrió el informe: el menú del
             técnico (?from=tecnico) o Actualizar estado (?from=actualizar). */}
-        <Link
-          href={
-            searchParams?.from === "tecnico"
-              ? `/tecnico?abrir=${params.id}${/^[0-9a-f-]{36}$/i.test(searchParams?.como || "") ? `&como=${searchParams.como}` : ""}`
-              : searchParams?.from === "actualizar"
-                ? `/app-clientes/ordenes/${params.id}/editar`
-                : `/app-clientes/ordenes/${params.id}`
-          }
-          className="back-link no-print"
-        >
+        <Link href={volverHref} className="back-link no-print">
           ← Volver
         </Link>
         <div className="no-print">
@@ -88,14 +126,14 @@ export default async function InformeMantenimientoPage({ params, searchParams })
         {/* V38: el técnico no ve el contacto del cliente ("cliente no debe
             de ver contacto"), ni siquiera en el formulario del Informe. */}
         <InformeMantenimientoForm
-          orden={esTecnico(profile) ? { ...orden, cliente_telefono: null } : orden}
+          orden={orden}
           serie={serie}
           tecnicoSugerido={profile?.full_name || ""}
           volver={
             searchParams?.from === "tecnico"
-              ? { href: `/tecnico?abrir=${params.id}${/^[0-9a-f-]{36}$/i.test(searchParams?.como || "") ? `&como=${searchParams.como}` : ""}`, texto: "← Volver a mis trabajos" }
+              ? { href: volverHref, texto: "← Volver a mis trabajos" }
               : searchParams?.from === "actualizar"
-                ? { href: `/app-clientes/ordenes/${params.id}/editar`, texto: "← Volver a Actualizar estado" }
+                ? { href: volverHref, texto: "← Volver a Actualizar estado" }
                 : null
           }
         />

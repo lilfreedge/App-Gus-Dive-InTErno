@@ -2294,3 +2294,17 @@ label .req {
 .tec-dato { display: flex; justify-content: space-between; gap: 10px; font-size: 14.5px; padding: 5px 0; color: var(--texto-suave); }
 .tec-dato b { color: var(--texto); text-align: right; }
 .tec-volver { font-size: 15px; font-weight: 800; color: var(--azul-claro); text-decoration: none; display: inline-block; margin-bottom: 6px; }
+/* V40 -- menú del técnico: el número de orden es lo principal; aviso de
+   "Informe guardado" al volver del informe. */
+.tec-titulo.tec-no { font-size: 20px; }
+.tec-equipo { font-size: 15.5px; font-weight: 700; color: var(--texto); margin-top: 2px; line-height: 1.25; }
+.tec-guardado { display: flex; gap: 8px; align-items: center; margin: 0 0 12px; font-size: 15px; }
+/* V40 -- etiqueta "Nitrox" en verde suave (pedido explícito: "el icono de
+   nitrox ponle un verde sutil de nitrox"; después: "pon el verde más sutil,
+   que no llame tanto la atención"); "Aire" queda gris como siempre. */
+.badge-nitrox { background: rgba(44, 158, 91, 0.07); color: #4f8764; }
+html[data-theme="dark"] .badge-nitrox { background: rgba(44, 158, 91, 0.1); color: #8cb89c; }
+/* V40 -- el logo de arriba lleva al inicio. */
+.topbar-logo-link { display: inline-block; line-height: 0; }
+.tec-volver-btn { background: none; border: none; padding: 4px 0; cursor: pointer; font-family: inherit; }
+.tec .info-box { font-size: 14.5px; }

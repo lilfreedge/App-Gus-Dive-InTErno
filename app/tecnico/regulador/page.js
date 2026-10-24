@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import HeaderSimple from "@/components/HeaderSimple";
-import { quienEs, accesosDe, primerNombre, sufijoComo } from "../datos";
+import { quienEs, accesosDe, primerNombre, sufijoComo, enlacesMenu } from "../datos";
 import ReguladorPasos from "./form-client";
 
 // V38 -- Mantenimiento de un regulador de la tienda (alquiler), en pasos y
@@ -28,10 +28,8 @@ export default async function TecnicoReguladorPage({ searchParams }) {
         nombre={primerNombre(yo.full_name)}
         sinBarra
         esTitular={!!yo.es_titular}
-        enlaces={[
-          { href: "/app-clientes/perfil", texto: "Mi perfil" },
-          { href: "/espacio?elegir=1", texto: "Entrar al app completo" },
-        ]}
+        enlaces={enlacesMenu(yo)}
+        inicio={`/tecnico${sufijoComo(viendoComo, persona)}`}
       />
       <div className="page tec" style={{ paddingTop: 12 }}>
         <Link href={`/tecnico${sufijo}`} className="tec-volver">

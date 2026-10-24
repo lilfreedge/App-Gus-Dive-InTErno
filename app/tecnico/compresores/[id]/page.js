@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import HeaderSimple from "@/components/HeaderSimple";
 import { ultimosHorometros } from "@/lib/compresores";
-import { quienEs, accesosDe, primerNombre, sufijoComo } from "../../datos";
+import { quienEs, accesosDe, primerNombre, sufijoComo, enlacesMenu } from "../../datos";
 import CompresorPasos from "./form-client";
 
 // V38 -- Registrar el mantenimiento de un compresor, en pasos y con botones
@@ -39,10 +39,8 @@ export default async function TecnicoCompresorPage({ params, searchParams }) {
         nombre={primerNombre(yo.full_name)}
         sinBarra
         esTitular={!!yo.es_titular}
-        enlaces={[
-          { href: "/app-clientes/perfil", texto: "Mi perfil" },
-          { href: "/espacio?elegir=1", texto: "Entrar al app completo" },
-        ]}
+        enlaces={enlacesMenu(yo)}
+        inicio={`/tecnico${sufijoComo(viendoComo, persona)}`}
       />
       <div className="page tec" style={{ paddingTop: 12 }}>
         <Link href={`/tecnico/compresores${sufijo}`} className="tec-volver">

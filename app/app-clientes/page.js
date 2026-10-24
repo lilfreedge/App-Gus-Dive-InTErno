@@ -8,6 +8,7 @@ import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { holdActivo } from "@/lib/holds";
 import { requiereVerificacion } from "@/lib/procesos-ordenes";
+import { nombreCorto } from "@/lib/tecnicos";
 
 const BADGE_ESTADO = {
   "En proceso": "badge-amarillo",
@@ -63,7 +64,7 @@ export default async function AppClientesPage() {
   // la persona lo prendió en "Personalizar mi menú".
   const muestraBotonRegistrarInicio = profile?.atajos_inicio_clientes?.registrar_orden === true;
   const CAMPOS =
-    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, verificado_por, en_espera, motivo_espera, holds";
+    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, verificado_por, en_espera, motivo_espera, holds, tecnico_asignado_id";
 
   const [{ data: ajustes }, { data: porTrabajarRaw }, { data: porEntregar }, { data: enEspera }, { data: enHidrostatica }, { data: enReparacion }] =
     await Promise.all([
@@ -126,6 +127,23 @@ export default async function AppClientesPage() {
     (o) => !((o.fecha_envio || o.fecha_envio_hidrostatica) && !o.fecha_retorno_tienda)
   );
 
+  // V39 -- a quién está asignada cada orden (pedido explícito: "que los que
+  // estén asignados lo diga en algún lado de cada orden, sutil. Los que no
+  // tengan a nadie asignado que no diga nada"; maqueta, opción A).
+  const idsTecnicos = [
+    ...new Set(
+      [porTrabajarRaw, porEntregar, enEspera, enHidrostatica, enReparacion]
+        .flatMap((l) => l || [])
+        .map((o) => o.tecnico_asignado_id)
+        .filter(Boolean)
+    ),
+  ];
+  const nombresTecnicos = {};
+  if (idsTecnicos.length) {
+    const { data: tecs } = await supabase.from("profiles").select("id, full_name").in("id", idsTecnicos);
+    for (const t of tecs || []) nombresTecnicos[t.id] = nombreCorto(t.full_name);
+  }
+
   // Aviso rojo de Hold activo hace más de 3 días (feature Hold,
   // 27-sep-2026, pedido explícito: "si, 3 dias") -- se cuenta desde que
   // empezó el Hold (hold.fecha_inicio), no desde el ingreso de la orden.
@@ -175,6 +193,7 @@ export default async function AppClientesPage() {
           Órdenes pendientes por trabajar ({porTrabajar.length})
         </div>
         <ListaOrdenes
+          nombresTecnicos={nombresTecnicos}
           ordenes={porTrabajar}
           vacio="No hay órdenes pendientes por trabajar."
           fechaCampo="fecha"
@@ -190,6 +209,7 @@ export default async function AppClientesPage() {
             que lo vean todos los usuarios, para saber en que estado realmente
             esta la orden") -- antes solo lo veían Titular/Administrador. */}
         <ListaOrdenes
+          nombresTecnicos={nombresTecnicos}
           ordenes={porEntregarConVerificacion}
           vacio="No hay órdenes pendientes por entregar."
           fechaCampo="fecha_listo_entrega"
@@ -209,6 +229,7 @@ export default async function AppClientesPage() {
             el badge "En espera" en todos lados). */}
         <div className="section-title">Órdenes en Hold ({(enEspera || []).length})</div>
         <ListaOrdenes
+          nombresTecnicos={nombresTecnicos}
           ordenes={enEsperaConHold}
           vacio="No hay órdenes en Hold."
           fechaCampo="fecha"
@@ -220,6 +241,7 @@ export default async function AppClientesPage() {
 
         <div className="section-title">Órdenes en prueba hidrostáticas ({(enHidrostatica || []).length})</div>
         <ListaOrdenes
+          nombresTecnicos={nombresTecnicos}
           ordenes={enHidrostatica}
           vacio="No hay órdenes en prueba hidrostática."
           fechaCampo="fecha_envio_hidrostatica"
@@ -230,6 +252,7 @@ export default async function AppClientesPage() {
 
         <div className="section-title">Órdenes enviadas a reparación ({(enReparacion || []).length})</div>
         <ListaOrdenes
+          nombresTecnicos={nombresTecnicos}
           ordenes={enReparacion}
           vacio="No hay órdenes enviadas a reparación."
           fechaCampo="fecha_envio"
@@ -259,6 +282,8 @@ export default async function AppClientesPage() {
 // antes solo se veía cliente + equipo aquí.
 function ListaOrdenes({
   ordenes,
+  // V39: { [id del técnico]: nombre } para la línea "Técnico: ..." (sutil).
+  nombresTecnicos = {},
   vacio,
   fechaCampo = "fecha",
   fechaLabel = "Fecha",
@@ -329,6 +354,26 @@ function ListaOrdenes({
                   <div>{fechaValor ? formatFechaDDMMAAAADeDate(fechaValor) : "—"}</div>
                 </span>
               </div>
+              {/* V39: el técnico asignado, en gris. Sin técnico, no dice nada. */}
+              {o.tecnico_asignado_id && nombresTecnicos[o.tecnico_asignado_id] && (
+                <div className="hint-text" style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+                  </svg>
+                  Técnico: {nombresTecnicos[o.tecnico_asignado_id]}
+                </div>
+              )}
               {diasAfuera !== null && (
                 <div className="hint-text" style={{ marginTop: 4, color: "var(--rojo)", fontWeight: 600 }}>
                   Lleva {diasAfuera} día{diasAfuera === 1 ? "" : "s"} afuera

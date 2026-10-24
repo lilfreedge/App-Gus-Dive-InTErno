@@ -12,6 +12,20 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V40",
+    fecha: "24 de octubre, 2026",
+    titulo: "Menú del técnico más claro, la orden en su propia pantalla, informe sencillo para el técnico, el gas en Actividad reciente y el logo lleva al inicio",
+    descripcion:
+      "Menú del técnico: \"Lo que te toca\" ahora se llama \"Mis trabajos\" y debajo del nombre dice \"Tienes N pendientes\". En cada orden lo grande es el número de orden (No. 02201); debajo va el equipo y la línea de siempre, también en \"Esperando al cliente\". Los íconos de Compresores, Mantenimiento de regulador de la tienda y de las órdenes de clientes son ahora los mismos del app. Al tocar una orden se abre sola, en su propia pantalla, con \"← Mis trabajos\" para volver (también sirve el botón de atrás del celular). Dentro de la orden, primero va \"Códigos usados en la orden\" (con una ⓘ que explica que ahí van los códigos que apliquen: mangueras, piezas, kits, etc.) y después el Informe de mantenimiento; igual en la ficha de la orden del técnico. La nota del técnico ahora dice \"Nota interna (no la ve el cliente)\": ya no sale en el recibo del cliente ni pasa sola a la Nota del informe (el Titular la puede traer a mano con el botón \"Usar la Nota del Seguimiento\"). Ya no sale \"Entrar al app completo\" para el técnico (ni abajo ni en ⚙); el Titular y los administradores que ven su menú sí la tienen. Informe de mantenimiento para el técnico: arriba solo el número de orden y el equipo, y abajo solo lo que él llena (sin Datos del cliente, Detalles, Componentes recibidos, Estado inicial, Garantía ni el campo Técnico, que se pone solo con su nombre; en el informe del cliente todo eso sale igual). Sin las pestañas, sin \"Imprimir / Guardar PDF\" y sin \"Enviar por correo\". Tiene que contestar \"¿Cambiaste algún o-ring?\" (No / Sí; con Sí anota cuáles) para poder guardar, como recordatorio. El botón dice \"Guardar informe\" y, al tocarlo, vuelve solo a la orden con el aviso \"Informe guardado\" (o a Actualizar estado, si lo abrió desde ahí). App Interno: en Actividad reciente de Inicio, cada llenado dice si fue Aire o Nitrox, con la misma etiqueta de la lista de llenados; la de Nitrox va en un verde suave en todos lados (Llenados de tanque, Movimientos y Mi actividad). El logo de GUS arriba a la izquierda lleva al inicio de donde estés: Inicio de App Interno, Inicio de App Equipos de clientes, el menú del técnico o \"¿A dónde quieres entrar?\". No trae migraciones nuevas.",
+  },
+  {
+    version: "V39",
+    fecha: "24 de octubre, 2026",
+    titulo: "Inicio: a quién está asignada cada orden",
+    descripcion:
+      "En Inicio de App Equipos de clientes, cada orden que tiene técnico asignado dice debajo, en gris, \"Técnico: (nombre)\". Las que no tienen a nadie no dicen nada. Sale en todas las listas de Inicio: por trabajar, por entregar, en Hold, en prueba hidrostática y en reparación. También: la lectura del horómetro por foto (si algún día se pone la llave de Claude en Vercel) ahora prueba otro modelo si el primero no está disponible.",
+  },
+  {
     version: "V38",
     fecha: "24 de octubre, 2026",
     titulo: "Menú propio para el técnico, el Informe de reguladores obligatorio para poner listo, el aviso por WhatsApp va al grupo y menús sin letricas",

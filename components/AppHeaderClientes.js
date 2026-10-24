@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getProfileYUser } from "@/lib/roles";
+import { getProfileYUser, esTecnico } from "@/lib/roles";
 import TopbarClientes from "./TopbarClientes";
 
 // Mismo split que AppHeader/TopbarClient (App Interno): esta parte trae
@@ -26,6 +26,7 @@ export default async function AppHeaderClientes() {
       permisos={profile?.permisos || {}}
       ordenMenuClientes={profile?.orden_menu_clientes}
       menuPersonalizadoClientes={profile?.menu_personalizado_clientes}
+      inicio={esTecnico(profile) ? "/tecnico" : "/app-clientes"}
     />
   );
 }
