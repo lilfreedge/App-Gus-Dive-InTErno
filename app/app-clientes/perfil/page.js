@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import EditarTelefono from "@/components/EditarTelefono";
-import { getProfileYUser } from "@/lib/roles";
+import { getProfileYUser, esTecnico } from "@/lib/roles";
+import Link from "next/link";
+import HeaderSimple from "@/components/HeaderSimple";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import PreferenciasApariencia from "@/components/PreferenciasApariencia";
 import MiActividadClientes from "@/components/MiActividadClientes";
@@ -60,10 +62,21 @@ export default async function PerfilClientesPage() {
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 20);
 
+  // V40 -- El técnico ve Mi perfil con el mismo encabezado de su menú (solo
+  // el logo y ⚙), sin "Mis órdenes" ni "Historial de órdenes" arriba, para
+  // que no se meta al app completo; con "← Mis trabajos" para volver. Y sin
+  // "Personalizar mi menú" (su menú no se personaliza).
+  const tecnico = esTecnico(profile);
+
   return (
     <div>
-      <AppHeaderClientes />
-      <div className="page" style={{ paddingTop: 24 }}>
+      {tecnico ? <HeaderSimple nombre="" sinBarra inicio="/tecnico" /> : <AppHeaderClientes />}
+      <div className="page" style={{ paddingTop: tecnico ? 12 : 24 }}>
+        {tecnico && (
+          <Link href="/tecnico" className="tec-volver">
+            ← Mis trabajos
+          </Link>
+        )}
         <h1 className="page-title">Mi Perfil</h1>
 
         <PerfilForm userId={user.id} nombreActual={profile?.full_name || ""} correo={user.email} />
@@ -92,15 +105,19 @@ export default async function PerfilClientesPage() {
             App Interno nunca tuvo este texto exacto (tiene el suyo propio,
             distinto, en PersonalizarMenu.js), así que este cambio solo
             aplicaba acá. */}
-        <div className="section-title" style={{ marginTop: 26 }}>
-          Personalizar mi menú
-        </div>
-        <div className="card">
-          <PersonalizarMenuClientes
-            menuInicial={profile?.menu_personalizado_clientes}
-            atajosInicioInicial={profile?.atajos_inicio_clientes}
-          />
-        </div>
+        {!tecnico && (
+          <>
+            <div className="section-title" style={{ marginTop: 26 }}>
+              Personalizar mi menú
+            </div>
+            <div className="card">
+              <PersonalizarMenuClientes
+                menuInicial={profile?.menu_personalizado_clientes}
+                atajosInicioInicial={profile?.atajos_inicio_clientes}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermiso, tieneAcceso, esTecnico } from "@/lib/roles";
 import AsignarOrden from "@/components/AsignarOrden";
@@ -17,7 +17,6 @@ import { holdActivo, diasEnHold, labelTipoHold, detalleHold } from "@/lib/holds"
 import { edicionesDeLaOrden } from "@/lib/bitacora-orden";
 import FotoLightbox from "@/components/FotoLightbox";
 import { IconRefresh } from "@/components/icons";
-import FichaOrdenTecnico from "./ficha-tecnico";
 import { hoyISO } from "@/lib/fechas";
 
 const BADGE_ESTADO = {
@@ -73,6 +72,11 @@ export default async function FichaOrdenPage({ params }) {
   // V34 -- el técnico no tiene Registro de Órdenes en su menú: "Volver" lo
   // lleva a sus órdenes.
   const tecnico = esTecnico(profile);
+  // V40 -- El técnico ya no ve la ficha de la orden (pedido explícito:
+  // "quítale este view al técnico, no sirve de nada"): lo lleva a su menú,
+  // con esa orden abierta en su propia pantalla. (Antes, en la V38, veía
+  // una ficha más sencilla: ficha-tecnico.js, que ya no se usa.)
+  if (tecnico) redirect(`/tecnico?abrir=${params.id}`);
 
   const [{ data: o }, { data: ajustes }, tecnicos] = await Promise.all([
     supabase.from("ordenes_equipos_con_nombre").select("*").eq("id", params.id).single(),
@@ -139,43 +143,6 @@ export default async function FichaOrdenPage({ params }) {
   );
   const puedeAnular = esTitular || !!profile?.is_admin;
 
-  // V38 -- el rol Técnico ve una ficha más sencilla (ficha-tecnico.js,
-  // maqueta-v38 opción A): solo lo de su trabajo y sin el contacto del
-  // cliente. El No. de serie se busca en el equipo del cliente.
-  if (tecnico) {
-    let serie = null;
-    if (o.equipo_id) {
-      const { data: eq } = await supabase.from("equipos_del_cliente").select("serie").eq("id", o.equipo_id).maybeSingle();
-      serie = eq?.serie || null;
-    }
-    return (
-      <div>
-        <AppHeaderClientes />
-        <div className="page" style={{ paddingTop: 24 }}>
-          <Link href="/app-clientes" className="back-link">
-            ← Volver
-          </Link>
-          <Breadcrumb
-            items={[
-              { label: "App Equipos de clientes", href: "/app-clientes" },
-              { label: "Mis órdenes", href: "/app-clientes" },
-              { label: `No. ${o.no_orden_fisico ?? o.folio}` },
-            ]}
-          />
-          <FichaOrdenTecnico
-            o={o}
-            miId={profile?.id}
-            hoy={hoyISO()}
-            hold={hold}
-            serie={serie}
-            codigosLista={codigosLista}
-            puedeActualizarEstado={puedeActualizarEstado}
-            puedeVerInforme={puedeVerInforme}
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>

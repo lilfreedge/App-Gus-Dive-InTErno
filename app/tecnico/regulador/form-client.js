@@ -189,6 +189,8 @@ export default function ReguladorPasos({ userId, nombreUsuario, reguladores = []
           <div className="tec-paso-t">
             O-rings que cambiaste <small>(si cambiaste)</small>
           </div>
+          {/* V40: el mismo recordatorio que en las órdenes de clientes. */}
+          <div className="tec-recordatorio">Los o-rings van incluidos en el mantenimiento. Si cambiaste alguno, anótalo aquí.</div>
           {oRings.map((r, i) => (
             <div className="tec-chip" key={i}>
               <span>

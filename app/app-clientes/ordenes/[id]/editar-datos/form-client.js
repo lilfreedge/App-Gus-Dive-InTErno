@@ -56,6 +56,12 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
     return out;
   });
   const [notas, setNotas] = useState(orden.notas || "");
+  // V40 (pedido explícito: "si voy a editar una orden, permíteme ver todo...
+  // no aparece el campo 'daños visibles' o lo otro que era para escribir lo
+  // que nos decía el cliente acerca del problema") -- mismos dos campos que
+  // "Registrar orden" (solo Reguladores).
+  const [problemasReportados, setProblemasReportados] = useState(orden.regulador_problemas_reportados || "");
+  const [danosVisibles, setDanosVisibles] = useState(orden.regulador_danos_visibles || "");
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -189,6 +195,8 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
       autorizacion_cliente: esRegulador ? autorizacionCliente || null : null,
       autorizacion_notas: esRegulador ? autorizacionNotas.trim() || null : null,
       regulador_componentes: esRegulador ? componentesRecibidos : {},
+      regulador_problemas_reportados: esRegulador ? problemasReportados.trim() || null : null,
+      regulador_danos_visibles: esRegulador ? danosVisibles.trim() || null : null,
       notas: notas.trim() || null,
       fecha,
     };
@@ -359,6 +367,18 @@ export default function EditarDatosOrdenForm({ orden, clientes: clientesIniciale
               );
             })}
           </div>
+
+          <label htmlFor="problemas_reportados" style={{ marginTop: 14 }}>Problemas reportados por cliente</label>
+          <textarea
+            id="problemas_reportados"
+            rows={2}
+            value={problemasReportados}
+            onChange={(e) => setProblemasReportados(e.target.value)}
+            placeholder="Opcional"
+          />
+
+          <label htmlFor="danos_visibles">Daños visibles</label>
+          <textarea id="danos_visibles" rows={2} value={danosVisibles} onChange={(e) => setDanosVisibles(e.target.value)} placeholder="Opcional" />
         </>
       )}
 

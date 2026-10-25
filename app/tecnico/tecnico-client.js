@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import FotoLightbox from "@/components/FotoLightbox";
 import ConInfo from "@/components/ConInfo";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { holdActivo, resumenHold, diasEnHold } from "@/lib/holds";
+import { holdActivo, resumenHold, detalleHold, diasEnHold } from "@/lib/holds";
 import {
   guardarOrden,
   codigosDe,
@@ -47,6 +47,7 @@ function equipoDe(o) {
 }
 
 const numero = (o) => o.no_orden_fisico ?? o.folio;
+const LISTOS = "listos"; // ?abrir=listos: la pantalla de "Listos hoy"
 
 export default function TecnicoInicio({
   nombre,
@@ -72,7 +73,6 @@ export default function TecnicoInicio({
   );
   const [guardando, setGuardando] = useState(null);
   const [errores, setErrores] = useState({});
-  const [verListos, setVerListos] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [consulta, setConsulta] = useState("");
   const [codigoHold, setCodigoHold] = useState("");
@@ -275,18 +275,25 @@ export default function TecnicoInicio({
     return partes.join(" · ");
   }
 
-  function ordenAbierta(o) {
-    const lista = codigosDe(o);
-    const esRegulador = o.tipo_equipo === "Reguladores";
-    const motivo = motivoNoListo(o);
-    const notaCambiada = (notas[o.id] || "").trim() !== (o.notas_tecnico_regulador || "").trim();
-    let n = 0;
+  // Lo que dijo el cliente, el cliente, la serie y la autorización (va
+  // arriba en la orden abierta y en la que está esperando al cliente).
+  function datosOrden(o) {
     return (
-      <div className="tec-open">
-        {o.notas && (
+      <>
+        {/* V40: en los reguladores, también los "Problemas reportados por
+            cliente" y los "Daños visibles" que se anotaron al registrar la
+            orden (el técnico ya no los ve en el informe). */}
+        {(o.regulador_problemas_reportados || o.notas) && (
           <div className="tec-dijo">
             <div className="tec-dijo-t">LO QUE DIJO EL CLIENTE</div>
+            {o.regulador_problemas_reportados}
+            {o.regulador_problemas_reportados && o.notas && <br />}
             {o.notas}
+          </div>
+        )}
+        {o.regulador_danos_visibles && (
+          <div className="tec-hint" style={{ fontSize: 14.5 }}>
+            Daños visibles: <b style={{ color: "var(--texto)" }}>{o.regulador_danos_visibles}</b>
           </div>
         )}
         <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 10 }}>
@@ -307,6 +314,19 @@ export default function TecnicoInicio({
             Autorización del cliente: <b style={{ color: "var(--texto)" }}>{o.autorizacion_cliente}</b>
           </div>
         )}
+      </>
+    );
+  }
+
+  function ordenAbierta(o) {
+    const lista = codigosDe(o);
+    const esRegulador = o.tipo_equipo === "Reguladores";
+    const motivo = motivoNoListo(o);
+    const notaCambiada = (notas[o.id] || "").trim() !== (o.notas_tecnico_regulador || "").trim();
+    let n = 0;
+    return (
+      <div className="tec-open">
+        {datosOrden(o)}
 
         {/* V40: primero los códigos y después el informe (pedido explícito:
             "intercambia de lugar: Informe de mantenimiento y ¿Qué códigos
@@ -357,6 +377,12 @@ export default function TecnicoInicio({
             <div className={`tec-paso-n${o.informe_mantenimiento ? " ok" : ""}`}>{++n}</div>
             <div className="tec-paso-body">
               <div className="tec-paso-t">Informe de mantenimiento</div>
+              {/* V40: recordatorio de los o-rings (pedido explícito: "los o-rings
+                  están incluidos en el mantenimiento, y en caso de que se
+                  cambien, esto debe de figurar en el informe"). */}
+              <div className="tec-recordatorio">
+                Los o-rings van incluidos en el mantenimiento. Si cambiaste alguno, tiene que salir en el informe.
+              </div>
               {o.informe_mantenimiento ? (
                 <div className="tec-chip ok">
                   <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -372,16 +398,15 @@ export default function TecnicoInicio({
                   )}
                 </div>
               ) : (
-                <>
-                  <div style={{ marginBottom: 8 }}>
-                    <span className="tec-estado rojo">Falta el informe</span>
-                  </div>
-                  {accesos.informe && (
-                    <Link href={conComo(`/app-clientes/ordenes/${o.id}/informe?from=tecnico`)} className="tec-btn azul">
-                      <IDoc /> Llenar el informe
-                    </Link>
-                  )}
-                </>
+                // V40: un solo botón (pedido explícito: "unifica eso"); que falta
+                // ya lo dice la tarjeta de arriba y el número del paso.
+                accesos.informe ? (
+                  <Link href={conComo(`/app-clientes/ordenes/${o.id}/informe?from=tecnico`)} className="tec-btn azul">
+                    <IDoc /> Llenar el informe
+                  </Link>
+                ) : (
+                  <span className="tec-estado rojo">Falta el informe</span>
+                )
               )}
             </div>
           </div>
@@ -447,12 +472,8 @@ export default function TecnicoInicio({
               <IPausa /> Hay que preguntarle algo al cliente
             </button>
           )}
-          <Link
-            href={`/app-clientes/ordenes/${o.id}`}
-            style={{ textAlign: "center", fontSize: 14.5, fontWeight: 700, color: "var(--azul-claro)", textDecoration: "none", padding: 6 }}
-          >
-            Ver la orden completa ›
-          </Link>
+          {/* V40: se quitó "Ver la orden completa" (el técnico ya no ve la
+              ficha de la orden: "quítale este view al técnico"). */}
         </div>
       </div>
     );
@@ -477,11 +498,10 @@ export default function TecnicoInicio({
             <div className="tec-equipo">{equipoDe(o)}</div>
             <div className="tec-linea rojo">{lineaOrden(o)}</div>
           </div>
-          {!sola && (
-            <span className="tec-flecha">
-              <IFlecha />
-            </span>
-          )}
+          {/* V40: un botón, como "Registrar" del compresor, en vez de la
+              flechita (pedido explícito: "que sean con botones ... no uses el
+              dropdown ese porque se va a confundir"). Toda la tarjeta abre. */}
+          {!sola && <span className="tec-btn azul chico tec-btn-tarjeta">Trabajar</span>}
         </Arriba>
         {sola && ordenAbierta(o)}
       </div>
@@ -492,8 +512,8 @@ export default function TecnicoInicio({
     const h = holdActivo(o.holds);
     const dias = h ? diasEnHold(h) : null;
     return (
-      <Link href={`/app-clientes/ordenes/${o.id}`} className="tec-card ambar" style={{ display: "block", textDecoration: "none" }}>
-        <div className="tec-card-top">
+      <div className="tec-card ambar">
+        <button type="button" className="tec-card-top" onClick={() => abrirOrden(o.id)}>
           <span className="tec-icono ambar">
             <IPausa />
           </span>
@@ -505,18 +525,52 @@ export default function TecnicoInicio({
               {dias === null ? "" : dias === 0 ? " · desde hoy" : ` · hace ${dias} día${dias === 1 ? "" : "s"}`}
             </div>
           </div>
-          <span className="tec-flecha">
-            <IFlecha />
-          </span>
-        </div>
-      </Link>
+          <span className="tec-btn azul chico tec-btn-tarjeta">Ver</span>
+        </button>
+      </div>
     );
   }
 
-  function grande({ href, icono, titulo, sub }) {
+  // V40 -- La orden que está esperando al cliente, en su propia pantalla
+  // (antes llevaba a la ficha de la orden): qué hay que preguntarle y desde
+  // cuándo. No hay nada que llenar; cuando el cliente contesta y se quita el
+  // Hold, la orden le sale otra vez en "Mis trabajos".
+  function esperandoSola(o) {
+    const h = holdActivo(o.holds);
+    const dias = h ? diasEnHold(h) : null;
     return (
-      <Link href={href} className="tec-card" style={{ display: "block", textDecoration: "none" }}>
-        <div className="tec-card-top">
+      <div className="tec-card ambar">
+        <div className="tec-card-top fijo">
+          <span className="tec-icono ambar">
+            <IPausa />
+          </span>
+          <div className="tec-card-main">
+            <div className="tec-titulo tec-no">No. {numero(o)}</div>
+            <div className="tec-equipo">{equipoDe(o)}</div>
+            <div className="tec-linea ambar">
+              Esperando al cliente
+              {dias === null ? "" : dias === 0 ? " · desde hoy" : ` · hace ${dias} día${dias === 1 ? "" : "s"}`}
+            </div>
+          </div>
+        </div>
+        <div className="tec-open">
+          <div className="tec-espera">
+            <div className="tec-dijo-t">LO QUE HAY QUE PREGUNTARLE AL CLIENTE</div>
+            {detalleHold(h)}
+          </div>
+          <div className="tec-hint" style={{ fontSize: 14.5, marginBottom: 6 }}>
+            Cuando el cliente conteste, esta orden te sale otra vez en Mis trabajos.
+          </div>
+          {datosOrden(o)}
+        </div>
+      </div>
+    );
+  }
+
+  // V40: "Abrir" pasó a "Trabajar" (pedido explícito: "Cambia 'abrir' por 'trabajar'").
+  function grande({ href, onClick, icono, titulo, sub, boton = "Trabajar" }) {
+    const dentro = (
+      <>
           <span className="tec-icono azul">{icono}</span>
           <div className="tec-card-main">
             <div className="tec-titulo" style={{ fontSize: 16.5 }}>
@@ -524,10 +578,21 @@ export default function TecnicoInicio({
             </div>
             {sub && <div className="tec-linea gris">{sub}</div>}
           </div>
-          <span className="tec-flecha">
-            <IFlecha />
-          </span>
+          <span className="tec-btn azul chico tec-btn-tarjeta">{boton}</span>
+      </>
+    );
+    if (onClick) {
+      return (
+        <div className="tec-card">
+          <button type="button" className="tec-card-top" onClick={onClick}>
+            {dentro}
+          </button>
         </div>
+      );
+    }
+    return (
+      <Link href={href} className="tec-card" style={{ display: "block", textDecoration: "none" }}>
+        <div className="tec-card-top">{dentro}</div>
       </Link>
     );
   }
@@ -692,6 +757,54 @@ export default function TecnicoInicio({
     );
   }
 
+  // V40: "Listos hoy" en su propia pantalla.
+  if (abierta === LISTOS) {
+    return (
+      <>
+        <button type="button" className="tec-volver tec-volver-btn" onClick={cerrarOrden}>
+          ← Mis trabajos
+        </button>
+        <div className="tec-hola" style={{ fontSize: 21 }}>
+          Listos hoy
+        </div>
+        <div className="tec-sub">Si pusiste una lista por error, toca &quot;No está listo&quot;.</div>
+        {listosHoy.length === 0 && (
+          <div className="tec-card">
+            <div className="tec-card-top fijo">
+              <div className="tec-card-main">
+                <div className="tec-linea gris">No hay nada puesto listo hoy.</div>
+              </div>
+            </div>
+          </div>
+        )}
+        {listosHoy.map((o) => (
+              <div key={o.id} className="tec-card verde">
+                <div className="tec-card-top fijo">
+                  <div className="tec-card-main">
+                    <div className="tec-titulo tec-no">No. {numero(o)}</div>
+                    <div className="tec-equipo">{equipoDe(o)}</div>
+                    <div className="tec-linea verde">Listo hoy</div>
+                    {errores[o.id] && <div className="tec-error">{errores[o.id]}</div>}
+                  </div>
+                  {accesos.actualizar && (
+                    <button
+                      type="button"
+                      className="tec-btn gris chico"
+                      style={{ fontSize: 14 }}
+                      disabled={guardando === `deshacer-${o.id}`}
+                      onClick={() => deshacerListo(o)}
+                    >
+                      {guardando === `deshacer-${o.id}` ? "..." : "No está listo"}
+                    </button>
+                  )}
+                </div>
+              </div>
+        ))}
+        {hoja_()}
+      </>
+    );
+  }
+
   // V40: la orden abierta va sola, en su propia pantalla.
   const ordenSola = abierta ? ordenPorId(abierta) : null;
   if (ordenSola) {
@@ -706,7 +819,7 @@ export default function TecnicoInicio({
         <button type="button" className="tec-volver tec-volver-btn" onClick={cerrarOrden}>
           ← Mis trabajos
         </button>
-        {orden(ordenSola, true)}
+        {holdActivo(ordenSola.holds) ? esperandoSola(ordenSola) : orden(ordenSola, true)}
         {hoja_()}
       </>
     );
@@ -766,46 +879,20 @@ export default function TecnicoInicio({
           icono: <IReg />,
           titulo: "Mantenimiento de regulador de la tienda",
           sub: "Los reguladores de alquiler",
+          boton: "Registrar",
         })
       )}
-      {listosHoy.length > 0 && (
-        <>
-          <button type="button" className="tec-plegado" onClick={() => setVerListos((v) => !v)} aria-expanded={verListos}>
-            <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <span style={{ color: "var(--verde)", display: "flex" }}>
-                <ICheck />
-              </span>
-              Listos hoy ({listosHoy.length})
-            </span>
-            {verListos ? <IAbajo /> : <IFlecha />}
-          </button>
-          {verListos &&
-            listosHoy.map((o) => (
-              <div key={o.id} className="tec-card verde" style={{ marginTop: 10 }}>
-                <div className="tec-card-top fijo">
-                  <div className="tec-card-main">
-                    <div className="tec-titulo" style={{ fontSize: 16 }}>
-                      {equipoDe(o)}
-                    </div>
-                    <div className="tec-linea verde">No. {numero(o)} · listo hoy</div>
-                    {errores[o.id] && <div className="tec-error">{errores[o.id]}</div>}
-                  </div>
-                  {accesos.actualizar && (
-                    <button
-                      type="button"
-                      className="tec-btn gris chico"
-                      style={{ fontSize: 14 }}
-                      disabled={guardando === `deshacer-${o.id}`}
-                      onClick={() => deshacerListo(o)}
-                    >
-                      {guardando === `deshacer-${o.id}` ? "..." : "No está listo"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-        </>
-      )}
+      {/* V40: "Listos hoy" ya no se despliega aquí: es una tarjeta con su
+          botón, como las demás, y se abre en su propia pantalla (pedido
+          explícito: "no uses el dropdown ese porque se va a confundir"). */}
+      {listosHoy.length > 0 &&
+        grande({
+          onClick: () => abrirOrden(LISTOS),
+          icono: <ICheck />,
+          titulo: `Listos hoy (${listosHoy.length})`,
+          sub: "Lo que pusiste listo hoy, por si te equivocaste",
+          boton: "Ver",
+        })}
 
       {/* V40: se quitó "Entrar al app completo" (pedido explícito: "Quita
           opcion de entrar a App completo"). */}

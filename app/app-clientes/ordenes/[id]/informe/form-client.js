@@ -343,7 +343,9 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
           {sencillo && (
             <div style={SECCION_ESTILO}>
               <div style={SECCION_LABEL_ESTILO}>¿Cambiaste algún o-ring?</div>
-              <div style={{ fontSize: 13, color: "var(--texto-suave)", marginTop: 4 }}>Revísalos siempre. Si cambiaste alguno, anótalo.</div>
+              <div className="tec-recordatorio" style={{ marginTop: 6 }}>
+                Los o-rings van incluidos en el mantenimiento. Si cambiaste alguno, tiene que salir en el informe: anótalo aquí.
+              </div>
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                 {[
                   { v: "no", label: "No" },
