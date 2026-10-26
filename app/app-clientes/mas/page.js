@@ -48,7 +48,9 @@ const OPCIONES = [
   // ruta y el permiso siguen iguales.
   {
     href: "/app-clientes/administracion/proximos-mantenimientos",
-    titulo: "Clientes por contactar",
+    // V40: renombrado a "Recordatorios de mantenimiento" (pedido explícito: "se entiende como que esos
+    // son clientes que tienen órdenes listas en tienda y hay que contactarlos").
+    titulo: "Recordatorios de mantenimiento",
     descripcion: "Mantenimientos recomendados y clientes que no vienen hace más de 12 meses -- a quién llamar.",
     // Ícono de teléfono (pedido explícito, 13-oct-2026: "quiero cambiar el
     // icono de clientes por contactar, pon un telefono") -- antes IconWrench.

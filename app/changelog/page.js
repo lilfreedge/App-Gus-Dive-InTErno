@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
+import HeaderSimple from "@/components/HeaderSimple";
 import Breadcrumb from "@/components/Breadcrumb";
 import ChangelogClient from "./changelog-client";
 
@@ -20,17 +21,20 @@ import ChangelogClient from "./changelog-client";
 // cualquiera con el enlace la podía abrir.
 export default async function ChangelogPage({ searchParams }) {
   const desdeClientes = searchParams?.desde === "clientes";
+  // V42: también desde Viajes/Buceos.
+  const desdeViajes = searchParams?.desde === "viajes";
+  const volver = desdeClientes ? "/app-clientes" : desdeViajes ? "/viajes-buceos" : "/dashboard";
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
   if (!tieneAcceso(profile, "changelog")) {
-    redirect(desdeClientes ? "/app-clientes" : "/dashboard");
+    redirect(volver);
   }
 
   return (
     <div>
-      {desdeClientes ? <AppHeaderClientes /> : <AppHeader />}
+      {desdeClientes ? <AppHeaderClientes /> : desdeViajes ? <HeaderSimple nombre="" etiqueta="Viajes/Buceos" inicio="/viajes-buceos" /> : <AppHeader />}
       <div className="page" style={{ paddingTop: 24 }}>
-        <Link href={desdeClientes ? "/app-clientes" : "/dashboard"} className="back-link">
+        <Link href={volver} className="back-link">
           ← Volver
         </Link>
         <Breadcrumb items={[{ label: "Changelog" }]} />

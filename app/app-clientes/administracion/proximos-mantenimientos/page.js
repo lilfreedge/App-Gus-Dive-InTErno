@@ -344,7 +344,7 @@ export default async function ClientesPorContactarPage() {
           }
         >
           <div className="titulo-con-info">
-            <Breadcrumb items={[{ label: "Más", href: "/app-clientes/mas" }, { label: "Clientes por contactar" }]} />
+            <Breadcrumb items={[{ label: "Más", href: "/app-clientes/mas" }, { label: "Recordatorios de mantenimiento" }]} />
           </div>
         </ConInfo>
 
