@@ -316,6 +316,15 @@ export function IconShuffle(props) {
   );
 }
 
+export function IconClock(props) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </Base>
+  );
+}
+
 export function IconLock(props) {
   return (
     <Base {...props}>

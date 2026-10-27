@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { PREGUNTAS, fechaLarga, rd, soloDigitos, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos } from "@/lib/viajes/modelo";
+import { PREGUNTAS, fechaLarga, rd, soloDigitos, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos, palabraViaje } from "@/lib/viajes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "./Piezas";
-import { IconCheck, IconClip } from "@/components/icons";
+import { IconCheck, IconClip, IconCalendar, IconClock, IconLock, IconChat } from "@/components/icons";
 
 // V42 -- Lo que ve el buzo en el link de inscripción (maqueta-viajes-v2).
 // Se identifica con su cédula o pasaporte; el celular queda para escribirle.
@@ -43,13 +43,13 @@ function SubirComprobante({ slug, tipoDoc, doc }) {
     <div className="pb-comp">
       {estado?.nombre ? (
         <div>
-          <IconCheck size={15} /> Recibimos tu comprobante (<b>{estado.nombre}</b>). Te confirmamos por WhatsApp.
+          <IconCheck size={15} /> Recibimos tu comprobante (<b>{estado.nombre}</b>). Te confirmaremos por WhatsApp.
         </div>
       ) : (
         <>
           <div style={{ fontWeight: 800 }}>¿Ya pagaste? Sube el comprobante</div>
           <div className="pb-h" style={{ margin: "2px 0 8px" }}>
-            Foto o PDF de la transferencia. También lo puedes subir después: entra a este mismo link con tu cédula.
+            Foto o PDF de la transferencia. También puedes subirlo después entrando a este mismo link con tu cédula.
           </div>
           <label className="pb-btn sec" style={{ display: "block", textAlign: "center" }}>
             {estado === "subiendo" ? (
@@ -64,6 +64,17 @@ function SubirComprobante({ slug, tipoDoc, doc }) {
           {estado?.error && <div className="pb-error">{estado.error}</div>}
         </>
       )}
+    </div>
+  );
+}
+
+// V45 -- Pedido: "decir que esa información de identidad no es compartida con
+// nadie. Es información utilizada para llevar el registro de los buzos".
+function Privacidad() {
+  return (
+    <div className="pb-priv">
+      <IconLock size={15} />
+      <span>Gus Dive Center no comparte esta información con nadie. Solo la usamos para llevar el registro de nuestros buzos.</span>
     </div>
   );
 }
@@ -107,6 +118,8 @@ export default function PublicoViaje({ v, tienda }) {
   const pideTallas = preguntaEquipo && piezas.some((p) => /BCD|chaleco|Wetsuit|Traje|Chapaletas|Aletas/i.test(p)) && !buzo?.tieneTallas;
   const total = (o && !o.noPaga ? precioDop(v, o) : 0) + extras.reduce((a, id) => a + (v.extras.find((e) => e.id === id)?.dop || 0), 0);
   const nombreActual = buzo ? buzo.corto : nombreCorto(nuevo.nombre || "");
+  // V45: "buceo" en vez de "viaje"; "viaje" solo para los que tienen hotel (Monte Cristi).
+  const palabra = palabraViaje(v);
 
   async function correr(fn) {
     setError("");
@@ -168,17 +181,18 @@ export default function PublicoViaje({ v, tienda }) {
 
   const seguirDatos = () =>
     !nuevo.nombre.trim() || !nuevo.agencia
-      ? setError("Falta tu nombre y tu certificación.")
+      ? setError("Faltan tu nombre y tu certificación.")
       : soloDigitos(nuevo.cel).length !== 10
       ? setError("Escribe tu celular completo.")
       : ir("viaje");
 
   function validarViaje() {
-    if (eq.donde && !donde) return "Dinos qué vas a hacer con el equipo.";
-    if (pideTallas && (!tallas.bcd || !tallas.chapaletas)) return "Pon tus tallas para reservarte el equipo.";
+    if (eq.donde && !donde) return "Indícanos qué harás con el equipo.";
+    if (pideTallas && (!tallas.bcd || !tallas.chapaletas)) return "Indica tus tallas para reservarte el equipo.";
     const falta = (v.preguntas || []).find((k) => k !== "conQuien" && !resp[k]);
-    if (falta) return `Falta: ${PREGUNTAS.find((x) => x.k === falta)?.t}`;
-    if (v.requisito && !acepto) return "Tienes que aceptar el requisito del viaje.";
+    // Pedido: quitar "Falta contestar"; el aviso es la pregunta que falta.
+    if (falta) return PREGUNTAS.find((x) => x.k === falta)?.t || "Falta contestar una pregunta.";
+    if (v.requisito && !acepto) return `Debes aceptar el requisito del ${palabra}.`;
     return "";
   }
 
@@ -232,6 +246,12 @@ export default function PublicoViaje({ v, tienda }) {
     ? `Hola, soy ${resultado.nombreCompleto || resultado.nombre}. Me inscribí en ${v.nombre} del ${fechaLarga(v.fecha)}. Código ${resultado.codigo}.`
     : "";
   const linkWA = tienda?.whatsapp ? `https://wa.me/${numeroWhatsApp(tienda.whatsapp)}?text=${encodeURIComponent(mensajeWA)}` : "";
+  // V45: el que ya está en la lista puede escribirle a la tienda (preguntas, equipo).
+  const linkWAYa =
+    tienda?.whatsapp && buzo?.yaInscrito
+      ? `https://wa.me/${numeroWhatsApp(tienda.whatsapp)}?text=${encodeURIComponent(`Hola, soy ${buzo.corto} y estoy en la lista de ${v.nombre} del ${fechaLarga(v.fecha)}.`)}`
+      : "";
+  const fechaHero = fechaLarga(v.fecha);
 
   return (
     <div className="pb">
@@ -242,16 +262,24 @@ export default function PublicoViaje({ v, tienda }) {
       <div className="pb-hero">
         <div className="pb-kicker">INSCRIPCIÓN</div>
         <div className="pb-titulo">{v.nombre}</div>
-        <div className="pb-sub">
-          {fechaLarga(v.fecha)} · {v.salida}
-        </div>
-        {v.abierto && <div className="pb-cupo">{quedan > 0 ? `Quedan ${quedan} cupo${quedan === 1 ? "" : "s"}` : "Lleno: te anotamos en lista de espera"}</div>}
+        {/* V45: fecha y salida en puntos (pedido: "pon la fecha y hora de salida tipo bullet"). */}
+        <ul className="pb-datos">
+          <li>
+            <IconCalendar size={16} /> {fechaHero.charAt(0).toUpperCase() + fechaHero.slice(1)}
+          </li>
+          {v.salida && (
+            <li>
+              <IconClock size={16} /> {v.salida}
+            </li>
+          )}
+        </ul>
+        {v.abierto && <div className="pb-cupo">{quedan > 0 ? `Quedan ${quedan} cupo${quedan === 1 ? "" : "s"}` : "Cupo lleno. Puedes anotarte en la lista de espera"}</div>}
       </div>
       <div className="pb-body">
         {!v.abierto ? (
           <div className="pb-card" style={{ textAlign: "center" }}>
-            <div className="pb-t">La inscripción para este viaje está cerrada</div>
-            <div className="pb-h">Escríbenos por WhatsApp y te avisamos si se abre un cupo.</div>
+            <div className="pb-t">La inscripción para este {palabra} está cerrada</div>
+            <div className="pb-h">Escríbenos por WhatsApp y te avisaremos si se abre un cupo.</div>
           </div>
         ) : (
           <>
@@ -292,14 +320,14 @@ export default function PublicoViaje({ v, tienda }) {
 
             {inscritoPor && paso !== "fin" && (
               <div className="pb-por">
-                Estás inscribiendo a otra persona (desde {inscritoPor.corto}). Pon <b>su</b> cédula o pasaporte.
+                Estás inscribiendo a otra persona (desde {inscritoPor.corto}). Ingresa <b>su</b> cédula o pasaporte.
               </div>
             )}
 
             {paso === "doc" && (
               <div className="pb-card" onKeyDown={conEnter(buscarDoc)}>
                 <div className="pb-t">{inscritoPor ? "Cédula o pasaporte de la otra persona" : "Tu cédula o pasaporte"}</div>
-                <div className="pb-h">Así sabemos quién eres. Si ya viajaste con nosotros, no tienes que llenar nada más.</div>
+                <div style={{ height: 10 }} />
                 <div className="pb-seg">
                   {[
                     ["cedula", "Cédula"],
@@ -328,15 +356,29 @@ export default function PublicoViaje({ v, tienda }) {
                 <button className="pb-btn" disabled={cargando} onClick={buscarDoc}>
                   {cargando ? "Buscando…" : "Continuar"}
                 </button>
+                <Privacidad />
               </div>
             )}
 
             {paso === "eres" && buzo && (
-              <div className="pb-card">
+              <div className="pb-card" style={buzo.yaInscrito ? { textAlign: "center" } : undefined}>
                 {buzo.yaInscrito ? (
                   <>
-                    <div className="pb-t">{buzo.corto}, ya estás en la lista de este viaje</div>
-                    <div className="pb-h">Si quieres cambiar algo, escríbenos por WhatsApp.</div>
+                    {/* V45: igual que la pantalla de "¡Listo!", con botón de WhatsApp. */}
+                    <div className="pb-ok">
+                      <IconCheck size={34} strokeWidth={2.6} />
+                    </div>
+                    <div className="pb-t">
+                      {buzo.corto}, ya estás en la lista de este {palabra}
+                    </div>
+                    <div className="pb-h" style={{ marginTop: 8 }}>
+                      Si tienes alguna pregunta, no dudes en escribirnos. ¿Te hace falta equipo? Avísanos y te lo apartamos.
+                    </div>
+                    {linkWAYa && (
+                      <a className="pb-btn verde" href={linkWAYa} target="_blank" rel="noreferrer" style={{ display: "block", textDecoration: "none" }}>
+                        <IconChat size={18} /> Escribir por WhatsApp
+                      </a>
+                    )}
                     <SubirComprobante slug={v.slug} tipoDoc={tipoDoc} doc={doc} />
                     <button className="pb-btn sec" onClick={otraPersona}>
                       Inscribir a otra persona
@@ -346,7 +388,7 @@ export default function PublicoViaje({ v, tienda }) {
                 ) : (
                   <>
                     <div className="pb-t">¿Eres {buzo.corto}?</div>
-                    {buzo.cel && <div className="pb-h">Te escribimos al {buzo.cel}.</div>}
+                    {buzo.cel && <div className="pb-h">Te escribiremos al {buzo.cel}.</div>}
                     <button className="pb-btn" onClick={() => ir("viaje")}>
                       Sí, {inscritoPor ? "es esa persona" : "soy yo"}
                     </button>
@@ -357,7 +399,7 @@ export default function PublicoViaje({ v, tienda }) {
                         setDoc("");
                         setPila([]);
                         setPaso("doc");
-                        setError("Revisa el número: esa cédula es de otra persona.");
+                        setError("Revisa el número. Esa cédula pertenece a otra persona.");
                       }}
                     >
                       No {inscritoPor ? "es esa persona" : "soy yo"}
@@ -370,8 +412,12 @@ export default function PublicoViaje({ v, tienda }) {
 
             {paso === "cel" && (
               <div className="pb-card" onKeyDown={conEnter(buscarCel)}>
-                <div className="pb-t">Primera vez con esta {tipoDoc === "cedula" ? "cédula" : "identificación"}</div>
-                <div className="pb-h">¿Cuál es tu celular? Si ya viajaste con nosotros te encontramos por ahí.</div>
+                {/* Solo sale si la cédula no está guardada. Muchos buzos que ya
+                    tenemos (de los sheets o agregados a mano) no tienen cédula,
+                    solo nombre y celular: con el celular se encuentran y se les
+                    guarda la cédula. */}
+                <div className="pb-t">¿Primera vez buceando con Gus?</div>
+                <div className="pb-h">Ingresa tu número de celular.</div>
                 <CampoCel className="pb-input" value={nuevo.cel} onChange={(cel) => setNuevo({ ...nuevo, cel })} />
                 {error && <div className="pb-error">{error}</div>}
                 <button className="pb-btn" disabled={cargando} onClick={buscarCel}>
@@ -384,7 +430,7 @@ export default function PublicoViaje({ v, tienda }) {
             {paso === "vincular" && (
               <div className="pb-card">
                 <div className="pb-t">¿Eres alguna de estas personas?</div>
-                <div className="pb-h">Con ese celular ya tenemos a:</div>
+                <div className="pb-h">Encontramos a estas personas con ese número.</div>
                 {candidatos.map((c) => (
                   <button
                     key={c.id}
@@ -402,7 +448,7 @@ export default function PublicoViaje({ v, tienda }) {
                   No, soy otra persona
                 </button>
                 <div className="pb-h" style={{ marginTop: 8 }}>
-                  Si escoges tu nombre, guardamos tu cédula para la próxima.
+                  Si eliges tu nombre, guardaremos tu cédula para la próxima vez.
                 </div>
                 <BotonAtras />
               </div>
@@ -411,10 +457,10 @@ export default function PublicoViaje({ v, tienda }) {
             {paso === "datos" && (
               <div className="pb-card" onKeyDown={conEnter(seguirDatos)}>
                 <div className="pb-t">Tus datos</div>
-                <div className="pb-h">Solo esta vez: la próxima te reconocemos por tu cédula.</div>
+                <div style={{ height: 10 }} />
                 <input className="pb-input" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} placeholder="Nombre y apellido" />
                 <CampoCel className="pb-input" value={nuevo.cel} onChange={(cel) => setNuevo({ ...nuevo, cel })} />
-                <input className="pb-input" type="email" value={nuevo.correo} onChange={(e) => setNuevo({ ...nuevo, correo: e.target.value })} placeholder="Correo" />
+                <input className="pb-input" type="email" value={nuevo.correo} onChange={(e) => setNuevo({ ...nuevo, correo: e.target.value })} placeholder="Correo electrónico" />
                 <select className="pb-input" value={nuevo.agencia} onChange={(e) => setNuevo({ ...nuevo, agencia: e.target.value })}>
                   <option value="">Agencia de certificación…</option>
                   {["PADI", "SSI", "SNSI", "Raid", "NAUI", "Otra", "No soy buzo (snorkel / acompañante)"].map((a) => (
@@ -426,6 +472,7 @@ export default function PublicoViaje({ v, tienda }) {
                 <button className="pb-btn" onClick={seguirDatos}>
                   Continuar
                 </button>
+                <Privacidad />
                 <BotonAtras />
               </div>
             )}
@@ -435,7 +482,7 @@ export default function PublicoViaje({ v, tienda }) {
                 <div className="pb-t">Hola, {buzo ? buzo.primer : primerNombre(nuevo.nombre)}</div>
                 {opcionesPagan.length > 1 && (
                   <>
-                    <div className="pb-h">{v.habitaciones ? "¿Qué habitación quieres? (precios por persona)" : "¿Cómo vas?"}</div>
+                    <div className="pb-h">{v.habitaciones ? "¿Qué habitación quieres? (precios por persona)" : "¿Cómo vas a participar?"}</div>
                     {opcionesPagan.map((x) => (
                       <button
                         key={x.id}
@@ -475,7 +522,7 @@ export default function PublicoViaje({ v, tienda }) {
                 {preguntaEquipo && (
                   <>
                     <div className="pb-h" style={{ marginTop: 10 }}>
-                      ¿Qué te falta?{eq.proveedor && !eq.donde ? ` (lo pone ${eq.proveedor})` : ""}
+                      ¿Qué equipo te falta?{eq.proveedor && !eq.donde ? ` (lo pone ${eq.proveedor})` : ""}
                     </div>
                     <div className="pb-chips">
                       {(eq.piezas || []).map((e) => (
@@ -558,17 +605,19 @@ export default function PublicoViaje({ v, tienda }) {
                   <IconCheck size={34} strokeWidth={2.6} />
                 </div>
                 {resultado.ya ? (
-                  <div className="pb-t">{resultado.nombre}, ya estabas en la lista de este viaje</div>
+                  <div className="pb-t">
+                    {resultado.nombre}, ya estabas en la lista de este {palabra}
+                  </div>
                 ) : (
                   <>
                     <div className="pb-t">
-                      ¡Listo, {resultado.nombre}! {resultado.enEspera ? "Estás en la lista de espera." : "Ya estás en la lista del viaje."}
+                      ¡Listo, {resultado.nombre}! {resultado.enEspera ? "Estás en la lista de espera." : `Ya estás en la lista del ${palabra}.`}
                     </div>
                     {!resultado.enEspera && (
                       <div className="pb-h" style={{ textAlign: "left", marginTop: 10 }}>
                         <b>Para separar tu cupo, transfiere {v.reserva ? `la reserva (${rd(v.reserva.monto)})` : `el pago (${rd(total)})`}</b>
                         {cuentas.length ? (
-                          " a:"
+                          cuentas.length === 1 ? " a esta cuenta." : " a una de estas cuentas."
                         ) : (
                           ". Te escribimos por WhatsApp con los datos para el pago."
                         )}
@@ -607,7 +656,7 @@ export default function PublicoViaje({ v, tienda }) {
                     {linkWA && (
                       <>
                         <div className="pb-wa">
-                          Toca el botón: se abre WhatsApp con este mensaje para la tienda:
+                          Al tocar el botón se abrirá WhatsApp con este mensaje para la tienda.
                           <br />
                           <i>“{mensajeWA}”</i>
                         </div>
@@ -622,9 +671,6 @@ export default function PublicoViaje({ v, tienda }) {
                 <button className="pb-btn sec" onClick={otraPersona}>
                   Inscribir a otra persona
                 </button>
-                <div className="pb-h" style={{ marginTop: 6 }}>
-                  Te va a pedir la cédula de esa persona.
-                </div>
               </div>
             )}
           </>

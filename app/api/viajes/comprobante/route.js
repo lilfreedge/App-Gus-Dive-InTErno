@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { nuevoId } from "@/lib/viajes/datos";
-import { formatoCedula, hoyISO } from "@/lib/viajes/modelo";
+import { formatoCedula, hoyISO, palabraViaje } from "@/lib/viajes/modelo";
 import { avisar } from "@/lib/viajes/avisos";
 
 export const dynamic = "force-dynamic";
@@ -27,13 +27,13 @@ export async function POST(request) {
   if (!TIPOS.includes(tipoArchivo)) return NextResponse.json({ error: "Sube una foto (JPG, PNG) o un PDF." }, { status: 400 });
 
   const s = createServiceClient();
-  const { data: v } = await s.from("viajes").select("id, nombre").eq("slug", slug).maybeSingle();
-  if (!v) return NextResponse.json({ error: "Ese viaje no existe." }, { status: 404 });
+  const { data: v } = await s.from("viajes").select("id, nombre, datos").eq("slug", slug).maybeSingle();
+  if (!v) return NextResponse.json({ error: "Este buceo no existe." }, { status: 404 });
   const valor = tipo === "pasaporte" ? doc.toUpperCase().replace(/\s/g, "") : formatoCedula(doc);
   const { data: b } = await s.from("viajes_buzos").select("id, nombre").eq(tipo === "pasaporte" ? "pasaporte" : "documento", valor).maybeSingle();
-  if (!b) return NextResponse.json({ error: "No encontramos esa cédula en este viaje." }, { status: 404 });
+  if (!b) return NextResponse.json({ error: `No encontramos esa cédula en este ${palabraViaje(v.datos)}.` }, { status: 404 });
   const { data: ins } = await s.from("viajes_inscripciones").select("id, estado, comprobantes").eq("viaje_id", v.id).eq("buzo_id", b.id).maybeSingle();
-  if (!ins || ins.estado === "quitado") return NextResponse.json({ error: "No estás inscrito en este viaje." }, { status: 404 });
+  if (!ins || ins.estado === "quitado") return NextResponse.json({ error: `No encontramos tu inscripción en este ${palabraViaje(v.datos)}.` }, { status: 404 });
   if ((ins.comprobantes || []).length >= 10) return NextResponse.json({ error: "Ya subiste varios comprobantes. Escríbenos por WhatsApp." }, { status: 400 });
 
   const ext = tipoArchivo === "application/pdf" ? "pdf" : (tipoArchivo.split("/")[1] || "jpg").replace("jpeg", "jpg");

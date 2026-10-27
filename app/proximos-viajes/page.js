@@ -4,7 +4,7 @@ import { estadoViaje, fechaObj, hoyISO, DIAS, MESES, rd, us } from "@/lib/viajes
 import AltoIframe from "@/components/viajes/AltoIframe";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Próximos viajes · Gus Dive Center" };
+export const metadata = { title: "Próximos buceos · Gus Dive Center" };
 
 // V42 -- Recuadro "Próximos viajes" para la página web (gusdivecenter.com).
 // Se pone UNA vez en WordPress (bloque "HTML personalizado"):
@@ -31,7 +31,7 @@ export default async function ProximosViajesPage() {
     <div className="wp-embed wp-embed-real">
       <style>{`body{background:#fff !important}`}</style>
       <AltoIframe />
-      <div className="wp-embed-t">Próximos viajes</div>
+      <div className="wp-embed-t">Próximos buceos</div>
       {Object.entries(porMes).map(([k, vs]) => (
         <div key={k}>
           <div className="wp-mes">{MESES[Number(k.slice(5)) - 1].toUpperCase()}</div>
@@ -64,7 +64,7 @@ export default async function ProximosViajesPage() {
           })}
         </div>
       ))}
-      {viajes.length === 0 && <div className="wp-mini">Pronto anunciamos los próximos viajes.</div>}
+      {viajes.length === 0 && <div className="wp-mini">Pronto anunciamos los próximos buceos.</div>}
     </div>
   );
 }

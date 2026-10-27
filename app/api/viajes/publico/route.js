@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { filaAViaje, filaABuzo, buzoAFila, nuevoId } from "@/lib/viajes/datos";
-import { formatoCedula, soloDigitos, celOculto, nombreCorto, primerNombre, estadoViaje, PREGUNTAS, fechaCorta } from "@/lib/viajes/modelo";
+import { formatoCedula, soloDigitos, celOculto, nombreCorto, primerNombre, estadoViaje, PREGUNTAS, fechaCorta, palabraViaje } from "@/lib/viajes/modelo";
 import { avisar } from "@/lib/viajes/avisos";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +37,7 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const s = createServiceClient();
   const { data: vrow } = await s.from("viajes").select("*").eq("slug", String(body.slug || "")).maybeSingle();
-  if (!vrow) return NextResponse.json({ error: "Ese viaje no existe." }, { status: 404 });
+  if (!vrow) return NextResponse.json({ error: "Este buceo no existe." }, { status: 404 });
   const v = filaAViaje(vrow);
   const tipo = body.tipoDoc === "pasaporte" ? "pasaporte" : "cedula";
 
@@ -67,11 +67,11 @@ export async function POST(request) {
   if (body.accion !== "inscribir") return NextResponse.json({ error: "Acción desconocida." }, { status: 400 });
 
   // ------------------------------------------------------------ inscribir
-  if (estadoViaje(v) !== "abierto") return NextResponse.json({ error: "La inscripción para este viaje está cerrada." }, { status: 400 });
+  if (estadoViaje(v) !== "abierto") return NextResponse.json({ error: `La inscripción para este ${palabraViaje(v)} está cerrada.` }, { status: 400 });
   if (!docValido(tipo, body.doc)) return NextResponse.json({ error: "Revisa tu cédula o pasaporte." }, { status: 400 });
   const o = v.opciones.find((x) => x.id === body.opcion && !x.noPaga);
-  if (!o) return NextResponse.json({ error: "Escoge una opción del viaje." }, { status: 400 });
-  if (v.requisito && !body.acepto) return NextResponse.json({ error: "Tienes que aceptar el requisito del viaje." }, { status: 400 });
+  if (!o) return NextResponse.json({ error: "Elige una opción." }, { status: 400 });
+  if (v.requisito && !body.acepto) return NextResponse.json({ error: `Debes aceptar el requisito del ${palabraViaje(v)}.` }, { status: 400 });
 
   let b = await buscarPorDoc(s, tipo, body.doc);
   let nuevo = false;
@@ -87,7 +87,7 @@ export async function POST(request) {
   }
   if (!b) {
     const n = body.nuevo || {};
-    if (!String(n.nombre || "").trim() || !n.agencia) return NextResponse.json({ error: "Falta tu nombre y tu certificación." }, { status: 400 });
+    if (!String(n.nombre || "").trim() || !n.agencia) return NextResponse.json({ error: "Faltan tu nombre y tu certificación." }, { status: 400 });
     if (soloDigitos(n.cel).length !== 10) return NextResponse.json({ error: "Escribe tu celular completo." }, { status: 400 });
     b = {
       id: nuevoId(),

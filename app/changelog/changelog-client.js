@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V45",
+    fecha: "27 de octubre, 2026",
+    titulo: "Viajes/Buceos: textos nuevos en lo que ve el buzo, \"buceo\" en vez de \"viaje\" y botón de WhatsApp para el que ya está inscrito",
+    descripcion:
+      "En el link de inscripción ahora se dice \"buceo\" en vez de \"viaje\" (\"viaje\" se queda solo en los que tienen hotel, como Monte Cristi), y en la lista de próximos buceos para la página web dice \"Próximos buceos\". Arriba, la fecha y la hora de salida salen en puntos con su icono. Se quitaron los dos puntos de los textos. Avisos del equipo nuevos (La Caleta y Salinas: \"¿Te falta algo? En Gus tenemos equipos para alquilar\"; Tiburones; \"Buzo + equipo\" US$10 adicional), con migration_73.sql para los que ya estaban creados. Cédula y Tus datos: se quitaron las líneas de \"si ya has buceado…\" y \"solo esta vez…\", y salió una línea con candado que dice que Gus Dive Center no comparte esa información con nadie y solo la usa para el registro de sus buzos. Celular: \"¿Primera vez buceando con Gus?\" e \"Ingresa tu número de celular\". El que entra al link y ya está en la lista ve la misma pantalla del \"¡Listo!\" con un botón verde \"Escribir por WhatsApp\" (para preguntas o para apartar equipo) y donde subir su comprobante. Si falta una pregunta, el aviso es la pregunta misma. Se quitó \"Te pediremos la cédula de esa persona\".",
+  },
+  {
     version: "V44",
     fecha: "26 de octubre, 2026",
     titulo: "Viajes/Buceos: Inicio y Más como en los otros apps, avisos cuando alguien se inscribe (en el app, correo y celular), reporte de equipo para los operadores y Catálogo por partes",

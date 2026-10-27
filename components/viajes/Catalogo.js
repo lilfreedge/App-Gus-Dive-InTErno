@@ -444,7 +444,7 @@ export function Catalogo({ db, ops, ir }) {
                 cupoMin: 0,
                 cupoMax: 12,
                 operador: "",
-                equipo: { modo: "no", nota: "Este viaje no incluye alquiler de equipo: trae tu equipo completo." },
+                equipo: { modo: "no", nota: "Este buceo no incluye alquiler de equipo. ¿Te falta algo? En Gus tenemos equipos para alquilar." },
                 extras: [],
                 preguntas: [],
                 reserva: null,
