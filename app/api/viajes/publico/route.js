@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { filaAViaje, filaABuzo, buzoAFila, nuevoId } from "@/lib/viajes/datos";
-import { formatoCedula, soloDigitos, celOculto, nombreCorto, primerNombre, estadoViaje, PREGUNTAS } from "@/lib/viajes/modelo";
+import { formatoCedula, soloDigitos, celOculto, nombreCorto, primerNombre, estadoViaje, PREGUNTAS, fechaCorta } from "@/lib/viajes/modelo";
+import { avisar } from "@/lib/viajes/avisos";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -173,6 +174,29 @@ export async function POST(request) {
     quien: "Link",
     texto: `Se inscribió por el link: ${b.nombre}${nuevo ? " (nuevo)" : ""}${inscritoPor ? ` (la inscribió ${nombreCorto(inscritoPor.nombre)})` : ""}${enEspera ? " · lista de espera" : ""}`,
   });
+
+  // V44: avisos (en el app, correo y celular, según lo que escogió el Titular).
+  const origen = new URL(request.url).origin;
+  const ruta = `/viajes-buceos/viaje/${v.id}`;
+  await avisar(
+    s,
+    "inscripcion",
+    {
+      titulo: `${enEspera ? "Lista de espera" : "Nueva inscripción"} · ${v.nombre}`,
+      texto: `${b.nombre} se inscribió (${o.nombre}) para el ${fechaCorta(v.fecha)}${enEspera ? " y quedó en lista de espera" : ""}${inscritoPor ? `. La inscribió ${nombreCorto(inscritoPor.nombre)}` : ""}.`,
+      viajeId: v.id,
+      ruta,
+    },
+    origen
+  );
+  if (!enEspera && (count || 0) + 1 === v.cupoMax) {
+    await avisar(
+      s,
+      "lleno",
+      { titulo: `Se llenó ${v.nombre}`, texto: `Llegó a ${v.cupoMax} buzos (${fechaCorta(v.fecha)}). Los próximos que se inscriban quedan en lista de espera.`, viajeId: v.id, ruta },
+      origen
+    );
+  }
 
   return NextResponse.json({ ok: true, nombre: primerNombre(b.nombre), nombreCompleto: b.nombre, enEspera, codigo });
 }

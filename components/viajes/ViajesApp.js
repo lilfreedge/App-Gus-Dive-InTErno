@@ -1,20 +1,24 @@
 "use client";
 
+import FechaHoy from "@/components/FechaHoy";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconGear, IconLogout, IconLock, IconShuffle, IconHistory } from "@/components/icons";
+import { IconGear, IconLogout, IconShuffle, IconHistory, IconUsers, IconBell } from "@/components/icons";
 import { cargarTodo, viajeAFila, insAFila, buzoAFila, catalogoAFila, nuevoId } from "@/lib/viajes/datos";
 import { ahora, hoyISO, rd } from "@/lib/viajes/modelo";
-import { Inicio, Calendario } from "./Inicio";
+import { Inicio, Buceos, Mas, Calendario } from "./Inicio";
+import { Atras } from "./Piezas";
 import { Viaje } from "./Viaje";
 import { NuevoViaje, Catalogo, EditarPlantilla } from "./Catalogo";
 import { Buzos, FichaBuzo } from "./Buzos";
-import { Historial, Reporte } from "./Historial";
+import { Historial, Reporte, ReporteEquipo } from "./Historial";
 import { Estadisticas } from "./Estadisticas";
 import { AccesosViajes } from "./Accesos";
+import { VisorComprobante } from "./Piezas";
+import { useAvisos, CampanaAvisos, ToastAviso, MisNotificaciones } from "./Avisos";
 
 // V42 -- App Viajes/Buceos. Un solo componente para todas las pantallas
 // (/viajes-buceos/...): los datos se cargan una vez y se quedan mientras
@@ -26,7 +30,7 @@ const BASE = "/viajes-buceos";
 export function rutaDeUrl(path) {
   const p = (path || "").replace(/^\/viajes-buceos\/?/, "").split("/").filter(Boolean);
   if (!p.length) return "inicio";
-  if (p[0] === "viaje" && p[1]) return p[2] === "reporte" ? `reporte:${p[1]}` : `viaje:${p[1]}${p[2] ? `:${p[2]}` : ""}`;
+  if (p[0] === "viaje" && p[1]) return p[2] === "reporte" ? `reporte:${p[1]}` : p[2] === "reporte-equipo" ? `reporte-equipo:${p[1]}` : `viaje:${p[1]}${p[2] ? `:${p[2]}` : ""}`;
   if (p[0] === "buzos" && p[1]) return `buzo:${p[1]}`;
   if (p[0] === "catalogo" && p[1]) return `plantilla:${p[1]}`;
   return p[0];
@@ -36,12 +40,13 @@ export function urlDeRuta(r) {
   if (k === "inicio") return BASE;
   if (k === "viaje") return `${BASE}/viaje/${id}${tab ? `/${tab}` : ""}`;
   if (k === "reporte") return `${BASE}/viaje/${id}/reporte`;
+  if (k === "reporte-equipo") return `${BASE}/viaje/${id}/reporte-equipo`;
   if (k === "buzo") return `${BASE}/buzos/${id}`;
   if (k === "plantilla") return `${BASE}/catalogo/${id}`;
   return `${BASE}/${k}`;
 }
 
-function Topbar({ nombre, nombreCompleto, correo, esTitular, links, activo, ir, verChangelog }) {
+function Topbar({ nombre, nombreCompleto, correo, esTitular, links, activo, ir, verChangelog, campana }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
@@ -64,9 +69,13 @@ function Topbar({ nombre, nombreCompleto, correo, esTitular, links, activo, ir, 
           <a className="topbar-logo-link" href={BASE} onClick={(e) => (e.preventDefault(), ir("inicio"))} aria-label="Ir al inicio">
             <Image src="/logo-gus-icon.png" alt="Gus Dive" width={64} height={22} className="topbar-logo" priority />
           </a>
-          <div className="topbar-sub">Hola, {nombre}</div>
+          <div className="topbar-sub">
+            Hola, {nombre}
+            <FechaHoy />
+          </div>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {campana}
           <div className="gear-wrap" ref={menuRef}>
             <button className="gear-btn" onClick={() => setOpen((o) => !o)} aria-label="Ajustes">
               <IconGear size={18} />
@@ -77,9 +86,13 @@ function Topbar({ nombre, nombreCompleto, correo, esTitular, links, activo, ir, 
                   <b>{nombreCompleto}</b>
                   {correo}
                 </div>
+                <a className="settings-menu-link" onClick={() => (setOpen(false), ir("notificaciones"))} style={{ cursor: "pointer" }}>
+                  <IconBell size={15} /> Notificaciones
+                </a>
                 {esTitular && (
-                  <a className="settings-menu-link" onClick={() => (setOpen(false), ir("accesos"))} style={{ cursor: "pointer" }}>
-                    <IconLock size={15} /> Accesos de Viajes
+                  <a className="settings-menu-link" onClick={() => (setOpen(false), ir("administracion"))} style={{ cursor: "pointer" }}>
+                    <IconUsers size={15} /> Administración
+                    <span className="settings-menu-tag">TITULAR</span>
                   </a>
                 )}
                 {verChangelog && (
@@ -126,6 +139,8 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
   const [db, setDb] = useState(null);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+  const [visor, setVisor] = useState(null); // comprobante abierto
+  const cerrarVisor = useCallback(() => setVisor(null), []);
   const ruta = rutaDeUrl(pathname);
   const rol = { corto: yo.corto };
 
@@ -140,6 +155,7 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
   useEffect(() => {
     recargar();
   }, [recargar]);
+  const av = useAvisos(supabase, yo, recargar);
 
   const ir = (r) => {
     router.push(urlDeRuta(r));
@@ -334,16 +350,17 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
       }
     },
     // Comprobantes de pago (fotos o PDF): bucket privado "viajes-comprobantes".
+    // Se ve ahí mismo (VisorComprobante), no en otra ventana.
     async verComprobante(c) {
-      const w = window.open("", "_blank");
+      const id = c.id || c.path;
+      setVisor({ id, nombre: c.nombre || "Comprobante", url: null, pdf: /\.pdf$/i.test(c.path || c.nombre || "") });
       const { data, error: e } = await supabase.storage.from("viajes-comprobantes").createSignedUrl(c.path, 600);
       if (e || !data?.signedUrl) {
-        if (w) w.close();
+        setVisor(null);
         avisar("No se pudo abrir el comprobante.");
         return;
       }
-      if (w) w.location = data.signedUrl;
-      else window.location.href = data.signedUrl;
+      setVisor((v) => (v && v.id === id ? { ...v, url: data.signedUrl } : v));
     },
     async adjuntarComprobante(x, file) {
       if (file.size > 10 * 1024 * 1024) return avisar("El archivo pesa más de 10 MB.");
@@ -369,19 +386,20 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
     },
   };
 
+  // V44 (pedido: "solo nos quedaríamos con inicio, viajes (renombrar esta a
+  // buceos) y calendario"; lo demás en "Más", como en los otros apps).
   const links = [
-    { r: "inicio", t: "Viajes" },
+    { r: "inicio", t: "Inicio" },
+    { r: "buceos", t: "Buceos" },
     { r: "calendario", t: "Calendario" },
-    ...(p.buzos ? [{ r: "buzos", t: "Buzos" }] : []),
-    ...(p.editarViaje ? [{ r: "catalogo", t: "Catálogo de viajes" }] : []),
-    ...(p.estadisticas ? [{ r: "estadisticas", t: "Estadísticas" }] : []),
-    { r: "historial", t: "Historial" },
+    { r: "mas", t: "Más" },
   ];
-  const activo = ruta.startsWith("buzo")
-    ? "buzos"
-    : ruta.startsWith("catalogo") || ruta.startsWith("plantilla")
-    ? "catalogo"
-    : ["calendario", "historial", "estadisticas", "accesos"].includes(ruta)
+  const enMas = ["buzos", "catalogo", "estadisticas", "historial", "mas"].includes(ruta) || ruta.startsWith("buzo:") || ruta.startsWith("plantilla:");
+  const activo = enMas
+    ? "mas"
+    : ruta === "buceos" || ruta === "nuevo" || ruta.startsWith("viaje:") || ruta.startsWith("reporte")
+    ? "buceos"
+    : ["calendario", "accesos", "administracion", "notificaciones"].includes(ruta)
     ? ruta
     : "inicio";
 
@@ -400,11 +418,16 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
   } else {
     const q = { db, setDb, ops, p, rol, yo, ir, avisar, recargar, supabase, personas, calUrl };
     if (ruta === "inicio") cuerpo = <Inicio {...q} />;
+    else if (ruta === "buceos") cuerpo = <Buceos {...q} />;
+    else if (ruta === "mas") cuerpo = <Mas {...q} />;
     else if (ruta === "calendario") cuerpo = <Calendario {...q} />;
     else if (ruta === "nuevo") cuerpo = p.editarViaje ? <NuevoViaje {...q} /> : <Inicio {...q} />;
     else if (ruta.startsWith("viaje:")) {
       const [, id, tab] = ruta.split(":");
       cuerpo = db.viajes.some((v) => v.id === id) ? <Viaje key={id} {...q} id={id} tab={tab || "inscritos"} /> : <div className="hint-text">Ese viaje no existe.</div>;
+    } else if (ruta.startsWith("reporte-equipo:")) {
+      const id = ruta.split(":")[1];
+      cuerpo = db.viajes.some((v) => v.id === id) ? <ReporteEquipo {...q} id={id} /> : null;
     } else if (ruta.startsWith("reporte:")) {
       const id = ruta.split(":")[1];
       cuerpo = db.viajes.some((v) => v.id === id) ? <Reporte {...q} id={id} /> : null;
@@ -414,7 +437,9 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
     else if (ruta.startsWith("plantilla:")) cuerpo = p.editarViaje && db.catalogo.some((c) => c.id === ruta.split(":")[1]) ? <EditarPlantilla key={ruta} {...q} id={ruta.split(":")[1]} /> : null;
     else if (ruta === "historial") cuerpo = <Historial {...q} />;
     else if (ruta === "estadisticas") cuerpo = p.estadisticas ? <Estadisticas {...q} /> : <Inicio {...q} />;
-    else if (ruta === "accesos") cuerpo = yo.esTitular ? <AccesosViajes {...q} /> : <Inicio {...q} />;
+    // V43: ⚙ › Administración ("accesos" queda por si alguien tenía el link viejo).
+    else if (ruta === "notificaciones") cuerpo = <MisNotificaciones {...q} av={av} />;
+    else if (ruta === "administracion" || ruta === "accesos") cuerpo = yo.esTitular ? <AccesosViajes {...q} /> : <Inicio {...q} />;
     else cuerpo = <Inicio {...q} />;
   }
 
@@ -429,9 +454,16 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
         links={links}
         activo={activo}
         ir={ir}
+        campana={<CampanaAvisos av={av} ir={ir} />}
       />
-      <div className="page vj-page">{cuerpo}</div>
+      <div className="page vj-page">
+        {/* V44: lo que está en "Más" tiene su "← Más" arriba. */}
+        {["buzos", "catalogo", "estadisticas", "historial"].includes(ruta) && db && <Atras onClick={() => ir("mas")}>Más</Atras>}
+        {cuerpo}
+      </div>
       {toast && <div className="vj-toast">{toast}</div>}
+      <ToastAviso aviso={av.nuevo} cerrar={av.cerrarNuevo} ir={ir} leer={av.leer} />
+      {visor && <VisorComprobante {...visor} cerrar={cerrarVisor} />}
       {children}
     </div>
   );

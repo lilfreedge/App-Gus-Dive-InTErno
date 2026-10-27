@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { PREGUNTAS, fechaLarga, rd, soloDigitos, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop } from "@/lib/viajes/modelo";
+import { PREGUNTAS, fechaLarga, rd, soloDigitos, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos } from "@/lib/viajes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "./Piezas";
+import { IconCheck, IconClip } from "@/components/icons";
 
 // V42 -- Lo que ve el buzo en el link de inscripción (maqueta-viajes-v2).
 // Se identifica con su cédula o pasaporte; el celular queda para escribirle.
@@ -42,7 +43,7 @@ function SubirComprobante({ slug, tipoDoc, doc }) {
     <div className="pb-comp">
       {estado?.nombre ? (
         <div>
-          ✓ Recibimos tu comprobante (<b>{estado.nombre}</b>). Te confirmamos por WhatsApp.
+          <IconCheck size={15} /> Recibimos tu comprobante (<b>{estado.nombre}</b>). Te confirmamos por WhatsApp.
         </div>
       ) : (
         <>
@@ -51,7 +52,13 @@ function SubirComprobante({ slug, tipoDoc, doc }) {
             Foto o PDF de la transferencia. También lo puedes subir después: entra a este mismo link con tu cédula.
           </div>
           <label className="pb-btn sec" style={{ display: "block", textAlign: "center" }}>
-            {estado === "subiendo" ? "Subiendo…" : "📎 Subir comprobante"}
+            {estado === "subiendo" ? (
+              "Subiendo…"
+            ) : (
+              <>
+                <IconClip size={16} /> Subir comprobante
+              </>
+            )}
             <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} disabled={estado === "subiendo"} onChange={(e) => subir(e.target.files?.[0])} />
           </label>
           {estado?.error && <div className="pb-error">{estado.error}</div>}
@@ -254,17 +261,26 @@ export default function PublicoViaje({ v, tienda }) {
                   <div key={x.id} className="pb-op-info">
                     <b>{x.nombre}</b> · {precioTexto(v, x)}
                     {v.habitaciones ? " por persona" : ""}
-                    <div>{x.incluye}</div>
+                    {/* "Precio por persona" ya lo dice la línea de arriba. */}
+                    {x.incluye && !(v.habitaciones && /^precio por persona\.?$/i.test(x.incluye.trim())) && <div>{x.incluye}</div>}
                   </div>
                 ))}
                 {v.incluye && (
                   <div className="pb-op-info">
                     <b>Incluye</b>
-                    <div>{v.incluye}</div>
+                    <ul className="pb-lista">
+                      {puntos(v.incluye).map((t) => (
+                        <li key={t}>{t}</li>
+                      ))}
+                    </ul>
                     {v.noIncluye && (
                       <>
-                        <b style={{ display: "block", marginTop: 6 }}>No incluye</b>
-                        <div>{v.noIncluye}</div>
+                        <b style={{ display: "block", marginTop: 8 }}>No incluye</b>
+                        <ul className="pb-lista">
+                          {puntos(v.noIncluye).map((t) => (
+                            <li key={t}>{t}</li>
+                          ))}
+                        </ul>
                       </>
                     )}
                   </div>
@@ -538,7 +554,9 @@ export default function PublicoViaje({ v, tienda }) {
 
             {paso === "fin" && resultado && (
               <div className="pb-card" style={{ textAlign: "center" }}>
-                <div className="pb-ok">✓</div>
+                <div className="pb-ok">
+                  <IconCheck size={34} strokeWidth={2.6} />
+                </div>
                 {resultado.ya ? (
                   <div className="pb-t">{resultado.nombre}, ya estabas en la lista de este viaje</div>
                 ) : (
@@ -567,7 +585,13 @@ export default function PublicoViaje({ v, tienda }) {
                               <div className="pb-cuenta-n">{c.numero}</div>
                             </div>
                             <button type="button" className="pb-copiar" onClick={() => copiar(c.numero)}>
-                              {copiado === c.numero ? "✓ Copiado" : "Copiar"}
+                              {copiado === c.numero ? (
+                                <>
+                                  <IconCheck size={14} /> Copiado
+                                </>
+                              ) : (
+                                "Copiar"
+                              )}
                             </button>
                           </div>
                         ))}

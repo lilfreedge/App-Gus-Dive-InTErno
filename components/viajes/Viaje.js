@@ -26,8 +26,13 @@ import {
   PREGUNTAS,
   hoyISO,
   nuevoIdLocal,
+  equipoViaje,
+  textoEquipo,
+  resumenTalla,
+  puntos,
 } from "@/lib/viajes/modelo";
-import { Chip, Modal, IconoWA, CampoCel, Atras } from "./Piezas";
+import { Chip, Modal, IconoWA, CampoCel, Atras, Buscar } from "./Piezas";
+import { IconLink, IconChat, IconReport, IconLock, IconUnlock, IconCheck, IconX, IconClip, IconAlert, IconClipboard, IconPrint } from "@/components/icons";
 
 const nombreDe = (db, id) => db.buzos.find((b) => b.id === id)?.nombre || "";
 const comprobanteNuevo = (x) => (x.comprobantes || []).some((c) => !c.visto);
@@ -44,7 +49,7 @@ export function Viaje(props) {
   const tabs = [
     { k: "inscritos", t: `Inscritos (${r.buzos.length})` },
     { k: "info", t: "Info del viaje" },
-    ...(v.equipo.modo === "si" ? [{ k: "tallas", t: "Tallas" }] : []),
+    ...(v.equipo.modo === "si" ? [{ k: "equipo", t: "Equipo" }] : []),
     ...(v.habitaciones ? [{ k: "habitaciones", t: "Habitaciones" }] : []),
     ...(p.numeros ? [{ k: "numeros", t: "Números" }] : []),
     ...(p.bitacora ? [{ k: "bitacora", t: "Bitácora" }] : []),
@@ -62,7 +67,7 @@ export function Viaje(props) {
   const q = { ...props, v, r, ev, cerrado, cambiarViaje };
   return (
     <>
-      <Atras onClick={() => ir(cerrado ? "historial" : "inicio")}>{cerrado ? "Historial" : "Viajes"}</Atras>
+      <Atras onClick={() => ir(cerrado ? "historial" : "buceos")}>{cerrado ? "Historial" : "Buceos"}</Atras>
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <h1 className="page-title" style={{ margin: 0 }}>
           {v.nombre}
@@ -76,27 +81,24 @@ export function Viaje(props) {
         {!cerrado && ev !== "realizado" && (
           <>
             <button className="btn secondary vj-btn" onClick={() => copiar(link, "Link de inscripción copiado")}>
-              🔗 Copiar link
-            </button>
-            <button className="btn secondary vj-btn" onClick={() => window.open(link, "_blank")}>
-              👁 Lo que ve el buzo
+              <IconLink size={16} /> Copiar link
             </button>
             <button className="btn secondary vj-btn" onClick={() => copiar((v.mensajeGrupo || "").replace("[día]", fechaLarga(v.fecha)), "Mensaje para el grupo copiado")}>
-              💬 Mensaje para el grupo
+              <IconChat size={16} /> Mensaje para el grupo
             </button>
           </>
         )}
         <button className="btn secondary vj-btn" onClick={() => ir(`reporte:${v.id}`)}>
-          📄 Reporte
+          <IconReport size={16} /> Reporte
         </button>
         {p.editarViaje && ev === "abierto" && (
           <button className="btn secondary vj-btn" onClick={() => cambiarViaje({ estado: "cerrado_insc" }, "Cerró la inscripción", "Abierta", "Cerrada")}>
-            🔒 Cerrar inscripción
+            <IconLock size={16} /> Cerrar inscripción
           </button>
         )}
         {p.editarViaje && ev === "cerrado_insc" && (
           <button className="btn secondary vj-btn" onClick={() => cambiarViaje({ estado: "abierto" }, "Abrió la inscripción", "Cerrada", "Abierta")}>
-            🔓 Abrir inscripción
+            <IconUnlock size={16} /> Abrir inscripción
           </button>
         )}
       </div>
@@ -117,14 +119,14 @@ export function Viaje(props) {
       {ev === "realizado" && <Cierre {...q} />}
       <div className="vj-tabs">
         {tabs.map((t) => (
-          <button key={t.k} className={`vj-tab${tab === t.k ? " sel" : ""}`} onClick={() => ir(`viaje:${id}:${t.k}`)}>
+          <button key={t.k} className={`vj-tab${tab === t.k || (tab === "tallas" && t.k === "equipo") ? " sel" : ""}`} onClick={() => ir(`viaje:${id}:${t.k}`)}>
             {t.t}
           </button>
         ))}
       </div>
       {tab === "inscritos" && <Inscritos {...q} />}
       {tab === "info" && <InfoViaje {...q} />}
-      {tab === "tallas" && <Tallas {...q} />}
+      {(tab === "equipo" || tab === "tallas") && <Equipo {...q} />}
       {tab === "habitaciones" && <Habitaciones {...q} />}
       {tab === "numeros" && p.numeros && <Numeros {...q} />}
       {tab === "bitacora" && p.bitacora && <BitacoraLista db={db} viajeId={v.id} />}
@@ -151,7 +153,7 @@ function Cierre({ db, v, r, p, ir, cambiarViaje, rol }) {
       <div style={{ fontWeight: 800 }}>Este viaje ya pasó. Para cerrarlo:</div>
       {checks.map((c, i) => (
         <div key={i} className={`vj-check-cierre${c.ok ? " ok" : ""}`}>
-          {c.ok ? "✓" : "•"} {c.t}
+          {c.ok ? <IconCheck size={15} /> : <span className="vj-check-punto">•</span>} {c.t}
         </div>
       ))}
       {p.cerrar ? (
@@ -203,9 +205,8 @@ function Inscritos(props) {
     { k: "todos", t: "Todos", f: () => true },
     ...(p.pagos ? [{ k: "sinpagar", t: "Sin pagar", f: (x) => ["sin", "parcial"].includes(ep(x).k) }] : []),
     ...(p.conciliar ? [{ k: "conciliar", t: "Por conciliar", f: (x) => (x.pagos || []).some((y) => !y.conciliado && !y.abono) }] : []),
-    ...(p.pagos || p.conciliar ? [{ k: "comprobante", t: "📎 Comprobante nuevo", f: comprobanteNuevo }] : []),
+    ...(p.pagos || p.conciliar ? [{ k: "comprobante", t: "Comprobante nuevo", i: IconClip, f: comprobanteNuevo }] : []),
     { k: "grupo", t: "Sin grupo", f: (x) => !x.grupo },
-    { k: "revisar", t: "Por revisar", f: (x) => x.nuevo },
     ...(pasado ? [{ k: "asist", t: "Sin marcar asistencia", f: (x) => x.asistio == null }] : []),
     { k: "staff", t: "Staff", f: (x) => x.rol === "staff" },
   ];
@@ -242,8 +243,8 @@ function Inscritos(props) {
           </div>
         )}
         <div>
-          <b>{r.porRevisar}</b>
-          <span>por revisar</span>
+          <b>{espera.length}</b>
+          <span>en lista de espera</span>
         </div>
       </div>
       <div className="vj-filtros">
@@ -251,12 +252,13 @@ function Inscritos(props) {
           const n = inscritos.filter(f.f).length;
           return (
             <button key={f.k} className={`vj-filtro${filtro === f.k ? " sel" : ""}`} onClick={() => setFiltro(f.k)}>
+              {f.i && <f.i size={14} />}
               {f.t} <span>{n}</span>
             </button>
           );
         })}
       </div>
-      <input className="vj-buscar" value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 Buscar en este viaje…" />
+      <Buscar value={q} onChange={setQ} placeholder="Buscar en este viaje…" />
       <div className="card vj-lista">
         {visibles.length > 0 && (
           <div className="vj-lista-head">
@@ -279,10 +281,9 @@ function Inscritos(props) {
             (x.extras || []).length ? `+ ${x.extras.map((id) => v.extras.find((y) => y.id === id)?.nombre).join(", ")}` : null,
           ].filter(Boolean);
           return (
-            <div key={x.id} className={`vj-fila${x.nuevo ? " nuevo" : ""}`}>
+            <div key={x.id} className="vj-fila">
               <button className="vj-fila-main" onClick={() => setAbierto(x.id)}>
                 <div className="vj-fila-nombre">
-                  {x.nuevo && <span className="vj-punto" title="Nuevo · por revisar" />}
                   {b.nombre}
                 </div>
                 <div className="hint-text">{sub.join(" · ") || formatoCel(b.cel)}</div>
@@ -290,19 +291,19 @@ function Inscritos(props) {
               <div className={`vj-fila-der${p.pagos || p.conciliar ? " con-pago" : ""}`}>
                 {(p.pagos || p.conciliar) && (
                   <button className={`vj-chip ${e.c} vj-chip-btn`} onClick={() => setAbierto(x.id)} title={comprobanteNuevo(x) ? "Subió un comprobante que nadie ha visto" : ""}>
-                    {comprobanteNuevo(x) ? "📎 " : ""}
+                    {comprobanteNuevo(x) && <IconClip size={13} />}
                     {e.t}
-                    {p.conciliar && e.k === "pagado" && (e.porConciliar ? " · por conciliar" : " ✓")}
+                    {p.conciliar && e.k === "pagado" && (e.porConciliar ? " · por conciliar" : <IconCheck size={13} />)}
                   </button>
                 )}
                 {pasado ? (
                   p.grupo && !cerrado ? (
                     <div className="vj-asist">
                       <button className={x.asistio === true ? "si" : ""} onClick={() => cambiar(x, { asistio: x.asistio === true ? null : true }, "Asistencia", x.asistio == null ? "—" : x.asistio ? "Asistió" : "No vino", "Asistió")}>
-                        ✓
+                        <IconCheck size={16} />
                       </button>
                       <button className={x.asistio === false ? "no" : ""} onClick={() => cambiar(x, { asistio: x.asistio === false ? null : false }, "Asistencia", x.asistio == null ? "—" : x.asistio ? "Asistió" : "No vino", "No vino")}>
-                        ✕
+                        <IconX size={16} />
                       </button>
                     </div>
                   ) : (
@@ -383,12 +384,6 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
   return (
     <Modal titulo={b.nombre} sub={`${x.rol === "staff" ? "Staff" : x.rol === "curso" ? "Estudiante de curso" : x.rol === "invitado" ? "Invitado" : o.nombre}${x.estado === "espera" ? " · lista de espera" : ""}`} cerrar={cerrar}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-        {x.nuevo && <Chip c="morado">Nuevo · por revisar</Chip>}
-        {x.nuevo && p.inscribir && !ro && (
-          <button className="btn secondary vj-mini" onClick={() => cambiar(x, { nuevo: false }, "Revisado")}>
-            ✓ Revisado
-          </button>
-        )}
         {inscritoPor && <Chip c="azul">La inscribió {inscritoPor}</Chip>}
         <Chip c="gris">{x.via === "mano" ? "Agregado a mano" : "Se inscribió por el link"}</Chip>
       </div>
@@ -601,7 +596,9 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
               {x.comprobantes.map((c) => (
                 <div key={c.id} className={`vj-comp${c.visto ? "" : " nuevo"}`}>
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <b>📎 {c.nombre || "Comprobante"}</b>
+                    <b className="vj-comp-n">
+                      <IconClip size={14} /> {c.nombre || "Comprobante"}
+                    </b>
                     <div className="hint-text">
                       {fechaCorta(c.fecha)} · {c.por === "Link" ? "lo subió el buzo" : `lo subió ${c.por}`}
                       {c.visto ? "" : " · nuevo"}
@@ -621,7 +618,7 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
           )}
           {p.pagos && !ro && (
             <label className="vj-adjuntar">
-              📎 Adjuntar comprobante
+              <IconClip size={15} /> Adjuntar comprobante
               <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={(ev2) => ev2.target.files?.[0] && adjuntar(ev2.target.files[0])} />
             </label>
           )}
@@ -800,7 +797,7 @@ function AgregarAMano({ db, ops, v, listo }) {
       </div>
       {!nuevo && (
         <>
-          <input className="vj-buscar" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 Nombre, celular o cédula…" style={{ marginBottom: 0 }} />
+          <Buscar autoFocus value={q} onChange={setQ} placeholder="Nombre, celular o cédula…" style={{ marginBottom: 0 }} />
           {resultados.length > 0 && (
             <div className="vj-resultados">
               {resultados.map((b) => (
@@ -925,12 +922,22 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir }) {
         ))}
         {v.incluye && (
           <div className="hint-text" style={{ marginTop: 8 }}>
-            <b>Incluye:</b> {v.incluye}
+            <b>Incluye:</b>
+            <ul className="pb-lista">
+              {puntos(v.incluye).map((t) => (
+                <li key={t}>{t}</li>
+              ))}
+            </ul>
           </div>
         )}
         {v.noIncluye && (
           <div className="hint-text" style={{ marginTop: 4 }}>
-            <b>No incluye:</b> {v.noIncluye}
+            <b>No incluye:</b>
+            <ul className="pb-lista">
+              {puntos(v.noIncluye).map((t) => (
+                <li key={t}>{t}</li>
+              ))}
+            </ul>
           </div>
         )}
         {v.reserva && <div className="aviso-box" style={{ marginTop: 10 }}>{v.reserva.nota}</div>}
@@ -1069,69 +1076,113 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir }) {
   );
 }
 
-// ------------------------------------------------------------- tallas
-function Tallas({ db, v, avisar }) {
-  const ins = db.inscripciones.filter((x) => x.viajeId === v.id && x.estado === "inscrito");
-  const buzos = ins.filter((x) => x.rol !== "staff");
-  const staff = ins.filter((x) => x.rol === "staff");
-  const prov = (x) => (x.equipo.donde ? v.equipo.donde?.find((d) => d.id === x.equipo.donde)?.t.replace("Lo alquilo ", "") : v.equipo.proveedor);
-  const celda = (x, b, pz) => {
-    if (!x.equipo.piezas.includes(pz)) return { t: "Propio", c: "propio" };
-    const t = b.tallas || {};
-    const talla = /BCD|chaleco/i.test(pz) ? t.bcd : /Wetsuit|Traje/i.test(pz) ? t.wetsuit || t.bcd : /Chapaletas|Aletas/i.test(pz) ? t.chapaletas : "";
-    const necesita = /BCD|chaleco|Wetsuit|Traje|Chapaletas|Aletas/i.test(pz);
-    if (necesita && !talla) return { t: "¿talla?", c: "falta" };
-    return { t: talla || prov(x) || "Alquila", c: "" };
+// ------------------------------------------------------------- equipo
+// V44 -- Antes "Tallas". Lo que hace falta de equipo, para mandárselo al
+// operador un par de días antes: el total por pieza y talla, cada buzo con
+// lo que alquila, y aviso si a alguien le falta la talla. Se manda por
+// WhatsApp, se copia o se saca el reporte (imprimir / PDF).
+function Equipo({ db, v, ir, avisar }) {
+  const eq = equipoViaje(db, v);
+  const staff = db.inscripciones.filter((x) => x.viajeId === v.id && x.estado === "inscrito" && x.rol === "staff");
+  const copiar = (t) => {
+    try {
+      navigator.clipboard?.writeText(t).catch(() => {});
+    } catch {}
+    avisar("Copiado: ya lo puedes pegar en WhatsApp");
   };
-  return (
-    <div className="card" style={{ overflowX: "auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-        <b>Lista de tallas para {v.equipo.proveedor || v.operador}</b>
-        <button className="btn secondary vj-mini" onClick={() => avisar("Lista de tallas copiada para mandarla por WhatsApp")}>
-          Copiar para enviar
-        </button>
+  const wa = (t) => window.open(`https://wa.me/?text=${encodeURIComponent(t)}`, "_blank");
+  const prov = v.equipo.proveedor || v.operador || "el operador";
+  if (!eq.grupos.length)
+    return (
+      <div className="card">
+        <b>Nadie ha pedido equipo todavía.</b>
+        <div className="hint-text" style={{ marginTop: 4 }}>
+          Cuando alguien escoja equipo al inscribirse (o se lo pongas en su ficha), aquí sale lo que hace falta para mandárselo a {prov}.
+        </div>
       </div>
-      <table className="vj-tabla">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Buzo</th>
-            {v.equipo.donde && <th>Dónde</th>}
-            {v.equipo.piezas.map((e) => (
-              <th key={e}>{e}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {buzos.map((x, i) => {
-            const b = db.buzos.find((y) => y.id === x.buzoId);
-            return (
-              <tr key={x.id}>
-                <td>{i + 1}</td>
-                <td>{b.nombre}</td>
-                {v.equipo.donde && <td>{x.equipo.piezas.length ? prov(x) : "—"}</td>}
-                {v.equipo.piezas.map((pz) => {
-                  const c = celda(x, b, pz);
-                  return (
-                    <td key={pz} className={c.c}>
-                      {c.t}
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      {staff.length > 0 && (
-        <div className="hint-text" style={{ marginTop: 10 }}>
-          <b>Guías:</b> {staff.map((x) => nombreDe(db, x.buzoId)).join(", ")}
+    );
+  return (
+    <>
+      {eq.sinTalla.length > 0 && (
+        <div className="aviso-box vj-eq-aviso">
+          <IconAlert size={16} />
+          <span>
+            {eq.sinTalla.length === 1 ? "A 1 buzo le falta la talla" : `A ${eq.sinTalla.length} buzos les falta la talla`} (
+            <b>{eq.sinTalla.map((f) => nombreCorto(f.nombre)).join(", ")}</b>): pídesela antes de mandar el reporte. Se pone en su ficha.
+          </span>
         </div>
       )}
-      <div className="hint-text" style={{ marginTop: 6 }}>
-        “¿talla?” = alquila pero no tenemos su talla guardada. Se le pide al inscribirse y queda guardada para la próxima.
+      {eq.grupos.map((g) => (
+        <div key={g.prov} className="card vj-eq">
+          <div className="vj-eq-head">
+            <div>
+              <div className="vj-eq-k">{g.prov === "Gus" ? "Equipo que pone" : "Equipo para"}</div>
+              <div className="vj-eq-t">{g.prov}</div>
+              <div className="hint-text">
+                {g.filas.length === 1 ? "1 buzo alquila" : `${g.filas.length} buzos alquilan`}
+              </div>
+            </div>
+            <div className="vj-eq-btns">
+              <button className="btn btn-primary vj-btn" onClick={() => wa(textoEquipo(v, g))}>
+                <IconoWA on /> Enviar por WhatsApp
+              </button>
+              <button className="btn secondary vj-btn" onClick={() => copiar(textoEquipo(v, g))}>
+                <IconClipboard size={16} /> Copiar
+              </button>
+              <button className="btn secondary vj-btn" onClick={() => ir(`reporte-equipo:${v.id}`)}>
+                <IconPrint size={16} /> Reporte / PDF
+              </button>
+            </div>
+          </div>
+          <div className="vj-eq-tot">
+            {g.totales.map((t) => (
+              <div key={t.pz}>
+                <b>{t.n}</b>
+                <span>{t.pz}</span>
+                {resumenTalla(t) && <small className={t.faltan ? "falta" : ""}>{resumenTalla(t)}</small>}
+              </div>
+            ))}
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table className="vj-tabla">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Buzo</th>
+                  {g.totales.map((t) => (
+                    <th key={t.pz}>{t.pz}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {g.filas.map((f, i) => (
+                  <tr key={f.id}>
+                    <td>{i + 1}</td>
+                    <td>
+                      <a className="vj-link" onClick={() => ir(`buzo:${f.buzoId}`)}>
+                        {f.nombre}
+                      </a>
+                    </td>
+                    {g.totales.map((t) => {
+                      const pz = f.piezas.find((p) => p.pz === t.pz);
+                      return (
+                        <td key={t.pz} className={!pz ? "propio" : pz.falta ? "falta" : ""}>
+                          {!pz ? "—" : pz.talla ? pz.talla : pz.falta ? "¿talla?" : <IconCheck size={15} />}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+      <div className="hint-text" style={{ marginTop: 4 }}>
+        {eq.propio === 1 ? "1 buzo lleva su equipo." : `${eq.propio} buzos llevan su equipo.`}
+        {staff.length > 0 && ` Guías: ${staff.map((x) => nombreDe(db, x.buzoId)).join(", ")}.`} “—” = no lo alquila.
       </div>
-    </div>
+    </>
   );
 }
 
@@ -1374,7 +1425,7 @@ export function BitacoraLista({ db, viajeId, mostrarViaje }) {
   const lista = db.bitacora.filter((h) => (viajeId ? h.viajeId === viajeId : true)).filter((h) => !q || `${h.texto} ${h.quien} ${h.antes || ""} ${h.despues || ""}`.toLowerCase().includes(q.toLowerCase()));
   return (
     <>
-      <input className="vj-buscar" value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 Buscar en la bitácora…" />
+      <Buscar value={q} onChange={setQ} placeholder="Buscar en la bitácora…" />
       <div className="card vj-lista">
         {lista.length === 0 && <div className="hint-text" style={{ padding: 14 }}>Sin movimientos.</div>}
         {lista.map((h) => {

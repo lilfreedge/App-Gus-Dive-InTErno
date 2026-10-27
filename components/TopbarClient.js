@@ -1,5 +1,6 @@
 "use client";
 
+import FechaHoy from "@/components/FechaHoy";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -100,7 +101,10 @@ export default function TopbarClient({
               priority
             />
           </Link>
-          <div className="topbar-sub">Hola, {nombre}</div>
+          <div className="topbar-sub">
+            Hola, {nombre}
+            <FechaHoy />
+          </div>
         </div>
 
         <div className="gear-wrap" ref={menuRef}>

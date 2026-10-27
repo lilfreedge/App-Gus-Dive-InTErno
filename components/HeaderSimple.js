@@ -1,5 +1,6 @@
 "use client";
 
+import FechaHoy from "@/components/FechaHoy";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -66,7 +67,10 @@ export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAp
               priority
             />
           </Link>
-          {nombre && <div className="topbar-sub">Hola, {nombre}</div>}
+          <div className="topbar-sub">
+            {nombre ? `Hola, ${nombre}` : null}
+            <FechaHoy conPunto={!!nombre} />
+          </div>
         </div>
 
         <div className="gear-wrap" ref={menuRef}>

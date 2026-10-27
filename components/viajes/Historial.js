@@ -14,9 +14,13 @@ import {
   MES_CORTO,
   fechaObj,
   hoyISO,
+  equipoViaje,
+  textoEquipo,
+  resumenTalla,
 } from "@/lib/viajes/modelo";
-import { Chip, Atras } from "./Piezas";
+import { Chip, Atras, IconoWA } from "./Piezas";
 import { BitacoraLista } from "./Viaje";
+import { IconPrint, IconMail, IconClipboard, IconCheck } from "@/components/icons";
 
 export function Historial({ db, p, ir }) {
   const [tab, setTab] = useState("viajes");
@@ -111,10 +115,10 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
       </div>
       <div className="no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "4px 0 12px" }}>
         <button className="btn btn-primary vj-btn" onClick={() => window.print()}>
-          🖨 Imprimir / Guardar PDF
+          <IconPrint size={16} /> Imprimir / Guardar PDF
         </button>
         <button className="btn secondary vj-btn" onClick={() => setCorreo(correo === null ? yo.correo || "" : null)}>
-          ✉️ Enviar por correo
+          <IconMail size={16} /> Enviar por correo
         </button>
       </div>
       {correo !== null && (
@@ -269,6 +273,103 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
           Los números (ganancia) solo salen en el reporte de Pipe y Gugi.
         </div>
       )}
+    </>
+  );
+}
+
+// V44 -- Reporte de equipo para el operador (imprimir / guardar PDF, o
+// mandarlo por WhatsApp). Uno por cada quien pone el equipo.
+export function ReporteEquipo({ db, id, ir, avisar }) {
+  const v = db.viajes.find((x) => x.id === id);
+  const eq = equipoViaje(db, v);
+  const copiar = (t) => {
+    try {
+      navigator.clipboard?.writeText(t).catch(() => {});
+    } catch {}
+    avisar("Copiado: ya lo puedes pegar en WhatsApp");
+  };
+  return (
+    <>
+      <div className="no-print">
+        <Atras onClick={() => ir(`viaje:${v.id}:equipo`)}>{v.nombre}</Atras>
+      </div>
+      <div className="no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "4px 0 12px" }}>
+        <button className="btn btn-primary vj-btn" onClick={() => window.print()}>
+          <IconPrint size={16} /> Imprimir / Guardar PDF
+        </button>
+        {eq.grupos.map((g) => (
+          <span key={g.prov} style={{ display: "contents" }}>
+            <button className="btn secondary vj-btn" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(textoEquipo(v, g))}`, "_blank")}>
+              <IconoWA on /> WhatsApp{eq.grupos.length > 1 ? ` (${g.prov})` : ""}
+            </button>
+            <button className="btn secondary vj-btn" onClick={() => copiar(textoEquipo(v, g))}>
+              <IconClipboard size={16} /> Copiar{eq.grupos.length > 1 ? ` (${g.prov})` : ""}
+            </button>
+          </span>
+        ))}
+      </div>
+      {eq.grupos.length === 0 && <div className="card hint-text">Nadie ha pedido equipo en este viaje.</div>}
+      {eq.grupos.map((g) => (
+        <div key={g.prov} className="vj-reporte vj-rep-equipo">
+          <div className="vj-rep-head">
+            <img src="/logo-gus-icon.png" alt="Gus" />
+            <div>
+              <div className="vj-rep-k">{g.prov === "Gus" ? "EQUIPO QUE PONE GUS" : `EQUIPO PARA ${g.prov.toUpperCase()}`}</div>
+              <div className="vj-rep-t">{v.nombre}</div>
+              <div className="vj-rep-s">
+                {fechaLarga(v.fecha)} · {v.salida}
+              </div>
+            </div>
+          </div>
+          <div className="vj-rep-body">
+            <div className="vj-rep-sec">Lo que hace falta</div>
+            <table className="vj-tabla">
+              <tbody>
+                {g.totales.map((t) => (
+                  <tr key={t.pz}>
+                    <td style={{ width: "45%" }}>{t.pz}</td>
+                    <td>
+                      <b>{t.n}</b>
+                      {resumenTalla(t) ? ` · ${resumenTalla(t)}` : ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="vj-rep-sec">Por buzo ({g.filas.length})</div>
+            <div style={{ overflowX: "auto" }}>
+              <table className="vj-tabla">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Buzo</th>
+                    {g.totales.map((t) => (
+                      <th key={t.pz}>{t.pz}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {g.filas.map((f, i) => (
+                    <tr key={f.id}>
+                      <td>{i + 1}</td>
+                      <td>{f.nombre}</td>
+                      {g.totales.map((t) => {
+                        const pz = f.piezas.find((p) => p.pz === t.pz);
+                        return (
+                          <td key={t.pz} className={!pz ? "propio" : pz.falta ? "falta" : ""}>
+                            {!pz ? "—" : pz.talla ? pz.talla : pz.falta ? "por confirmar" : <IconCheck size={14} />}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="vj-rep-pie">Gus Dive Center · {fechaCorta(hoyISO())}</div>
+          </div>
+        </div>
+      ))}
     </>
   );
 }

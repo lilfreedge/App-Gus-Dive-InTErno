@@ -433,3 +433,50 @@ export function IconBuzos(props) {
 export function IconAlquiler(props) {
   return <Base {...props}><g fill="currentColor" stroke="none"><path d="M7.4 2.6Q9 4.2 10.6 2.6L13.8 4.2L16.4 13.4L14.4 13.8L12.4 7.6L12.2 12.8L12 21.6L9.6 21.6L9 13.4L8.4 21.6L6 21.6L5.8 12.8L5.6 7.6L3.6 13.8L1.6 13.4L4.2 4.2Z"/><rect x="18.2" y="10.6" width="4.2" height="11" rx="2.1"/><rect x="19.6" y="8" width="1.4" height="3" rx=".5"/></g></Base>;
 }
+
+// V43 -- Viajes/Buceos sin emojis (pedido de Pipe: "quitemos los emojis,
+// usemos iconos de lo que usamos"): mensaje, clip, candado abierto,
+// impresora y cerrar, en el mismo estilo de línea.
+export function IconChat(props) {
+  return (
+    <Base {...props}>
+      <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z" />
+    </Base>
+  );
+}
+
+export function IconClip(props) {
+  return (
+    <Base {...props}>
+      <path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5" />
+    </Base>
+  );
+}
+
+export function IconUnlock(props) {
+  return (
+    <Base {...props}>
+      <rect x="3" y="11" width="18" height="11" rx="2" />
+      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+    </Base>
+  );
+}
+
+export function IconPrint(props) {
+  return (
+    <Base {...props}>
+      <path d="M6 9V2h12v7" />
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+      <rect x="6" y="14" width="12" height="8" />
+    </Base>
+  );
+}
+
+export function IconX(props) {
+  return (
+    <Base {...props}>
+      <path d="M18 6L6 18" />
+      <path d="M6 6l12 12" />
+    </Base>
+  );
+}

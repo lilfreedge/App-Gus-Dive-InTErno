@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { nuevoId } from "@/lib/viajes/datos";
 import { formatoCedula, hoyISO } from "@/lib/viajes/modelo";
+import { avisar } from "@/lib/viajes/avisos";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -10,7 +11,7 @@ export const runtime = "nodejs";
 // (pedido explícito: "hay manera de que el cliente pueda attach comprobante
 // de pago?"). Se verifica con su cédula/pasaporte que de verdad está inscrito
 // en ese viaje; el archivo va al bucket privado "viajes-comprobantes" y en
-// el app le sale "📎" a quien registra pagos.
+// el app le sale un clip a quien registra pagos.
 const TIPOS = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf"];
 
 export async function POST(request) {
@@ -44,5 +45,12 @@ export async function POST(request) {
   const c = { id: nuevoId(), path, nombre: String(file.name || `comprobante.${ext}`).slice(0, 80), fecha: hoyISO(), por: "Link", visto: false };
   await s.from("viajes_inscripciones").update({ comprobantes: [...(ins.comprobantes || []), c] }).eq("id", ins.id);
   await s.from("viajes_bitacora").insert({ viaje_id: v.id, quien: "Link", texto: `Subió su comprobante por el link: ${b.nombre}`, despues: c.nombre });
+  // V44: aviso a quien lo tenga activado.
+  await avisar(
+    s,
+    "comprobante",
+    { titulo: `Comprobante nuevo · ${v.nombre}`, texto: `${b.nombre} subió su comprobante de pago.`, viajeId: v.id, ruta: `/viajes-buceos/viaje/${v.id}` },
+    new URL(request.url).origin
+  );
   return NextResponse.json({ ok: true, nombre: c.nombre });
 }

@@ -97,6 +97,33 @@ export default async function EspacioPage({ searchParams }) {
   }
   const soloAsignadas = esTecnico(profile);
 
+  // V44 -- Viajes/Buceos ya está en uso (V42): la tarjeta decía todavía
+  // "Próximamente". Ahora: los avisos sin leer (migration_72.sql) y el
+  // próximo viaje. Si falta la migración, simplemente no sale esa línea.
+  const lineasViajes = [];
+  let proximoViaje = "";
+  if (tieneViajes && profile?.id) {
+    const { count: avisosViajes, error: eAv } = await supabase
+      .from("viajes_notificaciones")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", profile.id)
+      .eq("leida", false);
+    if (!eAv && avisosViajes > 0) lineasViajes.push(`${avisosViajes} aviso${avisosViajes === 1 ? "" : "s"} nuevo${avisosViajes === 1 ? "" : "s"}`);
+    const hoy = new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10);
+    const { data: prox } = await supabase
+      .from("viajes")
+      .select("nombre, fecha, estado")
+      .gte("fecha", hoy)
+      .in("estado", ["abierto", "cerrado_insc"])
+      .order("fecha")
+      .limit(1);
+    if (prox?.[0]) {
+      const [a, m, d] = prox[0].fecha.split("-").map(Number);
+      const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+      proximoViaje = `Próximo: ${prox[0].nombre.split(/[,(]/)[0].trim()} · ${d} ${MES[m - 1]}`;
+    }
+  }
+
   const lineasClientes = [];
   if (asignadasAMi > 0) {
     lineasClientes.push(`${asignadasAMi} orden${asignadasAMi === 1 ? "" : "es"} asignada${asignadasAMi === 1 ? "" : "s"} a ti`);
@@ -265,15 +292,21 @@ export default async function EspacioPage({ searchParams }) {
               cualquiera que llegue a /espacio, sin permiso propio todavía
               (mismo patrón que tuvo "App Equipos de clientes" cuando era
               solo una idea, ver comentario al inicio de este archivo).
-              Lleva a /viajes-buceos, una pantalla de "Próximamente". */}
+              Desde V42 es el app de verdad; V44: avisos y próximo viaje. */}
           {tieneViajes && (
             <Link href="/viajes-buceos" className="card espacio-card">
               <div className="espacio-icon espacio-icon-viajes">
                 <IconBuzos size={TAM_ICONO} />
               </div>
               <div className="espacio-title">Viajes/Buceos</div>
-              <div className="espacio-badge">Próximamente</div>
-              <div className="espacio-notif">Aún en construcción.</div>
+              <div className="espacio-notif">
+                {lineasViajes.map((linea) => (
+                  <div className="espacio-notif-alerta" key={linea}>
+                    {linea}
+                  </div>
+                ))}
+                {proximoViaje || (lineasViajes.length ? "" : "Sin viajes próximos.")}
+              </div>
             </Link>
           )}
 

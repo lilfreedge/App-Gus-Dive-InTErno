@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { fechaLarga, formatoCel, formatoCedula, rd, soloDigitos, estadoViaje, ESTADOS_VIAJE, nuevoIdLocal } from "@/lib/viajes/modelo";
-import { Chip, Atras, CampoCel } from "./Piezas";
+import { Chip, Atras, CampoCel, Buscar } from "./Piezas";
 
 const AGENCIAS = ["PADI", "SSI", "SNSI", "Raid", "NAUI", "Otra", "No es buzo (snorkel)"];
 
@@ -167,7 +167,7 @@ export function Buzos({ db, ops, p, ir }) {
           Staff
         </button>
       </div>
-      <input className="vj-buscar" value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 Nombre, celular, cédula o certificación…" />
+      <Buscar value={q} onChange={setQ} placeholder="Nombre, celular, cédula o certificación…" />
       <div className="card vj-lista">
         {lista.length === 0 && <div className="hint-text" style={{ padding: 14 }}>No hay nadie con esa búsqueda.</div>}
         {lista.map((b) => {

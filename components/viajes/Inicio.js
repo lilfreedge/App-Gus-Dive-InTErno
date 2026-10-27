@@ -18,7 +18,7 @@ import {
   nuevoIdLocal,
 } from "@/lib/viajes/modelo";
 import { Chip, Modal } from "./Piezas";
-import { IconBell } from "@/components/icons";
+import { IconBell, IconLink, IconCheck, IconBuzos, IconCatalog, IconReport, IconHistory } from "@/components/icons";
 
 // "Para" de un recordatorio: ids de las personas con acceso a Viajes. Vacío = todos.
 export const nombresPara = (para, personas) =>
@@ -40,7 +40,6 @@ export function pendientesViaje(db, v, p) {
     p.pagos && r.sinPagar ? `${r.sinPagar} sin pagar completo` : null,
     p.conciliar && r.porConciliar ? s(r.porConciliar, "pago por conciliar", "pagos por conciliar") : null,
     (p.pagos || p.conciliar) && comprobantes ? s(comprobantes, "comprobante nuevo", "comprobantes nuevos") : null,
-    p.inscribir && r.porRevisar ? s(r.porRevisar, "nuevo por revisar", "nuevos por revisar") : null,
     !pasado && p.grupo && r.sinGrupo ? `${r.sinGrupo} sin grupo de WhatsApp` : null,
   ].filter(Boolean);
 }
@@ -93,7 +92,9 @@ export function TarjetaViaje({ db, v, p, ir }) {
           </div>
         </div>
         {pend.length === 0 ? (
-          <span className="vj-semaforo ok">✓ Todo al día</span>
+          <span className="vj-semaforo ok">
+            <IconCheck size={14} /> Todo al día
+          </span>
         ) : (
           <button
             type="button"
@@ -148,26 +149,67 @@ export function ParaHacer({ db, ops, p, ir, personas = [], titulo = "Para hacer"
                   "Recordatorio suelto"
                 )}{" "}
                 · para {nombresPara(r.para, personas)}
+                {/* V44 (pregunta de Pipe: "¿de dónde sale esta notificación? ¿cómo llevo
+                    control de eso?"): de qué tipo es cada uno. */}
+                {" · "}
+                <span className="vj-rec-origen">{r.general ? "general (todos los viajes)" : r.libre ? "suelto" : "de este viaje"}</span>
               </div>
             </div>
             <Chip c={dp < 0 ? "rojo" : dp === 0 ? "ambar" : "gris"}>{dp < 0 ? `Atrasado ${-dp} d` : dp === 0 ? "Hoy" : fechaCorta(r.fecha)}</Chip>
           </div>
         );
       })}
+      <div className="vj-rec-pie">
+        Al marcarlo, se quita solo de ese viaje. Los generales se cambian en{" "}
+        <a className="vj-link" onClick={() => ir("calendario")}>
+          Calendario
+        </a>
+        ; los de cada viaje, en su pestaña Info del viaje (o en el Catálogo, para los próximos).
+      </div>
     </div>
   );
 }
+
+// V44 -- Inicio de Viajes/Buceos, como en los otros apps (pedido: "creamos
+// una ventana de inicio? como los otros apps"): los números de un vistazo,
+// lo que hay que hacer esta semana, lo que falta cerrar, el próximo viaje y
+// las últimas inscripciones.
+const haceCuanto = (iso) => {
+  if (!iso) return "";
+  const min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (min < 60) return min < 1 ? "ahora" : `hace ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.round(h / 24);
+  return d === 1 ? "ayer" : `hace ${d} días`;
+};
 
 export function Inicio(props) {
   const { db, p, ir } = props;
   const activos = db.viajes.filter((v) => !["cerrado", "cancelado"].includes(estadoViaje(v)));
   const porCerrar = activos.filter((v) => estadoViaje(v) === "realizado").sort((a, b) => a.fecha.localeCompare(b.fecha));
   const proximos = activos.filter((v) => estadoViaje(v) !== "realizado").sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const res = proximos.map((v) => resumenViaje(db, v));
+  // V44 (pedido: "viajes próximos solo no se entiende"): los de las próximas 2 semanas.
+  const en2semanas = proximos.filter((v) => diasPara(v.fecha) <= 14).length;
+  const sinPagar = res.reduce((a, r) => a + r.sinPagar, 0);
+  const porConciliar = res.reduce((a, r) => a + r.porConciliar, 0);
+  const siguiente = proximos[0];
+  const viajeDe = (id) => db.viajes.find((v) => v.id === id);
+  const ultimas = db.inscripciones
+    .filter((x) => x.rol !== "staff" && x.estado !== "quitado" && x.creado && viajeDe(x.viajeId))
+    .sort((a, b) => String(b.creado).localeCompare(String(a.creado)))
+    .slice(0, 6);
+  const tiles = [
+    { n: en2semanas, t: en2semanas === 1 ? "viaje en las próximas 2 semanas" : "viajes en las próximas 2 semanas", r: "buceos" },
+    ...(p.pagos ? [{ n: sinPagar, t: "pagos pendientes", r: "buceos", alerta: sinPagar > 0 }] : []),
+    ...(p.conciliar ? [{ n: porConciliar, t: "pagos por conciliar", r: "buceos", alerta: porConciliar > 0 }] : []),
+  ];
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <h1 className="page-title" style={{ margin: 0 }}>
-          Próximos viajes
+          Inicio
         </h1>
         {p.editarViaje && (
           <button className="btn btn-primary vj-btn" onClick={() => ir("nuevo")}>
@@ -175,7 +217,15 @@ export function Inicio(props) {
           </button>
         )}
       </div>
-      <div style={{ marginTop: 14 }}>
+      <div className="stat-row vj-stats">
+        {tiles.map((x) => (
+          <button key={x.t} type="button" className={`stat-card vj-stat${x.alerta ? " alerta" : ""}`} onClick={() => ir(x.r)}>
+            <div className="stat-value">{x.n}</div>
+            <div className="stat-label">{x.t}</div>
+          </button>
+        ))}
+      </div>
+      <div style={{ marginTop: 6 }}>
         <ParaHacer {...props} titulo="Para hacer esta semana" />
       </div>
       {porCerrar.length > 0 && (
@@ -186,13 +236,109 @@ export function Inicio(props) {
               <TarjetaViaje key={v.id} {...props} v={v} />
             ))}
           </div>
-          <div className="section-title">Próximos</div>
         </>
       )}
-      <div style={{ display: "grid", gap: 12, marginTop: porCerrar.length ? 0 : 14 }}>
+      <div className="section-title vj-sec-link">
+        <span>Próximo viaje</span>
+        {proximos.length > 1 && (
+          <a className="vj-link" onClick={() => ir("buceos")}>
+            Ver los {proximos.length} buceos
+          </a>
+        )}
+      </div>
+      {siguiente ? <TarjetaViaje {...props} v={siguiente} /> : <div className="card hint-text">No hay viajes próximos.</div>}
+      {ultimas.length > 0 && (
+        <>
+          <div className="section-title">Últimas inscripciones</div>
+          <div className="card vj-ultimas">
+            {ultimas.map((x) => {
+              const v = viajeDe(x.viajeId);
+              const b = db.buzos.find((y) => y.id === x.buzoId);
+              return (
+                <button key={x.id} type="button" className="vj-ultima" onClick={() => ir(`viaje:${v.id}`)}>
+                  <span style={{ minWidth: 0 }}>
+                    <b>{b?.nombre || "—"}</b>
+                    <span className="hint-text">
+                      {v.nombre} · {fechaCorta(v.fecha)}
+                      {x.estado === "espera" ? " · lista de espera" : ""}
+                    </span>
+                  </span>
+                  <span className="vj-ultima-cuando">
+                    {haceCuanto(x.creado)}
+                    <span>{x.via === "mano" ? "a mano" : "por el link"}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+// V44 -- "Más", como en los otros apps (pedido: "mete buzos, catálogo de
+// viajes, estadística e historial en más").
+export function Mas({ p, ir }) {
+  const opciones = [
+    ...(p.buzos ? [{ r: "buzos", t: "Buzos", I: IconBuzos }] : []),
+    ...(p.editarViaje ? [{ r: "catalogo", t: "Catálogo de viajes", I: IconCatalog }] : []),
+    ...(p.estadisticas ? [{ r: "estadisticas", t: "Estadísticas", I: IconReport }] : []),
+    { r: "historial", t: "Historial", I: IconHistory },
+  ];
+  return (
+    <>
+      <h1 className="page-title">Más</h1>
+      {opciones.map((o) => (
+        <button key={o.r} type="button" className="card hub-link-card vj-mas-card" onClick={() => ir(o.r)}>
+          <div className="hub-link-card-inner">
+            <div className="hub-link-icon">
+              <o.I size={20} />
+            </div>
+            <div className="hub-link-title">{o.t}</div>
+          </div>
+        </button>
+      ))}
+    </>
+  );
+}
+
+// V44 -- "Buceos" (antes "Viajes"): la lista de los viajes (pedido: "solo
+// nos quedaríamos con inicio, viajes (renombrar esta a buceos) y
+// calendario"). "Para hacer esta semana" pasó a Inicio.
+export function Buceos(props) {
+  const { db, p, ir } = props;
+  const activos = db.viajes.filter((v) => !["cerrado", "cancelado"].includes(estadoViaje(v)));
+  const porCerrar = activos.filter((v) => estadoViaje(v) === "realizado").sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const proximos = activos.filter((v) => estadoViaje(v) !== "realizado").sort((a, b) => a.fecha.localeCompare(b.fecha));
+  return (
+    <>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <h1 className="page-title" style={{ margin: 0 }}>
+          Buceos
+        </h1>
+        {p.editarViaje && (
+          <button className="btn btn-primary vj-btn" onClick={() => ir("nuevo")}>
+            + Nuevo viaje
+          </button>
+        )}
+      </div>
+      {porCerrar.length > 0 && (
+        <>
+          <div className="section-title">Ya pasaron · por cerrar</div>
+          <div style={{ display: "grid", gap: 12 }}>
+            {porCerrar.map((v) => (
+              <TarjetaViaje key={v.id} {...props} v={v} />
+            ))}
+          </div>
+        </>
+      )}
+      <div className="section-title">Próximos</div>
+      <div style={{ display: "grid", gap: 12 }}>
         {proximos.map((v) => (
           <TarjetaViaje key={v.id} {...props} v={v} />
         ))}
+        {!proximos.length && <div className="card hint-text">No hay viajes próximos.{p.editarViaje ? " Crea uno con “+ Nuevo viaje”." : ""}</div>}
       </div>
       <div className="hint-text" style={{ marginTop: 16 }}>
         Los viajes cerrados y cancelados están en{" "}
@@ -423,7 +569,7 @@ export function Calendario(props) {
             }
           }}
         >
-          🔗 Copiar link del calendario
+          <IconLink size={16} /> Copiar link del calendario
         </button>
         <div className="hint-text" style={{ marginTop: 8 }}>
           Los avisos salen en el app (Inicio → “Para hacer”). Google tarda unas horas en refrescar un calendario agregado por link. No compartas
