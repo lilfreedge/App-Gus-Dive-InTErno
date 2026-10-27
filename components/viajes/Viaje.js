@@ -30,6 +30,7 @@ import {
   textoEquipo,
   resumenTalla,
   puntos,
+  palabraViaje,
 } from "@/lib/viajes/modelo";
 import { Chip, Modal, IconoWA, CampoCel, Atras, Buscar } from "./Piezas";
 import { IconLink, IconChat, IconReport, IconLock, IconUnlock, IconCheck, IconX, IconClip, IconAlert, IconClipboard, IconPrint } from "@/components/icons";
@@ -46,9 +47,11 @@ export function Viaje(props) {
   const r = resumenViaje(db, v);
   const ev = estadoViaje(v);
   const cerrado = ev === "cerrado" || ev === "cancelado";
+  // V46: "buceo" en vez de "viaje" ("viaje" solo los que tienen hotel, como Monte Cristi).
+  const P = palabraViaje(v);
   const tabs = [
     { k: "inscritos", t: `Inscritos (${r.buzos.length})` },
-    { k: "info", t: "Info del viaje" },
+    { k: "info", t: `Info del ${P}` },
     ...(v.equipo.modo === "si" ? [{ k: "equipo", t: "Equipo" }] : []),
     ...(v.habitaciones ? [{ k: "habitaciones", t: "Habitaciones" }] : []),
     ...(p.numeros ? [{ k: "numeros", t: "Números" }] : []),
@@ -104,12 +107,12 @@ export function Viaje(props) {
       </div>
       {cerrado && (
         <div className={`vj-banner ${ev}`}>
-          {ev === "cerrado" ? `Viaje cerrado por ${v.cerradoPor || "—"} el ${fechaCorta(v.cerradoEl || hoyISO())}. Ya no se puede editar.` : `Viaje cancelado. ${v.motivoCancelado || ""}`}
+          {ev === "cerrado" ? `${P === "viaje" ? "Viaje" : "Buceo"} cerrado por ${v.cerradoPor || "—"} el ${fechaCorta(v.cerradoEl || hoyISO())}. Ya no se puede editar.` : `${P === "viaje" ? "Viaje" : "Buceo"} cancelado. ${v.motivoCancelado || ""}`}
           {p.cerrar && (
             <button
               className="btn secondary vj-mini"
               style={{ marginLeft: 8 }}
-              onClick={() => cambiarViaje({ estado: diasPara0(v.fecha) ? "realizado" : "abierto" }, "Reabrió el viaje", ESTADOS_VIAJE[ev].t, "Abierto")}
+              onClick={() => cambiarViaje({ estado: diasPara0(v.fecha) ? "realizado" : "abierto" }, `Reabrió el ${P}`, ESTADOS_VIAJE[ev].t, "Abierto")}
             >
               Reabrir
             </button>
@@ -139,6 +142,7 @@ const diasPara0 = (iso) => iso < hoyISO();
 function Cierre({ db, v, r, p, ir, cambiarViaje, rol }) {
   const [confirmar, setConfirmar] = useState(false);
   const n = numerosViaje(db, v);
+  const P = palabraViaje(v);
   const pagan = r.ins.filter((x) => x.rol === "buzo");
   const deben = pagan.filter((x) => ["sin", "parcial"].includes(estadoPago(v, x).k) && x.asistio !== false).length;
   const checks = [
@@ -150,7 +154,7 @@ function Cierre({ db, v, r, p, ir, cambiarViaje, rol }) {
   const listo = checks.every((c) => c.ok);
   return (
     <div className="card vj-cierre">
-      <div style={{ fontWeight: 800 }}>Este viaje ya pasó. Para cerrarlo:</div>
+      <div style={{ fontWeight: 800 }}>Este {P} ya pasó. Para cerrarlo:</div>
       {checks.map((c, i) => (
         <div key={i} className={`vj-check-cierre${c.ok ? " ok" : ""}`}>
           {c.ok ? <IconCheck size={15} /> : <span className="vj-check-punto">•</span>} {c.t}
@@ -167,17 +171,17 @@ function Cierre({ db, v, r, p, ir, cambiarViaje, rol }) {
               <button
                 className="btn btn-primary vj-btn"
                 onClick={() => {
-                  cambiarViaje({ estado: "cerrado", cerradoPor: rol.corto, cerradoEl: hoyISO() }, "Cerró el viaje", "Por cerrar", "Cerrado");
+                  cambiarViaje({ estado: "cerrado", cerradoPor: rol.corto, cerradoEl: hoyISO() }, `Cerró el ${P}`, "Por cerrar", "Cerrado");
                   ir("historial");
                 }}
               >
-                Sí, cerrar viaje
+                Sí, cerrar {P}
               </button>
             </div>
           </div>
         ) : (
           <button className="btn btn-primary vj-btn" style={{ marginTop: 10 }} onClick={() => setConfirmar(true)}>
-            Cerrar viaje
+            Cerrar {P}
           </button>
         )
       ) : (
@@ -192,6 +196,7 @@ function Cierre({ db, v, r, p, ir, cambiarViaje, rol }) {
 // ------------------------------------------------------------- inscritos
 function Inscritos(props) {
   const { db, ops, v, r, p, ev, cerrado } = props;
+  const P = palabraViaje(v);
   const [abierto, setAbierto] = useState(null);
   const [agregando, setAgregando] = useState(false);
   const [filtro, setFiltro] = useState("todos");
@@ -258,7 +263,7 @@ function Inscritos(props) {
           );
         })}
       </div>
-      <Buscar value={q} onChange={setQ} placeholder="Buscar en este viaje…" />
+      <Buscar value={q} onChange={setQ} placeholder={`Buscar en este ${P}…`} />
       <div className="card vj-lista">
         {visibles.length > 0 && (
           <div className="vj-lista-head">
@@ -343,7 +348,7 @@ function Inscritos(props) {
               <div key={x.id} className="vj-fila">
                 <button className="vj-fila-main" onClick={() => setAbierto(x.id)}>
                   <div className="vj-fila-nombre">{nombreDe(db, x.buzoId)}</div>
-                  <div className="hint-text">Se anotó cuando el viaje estaba lleno</div>
+                  <div className="hint-text">Se anotó cuando el {P} estaba lleno</div>
                 </button>
                 {p.inscribir && (
                   <button className="btn secondary vj-mini" onClick={() => cambiar(x, { estado: "inscrito" }, "Pasó de la lista de espera a inscritos")}>
@@ -364,6 +369,7 @@ function Inscritos(props) {
 function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol }) {
   const [pagando, setPagando] = useState(false);
   const [quitando, setQuitando] = useState(false);
+  const P = palabraViaje(v);
   if (!x) return null;
   const verComprobante = (c) => ops.verComprobante(c);
   const adjuntar = (file) => ops.adjuntarComprobante(x, file);
@@ -416,7 +422,7 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
 
       {x.rol === "buzo" && (
         <>
-          <div className="vj-sec">En este viaje</div>
+          <div className="vj-sec">En este {P}</div>
           {v.opciones.length > 1 && (
             <div className="vj-dato">
               <span>Opción</span>
@@ -447,7 +453,7 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
               {ex.nombre} (+{rd(ex.dop)})
             </label>
           ))}
-          {v.equipo.modo === "no" && <div className="hint-text">Este viaje no tiene alquiler de equipo.</div>}
+          {v.equipo.modo === "no" && <div className="hint-text">Este {P} no tiene alquiler de equipo.</div>}
           {mostrarEquipo && (
             <>
               <div className="hint-text" style={{ marginTop: 6 }}>
@@ -657,8 +663,8 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
           {quitando ? (
             <div>
               <div style={{ fontSize: 14, marginBottom: 8 }}>
-                ¿Quitar a {nombreCorto(b.nombre)} del viaje?
-                {e.pagado > 0 ? ` Lo que pagó (${rd(e.pagado)}) le queda como abono a favor para otro viaje.` : ""}
+                ¿Quitar a {nombreCorto(b.nombre)} del {P}?
+                {e.pagado > 0 ? ` Lo que pagó (${rd(e.pagado)}) le queda como abono a favor para otro buceo.` : ""}
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button className="btn secondary vj-btn" onClick={() => setQuitando(false)}>
@@ -667,7 +673,7 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
                 <button
                   className="btn vj-btn vj-rojo"
                   onClick={() => {
-                    ops.quitarIns(x, b, e.pagado || 0, `Quitó del viaje: ${b.nombre}`);
+                    ops.quitarIns(x, b, e.pagado || 0, `Quitó del ${P}: ${b.nombre}`);
                     cerrar();
                   }}
                 >
@@ -683,7 +689,7 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
                 </button>
               )}
               <button className="btn secondary vj-mini vj-rojo-txt" onClick={() => setQuitando(true)}>
-                Quitar del viaje
+                Quitar del {P}
               </button>
             </div>
           )}
@@ -871,6 +877,7 @@ function AgregarAMano({ db, ops, v, listo }) {
 // ------------------------------------------------------------- info del viaje
 function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir }) {
   const [cancelando, setCancelando] = useState(false);
+  const P = palabraViaje(v);
   const [motivo, setMotivo] = useState("");
   const [nuevoRec, setNuevoRec] = useState(null);
   const ro = cerrado || !p.editarViaje;
@@ -956,7 +963,7 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir }) {
         )}
       </div>
 
-      <div className="section-title">Pendientes del viaje</div>
+      <div className="section-title">Pendientes del {P}</div>
       <div className="card">
         {v.pendientes.map((x, i) => (
           <label key={i} className="vj-check">
@@ -971,7 +978,7 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir }) {
         ))}
       </div>
 
-      <div className="section-title">Recordatorios de este viaje</div>
+      <div className="section-title">Recordatorios de este {P}</div>
       <div className="card">
         <div className="hint-text" style={{ marginBottom: 6 }}>
           Además de los generales (1 mes antes, 1 semana antes…). Salen en el Calendario y en “Para hacer”.
@@ -1028,21 +1035,21 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir }) {
           <div className="card">
             <label className={`vj-toggle${v.web ? " on" : ""}`}>
               <input type="checkbox" checked={v.web} onChange={(e) => cambiarViaje({ web: e.target.checked }, "Mostrar en la web", v.web ? "Sí" : "No", e.target.checked ? "Sí" : "No")} />
-              Mostrar este viaje en gusdivecenter.com
+              Mostrar este {P} en gusdivecenter.com
             </label>
           </div>
         </>
       )}
       {p.cerrar && !cerrado && (
         <>
-          <div className="section-title">Cancelar el viaje</div>
+          <div className="section-title">Cancelar el {P}</div>
           <div className="card">
             {cancelando ? (
               <>
                 <label>Motivo</label>
                 <input value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ej. No se llegó al mínimo, mal tiempo…" />
                 <div className="hint-text" style={{ marginTop: 6 }}>
-                  Lo que cada buzo pagó le queda como <b>abono a favor</b> para otro viaje (se ve en su ficha). Si alguien quiere su dinero de
+                  Lo que cada buzo pagó le queda como <b>abono a favor</b> para otro buceo (se ve en su ficha). Si alguien quiere su dinero de
                   vuelta, se le quita el abono a mano.
                 </div>
                 <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
@@ -1060,13 +1067,13 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir }) {
                       ir("historial");
                     }}
                   >
-                    Sí, cancelar viaje
+                    Sí, cancelar {P}
                   </button>
                 </div>
               </>
             ) : (
               <button className="btn secondary vj-mini vj-rojo-txt" onClick={() => setCancelando(true)}>
-                Cancelar este viaje…
+                Cancelar este {P}…
               </button>
             )}
           </div>

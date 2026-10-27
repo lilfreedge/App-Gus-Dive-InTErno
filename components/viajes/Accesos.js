@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { PERMISOS, EVENTOS_AVISO, VIAS_AVISO } from "@/lib/viajes/modelo";
 import { IconEdit, IconLink, IconPlus, IconCheck, IconBuzos, IconReceipt, IconLock, IconReport, IconHistory, IconGauge, IconUsers, IconBell } from "@/components/icons";
 
-// V43 -- ⚙ › Administración de Viajes/Buceos (solo el Titular). Pedido de
+// V43 -- ⚙ › Administración de Buceos (solo el Titular). Pedido de
 // Pipe: "ponme en settings sección de administración para controlar los
 // accesos de los demás". Igual que la Administración de App Equipos de
 // clientes: la gente agrupada (Titular, Administradores, Usuarios, Sin
@@ -13,7 +13,7 @@ import { IconEdit, IconLink, IconPlus, IconCheck, IconBuzos, IconReceipt, IconLo
 // cerrar viajes, bitácora y estadísticas) solo se le pueden dar a un
 // Administrador ("eso me corresponde a mí o a mi hermano").
 const SECCIONES = [
-  { t: "Viajes", ks: ["editarViaje", "web"] },
+  { t: "Buceos", ks: ["editarViaje", "web"] },
   { t: "Buzos e inscritos", ks: ["inscribir", "grupo", "buzos"] },
   { t: "Pagos", ks: ["pagos", "conciliar"] },
   { t: "Números y control", ks: ["numeros", "cerrar", "bitacora", "estadisticas"] },
@@ -27,7 +27,7 @@ const GRUPOS = [
   { g: "titular", t: "Titular" },
   { g: "admin", t: "Administradores" },
   { g: "usuario", t: "Usuarios" },
-  { g: "sin", t: "Sin acceso a Viajes/Buceos" },
+  { g: "sin", t: "Sin acceso a Buceos" },
 ];
 
 // V44 -- Qué avisos le llegan a esta persona y por dónde (migration_72.sql).
@@ -137,7 +137,7 @@ export function AccesosViajes({ supabase, avisar, yo }) {
     <>
       <h1 className="page-title">Administración</h1>
       <div className="hint-text" style={{ marginBottom: 4 }}>
-        Toca a una persona para ver y cambiar lo que puede hacer en Viajes/Buceos y qué avisos le llegan (en el app, por correo o en el celular). Los cambios se guardan al momento. Solo tú (el Titular) entras aquí.
+        Toca a una persona para ver y cambiar lo que puede hacer en Buceos y qué avisos le llegan (en el app, por correo o en el celular). Los cambios se guardan al momento. Solo tú (el Titular) entras aquí.
       </div>
       {GRUPOS.map(({ g, t }) => {
         const gente = perfiles.filter((pf) => grupoDe(pf) === g);
@@ -173,7 +173,7 @@ export function AccesosViajes({ supabase, avisar, yo }) {
                     {esta && titular && (
                       <div className="vj-adm-cuerpo">
                         <div className="hint-text" style={{ marginBottom: 4 }}>
-                          El Titular puede todo en Viajes/Buceos. Aquí solo escoges qué avisos te llegan.
+                          El Titular puede todo en Buceos. Aquí solo escoges qué avisos te llegan.
                         </div>
                         {confs ? (
                           <AvisosPersona pf={pf} conf={confs[pf.id]} info={info[pf.id]} cambiar={cambiarAvisos} ocupado={guardando === pf.id} />
@@ -188,13 +188,13 @@ export function AccesosViajes({ supabase, avisar, yo }) {
                           <span className="vj-adm-label">
                             <IconUsers size={15} />
                             <span>
-                              Entrar a Viajes/Buceos
-                              <span className="hint-text">Es el mismo acceso de “Accesos a apps”. Con solo esto, puede ver los viajes, los inscritos y el calendario.</span>
+                              Entrar a Buceos
+                              <span className="hint-text">Es el mismo acceso de “Accesos a apps”. Con solo esto, puede ver los buceos, los inscritos y el calendario.</span>
                             </span>
                           </span>
                           <input type="checkbox" checked={entra} disabled={guardando === pf.id} onChange={(e) => guardar(pf, { acceso_viajes: e.target.checked })} />
                         </label>
-                        {!entra && <div className="aviso-box vj-adm-aviso">Todavía no entra a Viajes/Buceos. Puedes dejarle los permisos listos desde ya.</div>}
+                        {!entra && <div className="aviso-box vj-adm-aviso">Todavía no entra a Buceos. Puedes dejarle los permisos listos desde ya.</div>}
                         <div className="vj-adm-atajos">
                           <button type="button" className="btn secondary vj-mini" disabled={guardando === pf.id} onClick={() => guardar(pf, Object.fromEntries(SUELTOS.filter(puede).map((x) => [x.clave, true])))}>
                             Darle todo

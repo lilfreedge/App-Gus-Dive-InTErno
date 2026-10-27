@@ -32,7 +32,7 @@ export default async function ChangelogPage({ searchParams }) {
 
   return (
     <div>
-      {desdeClientes ? <AppHeaderClientes /> : desdeViajes ? <HeaderSimple nombre="" etiqueta="Viajes/Buceos" inicio="/viajes-buceos" /> : <AppHeader />}
+      {desdeClientes ? <AppHeaderClientes /> : desdeViajes ? <HeaderSimple nombre="" etiqueta="Buceos" inicio="/viajes-buceos" /> : <AppHeader />}
       <div className="page" style={{ paddingTop: 24 }}>
         <Link href={volver} className="back-link">
           ← Volver

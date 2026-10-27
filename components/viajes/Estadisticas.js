@@ -146,7 +146,7 @@ export function Estadisticas({ db, ir }) {
     meses.push({
       label: MES_CORTO[d.getMonth()].slice(0, 3),
       g,
-      tip: [`${MESES[d.getMonth()]} ${d.getFullYear()}`, `Ganancia real: ${rd(g)}`, `${vs.length} viaje${vs.length === 1 ? "" : "s"}`],
+      tip: [`${MESES[d.getMonth()]} ${d.getFullYear()}`, `Ganancia real: ${rd(g)}`, `${vs.length} buceo${vs.length === 1 ? "" : "s"}`],
     });
   }
   // por tipo
@@ -159,7 +159,7 @@ export function Estadisticas({ db, ir }) {
     tipos[t].b += v.asistieron;
   }
   const porTipo = Object.entries(tipos)
-    .map(([t, x]) => ({ label: t, valor: Math.round(x.g / x.n), n: x.n, b: x.b, total: x.g, tip: [t, `${x.n} viaje${x.n === 1 ? "" : "s"}`, `Promedio por viaje: ${rd(x.g / x.n)}`, `Total: ${rd(x.g)}`, `Buzos por viaje: ${Math.round(x.b / x.n)}`] }))
+    .map(([t, x]) => ({ label: t, valor: Math.round(x.g / x.n), n: x.n, b: x.b, total: x.g, tip: [t, `${x.n} buceo${x.n === 1 ? "" : "s"}`, `Promedio por buceo: ${rd(x.g / x.n)}`, `Total: ${rd(x.g)}`, `Buzos por buceo: ${Math.round(x.b / x.n)}`] }))
     .sort((a, b) => b.valor - a.valor);
   const ultimos = todos.slice(-12).map((v) => ({
     label: `${fechaObj(v.fecha).getDate()} ${MES_CORTO[fechaObj(v.fecha).getMonth()].slice(0, 3).toLowerCase()}`,
@@ -179,10 +179,10 @@ export function Estadisticas({ db, ir }) {
     <>
       <h1 className="page-title">Estadísticas</h1>
       <div className="hint-text" style={{ marginBottom: 10 }}>
-        Solo tú y los administradores. Sale de los viajes que ya pasaron (ganancia real = cobrado − gastos reales que pongan en Números).
+        Solo tú y los administradores. Sale de los buceos que ya pasaron (ganancia real = cobrado − gastos reales que pongan en Números).
       </div>
       {!hayDatos && (
-        <div className="card aviso-box">Todavía no hay viajes pasados en el app. Los charts se llenan solos a medida que se hagan y se cierren los viajes.</div>
+        <div className="card aviso-box">Todavía no hay buceos pasados en el app. Los charts se llenan solos a medida que se hagan y se cierren los buceos.</div>
       )}
       <div className="ch-filtros">
         {[
@@ -200,7 +200,7 @@ export function Estadisticas({ db, ir }) {
       </div>
       <div className="ch-tiles">
         <div>
-          <span>Viajes</span>
+          <span>Buceos</span>
           <b>{todos.length}</b>
         </div>
         <div>
@@ -212,7 +212,7 @@ export function Estadisticas({ db, ir }) {
           <b>{rd(total)}</b>
         </div>
         <div>
-          <span>Promedio por viaje</span>
+          <span>Promedio por buceo</span>
           <b>{rd(todos.length ? total / todos.length : 0)}</b>
         </div>
         <div>
@@ -227,7 +227,7 @@ export function Estadisticas({ db, ir }) {
             <thead>
               <tr>
                 <th>Fecha</th>
-                <th>Viaje</th>
+                <th>Buceo</th>
                 <th>Inscritos</th>
                 <th>Asistieron</th>
                 <th>Ganancia real</th>
@@ -264,14 +264,14 @@ export function Estadisticas({ db, ir }) {
             <Columnas datos={meses} series={[{ k: "g", color: AZUL }]} />
           </div>
           <div className="card ch-card">
-            <div className="ch-t">¿Qué viaje deja más? · ganancia promedio por viaje</div>
+            <div className="ch-t">¿Qué buceo deja más? · ganancia promedio por buceo</div>
             <Barras datos={porTipo} formato={(v) => rd(v)} />
             <div className="hint-text" style={{ marginTop: 6 }}>
-              Pasa el mouse por una barra: cuántas veces se hizo, el total y los buzos por viaje.
+              Pasa el mouse por una barra: cuántas veces se hizo, el total y los buzos por buceo.
             </div>
           </div>
           <div className="card ch-card">
-            <div className="ch-t">Buzos por viaje · últimos {ultimos.length}</div>
+            <div className="ch-t">Buzos por buceo · últimos {ultimos.length}</div>
             <div className="ch-leyenda">
               <span>
                 <i style={{ background: AZUL }} /> Inscritos

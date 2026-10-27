@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { IconGear, IconLogout, IconShuffle, IconHistory, IconUsers, IconBell } from "@/components/icons";
 import { cargarTodo, viajeAFila, insAFila, buzoAFila, catalogoAFila, nuevoId } from "@/lib/viajes/datos";
-import { ahora, hoyISO, rd } from "@/lib/viajes/modelo";
+import { ahora, hoyISO, rd, palabraViaje } from "@/lib/viajes/modelo";
 import { Inicio, Buceos, Mas, Calendario } from "./Inicio";
 import { Atras } from "./Piezas";
 import { Viaje } from "./Viaje";
@@ -112,7 +112,7 @@ function Topbar({ nombre, nombreCompleto, correo, esTitular, links, activo, ir, 
           </div>
         </div>
       </div>
-      <div className="topbar-appname">VIAJES/BUCEOS</div>
+      <div className="topbar-appname">BUCEOS</div>
       <nav className="topnav">
         {links.map((l) => (
           <a
@@ -184,7 +184,7 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
         : /pasaporte_uq/.test(m)
         ? "Ese pasaporte ya está en la base, con otra persona."
         : /viaje_id_buzo_id/.test(m)
-        ? "Esa persona ya está en este viaje."
+        ? "Esa persona ya está en la lista."
         : `No se pudo guardar: ${m}`
     );
     recargar();
@@ -236,7 +236,7 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
       }
     },
     async usarAbono(x, b, monto) {
-      const pg = { id: nuevoId(), monto, cuenta: "Abono a favor", fecha: hoyISO(), por: yo.corto, conciliado: false, abono: true, nota: "Abono de un viaje anterior" };
+      const pg = { id: nuevoId(), monto, cuenta: "Abono a favor", fecha: hoyISO(), por: yo.corto, conciliado: false, abono: true, nota: "Abono de un buceo anterior" };
       local((d) => ({
         ...d,
         inscripciones: d.inscripciones.map((y) => (y.id === x.id ? { ...y, pagos: [...(y.pagos || []), pg] } : y)),
@@ -254,7 +254,7 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
       local((d) => ({ ...d, viajes: [...d.viajes, v] }));
       try {
         await guardar(supabase.from("viajes").insert({ id: v.id, creado_por: yo.id, ...viajeAFila(v) }));
-        await log(v.id, `Creó el viaje: ${v.nombre} (${v.fecha})`);
+        await log(v.id, `Creó el ${palabraViaje(v)}: ${v.nombre} (${v.fecha})`);
       } catch (e) {
         fallo(e);
       }
@@ -275,7 +275,7 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
           const b = db.buzos.find((y) => y.id === a.buzoId);
           await guardar(supabase.from("viajes_buzos").update({ abono: (b?.abono || 0) + a.monto }).eq("id", a.buzoId));
         }
-        await log(v.id, "Canceló el viaje", antes, `Cancelado${motivo ? ` (${motivo})` : ""}`);
+        await log(v.id, `Canceló el ${palabraViaje(v)}`, antes, `Cancelado${motivo ? ` (${motivo})` : ""}`);
       } catch (e) {
         fallo(e);
       }
@@ -407,7 +407,7 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
   if (error) {
     cuerpo = (
       <div className="card aviso-box">
-        No se pudieron cargar los viajes: {error}
+        No se pudieron cargar los buceos: {error}
         <div className="hint-text" style={{ marginTop: 6 }}>
           Si es la primera vez, falta correr la migración migration_71.sql en Supabase.
         </div>
@@ -424,7 +424,7 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
     else if (ruta === "nuevo") cuerpo = p.editarViaje ? <NuevoViaje {...q} /> : <Inicio {...q} />;
     else if (ruta.startsWith("viaje:")) {
       const [, id, tab] = ruta.split(":");
-      cuerpo = db.viajes.some((v) => v.id === id) ? <Viaje key={id} {...q} id={id} tab={tab || "inscritos"} /> : <div className="hint-text">Ese viaje no existe.</div>;
+      cuerpo = db.viajes.some((v) => v.id === id) ? <Viaje key={id} {...q} id={id} tab={tab || "inscritos"} /> : <div className="hint-text">Ese buceo no existe.</div>;
     } else if (ruta.startsWith("reporte-equipo:")) {
       const id = ruta.split(":")[1];
       cuerpo = db.viajes.some((v) => v.id === id) ? <ReporteEquipo {...q} id={id} /> : null;

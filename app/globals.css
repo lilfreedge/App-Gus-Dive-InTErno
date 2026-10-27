@@ -2767,6 +2767,11 @@ a.pb-btn { text-align: center; box-sizing: border-box; }
 .pb-datos svg { flex: none; opacity: 0.85; }
 .pb-priv { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; line-height: 1.4; color: #5c6b78; background: #f4f8fb; border-radius: 10px; padding: 8px 10px; margin-top: 12px; text-align: left; }
 .pb-priv svg { flex: none; margin-top: 1px; color: #1b7fae; }
+/* V47: solo las tallas de lo que marcó, en lista y con su nombre */
+.pb-tallas { display: grid; gap: 8px; margin-top: 10px; }
+.pb-tallas label { display: block; min-width: 0; margin: 0; padding: 0; }
+.pb-tallas label span { display: block; font-size: 13px; font-weight: 700; color: #5c6b78; margin-bottom: 4px; }
+.pb-tallas .pb-input { margin: 0; }
 /* V44: Catálogo / nuevo viaje por partes (un botón por parte, se abre al tocarlo) */
 .vj-fsecs { display: grid; gap: 8px; }
 .vj-fsec { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; overflow: hidden; }

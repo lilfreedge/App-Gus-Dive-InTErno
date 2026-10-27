@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { rd, us, soloDigitos, precioDop, PREGUNTAS, hoyISO, sumarDias, nuevoIdLocal, puntos, fechaLarga } from "@/lib/viajes/modelo";
+import { rd, us, soloDigitos, precioDop, PREGUNTAS, hoyISO, sumarDias, nuevoIdLocal, puntos, fechaLarga, palabraViaje } from "@/lib/viajes/modelo";
 import { IconCalendar, IconReceipt, IconCheck, IconPlus, IconRegulator, IconClipboard, IconLock, IconBell, IconChat } from "@/components/icons";
 import { armarSlug } from "@/lib/viajes/datos";
 import { Atras } from "./Piezas";
@@ -56,13 +56,13 @@ function FormViaje({ f, setF, p, esViaje }) {
         id="datos"
         {...sec}
         Icono={IconCalendar}
-        titulo={esViaje ? "Fecha y datos" : "Datos del viaje"}
+        titulo={esViaje ? "Fecha y datos" : "Datos del buceo"}
         resumen={[esViaje && f.fecha ? fechaLarga(f.fecha) : null, f.salida || "Sin salida", `cupo ${f.cupoMin ? `${f.cupoMin} a ` : "hasta "}${f.cupoMax}`, f.operador].filter(Boolean).join(" · ")}
       >
         <div className="vj-form2">
           {!esViaje && (
             <div>
-              <label>Nombre del viaje</label>
+              <label>Nombre del buceo</label>
               <input value={f.nombre} onChange={(e) => set("nombre", e.target.value)} />
             </div>
           )}
@@ -145,7 +145,7 @@ function FormViaje({ f, setF, p, esViaje }) {
                       <input type="checkbox" checked={!!o.conEquipo} onChange={(e) => setOp(i, "conEquipo", e.target.checked)} /> Esta opción incluye equipo
                     </label>
                     <label className="vj-check">
-                      <input type="checkbox" checked={!!o.noPaga} onChange={(e) => setOp(i, "noPaga", e.target.checked)} /> No paga el viaje (va con su curso)
+                      <input type="checkbox" checked={!!o.noPaga} onChange={(e) => setOp(i, "noPaga", e.target.checked)} /> No paga el buceo (va con su curso)
                     </label>
                     {f.opciones.length > 1 && (
                       <button
@@ -339,9 +339,9 @@ export function NuevoViaje({ db, ops, p, ir }) {
     return (
       <>
         <Atras onClick={() => ir("buceos")}>Buceos</Atras>
-        <h1 className="page-title">Nuevo viaje</h1>
+        <h1 className="page-title">Nuevo buceo</h1>
         <div className="hint-text" style={{ marginBottom: 10 }}>
-          Escoge el viaje del Catálogo. Ya viene lleno con su información de siempre (precios, salida, equipo, cupo, operador, recordatorios): solo
+          Escoge el buceo del Catálogo. Ya viene lleno con su información de siempre (precios, salida, equipo, cupo, operador, recordatorios): solo
           pones la fecha y cambias lo que varíe esta vez.
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 10 }}>
@@ -370,9 +370,9 @@ export function NuevoViaje({ db, ops, p, ir }) {
             </button>
           ))}
           <button className="card vj-plantilla" style={{ borderStyle: "dashed" }} onClick={() => ir("catalogo")}>
-            <b>+ Otro viaje</b>
+            <b>+ Otro buceo</b>
             <div className="hint-text" style={{ marginTop: 4 }}>
-              Se agrega en el Catálogo de viajes y queda para la próxima
+              Se agrega en el Catálogo de buceos y queda para la próxima
             </div>
           </button>
         </div>
@@ -401,7 +401,9 @@ export function NuevoViaje({ db, ops, p, ir }) {
   return (
     <>
       <Atras onClick={() => setF(null)}>Escoger otro</Atras>
-      <h1 className="page-title">Nuevo viaje: {f.nombre}</h1>
+      <h1 className="page-title">
+        Nuevo {palabraViaje(f)}: {f.nombre}
+      </h1>
       <div className="hint-text" style={{ marginBottom: 10 }}>
         Ya viene lleno del Catálogo. Pon la fecha y toca cualquier parte si quieres cambiar algo solo para esta vez.
       </div>
@@ -414,7 +416,7 @@ export function NuevoViaje({ db, ops, p, ir }) {
       )}
       <div className="vj-guardar-barra">
         <button className="btn btn-primary" onClick={crear}>
-          Crear viaje
+          Crear {palabraViaje(f)}
         </button>
       </div>
     </>
@@ -427,7 +429,7 @@ export function Catalogo({ db, ops, ir }) {
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <h1 className="page-title" style={{ margin: 0 }}>
-          Catálogo de viajes
+          Catálogo de buceos
         </h1>
         <button
           className="btn btn-primary vj-btn"
@@ -436,7 +438,7 @@ export function Catalogo({ db, ops, ir }) {
             ops.guardarPlantilla(
               {
                 id,
-                nombre: "Viaje nuevo",
+                nombre: "Buceo nuevo",
                 salida: "",
                 moneda: "DOP",
                 tasa: 62,
@@ -459,12 +461,12 @@ export function Catalogo({ db, ops, ir }) {
             ir(`plantilla:${id}`);
           }}
         >
-          + Agregar viaje
+          + Agregar buceo
         </button>
       </div>
       <div className="hint-text" style={{ margin: "6px 0 12px" }}>
-        Los viajes que ofrecen, con su información de siempre (sacada de los sheets). Al crear un viaje se escoge de aquí y ya viene lleno. Si cambias
-        algo aquí, los viajes nuevos salen con el cambio; los que ya están programados se quedan como estaban.
+        Los buceos que ofrecen, con su información de siempre (sacada de los sheets). Al crear un buceo se escoge de aquí y ya viene lleno. Si cambias
+        algo aquí, los buceos nuevos salen con el cambio; los que ya están programados se quedan como estaban.
       </div>
       <div className="card vj-lista">
         {db.catalogo.map((c) => (
@@ -500,15 +502,15 @@ export function EditarPlantilla({ db, ops, id, p, ir, avisar }) {
         .filter(Boolean),
     };
     ops.guardarPlantilla(limpio, false);
-    avisar("Guardado en el Catálogo de viajes");
+    avisar("Guardado en el Catálogo de buceos");
     ir("catalogo");
   }
   return (
     <>
-      <Atras onClick={() => ir("catalogo")}>Catálogo de viajes</Atras>
-      <h1 className="page-title">{f.nombre || "Viaje"}</h1>
+      <Atras onClick={() => ir("catalogo")}>Catálogo de buceos</Atras>
+      <h1 className="page-title">{f.nombre || "Buceo"}</h1>
       <div className="hint-text" style={{ marginBottom: 10 }}>
-        Toca cada parte para verla y cambiarla. Los cambios salen en los viajes nuevos; los que ya están programados se quedan como estaban.
+        Toca cada parte para verla y cambiarla. Los cambios salen en los buceos nuevos; los que ya están programados se quedan como estaban.
       </div>
       <FormViaje f={f} setF={setF} p={p} />
       <div className="vj-guardar-barra">
@@ -519,7 +521,7 @@ export function EditarPlantilla({ db, ops, id, p, ir, avisar }) {
       <div className="card" style={{ marginTop: 12 }}>
         {quitando ? (
           <>
-            <div style={{ fontSize: 14 }}>¿Quitar “{original.nombre}” del catálogo? Los viajes que ya se hicieron con él no cambian.</div>
+            <div style={{ fontSize: 14 }}>¿Quitar “{original.nombre}” del catálogo? Los buceos que ya se hicieron con él no cambian.</div>
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <button className="btn secondary vj-btn" onClick={() => setQuitando(false)}>
                 No

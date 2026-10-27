@@ -298,14 +298,14 @@ export default async function EspacioPage({ searchParams }) {
               <div className="espacio-icon espacio-icon-viajes">
                 <IconBuzos size={TAM_ICONO} />
               </div>
-              <div className="espacio-title">Viajes/Buceos</div>
+              <div className="espacio-title">Buceos</div>
               <div className="espacio-notif">
                 {lineasViajes.map((linea) => (
                   <div className="espacio-notif-alerta" key={linea}>
                     {linea}
                   </div>
                 ))}
-                {proximoViaje || (lineasViajes.length ? "" : "Sin viajes próximos.")}
+                {proximoViaje || (lineasViajes.length ? "" : "Sin buceos próximos.")}
               </div>
             </Link>
           )}

@@ -46,9 +46,9 @@ export default function AccesosClient({ perfiles, miId }) {
               <IconTiendaTanque size={15} style={{ display: "block", margin: "0 auto 3px" }} />
               App Interno
             </th>
-            <th title="Viajes/Buceos">
+            <th title="Buceos">
               <IconBuzos size={15} style={{ display: "block", margin: "0 auto 3px" }} />
-              Viajes/Buceos
+              Buceos
             </th>
             <th title="Alquiler">
               <IconAlquiler size={15} style={{ display: "block", margin: "0 auto 3px" }} />

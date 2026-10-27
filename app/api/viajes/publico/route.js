@@ -51,7 +51,8 @@ export async function POST(request) {
       corto: nombreCorto(b.nombre),
       primer: primerNombre(b.nombre),
       cel: celOculto(b.cel),
-      tieneTallas: !!(b.tallas?.bcd && b.tallas?.chapaletas),
+      // V47: qué tallas ya tenemos, para no volver a pedirlas.
+      tallasGuardadas: { bcd: !!b.tallas?.bcd, wetsuit: !!b.tallas?.wetsuit, chapaletas: !!b.tallas?.chapaletas },
       yaInscrito: !!ya && ya.estado !== "quitado",
     });
   }
@@ -111,9 +112,9 @@ export async function POST(request) {
   // Tallas y contacto de emergencia: se guardan en su ficha para la próxima.
   const cambiosBuzo = {};
   const tallas = body.tallas || {};
-  if ((tallas.bcd && !b.tallas?.bcd) || (tallas.chapaletas && !b.tallas?.chapaletas)) {
-    cambiosBuzo.tallas = { ...(b.tallas || {}), bcd: b.tallas?.bcd || String(tallas.bcd || "").slice(0, 10), chapaletas: b.tallas?.chapaletas || String(tallas.chapaletas || "").slice(0, 10) };
-  }
+  const tallasNuevas = {};
+  for (const k of ["bcd", "wetsuit", "chapaletas"]) if (String(tallas[k] || "").trim() && !b.tallas?.[k]) tallasNuevas[k] = String(tallas[k]).trim().slice(0, 10);
+  if (Object.keys(tallasNuevas).length) cambiosBuzo.tallas = { ...(b.tallas || {}), ...tallasNuevas };
   if (body.respuestas?.emergencia && !b.emergencia) cambiosBuzo.emergencia = String(body.respuestas.emergencia).slice(0, 120);
   if (Object.keys(cambiosBuzo).length) await s.from("viajes_buzos").update(buzoAFila(cambiosBuzo)).eq("id", b.id);
 

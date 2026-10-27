@@ -3,7 +3,7 @@ import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser } from "@/lib/roles";
 import { filaAViaje, filaAIns, filaABuzo } from "@/lib/viajes/datos";
-import { permisosViajes, resumenViaje, numerosViaje, estadoViaje, estadoPago, pagoEnDop, fechaLarga, rd, ESTADOS_VIAJE, hoyISO, fechaCorta } from "@/lib/viajes/modelo";
+import { permisosViajes, resumenViaje, numerosViaje, estadoViaje, estadoPago, pagoEnDop, fechaLarga, rd, ESTADOS_VIAJE, hoyISO, fechaCorta, palabraViaje } from "@/lib/viajes/modelo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,7 +24,7 @@ export async function POST(request, { params }) {
   if (!EMAIL_REGEX.test(correo)) return NextResponse.json({ error: "Ese correo no es válido." }, { status: 400 });
 
   const { data: vrow } = await supabase.from("viajes").select("*").eq("id", params.id).maybeSingle();
-  if (!vrow) return NextResponse.json({ error: "Viaje no encontrado" }, { status: 404 });
+  if (!vrow) return NextResponse.json({ error: "Buceo no encontrado" }, { status: 404 });
   const v = filaAViaje(vrow);
   const { data: insRows } = await supabase.from("viajes_inscripciones").select("*").eq("viaje_id", v.id);
   const inscripciones = (insRows || []).map(filaAIns);
@@ -65,7 +65,7 @@ export async function POST(request, { params }) {
 
   const html = `<div style="font-family:Arial,sans-serif;color:#1a2733;max-width:680px">
     <div style="background:#4ebae8;color:#06324f;padding:16px 18px;border-radius:10px 10px 0 0">
-      <div style="font-size:11px;font-weight:800;letter-spacing:.12em">REPORTE DEL VIAJE</div>
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em">REPORTE DEL ${palabraViaje(v).toUpperCase()}</div>
       <div style="font-size:20px;font-weight:800">${h(v.nombre)}</div>
       <div style="font-size:13px">${h(fechaLarga(v.fecha))} · ${h(v.salida)}</div>
     </div>
@@ -82,7 +82,7 @@ export async function POST(request, { params }) {
   const { error } = await resend.emails.send({
     from: process.env.REPORT_EMAIL_FROM || "Gus Dive <onboarding@resend.dev>",
     to: [correo],
-    subject: `Reporte del viaje: ${v.nombre} (${fechaCorta(v.fecha)})`,
+    subject: `Reporte del ${palabraViaje(v)}: ${v.nombre} (${fechaCorta(v.fecha)})`,
     html,
   });
   if (error) return NextResponse.json({ error: error?.message || "No se pudo enviar" }, { status: 500 });

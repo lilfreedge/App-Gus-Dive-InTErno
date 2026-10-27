@@ -21,7 +21,7 @@ export async function POST(request) {
   const k = await llavesPush(s);
   const origen = new URL(request.url).origin;
   webpush.setVapidDetails(origen.startsWith("https:") ? origen : "mailto:avisos@gusdivecenter.com", k.publica, k.privada);
-  const carga = JSON.stringify({ title: "Gus Dive · Viajes/Buceos", body: "Así te van a llegar los avisos de los viajes.", url: "/viajes-buceos", tag: "prueba" });
+  const carga = JSON.stringify({ title: "Gus Dive · Buceos", body: "Así te van a llegar los avisos de los buceos.", url: "/viajes-buceos", tag: "prueba" });
   let ok = 0;
   for (const sub of subs) {
     try {

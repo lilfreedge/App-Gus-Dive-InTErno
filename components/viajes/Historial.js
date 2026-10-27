@@ -17,6 +17,7 @@ import {
   equipoViaje,
   textoEquipo,
   resumenTalla,
+  palabraViaje,
 } from "@/lib/viajes/modelo";
 import { Chip, Atras, IconoWA } from "./Piezas";
 import { BitacoraLista } from "./Viaje";
@@ -30,7 +31,7 @@ export function Historial({ db, p, ir }) {
       <h1 className="page-title">Historial</h1>
       <div className="vj-tabs">
         <button className={`vj-tab${tab === "viajes" ? " sel" : ""}`} onClick={() => setTab("viajes")}>
-          Viajes pasados ({pasados.length})
+          Buceos pasados ({pasados.length})
         </button>
         {p.bitacora && (
           <button className={`vj-tab${tab === "mov" ? " sel" : ""}`} onClick={() => setTab("mov")}>
@@ -72,7 +73,7 @@ export function Historial({ db, p, ir }) {
       {tab === "mov" && p.bitacora && (
         <>
           <div className="hint-text" style={{ marginBottom: 8 }}>
-            Cada movimiento de todos los viajes: quién, cuándo y qué cambió (antes → después). Solo tú y los administradores.
+            Cada movimiento de todos los buceos: quién, cuándo y qué cambió (antes → después). Solo tú y los administradores.
           </div>
           <BitacoraLista db={db} mostrarViaje />
         </>
@@ -133,7 +134,7 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
         <div className="vj-rep-head">
           <img src="/logo-gus-icon.png" alt="Gus" />
           <div>
-            <div className="vj-rep-k">REPORTE DEL VIAJE</div>
+            <div className="vj-rep-k">REPORTE DEL {palabraViaje(v).toUpperCase()}</div>
             <div className="vj-rep-t">{v.nombre}</div>
             <div className="vj-rep-s">
               {fechaLarga(v.fecha)} · {v.salida}
@@ -308,7 +309,7 @@ export function ReporteEquipo({ db, id, ir, avisar }) {
           </span>
         ))}
       </div>
-      {eq.grupos.length === 0 && <div className="card hint-text">Nadie ha pedido equipo en este viaje.</div>}
+      {eq.grupos.length === 0 && <div className="card hint-text">Nadie ha pedido equipo en este {palabraViaje(v)}.</div>}
       {eq.grupos.map((g) => (
         <div key={g.prov} className="vj-reporte vj-rep-equipo">
           <div className="vj-rep-head">

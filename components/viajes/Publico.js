@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PREGUNTAS, fechaLarga, rd, soloDigitos, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos, palabraViaje } from "@/lib/viajes/modelo";
+import { PREGUNTAS, fechaLarga, rd, soloDigitos, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos, palabraViaje, tallasPara } from "@/lib/viajes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "./Piezas";
 import { IconCheck, IconClip, IconCalendar, IconClock, IconLock, IconChat } from "@/components/icons";
@@ -9,6 +9,7 @@ import { IconCheck, IconClip, IconCalendar, IconClock, IconLock, IconChat } from
 // V42 -- Lo que ve el buzo en el link de inscripción (maqueta-viajes-v2).
 // Se identifica con su cédula o pasaporte; el celular queda para escribirle.
 const VACIO = { nombre: "", cel: "", correo: "", agencia: "", cert: "" };
+const TALLAS_VACIAS = { bcd: "", wetsuit: "", chapaletas: "" };
 
 async function api(cuerpo) {
   const r = await fetch("/api/viajes/publico", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo) });
@@ -85,14 +86,14 @@ export default function PublicoViaje({ v, tienda }) {
   const [pila, setPila] = useState([]); // pasos anteriores, para "← Atrás"
   const [tipoDoc, setTipoDoc] = useState("cedula");
   const [doc, setDoc] = useState("");
-  const [buzo, setBuzo] = useState(null); // { corto, primer, cel, tieneTallas }
+  const [buzo, setBuzo] = useState(null); // { corto, primer, cel, tallasGuardadas }
   const [vincularId, setVincularId] = useState(null);
   const [nuevo, setNuevo] = useState(VACIO);
   const [candidatos, setCandidatos] = useState([]);
   const [opcion, setOpcion] = useState(opcionesPagan[0]?.id || "");
   const [donde, setDonde] = useState(v.equipo?.donde ? "" : null);
   const [piezas, setPiezas] = useState([]);
-  const [tallas, setTallas] = useState({ bcd: "", chapaletas: "" });
+  const [tallas, setTallas] = useState(TALLAS_VACIAS);
   const [extras, setExtras] = useState([]);
   const [resp, setResp] = useState({});
   const [acepto, setAcepto] = useState(false);
@@ -115,7 +116,9 @@ export default function PublicoViaje({ v, tienda }) {
   const o = v.opciones.find((x) => x.id === opcion) || opcionesPagan[0];
   const eq = v.equipo || { modo: "no" };
   const preguntaEquipo = eq.modo === "si" && (!eq.soloConOpcion || o?.conEquipo) && (!eq.donde || ["gus", "alla"].includes(donde));
-  const pideTallas = preguntaEquipo && piezas.some((p) => /BCD|chaleco|Wetsuit|Traje|Chapaletas|Aletas/i.test(p)) && !buzo?.tieneTallas;
+  // V47: solo la talla de lo que marcó (y que no tengamos ya guardada).
+  const tallasPedir = preguntaEquipo ? tallasPara(piezas).filter((t) => !buzo?.tallasGuardadas?.[t.k]) : [];
+  const pideTallas = tallasPedir.length > 0;
   const total = (o && !o.noPaga ? precioDop(v, o) : 0) + extras.reduce((a, id) => a + (v.extras.find((e) => e.id === id)?.dop || 0), 0);
   const nombreActual = buzo ? buzo.corto : nombreCorto(nuevo.nombre || "");
   // V45: "buceo" en vez de "viaje"; "viaje" solo para los que tienen hotel (Monte Cristi).
@@ -188,7 +191,7 @@ export default function PublicoViaje({ v, tienda }) {
 
   function validarViaje() {
     if (eq.donde && !donde) return "Indícanos qué harás con el equipo.";
-    if (pideTallas && (!tallas.bcd || !tallas.chapaletas)) return "Indica tus tallas para reservarte el equipo.";
+    if (tallasPedir.some((t) => !tallas[t.k])) return "Escoge tus tallas para reservarte el equipo.";
     const falta = (v.preguntas || []).find((k) => k !== "conQuien" && !resp[k]);
     // Pedido: quitar "Falta contestar"; el aviso es la pregunta que falta.
     if (falta) return PREGUNTAS.find((x) => x.k === falta)?.t || "Falta contestar una pregunta.";
@@ -211,7 +214,7 @@ export default function PublicoViaje({ v, tienda }) {
         opcion,
         donde,
         piezas: preguntaEquipo ? piezas : [],
-        tallas: pideTallas ? tallas : null,
+        tallas: pideTallas ? Object.fromEntries(tallasPedir.map((t) => [t.k, tallas[t.k]])) : null,
         extras,
         respuestas: resp,
         acepto,
@@ -233,7 +236,7 @@ export default function PublicoViaje({ v, tienda }) {
     setVincularId(null);
     setNuevo(VACIO);
     setPiezas([]);
-    setTallas({ bcd: "", chapaletas: "" });
+    setTallas(TALLAS_VACIAS);
     setExtras([]);
     setResp({});
     setDonde(eq.donde ? "" : null);
@@ -437,7 +440,7 @@ export default function PublicoViaje({ v, tienda }) {
                     className="pb-op"
                     onClick={() => {
                       setVincularId(c.id);
-                      setBuzo({ corto: c.corto, primer: c.corto.split(" ")[0], tieneTallas: false });
+                      setBuzo({ corto: c.corto, primer: c.corto.split(" ")[0], tallasGuardadas: {} });
                       ir("viaje");
                     }}
                   >
@@ -537,9 +540,20 @@ export default function PublicoViaje({ v, tienda }) {
                       )}
                     </div>
                     {pideTallas && (
-                      <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                        <input className="pb-input" value={tallas.bcd} onChange={(e) => setTallas({ ...tallas, bcd: e.target.value.toUpperCase() })} placeholder="Talla BCD (S, M, L…)" />
-                        <input className="pb-input" value={tallas.chapaletas} onChange={(e) => setTallas({ ...tallas, chapaletas: e.target.value })} placeholder="Talla chapaletas" />
+                      <div className="pb-tallas">
+                        {tallasPedir.map((t) => (
+                          <label key={t.k}>
+                            <span>{t.t}</span>
+                            <select className="pb-input" value={tallas[t.k]} onChange={(e) => setTallas({ ...tallas, [t.k]: e.target.value })}>
+                              <option value="">Escoge…</option>
+                              {t.ops.map((o) => (
+                                <option key={o.v} value={o.v}>
+                                  {o.t}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ))}
                       </div>
                     )}
                   </>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { fechaLarga, formatoCel, formatoCedula, rd, soloDigitos, estadoViaje, ESTADOS_VIAJE, nuevoIdLocal } from "@/lib/viajes/modelo";
+import { fechaLarga, formatoCel, formatoCedula, rd, soloDigitos, estadoViaje, ESTADOS_VIAJE, nuevoIdLocal, TALLAS } from "@/lib/viajes/modelo";
 import { Chip, Atras, CampoCel, Buscar } from "./Piezas";
 
 const AGENCIAS = ["PADI", "SSI", "SNSI", "Raid", "NAUI", "Otra", "No es buzo (snorkel)"];
@@ -67,10 +67,20 @@ function FormBuzo({ b, p, guardar, cancelar, nuevo }) {
         </div>
         <div>
           <label>Tallas: BCD / wetsuit / chapaletas</label>
+          {/* V47: en lista, igual que en el link. Si tenía una talla escrita
+              a mano que no está en la lista, se sigue viendo. */}
           <div style={{ display: "flex", gap: 6 }}>
-            <input value={f.bcd} onChange={(e) => set("bcd", e.target.value.toUpperCase())} placeholder="BCD" />
-            <input value={f.wetsuit} onChange={(e) => set("wetsuit", e.target.value.toUpperCase())} placeholder="Wetsuit" />
-            <input value={f.chapaletas} onChange={(e) => set("chapaletas", e.target.value)} placeholder="Chap." />
+            {TALLAS.map((t) => (
+              <select key={t.k} value={f[t.k]} onChange={(e) => set(t.k, e.target.value)} title={t.t} style={{ minWidth: 0, flex: 1 }}>
+                <option value="">{t.k === "bcd" ? "BCD" : t.k === "wetsuit" ? "Wetsuit" : "Chap."}</option>
+                {f[t.k] && !t.ops.some((o) => o.v === f[t.k]) && <option value={f[t.k]}>{f[t.k]}</option>}
+                {t.ops.map((o) => (
+                  <option key={o.v} value={o.v}>
+                    {t.k === "chapaletas" ? o.v : o.t}
+                  </option>
+                ))}
+              </select>
+            ))}
           </div>
         </div>
         <div>
@@ -281,9 +291,9 @@ export function FichaBuzo({ db, ops, id, p, ir }) {
           )}
         </div>
       )}
-      <div className="section-title">Sus viajes ({viajes.length})</div>
+      <div className="section-title">Sus buceos ({viajes.length})</div>
       <div className="card vj-lista">
-        {viajes.length === 0 && <div className="hint-text" style={{ padding: 14 }}>Todavía no ha ido a ningún viaje.</div>}
+        {viajes.length === 0 && <div className="hint-text" style={{ padding: 14 }}>Todavía no ha ido a ningún buceo.</div>}
         {viajes.map(({ x, v }) => {
           const ev = estadoViaje(v);
           return (

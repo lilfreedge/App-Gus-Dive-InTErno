@@ -12,6 +12,20 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V47",
+    fecha: "27 de octubre, 2026",
+    titulo: "El app se llama Buceos, y las tallas salen solo para lo que el buzo marca, en lista",
+    descripcion:
+      "El app Viajes/Buceos ahora se llama Buceos (en la pantalla de escoger app, arriba, en Accesos a apps, en Administración, en los correos y en las notificaciones). En el link de inscripción, al escoger el equipo que le falta, solo sale la talla de lo que marcó: BCD, wetsuit o chapaletas, cada una con su nombre y en lista (BCD y wetsuit: XS, S, M, L, XL, XXL; chapaletas del 36 al 43 con su número en US de hombre y de mujer al lado). Antes salían siempre BCD y chapaletas sin decir cuál era cuál, y no se pedía la del wetsuit. Si ya tenemos guardada una talla del buzo, no se la vuelve a pedir. En la ficha del buzo, las tallas también se escogen de la lista.",
+  },
+  {
+    version: "V46",
+    fecha: "27 de octubre, 2026",
+    titulo: "Viajes/Buceos: \"buceo\" en vez de \"viaje\" también dentro del app",
+    descripcion:
+      "Dentro del app ahora dice \"buceo\" en vez de \"viaje\": + Nuevo buceo, Catálogo de buceos, Próximo buceo, buceos en las próximas 2 semanas, Buceos pasados, Info del buceo, Cerrar / Cancelar / Quitar del buceo, Estadísticas (promedio y buzos por buceo), permisos y avisos (\"Un buceo se llena\"), la ficha de cada buzo (Sus buceos), el reporte y el nombre del calendario (Buceos Gus Dive). Dentro de un viaje con hotel, como Monte Cristi, sigue diciendo \"viaje\". El botón del correo de avisos ahora dice \"Abrir en el app\". El nombre del app (Viajes/Buceos) no cambió.",
+  },
+  {
     version: "V45",
     fecha: "27 de octubre, 2026",
     titulo: "Viajes/Buceos: textos nuevos en lo que ve el buzo, \"buceo\" en vez de \"viaje\" y botón de WhatsApp para el que ya está inscrito",

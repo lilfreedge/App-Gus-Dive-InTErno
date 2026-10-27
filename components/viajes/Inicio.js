@@ -152,7 +152,7 @@ export function ParaHacer({ db, ops, p, ir, personas = [], titulo = "Para hacer"
                 {/* V44 (pregunta de Pipe: "¿de dónde sale esta notificación? ¿cómo llevo
                     control de eso?"): de qué tipo es cada uno. */}
                 {" · "}
-                <span className="vj-rec-origen">{r.general ? "general (todos los viajes)" : r.libre ? "suelto" : "de este viaje"}</span>
+                <span className="vj-rec-origen">{r.general ? "general (todos los buceos)" : r.libre ? "suelto" : "de este buceo"}</span>
               </div>
             </div>
             <Chip c={dp < 0 ? "rojo" : dp === 0 ? "ambar" : "gris"}>{dp < 0 ? `Atrasado ${-dp} d` : dp === 0 ? "Hoy" : fechaCorta(r.fecha)}</Chip>
@@ -160,11 +160,11 @@ export function ParaHacer({ db, ops, p, ir, personas = [], titulo = "Para hacer"
         );
       })}
       <div className="vj-rec-pie">
-        Al marcarlo, se quita solo de ese viaje. Los generales se cambian en{" "}
+        Al marcarlo, se quita solo de ese buceo. Los generales se cambian en{" "}
         <a className="vj-link" onClick={() => ir("calendario")}>
           Calendario
         </a>
-        ; los de cada viaje, en su pestaña Info del viaje (o en el Catálogo, para los próximos).
+        ; los de cada buceo, en su pestaña Info del buceo (o en el Catálogo, para los próximos).
       </div>
     </div>
   );
@@ -201,7 +201,7 @@ export function Inicio(props) {
     .sort((a, b) => String(b.creado).localeCompare(String(a.creado)))
     .slice(0, 6);
   const tiles = [
-    { n: en2semanas, t: en2semanas === 1 ? "viaje en las próximas 2 semanas" : "viajes en las próximas 2 semanas", r: "buceos" },
+    { n: en2semanas, t: en2semanas === 1 ? "buceo en las próximas 2 semanas" : "buceos en las próximas 2 semanas", r: "buceos" },
     ...(p.pagos ? [{ n: sinPagar, t: "pagos pendientes", r: "buceos", alerta: sinPagar > 0 }] : []),
     ...(p.conciliar ? [{ n: porConciliar, t: "pagos por conciliar", r: "buceos", alerta: porConciliar > 0 }] : []),
   ];
@@ -213,7 +213,7 @@ export function Inicio(props) {
         </h1>
         {p.editarViaje && (
           <button className="btn btn-primary vj-btn" onClick={() => ir("nuevo")}>
-            + Nuevo viaje
+            + Nuevo buceo
           </button>
         )}
       </div>
@@ -239,14 +239,14 @@ export function Inicio(props) {
         </>
       )}
       <div className="section-title vj-sec-link">
-        <span>Próximo viaje</span>
+        <span>Próximo buceo</span>
         {proximos.length > 1 && (
           <a className="vj-link" onClick={() => ir("buceos")}>
             Ver los {proximos.length} buceos
           </a>
         )}
       </div>
-      {siguiente ? <TarjetaViaje {...props} v={siguiente} /> : <div className="card hint-text">No hay viajes próximos.</div>}
+      {siguiente ? <TarjetaViaje {...props} v={siguiente} /> : <div className="card hint-text">No hay buceos próximos.</div>}
       {ultimas.length > 0 && (
         <>
           <div className="section-title">Últimas inscripciones</div>
@@ -282,7 +282,7 @@ export function Inicio(props) {
 export function Mas({ p, ir }) {
   const opciones = [
     ...(p.buzos ? [{ r: "buzos", t: "Buzos", I: IconBuzos }] : []),
-    ...(p.editarViaje ? [{ r: "catalogo", t: "Catálogo de viajes", I: IconCatalog }] : []),
+    ...(p.editarViaje ? [{ r: "catalogo", t: "Catálogo de buceos", I: IconCatalog }] : []),
     ...(p.estadisticas ? [{ r: "estadisticas", t: "Estadísticas", I: IconReport }] : []),
     { r: "historial", t: "Historial", I: IconHistory },
   ];
@@ -319,7 +319,7 @@ export function Buceos(props) {
         </h1>
         {p.editarViaje && (
           <button className="btn btn-primary vj-btn" onClick={() => ir("nuevo")}>
-            + Nuevo viaje
+            + Nuevo buceo
           </button>
         )}
       </div>
@@ -338,10 +338,10 @@ export function Buceos(props) {
         {proximos.map((v) => (
           <TarjetaViaje key={v.id} {...props} v={v} />
         ))}
-        {!proximos.length && <div className="card hint-text">No hay viajes próximos.{p.editarViaje ? " Crea uno con “+ Nuevo viaje”." : ""}</div>}
+        {!proximos.length && <div className="card hint-text">No hay buceos próximos.{p.editarViaje ? " Crea uno con “+ Nuevo buceo”." : ""}</div>}
       </div>
       <div className="hint-text" style={{ marginTop: 16 }}>
-        Los viajes cerrados y cancelados están en{" "}
+        Los buceos cerrados y cancelados están en{" "}
         <a className="vj-link" onClick={() => ir("historial")}>
           Historial
         </a>
@@ -432,7 +432,7 @@ export function Calendario(props) {
           })}
         </div>
         <div className="hint-text" style={{ marginTop: 8 }}>
-          <span className="vj-cal-viaje muestra">Viaje</span> <span className="vj-cal-rec muestra">
+          <span className="vj-cal-viaje muestra">Buceo</span> <span className="vj-cal-rec muestra">
             <IconBell size={10} /> Recordatorio
           </span>{" "}
           {p.editarViaje ? "· Toca un día para ponerle un recordatorio." : ""}
@@ -469,10 +469,10 @@ export function Calendario(props) {
         ))}
       </div>
 
-      <div className="section-title">Recordatorios generales (para todos los viajes)</div>
+      <div className="section-title">Recordatorios generales (para todos los buceos)</div>
       <div className="card">
         <div className="hint-text" style={{ marginBottom: 8 }}>
-          Salen solos en cada viaje. Cada viaje del Catálogo además tiene los suyos (ej. Bayahibe: enviar tallas a Alberto el viernes).
+          Salen solos en cada buceo. Cada buceo del Catálogo además tiene los suyos (ej. Bayahibe: enviar tallas a Alberto el viernes).
         </div>
         {generales.map((g) =>
           editGen ? (
@@ -554,7 +554,7 @@ export function Calendario(props) {
       <div className="section-title">Calendario de la tienda (Google Calendar)</div>
       <div className="card">
         <div style={{ fontSize: 14 }}>
-          Los viajes y recordatorios de aquí pueden salir también en el calendario de la tienda. Se agrega <b>una sola vez</b> en Google Calendar
+          Los buceos y recordatorios de aquí pueden salir también en el calendario de la tienda. Se agrega <b>una sola vez</b> en Google Calendar
           (“Otros calendarios” → “Desde URL”) y después se actualiza solo.
         </div>
         <button
@@ -573,7 +573,7 @@ export function Calendario(props) {
         </button>
         <div className="hint-text" style={{ marginTop: 8 }}>
           Los avisos salen en el app (Inicio → “Para hacer”). Google tarda unas horas en refrescar un calendario agregado por link. No compartas
-          este link: quien lo tenga ve los viajes y recordatorios.
+          este link: quien lo tenga ve los buceos y recordatorios.
         </div>
       </div>
 

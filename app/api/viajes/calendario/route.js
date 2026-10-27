@@ -27,7 +27,7 @@ export async function GET(request) {
     libres: (recs || []).filter((r) => r.tipo === "suelto").map((r) => ({ id: r.id, fecha: r.fecha, texto: r.texto, para: r.para || [] })),
     hechos: Object.fromEntries((hechos || []).map((h) => [h.clave, true])),
   };
-  const lineas = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Gus Dive Center//Viajes//ES", "CALSCALE:GREGORIAN", "X-WR-CALNAME:Viajes Gus Dive", "X-WR-TIMEZONE:America/Santo_Domingo"];
+  const lineas = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Gus Dive Center//Viajes//ES", "CALSCALE:GREGORIAN", "X-WR-CALNAME:Buceos Gus Dive", "X-WR-TIMEZONE:America/Santo_Domingo"];
   const ahora = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
   for (const v of db.viajes) {
     const fin = v.finDeSemana ? sumarDias(v.fecha, 3) : sumarDias(v.fecha, 1);

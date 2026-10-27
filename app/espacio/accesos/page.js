@@ -68,7 +68,7 @@ export default async function AccesosAppsPage() {
             </div>
             <div className="stat-card">
               <div className="stat-value">{conAccesoViajes} de {totalUsuarios}</div>
-              <div className="stat-label">Con acceso a Viajes/Buceos</div>
+              <div className="stat-label">Con acceso a Buceos</div>
             </div>
             <div className="stat-card">
               <div className="stat-value">{conAccesoAlquiler} de {totalUsuarios}</div>
