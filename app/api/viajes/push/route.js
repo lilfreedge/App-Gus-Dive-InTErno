@@ -20,7 +20,9 @@ async function quien() {
   } = await supabase.auth.getUser();
   if (!user) return null;
   const { data: p } = await supabase.from("profiles").select("es_titular, permisos").eq("id", user.id).maybeSingle();
-  if (!p || !(p.es_titular || p.permisos?.acceso_viajes)) return null;
+  // V52: también desde App Interno y App Equipos de clientes (la campanita).
+  const pp = p?.permisos || {};
+  if (!p || !(p.es_titular || pp.acceso_viajes || pp.acceso_app_interno || pp.equipos_clientes || pp.rol_operativo)) return null;
   return user;
 }
 

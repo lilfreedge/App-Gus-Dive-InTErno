@@ -30,7 +30,8 @@ const BASE = "/viajes-buceos";
 export function rutaDeUrl(path) {
   const p = (path || "").replace(/^\/viajes-buceos\/?/, "").split("/").filter(Boolean);
   if (!p.length) return "inicio";
-  if (p[0] === "viaje" && p[1]) return p[2] === "reporte" ? `reporte:${p[1]}` : p[2] === "reporte-equipo" ? `reporte-equipo:${p[1]}` : `viaje:${p[1]}${p[2] ? `:${p[2]}` : ""}`;
+  if (p[0] === "viaje" && p[1])
+    return ["reporte", "reporte-equipo", "reporte-asistencia", "reporte-ganancia"].includes(p[2]) ? `${p[2]}:${p[1]}` : `viaje:${p[1]}${p[2] ? `:${p[2]}` : ""}`;
   if (p[0] === "buzos" && p[1]) return `buzo:${p[1]}`;
   if (p[0] === "catalogo" && p[1]) return `plantilla:${p[1]}`;
   return p[0];
@@ -41,6 +42,8 @@ export function urlDeRuta(r) {
   if (k === "viaje") return `${BASE}/viaje/${id}${tab ? `/${tab}` : ""}`;
   if (k === "reporte") return `${BASE}/viaje/${id}/reporte`;
   if (k === "reporte-equipo") return `${BASE}/viaje/${id}/reporte-equipo`;
+  if (k === "reporte-asistencia") return `${BASE}/viaje/${id}/reporte-asistencia`;
+  if (k === "reporte-ganancia") return `${BASE}/viaje/${id}/reporte-ganancia`;
   if (k === "buzo") return `${BASE}/buzos/${id}`;
   if (k === "plantilla") return `${BASE}/catalogo/${id}`;
   return `${BASE}/${k}`;
@@ -280,6 +283,27 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
         fallo(e);
       }
     },
+    // V52 -- Borrar un buceo de verdad (solo el Titular, "32. si"): se van el
+    // buceo, sus inscritos y sus pagos. En la bitácora queda quién, cuándo, el
+    // motivo y cuántos inscritos tenía (la bitácora no se borra).
+    async borrarViaje(v, motivo) {
+      const ins = db.inscripciones.filter((x) => x.viajeId === v.id);
+      const pagados = ins.reduce((a, x) => a + (x.pagos || []).length, 0);
+      try {
+        await log(
+          null,
+          `Borró el ${palabraViaje(v)}: ${v.nombre} (${v.fecha})`,
+          `${ins.length} inscrito${ins.length === 1 ? "" : "s"}${pagados ? `, ${pagados} pago${pagados === 1 ? "" : "s"}` : ""}`,
+          `Borrado. Motivo: ${motivo}`
+        );
+        await guardar(supabase.from("viajes").delete().eq("id", v.id));
+        local((d) => ({ ...d, viajes: d.viajes.filter((x) => x.id !== v.id), inscripciones: d.inscripciones.filter((x) => x.viajeId !== v.id) }));
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
     async guardarPlantilla(c, esNueva) {
       local((d) => ({ ...d, catalogo: esNueva ? [...d.catalogo, c] : d.catalogo.map((x) => (x.id === c.id ? c : x)) }));
       try {
@@ -428,9 +452,11 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
     } else if (ruta.startsWith("reporte-equipo:")) {
       const id = ruta.split(":")[1];
       cuerpo = db.viajes.some((v) => v.id === id) ? <ReporteEquipo {...q} id={id} /> : null;
-    } else if (ruta.startsWith("reporte:")) {
-      const id = ruta.split(":")[1];
-      cuerpo = db.viajes.some((v) => v.id === id) ? <Reporte {...q} id={id} /> : null;
+    } else if (ruta.startsWith("reporte:") || ruta.startsWith("reporte-asistencia:") || ruta.startsWith("reporte-ganancia:")) {
+      // V52: el reporte general, el de asistencia y el de ganancia ("37. ok").
+      const [k, id] = ruta.split(":");
+      const tipo = k === "reporte-asistencia" ? "asistencia" : k === "reporte-ganancia" ? "ganancia" : "general";
+      cuerpo = db.viajes.some((v) => v.id === id) ? <Reporte {...q} id={id} tipo={tipo} /> : null;
     } else if (ruta === "buzos") cuerpo = p.buzos ? <Buzos {...q} /> : <Inicio {...q} />;
     else if (ruta.startsWith("buzo:")) cuerpo = db.buzos.some((b) => b.id === ruta.split(":")[1]) ? <FichaBuzo {...q} id={ruta.split(":")[1]} /> : null;
     else if (ruta === "catalogo") cuerpo = p.editarViaje ? <Catalogo {...q} /> : <Inicio {...q} />;

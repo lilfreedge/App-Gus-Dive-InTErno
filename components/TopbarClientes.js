@@ -8,7 +8,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { NAV_SECTIONS_CLIENTES, SECCIONES_FIJAS_CLIENTES, ordenarSeccionesClientes, puedeVerSeccionClientes } from "@/lib/nav-clientes";
 import { useReorderDrag } from "@/lib/useReorderDrag";
-import { IconLogout, IconGear, IconEdit, IconShuffle, IconLock, IconHistory, IconBell } from "./icons";
+import { IconLogout, IconGear, IconEdit, IconShuffle, IconLock, IconHistory } from "./icons";
+import CampanaNotificaciones from "./CampanaNotificaciones";
 
 // Topbar de App Equipos Clientes (23-sep-2026, primera versión real --
 // hasta ahora esta app era un placeholder "próximamente" con
@@ -116,6 +117,15 @@ export default function TopbarClientes({
           </div>
         </div>
 
+        {/* V52: la campanita al lado del ⚙ (a todos, "29"). */}
+        <div className="topbar-iconos">
+        <CampanaNotificaciones
+          app="clientes"
+          tecnico={tecnico}
+          puedeAdministrar={esTitular || isAdmin}
+          rutaAdmin="/app-clientes/administracion/avisos"
+          rutaTodas="/app-clientes/notificaciones"
+        />
         <div className="gear-wrap" ref={menuRef}>
           <button className="gear-btn" onClick={() => setOpen((o) => !o)} aria-label="Ajustes">
             <IconGear size={18} />
@@ -138,12 +148,6 @@ export default function TopbarClientes({
                   <IconHistory size={15} /> Changelog
                 </Link>
               )}
-              {/* V51: avisos fijos de App Equipos de clientes (Titular y administradores). */}
-              {(esTitular || isAdmin) && (
-                <Link href="/app-clientes/administracion/avisos" className="settings-menu-link" onClick={() => setOpen(false)}>
-                  <IconBell size={15} /> Avisos fijos
-                </Link>
-              )}
               {esTitular && (
                 <Link href="/app-clientes/administracion" className="settings-menu-link" onClick={() => setOpen(false)}>
                   <IconLock size={15} /> Administración
@@ -160,6 +164,7 @@ export default function TopbarClientes({
               </button>
             </div>
           )}
+        </div>
         </div>
       </div>
       <div className="topbar-appname">App Equipos de clientes</div>

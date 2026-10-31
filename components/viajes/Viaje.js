@@ -27,17 +27,14 @@ import {
   hoyISO,
   nuevoIdLocal,
   equipoViaje,
-  textoEquipo,
   resumenTalla,
   puntos,
   palabraViaje,
-  etiquetaGrupo,
-  vcfGrupo,
-  linkGrupoValido,
 } from "@/lib/viajes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { Chip, Modal, IconoWA, CampoCel, Atras, Buscar } from "./Piezas";
-import { IconLink, IconChat, IconReport, IconLock, IconUnlock, IconCheck, IconX, IconClip, IconAlert, IconClipboard, IconPrint } from "@/components/icons";
+import EnviarPdf from "./EnviarPdf";
+import { IconLink, IconReport, IconLock, IconUnlock, IconCheck, IconX, IconClip, IconAlert, IconClipboard, IconPrint } from "@/components/icons";
 
 const nombreDe = (db, id) => db.buzos.find((b) => b.id === id)?.nombre || "";
 const comprobanteNuevo = (x) => (x.comprobantes || []).some((c) => !c.visto);
@@ -47,11 +44,12 @@ const comprobanteNuevo = (x) => (x.comprobantes || []).some((c) => !c.visto);
 // =====================================================================
 export function Viaje(props) {
   const { db, ops, p, id, tab, ir, avisar } = props;
-  const [grupoAbierto, setGrupoAbierto] = useState(false);
   const v = db.viajes.find((x) => x.id === id);
   const r = resumenViaje(db, v);
   const ev = estadoViaje(v);
   const cerrado = ev === "cerrado" || ev === "cancelado";
+  const yaPaso = ev === "realizado" || ev === "cerrado";
+  const [repAbierto, setRepAbierto] = useState(false);
   // V46: "buceo" en vez de "viaje" ("viaje" solo los que tienen hotel, como Monte Cristi).
   const P = palabraViaje(v);
   const tabs = [
@@ -91,20 +89,34 @@ export function Viaje(props) {
             <button className="btn secondary vj-btn" onClick={() => copiar(link, "Link de inscripción copiado")}>
               <IconLink size={16} /> Copiar link
             </button>
-            {p.grupo && (
-              <button className="btn secondary vj-btn" onClick={() => setGrupoAbierto(true)}>
-                <IconoWA on /> Grupo de WhatsApp
-              </button>
-            )}
-            <button className="btn secondary vj-btn" onClick={() => copiar((v.mensajeGrupo || "").replace("[día]", fechaLarga(v.fecha)), "Mensaje para el grupo copiado")}>
-              <IconChat size={16} /> Mensaje para el grupo
-            </button>
           </>
         )}
-        {grupoAbierto && <GrupoWA {...q} cerrar={() => setGrupoAbierto(false)} />}
-        <button className="btn secondary vj-btn" onClick={() => ir(`reporte:${v.id}`)}>
-          <IconReport size={16} /> Reporte
-        </button>
+        {/* V52: "Reporte" abre las opciones (maqueta-v52-nota.html, "37. ok").
+            El del proveedor sigue en la pestaña Equipo ("38. ... quizás sea
+            mejor que esté en otro lado"). */}
+        <div className="vj-rep-wrap">
+          <button className="btn secondary vj-btn" onClick={() => setRepAbierto((o) => !o)}>
+            <IconReport size={16} /> Reporte ▾
+          </button>
+          {repAbierto && (
+            <div className="vj-rep-menu">
+              <button type="button" onClick={() => ir(`reporte:${v.id}`)}>
+                <b>General</b>
+                <span>Inscritos, pagos y equipo, para imprimir o mandar por correo.</span>
+              </button>
+              <button type="button" disabled={!yaPaso} onClick={() => ir(`reporte-asistencia:${v.id}`)}>
+                <b>Asistencia</b>
+                <span>{yaPaso ? "Quién fue y quién no fue." : `Sale cuando el ${P} ya pasó.`}</span>
+              </button>
+              {p.numeros && (
+                <button type="button" disabled={!yaPaso} onClick={() => ir(`reporte-ganancia:${v.id}`)}>
+                  <b>Ganancia</b>
+                  <span>{yaPaso ? "Lo que entró, lo que costó y lo que quedó." : `Sale cuando el ${P} ya pasó.`}</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         {p.editarViaje && ev === "abierto" && (
           <button className="btn secondary vj-btn" onClick={() => cambiarViaje({ estado: "cerrado_insc" }, "Cerró la inscripción", "Abierta", "Cerrada")}>
             <IconLock size={16} /> Cerrar inscripción
@@ -205,6 +217,38 @@ function Cierre({ db, v, r, p, ir, cambiarViaje, rol }) {
 }
 
 // ------------------------------------------------------------- inscritos
+// V52 -- Tarjeta arriba de Inscritos con el listado para el proveedor
+// (maqueta-v52-preguntas.html, "38. Me gusta el B. Cambia 'EQUIPO PARA EL
+// PROVEEDOR' a 'REPORTE DE LISTADO DE BUZOS PARA PROVEEDOR'"). Sale mientras
+// el buceo no ha pasado; "Ver todo" abre la pestaña Equipo.
+function TarjetaProveedor({ db, v, ir, avisar }) {
+  const eq = equipoViaje(db, v);
+  const reps = eq.reportes.filter((g) => g.prov !== "Gus" && g.total > 0);
+  if (!reps.length) return null;
+  return reps.map((g) => {
+    const sinTalla = g.filas.filter((f) => f.piezas.some((p) => p.falta)).length;
+    return (
+      <div key={g.prov} className="vj-prov">
+        <div className="vj-prov-k">Reporte de listado de buzos para proveedor</div>
+        <div className="vj-prov-t">
+          {g.prov} · {g.cuantos}
+        </div>
+        <div className="vj-prov-s">
+          {g.filas.length ? `${g.filas.length} necesita${g.filas.length > 1 ? "n" : ""} equipo` : "Nadie necesita equipo"}
+          {g.totales.length > 0 && `: ${g.totales.map((t) => `${t.n} ${t.pz}`).join(" · ")}`}
+          {sinTalla > 0 && <span className="falta"> · {sinTalla === 1 ? "a 1 le falta la talla" : `a ${sinTalla} les falta la talla`}</span>}
+        </div>
+        <div className="vj-prov-btns">
+          <EnviarPdf v={v} g={g} avisar={avisar} className="btn secondary vj-btn" />
+          <button className="btn secondary vj-btn" onClick={() => ir(`viaje:${v.id}:equipo`)}>
+            Ver todo
+          </button>
+        </div>
+      </div>
+    );
+  });
+}
+
 function Inscritos(props) {
   const { db, ops, v, r, p, ev, cerrado } = props;
   const P = palabraViaje(v);
@@ -236,6 +280,7 @@ function Inscritos(props) {
 
   return (
     <>
+      {v.equipo.modo === "si" && !pasado && <TarjetaProveedor {...props} />}
       <div className="vj-resumen">
         <div>
           <b>{r.buzos.length}</b>
@@ -301,6 +346,23 @@ function Inscritos(props) {
               <button className="vj-fila-main" onClick={() => setAbierto(x.id)}>
                 <div className="vj-fila-nombre">
                   {b.nombre}
+                  {/* V52 (nota: "que se pueda ver el número de contacto de los
+                      buzos inscritos, justo al lado de su nombre"; "36. Ponlo
+                      más pequeño ... al tocarlo te lleva a WhatsApp"). */}
+                  {b.cel && (
+                    <span
+                      role="link"
+                      tabIndex={0}
+                      className="vj-tel"
+                      title="Escribirle por WhatsApp"
+                      onClick={(ev2) => {
+                        ev2.stopPropagation();
+                        window.open(`https://wa.me/${numeroWhatsApp(b.cel)}`, "_blank", "noopener");
+                      }}
+                    >
+                      {formatoCel(b.cel)}
+                    </span>
+                  )}
                 </div>
                 <div className="hint-text">{sub.join(" · ") || formatoCel(b.cel)}</div>
               </button>
@@ -373,127 +435,6 @@ function Inscritos(props) {
       )}
       {abierto && <PanelInscrito {...props} x={db.inscripciones.find((y) => y.id === abierto)} cerrar={() => setAbierto(null)} cambiar={cambiar} />}
     </>
-  );
-}
-
-// ------------------------------------------------------------- grupo de WhatsApp
-// V48 -- Pidió las dos opciones: bajar los contactos para meterlos ellos mismos
-// al grupo, y el link del grupo para los que se inscriban después.
-const linkInvitacion = (v, b) =>
-  `https://wa.me/${numeroWhatsApp(b.cel)}?text=${encodeURIComponent(`Hola ${String(b.nombre || "").split(" ")[0]}, este es el link del grupo de WhatsApp de ${v.nombre} del ${fechaLarga(v.fecha)}\n${String(v.linkGrupo).trim()}`)}`;
-
-function GrupoWA({ db, ops, v, p, cambiarViaje, cerrar, avisar }) {
-  const [link, setLink] = useState(v.linkGrupo || "");
-  const [marcando, setMarcando] = useState(false);
-  const ins = db.inscripciones.filter((x) => x.viajeId === v.id && x.estado === "inscrito");
-  const buzoDe = (x) => db.buzos.find((b) => b.id === x.buzoId) || { nombre: "—", cel: "" };
-  const buzos = ins.filter((x) => x.rol !== "staff");
-  const faltan = buzos.filter((x) => !x.grupo);
-  const sinCel = (lista) => lista.filter((x) => !buzoDe(x).cel).length;
-  const et = etiquetaGrupo(v);
-  const guardado = linkGrupoValido(v.linkGrupo);
-
-  function bajar(lista) {
-    const texto = vcfGrupo(
-      v,
-      lista.map((x) => buzoDe(x))
-    );
-    const url = URL.createObjectURL(new Blob([texto], { type: "text/vcard;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${et}.vcf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
-    avisar(`Bajaste ${lista.length - sinCel(lista)} contacto${lista.length - sinCel(lista) === 1 ? "" : "s"}`);
-  }
-  async function marcarTodos() {
-    for (const x of ins.filter((y) => !y.grupo)) await ops.cambiarIns(x, { grupo: true }, `Grupo de WhatsApp: ${buzoDe(x).nombre}`, "No", "Sí");
-    setMarcando(false);
-    avisar("Todos marcados en el grupo");
-  }
-  const guardarLink = () => {
-    const t = link.trim();
-    if (t && !linkGrupoValido(t)) return avisar("Ese link no es de un grupo de WhatsApp (empieza con https://chat.whatsapp.com/)");
-    cambiarViaje({ linkGrupo: t }, "Link del grupo de WhatsApp", v.linkGrupo ? "Tenía" : "—", t ? "Puesto" : "Quitado");
-    avisar(t ? "Link del grupo guardado" : "Link del grupo quitado");
-  };
-
-  return (
-    <Modal titulo="Grupo de WhatsApp" sub={`${v.nombre} · ${fechaLarga(v.fecha)}`} cerrar={cerrar}>
-      <div className="vj-gw-paso">
-        <div className="vj-gw-t">1. Meter a los inscritos</div>
-        <div className="hint-text">
-          Baja los contactos y ábrelos en tu celular para guardarlos todos de una vez. Después, en WhatsApp, crea el grupo (o entra a “Añadir participantes”) y busca <b>“{et}”</b>. Salen todos juntos.
-        </div>
-        <div className="vj-gw-botones">
-          <button className="btn btn-primary vj-btn" disabled={!faltan.length} onClick={() => bajar(faltan)}>
-            Bajar contactos de los que faltan ({faltan.length})
-          </button>
-          {faltan.length !== buzos.length && (
-            <button className="btn secondary vj-btn" disabled={!buzos.length} onClick={() => bajar(buzos)}>
-              Todos los inscritos ({buzos.length})
-            </button>
-          )}
-        </div>
-        {sinCel(faltan) > 0 && <div className="hint-text" style={{ marginTop: 6 }}>{sinCel(faltan)} no tiene{sinCel(faltan) === 1 ? "" : "n"} celular guardado y no sale{sinCel(faltan) === 1 ? "" : "n"} en el archivo.</div>}
-        <div style={{ marginTop: 10 }}>
-          {marcando ? (
-            <div className="vj-gw-confirmar">
-              <span>¿Marcar a todos como que ya están en el grupo?</span>
-              <button className="btn btn-primary vj-mini" onClick={marcarTodos}>
-                Sí, marcar
-              </button>
-              <button className="btn secondary vj-mini" onClick={() => setMarcando(false)}>
-                No
-              </button>
-            </div>
-          ) : (
-            <button className="btn secondary vj-mini" disabled={!ins.some((x) => !x.grupo)} onClick={() => setMarcando(true)}>
-              <IconCheck size={14} /> Marcar todos en el grupo
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="vj-gw-paso">
-        <div className="vj-gw-t">2. Link del grupo (para los que se inscriban después)</div>
-        <div className="hint-text">
-          En WhatsApp, en la info del grupo, toca “Invitar al grupo mediante enlace” y copia el enlace. Pégalo aquí. Los que se inscriban por el link lo ven al terminar, y se lo puedes mandar a cada uno.
-        </div>
-        <div className="vj-gw-link">
-          <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://chat.whatsapp.com/…" />
-          <button className="btn btn-primary vj-mini" disabled={link.trim() === (v.linkGrupo || "")} onClick={guardarLink}>
-            {link.trim() ? "Guardar" : "Quitar"}
-          </button>
-        </div>
-        {guardado && faltan.length > 0 && (
-          <>
-            <div className="hint-text" style={{ margin: "10px 0 4px" }}>
-              Mandarle el link a los que faltan
-            </div>
-            <div className="vj-gw-lista">
-              {faltan.map((x) => {
-                const b = buzoDe(x);
-                return (
-                  <div key={x.id} className="vj-gw-fila">
-                    <span>{b.nombre}</span>
-                    {b.cel ? (
-                      <a className="btn secondary vj-mini" href={linkInvitacion(v, b)} target="_blank" rel="noreferrer">
-                        <IconoWA on /> Mandar link
-                      </a>
-                    ) : (
-                      <span className="hint-text">sin celular</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
-    </Modal>
   );
 }
 
@@ -640,11 +581,6 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
             <input type="checkbox" checked={x.grupo} disabled={!p.grupo || ro} onChange={(ev2) => cambiar(x, { grupo: ev2.target.checked }, "Grupo de WhatsApp", x.grupo ? "Sí" : "No", ev2.target.checked ? "Sí" : "No")} />
             {x.grupo ? "Ya está en el grupo" : "Todavía no está en el grupo"}
           </label>
-          {!x.grupo && linkGrupoValido(v.linkGrupo) && b?.cel && (
-            <a className="btn secondary vj-mini" style={{ marginTop: 8, display: "inline-flex", gap: 6, alignItems: "center", textDecoration: "none" }} href={linkInvitacion(v, b)} target="_blank" rel="noreferrer">
-              <IconoWA on /> Mandarle el link del grupo
-            </a>
-          )}
         </>
       )}
 
@@ -1012,8 +948,13 @@ function AgregarAMano({ db, ops, v, listo }) {
 }
 
 // ------------------------------------------------------------- info del viaje
-function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir }) {
+function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir, yo, avisar }) {
   const [cancelando, setCancelando] = useState(false);
+  // V52: borrar el buceo (solo el Titular).
+  const [motivoBorrar, setMotivoBorrar] = useState("");
+  const [confirmaBorrar, setConfirmaBorrar] = useState("");
+  const [borrando, setBorrando] = useState(false);
+  const nIns = db.inscripciones.filter((x) => x.viajeId === v.id && x.estado !== "quitado").length;
   const P = palabraViaje(v);
   const [motivo, setMotivo] = useState("");
   const [nuevoRec, setNuevoRec] = useState(null);
@@ -1160,9 +1101,17 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir }) {
       </div>
 
       <div className="section-title">Grupo de WhatsApp</div>
+      {/* V52: el botón de copiar el mensaje vive aquí, no arriba ("43. info del buceo, B"). */}
       <div className="card">
-        <div className="hint-text" style={{ marginBottom: 6 }}>
-          Mensaje para el grupo
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 6 }}>
+          <span className="hint-text" style={{ margin: 0 }}>
+            Mensaje para el grupo
+          </span>
+          {v.mensajeGrupo && (
+            <button className="btn secondary vj-mini" onClick={() => copiarMensajeGrupo(v, avisar)}>
+              <IconClipboard size={14} /> Copiar
+            </button>
+          )}
         </div>
         <div style={{ fontSize: 14, whiteSpace: "pre-wrap" }}>{(v.mensajeGrupo || "—").replace("[día]", fechaLarga(v.fecha))}</div>
       </div>
@@ -1216,8 +1165,56 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir }) {
           </div>
         </>
       )}
+      {yo?.esTitular && (
+        <>
+          <div className="section-title">Borrar el {P}</div>
+          <div className="vj-borrar">
+            <b>
+              Se borra todo: el {P}, {nIns === 1 ? "su inscrito" : `sus ${nIns} inscritos`} y sus pagos.
+            </b>
+            <div className="hint-text" style={{ color: "#8a2020" }}>
+              No se puede deshacer. Solo te sale a ti. Si lo que quieres es que no se dé, usa &quot;Cancelar&quot;, que guarda los pagos como abono.
+            </div>
+            <label>
+              Motivo <span className="req">*</span>
+            </label>
+            <input value={motivoBorrar} onChange={(e) => setMotivoBorrar(e.target.value)} placeholder="Ej. Era de prueba, lo creé dos veces…" />
+            <label>Escribe BORRAR para confirmar</label>
+            <input value={confirmaBorrar} onChange={(e) => setConfirmaBorrar(e.target.value)} placeholder="BORRAR" />
+            <button
+              className="btn danger"
+              type="button"
+              style={{ marginTop: 12, width: "auto" }}
+              disabled={borrando || !motivoBorrar.trim() || confirmaBorrar.trim().toUpperCase() !== "BORRAR"}
+              onClick={async () => {
+                setBorrando(true);
+                const ok = await ops.borrarViaje(v, motivoBorrar.trim());
+                setBorrando(false);
+                if (ok) {
+                  avisar?.(`${P === "viaje" ? "Viaje" : "Buceo"} borrado`);
+                  ir("buceos");
+                }
+              }}
+            >
+              {borrando ? "Borrando…" : `Borrar el ${P}`}
+            </button>
+          </div>
+        </>
+      )}
     </>
   );
+}
+
+function copiarMensajeGrupo(v, avisar) {
+  const t = (v.mensajeGrupo || "").replace("[día]", fechaLarga(v.fecha));
+  try {
+    navigator.clipboard
+      .writeText(t)
+      .then(() => avisar("Mensaje para el grupo copiado"))
+      .catch(() => avisar(t));
+  } catch {
+    avisar(t);
+  }
 }
 
 // ------------------------------------------------------------- equipo
@@ -1225,23 +1222,24 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir }) {
 // operador un par de días antes: el total por pieza y talla, cada buzo con
 // lo que alquila, y aviso si a alguien le falta la talla. Se manda por
 // WhatsApp, se copia o se saca el reporte (imprimir / PDF).
+// V52 -- Ahora es el "listado de buzos para proveedor" ("38"): salen todos
+// los buzos; los que necesitan equipo arriba con lo que necesitan y los
+// demás abajo (equipo propio, equipo de Gus o guía).
 function Equipo({ db, v, ir, avisar }) {
   const eq = equipoViaje(db, v);
-  const staff = db.inscripciones.filter((x) => x.viajeId === v.id && x.estado === "inscrito" && x.rol === "staff");
-  const copiar = (t) => {
-    try {
-      navigator.clipboard?.writeText(t).catch(() => {});
-    } catch {}
-    avisar("Copiado: ya lo puedes pegar en WhatsApp");
-  };
-  const wa = (t) => window.open(`https://wa.me/?text=${encodeURIComponent(t)}`, "_blank");
-  const prov = v.equipo.proveedor || v.operador || "el operador";
-  if (!eq.grupos.length)
-    return (
+  if (!eq.reportes.some((g) => g.total > 0))
+    return eq.reportes.length ? (
+      <div className="card">
+        <b>Todavía no hay inscritos.</b>
+        <div className="hint-text" style={{ marginTop: 4 }}>
+          Cuando se inscriban, aquí sale el listado de buzos para {eq.reportes[0].prov}, con lo que necesita cada uno.
+        </div>
+      </div>
+    ) : (
       <div className="card">
         <b>Nadie ha pedido equipo todavía.</b>
         <div className="hint-text" style={{ marginTop: 4 }}>
-          Cuando alguien escoja equipo al inscribirse (o se lo pongas en su ficha), aquí sale lo que hace falta para mandárselo a {prov}.
+          Cuando alguien escoja equipo al inscribirse (o se lo pongas en su ficha), aquí sale lo que hace falta.
         </div>
       </div>
     );
@@ -1256,76 +1254,102 @@ function Equipo({ db, v, ir, avisar }) {
           </span>
         </div>
       )}
-      {eq.grupos.map((g) => (
+      {eq.reportes.map((g) => (
         <div key={g.prov} className="card vj-eq">
           <div className="vj-eq-head">
             <div>
-              <div className="vj-eq-k">{g.prov === "Gus" ? "Equipo que pone" : "Equipo para"}</div>
+              <div className="vj-eq-k">{g.prov === "Gus" ? "Equipo que pone" : "Listado de buzos para"}</div>
               <div className="vj-eq-t">{g.prov}</div>
               <div className="hint-text">
-                {g.filas.length === 1 ? "1 buzo alquila" : `${g.filas.length} buzos alquilan`}
+                {g.prov === "Gus"
+                  ? g.filas.length === 1
+                    ? "1 buzo alquila"
+                    : `${g.filas.length} buzos alquilan`
+                  : `${g.cuantos} · ${g.filas.length ? `${g.filas.length} necesita${g.filas.length > 1 ? "n" : ""} equipo` : "nadie necesita equipo"}`}
               </div>
             </div>
             <div className="vj-eq-btns">
-              <button className="btn btn-primary vj-btn" onClick={() => wa(textoEquipo(v, g))}>
-                <IconoWA on /> Enviar por WhatsApp
-              </button>
-              <button className="btn secondary vj-btn" onClick={() => copiar(textoEquipo(v, g))}>
-                <IconClipboard size={16} /> Copiar
-              </button>
+              {/* V52: manda el PDF, no el texto, y sin "Copiar" ("42"). */}
+              <EnviarPdf v={v} g={g} avisar={avisar} />
               <button className="btn secondary vj-btn" onClick={() => ir(`reporte-equipo:${v.id}`)}>
                 <IconPrint size={16} /> Reporte / PDF
               </button>
             </div>
           </div>
-          <div className="vj-eq-tot">
-            {g.totales.map((t) => (
-              <div key={t.pz}>
-                <b>{t.n}</b>
-                <span>{t.pz}</span>
-                {resumenTalla(t) && <small className={t.faltan ? "falta" : ""}>{resumenTalla(t)}</small>}
-              </div>
-            ))}
-          </div>
-          <div style={{ overflowX: "auto" }}>
-            <table className="vj-tabla">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Buzo</th>
-                  {g.totales.map((t) => (
-                    <th key={t.pz}>{t.pz}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {g.filas.map((f, i) => (
-                  <tr key={f.id}>
-                    <td>{i + 1}</td>
-                    <td>
-                      <a className="vj-link" onClick={() => ir(`buzo:${f.buzoId}`)}>
-                        {f.nombre}
-                      </a>
-                    </td>
-                    {g.totales.map((t) => {
-                      const pz = f.piezas.find((p) => p.pz === t.pz);
-                      return (
-                        <td key={t.pz} className={!pz ? "propio" : pz.falta ? "falta" : ""}>
-                          {!pz ? "—" : pz.talla ? pz.talla : pz.falta ? "¿talla?" : <IconCheck size={15} />}
+          {g.totales.length > 0 && (
+            <div className="vj-eq-tot">
+              {g.totales.map((t) => (
+                <div key={t.pz}>
+                  <b>{t.n}</b>
+                  <span>{t.pz}</span>
+                  {resumenTalla(t) && <small className={t.faltan ? "falta" : ""}>{resumenTalla(t)}</small>}
+                </div>
+              ))}
+            </div>
+          )}
+          {g.filas.length > 0 && (
+            <>
+              {g.otros.length > 0 && <div className="vj-eq-sec">Necesitan equipo ({g.filas.length})</div>}
+              <div style={{ overflowX: "auto" }}>
+                <table className="vj-tabla">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Buzo</th>
+                      {g.totales.map((t) => (
+                        <th key={t.pz}>{t.pz}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {g.filas.map((f, i) => (
+                      <tr key={f.id}>
+                        <td>{i + 1}</td>
+                        <td>
+                          <a className="vj-link" onClick={() => ir(`buzo:${f.buzoId}`)}>
+                            {f.nombre}
+                          </a>
                         </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        {g.totales.map((t) => {
+                          const pz = f.piezas.find((p) => p.pz === t.pz);
+                          return (
+                            <td key={t.pz} className={!pz ? "propio" : pz.falta ? "falta" : ""}>
+                              {!pz ? "—" : pz.talla ? pz.talla : pz.falta ? "¿talla?" : <IconCheck size={15} />}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+          {g.otros.length > 0 && (
+            <>
+              <div className="vj-eq-sec">{g.filas.length ? `No necesitan equipo (${g.otros.length})` : `Buzos (${g.otros.length})`}</div>
+              <table className="vj-tabla">
+                <tbody>
+                  {g.otros.map((f, i) => (
+                    <tr key={f.id}>
+                      <td style={{ width: 28 }}>{g.filas.length + i + 1}</td>
+                      <td>
+                        <a className="vj-link" onClick={() => ir(`buzo:${f.buzoId}`)}>
+                          {f.nombre}
+                        </a>
+                      </td>
+                      <td className="propio vj-nota-eq">
+                        {f.nota}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
         </div>
       ))}
-      <div className="hint-text" style={{ marginTop: 4 }}>
-        {eq.propio === 1 ? "1 buzo lleva su equipo." : `${eq.propio} buzos llevan su equipo.`}
-        {staff.length > 0 && ` Guías: ${staff.map((x) => nombreDe(db, x.buzoId)).join(", ")}.`} “—” = no lo alquila.
-      </div>
+      {eq.grupos.length > 0 && <div className="hint-text" style={{ marginTop: 4 }}>“—” = no lo alquila.</div>}
     </>
   );
 }

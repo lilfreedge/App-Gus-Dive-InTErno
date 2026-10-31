@@ -2315,6 +2315,13 @@ html[data-theme="dark"] .badge-nitrox { background: rgba(44, 158, 91, 0.1); colo
 /* V40 -- recordatorio de los o-rings (menú del técnico e informe). */
 .tec-recordatorio { background: #fff6e0; border: 1px solid #f0d49b; color: #7a5210; border-radius: 10px; padding: 8px 11px; font-size: 14px; font-weight: 600; line-height: 1.4; margin-bottom: 8px; }
 html[data-theme="dark"] .tec-recordatorio { background: #3a2f17; border-color: #6b5320; color: #f0d49b; }
+/* V52: recordatorio de o-rings con etiquetas ("40. 2B"). */
+.oring-dos { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: baseline; }
+.oring-et { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.oring-et.inc { background: #e9f8ef; color: #1d6b3d; border: 1px solid #bfe8cf; }
+.oring-et.cob { background: #fdece9; color: #b33a22; border: 1px solid #f3cfc6; }
+html[data-theme="dark"] .oring-et.inc { background: #12291c; color: #7fd6a2; border-color: #22492f; }
+html[data-theme="dark"] .oring-et.cob { background: #3a241d; color: #ff9478; border-color: #4a2c26; }
 
 /* ===== V42: Viajes/Buceos ===== */
 /* ---- el app ---- */
@@ -2712,6 +2719,20 @@ a.pb-btn { text-align: center; box-sizing: border-box; }
 .vj-eq-tot span { font-size: 13px; font-weight: 700; color: #06324f; }
 .vj-eq-tot small { font-size: 12px; color: #33607f; margin-top: 2px; }
 .vj-eq-tot small.falta { color: var(--rojo); font-weight: 700; }
+/* V52: listado para el proveedor ("38") */
+.vj-nota-eq { text-align: right; white-space: nowrap; font-size: 12.5px; }
+.vj-eq-sec { font-size: 12px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--texto-suave); margin: 14px 0 4px; }
+.vj-prov { background: #e3f4fc; border: 1px solid #a9dcf3; border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; }
+.vj-prov-k { font-size: 11.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: #06567f; }
+.vj-prov-t { font-size: 16px; font-weight: 800; color: #06324f; margin-top: 2px; }
+.vj-prov-s { font-size: 13.5px; color: #2d566d; margin-top: 2px; }
+.vj-prov-s .falta { color: #9a5b0e; font-weight: 700; }
+.vj-prov-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.vj-prov-btns .btn { margin: 0; background: #fff; }
+html[data-theme="dark"] .vj-prov { background: #12283a; border-color: #23506f; }
+html[data-theme="dark"] .vj-prov-k, html[data-theme="dark"] .vj-prov-t { color: #9fd6f2; }
+html[data-theme="dark"] .vj-prov-s { color: #b5cfe0; }
+html[data-theme="dark"] .vj-prov-btns .btn { background: var(--tarjeta); }
 .vj-rep-equipo + .vj-rep-equipo { margin-top: 16px; }
 @media print { .vj-rep-equipo + .vj-rep-equipo { page-break-before: always; margin-top: 0; } }
 /* V44: avisos de Viajes (campanita, aviso al momento, ⚙ › Notificaciones) */
@@ -2826,20 +2847,6 @@ a.mant-pend-chip:hover { border-color: var(--rojo); }
 .pb-cupo.lleno { background: #fff1e6; color: #b23c17; border: 2px solid #e8590c; font-size: 14px; font-weight: 800; padding: 5px 12px; display: inline-flex; align-items: center; gap: 6px; }
 .pb-lleno { display: flex; gap: 10px; align-items: flex-start; background: #fff1e6; border: 2px solid #e8590c; color: #8a2f12; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; font-size: 14.5px; line-height: 1.4; }
 .pb-lleno svg { flex: none; color: #e8590c; margin-top: 1px; }
-/* V48: grupo de WhatsApp (contactos + link) */
-.vj-gw-paso { padding: 12px 0; border-bottom: 1px solid var(--borde); }
-.vj-gw-paso:last-child { border-bottom: none; padding-bottom: 0; }
-.vj-gw-paso:first-child { padding-top: 0; }
-.vj-gw-t { font-weight: 800; margin-bottom: 4px; }
-.vj-gw-botones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.vj-gw-confirmar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
-.vj-gw-link { display: flex; gap: 8px; margin-top: 8px; }
-.vj-gw-link input { flex: 1; min-width: 0; }
-.vj-gw-lista { display: grid; gap: 6px; }
-.vj-gw-fila { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
-.vj-gw-fila a { display: inline-flex; gap: 6px; align-items: center; text-decoration: none; white-space: nowrap; }
-.pb-btn.wa-sec { background: #fff; color: #1f8f4e; border: 1.5px solid #1f8f4e; }
-.pb-btn.wa-sec svg { vertical-align: -3px; margin-right: 6px; }
 /* V47: solo las tallas de lo que marcó, en lista y con su nombre */
 .pb-tallas { display: grid; gap: 8px; margin-top: 10px; }
 .pb-tallas label { display: block; min-width: 0; margin: 0; padding: 0; }
@@ -2928,3 +2935,52 @@ a.mant-pend-chip:hover { border-color: var(--rojo); }
 .manual-franja { display: flex; align-items: center; gap: 10px; background: #e8f1f8; border: 1px solid #b9d3e6; border-radius: 10px; padding: 10px 12px; margin-top: 8px; color: #1f3b4d; font-weight: 700; font-size: 15px; text-decoration: none; }
 .manual-franja .manual-ic { width: 22px; height: 28px; font-size: 7px; border-radius: 4px; }
 .manual-franja .abrir { margin-left: auto; color: var(--azul-claro); font-size: 14px; white-space: nowrap; }
+
+/* ---------- V52 ---------- */
+.inf-falta { background: #fff8e1; border: 1px solid #f0d49b; color: #6b4a07; border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 12px; }
+.inf-listo { background: rgba(44, 158, 91, 0.1); border: 1px solid rgba(44, 158, 91, 0.5); color: #1d6b3d; border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 12px; font-weight: 700; }
+.vj-borrar { border: 2px solid var(--rojo); border-radius: 12px; background: var(--error-fondo); padding: 12px 14px; color: #8a2020; }
+.list-item.toca { cursor: pointer; position: relative; padding-right: 22px; }
+.list-item.toca::after { content: "›"; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 22px; color: var(--texto-suave); }
+.list-item.toca:hover { background: var(--superficie-suave); }
+.mov-fila { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--superficie-suave); font-size: 14.5px; }
+.mov-fila span { color: var(--texto-suave); flex-shrink: 0; }
+.mov-fila b { text-align: right; font-weight: 600; }
+.tec-atraso { display: inline-block; margin-left: 8px; font-size: 13px; font-weight: 800; color: var(--rojo); background: var(--error-fondo); border-radius: 999px; padding: 2px 9px; vertical-align: 3px; white-space: nowrap; }
+/* V52: la campanita de App Interno y App Equipos de clientes */
+.topbar-iconos { display: flex; gap: 6px; align-items: center; }
+.campana-btn { position: relative; }
+.campana-n { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: #d93a2b; color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid var(--azul); box-sizing: border-box; }
+.campana-menu { width: 360px; max-width: calc(100vw - 24px); padding: 0; overflow: hidden; }
+.campana-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px 8px; color: var(--texto); }
+.campana-head b { font-size: 15px; }
+.campana-link { background: none; border: 0; color: var(--azul-claro); font-weight: 700; font-size: 12.5px; cursor: pointer; font-family: inherit; padding: 0; }
+.campana-lista { max-height: 300px; overflow-y: auto; border-top: 1px solid var(--borde); }
+.campana-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid var(--borde); text-decoration: none; color: var(--texto); font-size: 14px; }
+.campana-item:hover { background: var(--superficie-suave); }
+.campana-item.nuevo { background: #eef8fd; }
+.campana-item b { display: block; }
+.campana-txt { display: block; color: var(--texto); }
+.campana-item small { display: block; color: var(--texto-suave); font-size: 12px; margin-top: 2px; }
+.campana-dot { width: 8px; height: 8px; border-radius: 50%; background: #2b8ad6; margin-top: 6px; flex-shrink: 0; }
+.campana-vacio { padding: 12px; color: var(--texto-suave); font-size: 13.5px; }
+.campana-sec { font-size: 11.5px; font-weight: 800; letter-spacing: 0.04em; color: var(--texto-suave); padding: 8px 12px 4px; background: var(--superficie-suave); }
+.campana-avisos { padding: 8px 12px; max-height: 260px; overflow-y: auto; }
+.campana-avisos .avisos-fijos { margin-bottom: 0; }
+.campana-avisos .af { font-size: 13.5px; padding: 8px 10px; }
+.campana-pie { display: block; text-align: center; padding: 11px; border-top: 1px solid var(--borde); font-weight: 700; color: var(--azul-claro); font-size: 14px; text-decoration: none; }
+.campana-pie.gris { font-weight: 600; color: var(--texto-suave); }
+/* V52: el folio al final, chiquito y en gris ("39. A"; nota: "que el número
+   de folio se vea mucho más discreto ... en todos lados del app"). */
+.folio-fin { font-size: 12px; color: #9aa7b1; font-weight: 500; white-space: nowrap; }
+.vj-fila-nombre:has(.vj-tel) { flex-wrap: wrap; column-gap: 6px; row-gap: 0; }
+.vj-tel { font-size: 11.5px; font-weight: 500; color: var(--azul-claro); white-space: nowrap; cursor: pointer; }
+.vj-tel:hover { text-decoration: underline; }
+.vj-rep-wrap { position: relative; display: inline-block; }
+.vj-rep-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16); width: 300px; max-width: calc(100vw - 32px); overflow: hidden; }
+.vj-rep-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--superficie-suave); padding: 11px 14px; cursor: pointer; font-family: inherit; color: var(--texto); }
+.vj-rep-menu button:first-child { border-top: 0; }
+.vj-rep-menu button:hover:not(:disabled) { background: var(--superficie-suave); }
+.vj-rep-menu button:disabled { opacity: 0.5; cursor: default; }
+.vj-rep-menu b { display: block; font-size: 14.5px; }
+.vj-rep-menu span { display: block; font-size: 12.5px; color: var(--texto-suave); margin-top: 2px; }

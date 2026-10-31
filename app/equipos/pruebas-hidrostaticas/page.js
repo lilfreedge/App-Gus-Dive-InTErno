@@ -207,7 +207,6 @@ export default async function PruebasHidrostaticasPage() {
                 <div className="list-item" key={p.id} data-buscar="">
                   <div className="list-item-top">
                     <span className="list-item-title">
-                      <span className="folio-tag">#{p.folio}</span>
                       Prueba hidrostática
                       <span className={p.resultado === "Aprobado" ? "badge badge-verde" : "badge badge-rojo"}>
                         {p.resultado}
@@ -225,7 +224,7 @@ export default async function PruebasHidrostaticasPage() {
                     </div>
                   </div>
                   <div className="list-item-meta">
-                    Fecha de la prueba: <b>{formatMesAnio(p.fecha_prueba)}</b>
+                    Fecha de la prueba: <b>{formatMesAnio(p.fecha_prueba)}</b> <span className="folio-fin">· #{p.folio}</span>
                   </div>
                   {envio && (
                     <div className="list-item-meta">

@@ -9,14 +9,13 @@ import { IconClipboard } from "./icons";
 // también en Movimientos). Sale solo cuando el código se marcó como
 // recibido. `item` es una fila de solicitudes_almacen_items con
 // `solicitud` (folio, quién la pidió, nota) adentro.
-export default function SolicitudRecibidaItem({ item, conIcono = false }) {
+export default function SolicitudRecibidaItem({ item, conIcono = false, onClick = null }) {
   const s = item.solicitud || {};
   return (
-    <div className="list-item" data-buscar="">
+    <div className={`list-item${onClick ? " toca" : ""}`} data-buscar="" onClick={onClick || undefined}>
       <div className="list-item-top">
         <span className="list-item-title">
           {conIcono && <IconClipboard size={14} />}
-          <span className="folio-tag">Solicitud #{s.folio ?? "?"}</span>
           {item.codigo_snapshot}
           <span className="badge">Llegó del almacén</span>
         </span>
@@ -26,6 +25,7 @@ export default function SolicitudRecibidaItem({ item, conIcono = false }) {
         {item.recibido_por_nombre ? `Recibió: ${item.recibido_por_nombre} · ` : ""}
         {formatFecha(item.recibido_at)}
         {s.nombre_usuario_snapshot ? ` · Pidió: ${s.nombre_usuario_snapshot}` : ""}
+        <span className="folio-fin"> · Solicitud #{s.folio ?? "?"}</span>
       </div>
       {item.descripcion_snapshot && conIcono && <div className="list-item-meta">{item.descripcion_snapshot}</div>}
       {s.nota && <div className="list-item-note">{s.nota}</div>}

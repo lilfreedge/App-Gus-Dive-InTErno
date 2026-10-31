@@ -35,11 +35,10 @@ export default function MiActividadClientes({ actividad }) {
                   <div className="list-item" key={`orden-${a.id}`}>
                     <div className="list-item-top">
                       <span className="list-item-title">
-                        <span className="folio-tag">#{a.folio}</span>
                         {a.cliente_nombre_snapshot} — {tipoEquipoLabel(a.tipo_equipo, a.tipo_equipo_otro)}
                       </span>
                     </div>
-                    <div className="list-item-meta">Orden registrada · {formatFecha(a.created_at)}</div>
+                    <div className="list-item-meta">Orden registrada · {formatFecha(a.created_at)} <span className="folio-fin">· #{a.folio}</span></div>
                   </div>
                 );
               }

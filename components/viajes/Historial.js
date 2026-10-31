@@ -15,13 +15,13 @@ import {
   fechaObj,
   hoyISO,
   equipoViaje,
-  textoEquipo,
   resumenTalla,
   palabraViaje,
 } from "@/lib/viajes/modelo";
-import { Chip, Atras, IconoWA } from "./Piezas";
+import { Chip, Atras } from "./Piezas";
 import { BitacoraLista } from "./Viaje";
-import { IconPrint, IconMail, IconClipboard, IconCheck } from "@/components/icons";
+import EnviarPdf from "./EnviarPdf";
+import { IconPrint, IconMail, IconCheck } from "@/components/icons";
 
 export function Historial({ db, p, ir }) {
   const [tab, setTab] = useState("viajes");
@@ -85,7 +85,11 @@ export function Historial({ db, p, ir }) {
 // =====================================================================
 // REPORTE DEL VIAJE
 // =====================================================================
-export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
+// V52: `tipo` "general" | "asistencia" | "ganancia" ("37. ok por ahora sí").
+export function Reporte({ db, p, id, ir, avisar, rol, yo, tipo = "general" }) {
+  const general = tipo === "general";
+  const soloAsistencia = tipo === "asistencia";
+  const soloGanancia = tipo === "ganancia";
   const [correo, setCorreo] = useState(null);
   const [enviando, setEnviando] = useState(false);
   async function enviar() {
@@ -134,7 +138,7 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
         <div className="vj-rep-head">
           <img src="/logo-gus-icon.png" alt="Gus" />
           <div>
-            <div className="vj-rep-k">REPORTE DEL {palabraViaje(v).toUpperCase()}</div>
+            <div className="vj-rep-k">{soloAsistencia ? "REPORTE DE ASISTENCIA" : soloGanancia ? "REPORTE DE GANANCIA" : `REPORTE DEL ${palabraViaje(v).toUpperCase()}`}</div>
             <div className="vj-rep-t">{v.nombre}</div>
             <div className="vj-rep-s">
               {fechaLarga(v.fecha)} · {v.salida}
@@ -142,6 +146,7 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
           </div>
         </div>
         <div className="vj-rep-body">
+          {!soloGanancia && (
           <div className="vj-rep-tiles">
             <div>
               <b>{r.buzos.length}</b>
@@ -160,6 +165,9 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
               <span>staff</span>
             </div>
           </div>
+          )}
+          {general && (
+          <>
           <div className="vj-rep-sec">Datos</div>
           <table className="vj-tabla">
             <tbody>
@@ -193,6 +201,10 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
               )}
             </tbody>
           </table>
+          </>
+          )}
+          {!soloGanancia && (
+          <>
           <div className="vj-rep-sec">Participantes</div>
           <div style={{ overflowX: "auto" }}>
             <table className="vj-tabla">
@@ -202,9 +214,9 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
                   <th>Nombre</th>
                   <th>Opción</th>
                   {pasado && <th>Asistió</th>}
-                  {(p.pagos || p.conciliar) && <th>Pago</th>}
-                  {(p.pagos || p.conciliar) && <th>Pagado</th>}
-                  {p.conciliar && <th>Conciliado</th>}
+                  {general && (p.pagos || p.conciliar) && <th>Pago</th>}
+                  {general && (p.pagos || p.conciliar) && <th>Pagado</th>}
+                  {general && p.conciliar && <th>Conciliado</th>}
                 </tr>
               </thead>
               <tbody>
@@ -219,16 +231,68 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
                       <td>{nombre(x)}</td>
                       <td>{x.rol === "staff" ? "Staff" : o?.nombre}</td>
                       {pasado && <td>{x.asistio ? "Sí" : x.asistio === false ? "No" : "—"}</td>}
-                      {(p.pagos || p.conciliar) && <td>{e.t}</td>}
-                      {(p.pagos || p.conciliar) && <td>{pagado ? rd(pagado) : "—"}</td>}
-                      {p.conciliar && <td>{conc}</td>}
+                      {general && (p.pagos || p.conciliar) && <td>{e.t}</td>}
+                      {general && (p.pagos || p.conciliar) && <td>{pagado ? rd(pagado) : "—"}</td>}
+                      {general && p.conciliar && <td>{conc}</td>}
                     </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
-          {p.numeros && (
+          {soloAsistencia && (
+            <div className="hint-text" style={{ marginTop: 6 }}>
+              Asistieron {ins.filter((x) => x.asistio === true).length} · No vinieron {ins.filter((x) => x.asistio === false).length} · Sin marcar{" "}
+              {ins.filter((x) => x.asistio == null).length}
+            </div>
+          )}
+          </>
+          )}
+          {soloGanancia && p.numeros && (
+            <>
+              <div className="vj-rep-sec">Por opción</div>
+              <table className="vj-tabla">
+                <thead>
+                  <tr>
+                    <th>Opción</th>
+                    <th>Buzos</th>
+                    <th>Entra</th>
+                    <th>Cuesta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {n.filas
+                    .filter((f) => f.n > 0)
+                    .map((f) => (
+                      <tr key={f.o.id}>
+                        <td>{f.o.nombre}</td>
+                        <td>{f.n}</td>
+                        <td>{rd(f.ingreso)}</td>
+                        <td>{f.costo == null ? "—" : rd(f.costo)}</td>
+                      </tr>
+                    ))}
+                  {n.extras > 0 && (
+                    <tr>
+                      <td>Extras</td>
+                      <td></td>
+                      <td>{rd(n.extras)}</td>
+                      <td></td>
+                    </tr>
+                  )}
+                  {n.staff > 0 && (
+                    <tr>
+                      <td>Staff</td>
+                      <td>{n.staff}</td>
+                      <td></td>
+                      <td>{rd(n.costoStaff)}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              {n.sinCosto && <div className="hint-text" style={{ marginTop: 6 }}>Alguna opción no tiene costo puesto (en Números del buceo).</div>}
+            </>
+          )}
+          {(general || soloGanancia) && p.numeros && (
             <>
               <div className="vj-rep-sec">Números</div>
               <table className="vj-tabla">
@@ -269,7 +333,8 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
           </div>
         </div>
       </div>
-      {!p.numeros && (
+      {soloGanancia && !p.numeros && <div className="aviso-box card">Este reporte solo lo ven Pipe y Gugi.</div>}
+      {general && !p.numeros && (
         <div className="hint-text" style={{ marginTop: 8 }}>
           Los números (ganancia) solo salen en el reporte de Pipe y Gugi.
         </div>
@@ -283,12 +348,8 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo }) {
 export function ReporteEquipo({ db, id, ir, avisar }) {
   const v = db.viajes.find((x) => x.id === id);
   const eq = equipoViaje(db, v);
-  const copiar = (t) => {
-    try {
-      navigator.clipboard?.writeText(t).catch(() => {});
-    } catch {}
-    avisar("Copiado: ya lo puedes pegar en WhatsApp");
-  };
+  // V52: con todos los buzos ("38"); el del operador sale aunque nadie le alquile.
+  const reps = eq.reportes.filter((g) => g.total > 0 || g.filas.length > 0);
   return (
     <>
       <div className="no-print">
@@ -298,24 +359,18 @@ export function ReporteEquipo({ db, id, ir, avisar }) {
         <button className="btn btn-primary vj-btn" onClick={() => window.print()}>
           <IconPrint size={16} /> Imprimir / Guardar PDF
         </button>
-        {eq.grupos.map((g) => (
-          <span key={g.prov} style={{ display: "contents" }}>
-            <button className="btn secondary vj-btn" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(textoEquipo(v, g))}`, "_blank")}>
-              <IconoWA on /> WhatsApp{eq.grupos.length > 1 ? ` (${g.prov})` : ""}
-            </button>
-            <button className="btn secondary vj-btn" onClick={() => copiar(textoEquipo(v, g))}>
-              <IconClipboard size={16} /> Copiar{eq.grupos.length > 1 ? ` (${g.prov})` : ""}
-            </button>
-          </span>
+        {/* V52: WhatsApp manda el PDF, y sin "Copiar" ("42"). */}
+        {reps.map((g) => (
+          <EnviarPdf key={g.prov} v={v} g={g} avisar={avisar} className="btn secondary vj-btn" texto={`Enviar por WhatsApp${reps.length > 1 ? ` (${g.prov})` : ""}`} />
         ))}
       </div>
-      {eq.grupos.length === 0 && <div className="card hint-text">Nadie ha pedido equipo en este {palabraViaje(v)}.</div>}
-      {eq.grupos.map((g) => (
+      {reps.length === 0 && <div className="card hint-text">Todavía no hay inscritos en este {palabraViaje(v)}.</div>}
+      {reps.map((g) => (
         <div key={g.prov} className="vj-reporte vj-rep-equipo">
           <div className="vj-rep-head">
             <img src="/logo-gus-icon.png" alt="Gus" />
             <div>
-              <div className="vj-rep-k">{g.prov === "Gus" ? "EQUIPO QUE PONE GUS" : `EQUIPO PARA ${g.prov.toUpperCase()}`}</div>
+              <div className="vj-rep-k">{g.prov === "Gus" ? "EQUIPO QUE PONE GUS" : `LISTADO DE BUZOS PARA ${g.prov.toUpperCase()}`}</div>
               <div className="vj-rep-t">{v.nombre}</div>
               <div className="vj-rep-s">
                 {fechaLarga(v.fecha)} · {v.salida}
@@ -323,7 +378,14 @@ export function ReporteEquipo({ db, id, ir, avisar }) {
             </div>
           </div>
           <div className="vj-rep-body">
-            <div className="vj-rep-sec">Lo que hace falta</div>
+            {g.prov !== "Gus" && (
+              <div className="vj-rep-sec" style={{ marginTop: 0 }}>
+                {/* V52: sin "· N necesitan equipo" ("42. ... quita esto"). */}
+                {g.cuantos}
+              </div>
+            )}
+            {g.totales.length > 0 && <div className="vj-rep-sec">Lo que hace falta</div>}
+            {g.totales.length > 0 && (
             <table className="vj-tabla">
               <tbody>
                 {g.totales.map((t) => (
@@ -337,7 +399,9 @@ export function ReporteEquipo({ db, id, ir, avisar }) {
                 ))}
               </tbody>
             </table>
-            <div className="vj-rep-sec">Por buzo ({g.filas.length})</div>
+            )}
+            {g.filas.length > 0 && <div className="vj-rep-sec">{g.otros.length ? "Necesitan equipo" : "Por buzo"} ({g.filas.length})</div>}
+            {g.filas.length > 0 && (
             <div style={{ overflowX: "auto" }}>
               <table className="vj-tabla">
                 <thead>
@@ -367,6 +431,25 @@ export function ReporteEquipo({ db, id, ir, avisar }) {
                 </tbody>
               </table>
             </div>
+            )}
+            {g.otros.length > 0 && (
+              <>
+                <div className="vj-rep-sec">{g.filas.length ? "No necesitan equipo" : "Buzos"} ({g.otros.length})</div>
+                <table className="vj-tabla">
+                  <tbody>
+                    {g.otros.map((f, i) => (
+                      <tr key={f.id}>
+                        <td style={{ width: 28 }}>{g.filas.length + i + 1}</td>
+                        <td>{f.nombre}</td>
+                        <td className="propio vj-nota-eq">
+                          {f.nota}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
             <div className="vj-rep-pie">Gus Dive Center · {fechaCorta(hoyISO())}</div>
           </div>
         </div>

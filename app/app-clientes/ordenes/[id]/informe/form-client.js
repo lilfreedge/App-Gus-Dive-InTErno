@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
@@ -17,6 +16,7 @@ import BotonImprimir from "@/components/BotonImprimir";
 import EnviarInformeClient from "./enviar-client";
 import { IconLock, IconCheck } from "@/components/icons";
 import ConInfo from "@/components/ConInfo";
+import RecordatorioOrings from "@/components/RecordatorioOrings";
 
 const SECCION_ESTILO = { background: "var(--fondo)", border: "1px solid var(--borde)", borderRadius: 10, padding: 14, marginBottom: 12 };
 const SECCION_LABEL_ESTILO = { fontSize: 11, fontWeight: 700, color: "var(--texto-suave)", textTransform: "uppercase", letterSpacing: 0.3 };
@@ -53,7 +53,6 @@ const TEXTO_SUTIL_ESTILO = { fontSize: 13, color: "var(--texto-suave)" };
 // se dejó. Respuesta a la maqueta: "6. Excelente".
 export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido = "", volver = null, sencillo = false, alGuardar = null, borrador = null }) {
   const supabase = createClient();
-  const router = useRouter();
   const datosBorrador = !orden.informe_mantenimiento && borrador?.datos ? borrador.datos : null;
 
   const [informe, setInforme] = useState(() => ({
@@ -61,10 +60,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
     ...(orden.informe_mantenimiento || datosBorrador?.informe || {}),
   }));
   const [yaGenerado, setYaGenerado] = useState(!!orden.informe_mantenimiento);
-  const [recienGuardado, setRecienGuardado] = useState(false);
   const [vista, setVista] = useState("formulario");
-  const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState("");
 
   function set(campo, valor) {
     setInforme((prev) => ({ ...prev, [campo]: valor }));
@@ -91,61 +87,132 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
           : null
   );
 
-  // V50 -- Se guarda solo mientras el informe no exista todavía.
-  // estadoBorrador: null (nada que decir) | { t: "guardando" } |
-  // { t: "ok", en } | { t: "error" }.
-  const [estadoBorrador, setEstadoBorrador] = useState(() => (datosBorrador ? { t: "ok", en: borrador.actualizado_en } : null));
+  // V52 -- Todo se guarda solo, sin botón ("27. A"; nota "App Gus interno":
+  // "Quita el botón de 'guardar informe'. Necesito que todos los datos a
+  // medida de que uno los vaya agregando se vayan guardando solo"). Mientras
+  // le falte algo, se guarda como borrador (informes_borrador, la ficha dice
+  // "a medias"); cuando tiene lo que hace falta, queda como el informe de la
+  // orden y el cliente ya lo puede ver. Si después se cambia algo, se vuelve
+  // a guardar solo.
+  // estado: null | { t: "guardando" } | { t: "ok", en } | { t: "error" }.
+  const [estado, setEstado] = useState(() => (datosBorrador ? { t: "ok", en: borrador.actualizado_en } : null));
   const borradorActivo = useRef(true); // se apaga si la tabla todavía no existe
   const primeraVez = useRef(true);
-  const guardandoFinal = useRef(false);
-  const timerBorrador = useRef(null);
+  const timer = useRef(null);
   const yoId = useRef(null);
+  const auditado = useRef(false); // una entrada en la bitácora por visita
+  const recomendacionGuardada = useRef(orden.informe_mantenimiento?.recomendacion || null);
+
+  // Lo que le falta para quedar listo.
+  const falta = [];
+  if (sencillo && respuestaOrings === null) falta.push("si cambiaste algún o-ring");
+  if (sencillo && respuestaOrings === "si" && (informe.orings || []).length === 0 && !nuevoOring.trim()) falta.push("cuál o-ring cambiaste");
+  if (informe.aprobado !== true && informe.aprobado !== false) falta.push('"Aprobado para su uso" o "No aprobado"');
+  if (!String(informe.tecnico || "").trim()) falta.push("el técnico que lo hizo");
+  const listo = falta.length === 0;
+
+  function informeFinalDe() {
+    // Lo que el técnico escribió sin tocar "+ Agregar" también cuenta; con "No", no se guardan o-rings.
+    let oringsFinal = informe.orings || [];
+    if (sencillo && respuestaOrings === "si" && nuevoOring.trim()) oringsFinal = [...oringsFinal, nuevoOring.trim()];
+    if (sencillo && respuestaOrings === "no") oringsFinal = [];
+    return {
+      ...informe,
+      orings: oringsFinal,
+      marca: (informe.marca || "").trim(),
+      modelo: (informe.modelo || "").trim(),
+      tecnico: (informe.tecnico || "").trim(),
+      actualizado_en: new Date().toISOString(),
+    };
+  }
+
+  async function guardarBorrador() {
+    if (!borradorActivo.current) return setEstado(null);
+    if (!yoId.current) {
+      const { data } = await supabase.auth.getUser();
+      yoId.current = data?.user?.id || null;
+    }
+    const en = new Date().toISOString();
+    const { error: e } = await supabase.from("informes_borrador").upsert(
+      { orden_id: orden.id, datos: { informe, respuestaOrings, nuevoOring }, actualizado_en: en, actualizado_por: yoId.current, nombre: tecnicoSugerido || "" },
+      { onConflict: "orden_id" }
+    );
+    if (e) {
+      // Sin migration_75.sql la tabla no existe: el borrador no se guarda (y no se dice nada).
+      if (["42P01", "PGRST205", "PGRST204"].includes(e.code) || /does not exist|could not find/i.test(e.message || "")) {
+        borradorActivo.current = false;
+        return setEstado(null);
+      }
+      return setEstado({ t: "error" });
+    }
+    setEstado({ t: "ok", en });
+  }
+
+  async function guardarInforme() {
+    const informeFinal = informeFinalDe();
+    if (!auditado.current) {
+      await registrarCambio(supabase, {
+        tabla: "ordenes_equipos",
+        registroId: orden.id,
+        accion: "editar",
+        datosAnteriores: orden,
+        datosNuevos: { ...orden, informe_mantenimiento: informeFinal },
+      });
+      auditado.current = true;
+    }
+    const { error: err } = await supabase
+      .from("ordenes_equipos")
+      .update({ informe_mantenimiento: informeFinal, updated_at: new Date().toISOString() })
+      .eq("id", orden.id);
+    if (err) return setEstado({ t: "error" });
+
+    // "Recomendación de próximo mantenimiento" -- se guarda también en el
+    // EQUIPO (1-oct-2026, pedido explícito). No bloquea si falla.
+    if ((informeFinal.recomendacion === "6" || informeFinal.recomendacion === "12") && orden.equipo_id && recomendacionGuardada.current !== informeFinal.recomendacion) {
+      try {
+        await supabase
+          .from("equipos_del_cliente")
+          .update({ proximo_mantenimiento_recomendado: sumarMeses(hoyISO(), Number(informeFinal.recomendacion)) })
+          .eq("id", orden.equipo_id);
+        recomendacionGuardada.current = informeFinal.recomendacion;
+      } catch {
+        // No bloquea -- el Informe ya quedó guardado.
+      }
+    }
+    if (!yaGenerado) {
+      setYaGenerado(true);
+      // Ya no hace falta el borrador.
+      try {
+        await supabase.from("informes_borrador").delete().eq("orden_id", orden.id);
+      } catch {
+        // No importa: la ficha solo dice "a medias" si no hay informe.
+      }
+    }
+    setEstado({ t: "ok", en: informeFinal.actualizado_en });
+  }
 
   useEffect(() => {
     if (primeraVez.current) {
       primeraVez.current = false;
       return;
     }
-    if (yaGenerado || !borradorActivo.current || guardandoFinal.current) return;
-    setEstadoBorrador({ t: "guardando" });
-    clearTimeout(timerBorrador.current);
-    timerBorrador.current = setTimeout(async () => {
-      if (guardandoFinal.current) return;
+    // Ya existía y ahora le falta algo (por ejemplo, tocó "Sí" en o-rings y
+    // no escribió cuál): no se guarda hasta que lo complete.
+    if (yaGenerado && !listo) return setEstado(null);
+    setEstado({ t: "guardando" });
+    clearTimeout(timer.current);
+    timer.current = setTimeout(async () => {
       try {
-        if (!yoId.current) {
-          const { data } = await supabase.auth.getUser();
-          yoId.current = data?.user?.id || null;
-        }
-        const en = new Date().toISOString();
-        const { error: e } = await supabase.from("informes_borrador").upsert(
-          {
-            orden_id: orden.id,
-            datos: { informe, respuestaOrings, nuevoOring },
-            actualizado_en: en,
-            actualizado_por: yoId.current,
-            nombre: tecnicoSugerido || "",
-          },
-          { onConflict: "orden_id" }
-        );
-        if (e) {
-          // Sin migration_75.sql la tabla no existe: no se guarda solo y no se dice nada.
-          if (["42P01", "PGRST205", "PGRST204"].includes(e.code) || /does not exist|could not find/i.test(e.message || "")) {
-            borradorActivo.current = false;
-            setEstadoBorrador(null);
-          } else {
-            setEstadoBorrador({ t: "error" });
-          }
-          return;
-        }
-        if (!guardandoFinal.current) setEstadoBorrador({ t: "ok", en });
+        if (listo) await guardarInforme();
+        else await guardarBorrador();
       } catch {
-        setEstadoBorrador({ t: "error" });
+        setEstado({ t: "error" });
       }
     }, 900);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [informe, respuestaOrings, nuevoOring]);
 
-  useEffect(() => () => clearTimeout(timerBorrador.current), []);
+  useEffect(() => () => clearTimeout(timer.current), []);
   function agregarOring() {
     const valor = nuevoOring.trim();
     if (!valor) return;
@@ -154,104 +221,6 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
   }
   function quitarOring(i) {
     setInforme((prev) => ({ ...prev, orings: prev.orings.filter((_, idx) => idx !== i) }));
-  }
-
-  async function generarInforme() {
-    setError("");
-    // Marca/Modelo/No. de serie dejaron de pedirse acá (feedback en vivo,
-    // 29-sep-2026, pedido explícito: "que la marca y modelo de regulador
-    // sean intocables, junto al no. de serie") -- ahora son de solo
-    // lectura, tomados directo del equipo (ver Detalles más abajo), así
-    // que ya no hace falta validarlos aquí: si faltan, hay que corregirlos
-    // en "Editar equipo", no en este formulario.
-    if (informe.aprobado !== true && informe.aprobado !== false) {
-      setError('Indica si el regulador queda "Aprobado para su uso" o "No aprobado".');
-      return;
-    }
-    if (sencillo && respuestaOrings === null) {
-      setError("Contesta si cambiaste algún o-ring (No o Sí).");
-      return;
-    }
-    if (sencillo && respuestaOrings === "si" && (informe.orings || []).length === 0 && !nuevoOring.trim()) {
-      setError("Anota cuál o-ring cambiaste, o toca No.");
-      return;
-    }
-    if (!informe.tecnico.trim()) {
-      setError("Indica el técnico que hizo el mantenimiento.");
-      return;
-    }
-
-    setGuardando(true);
-    // V50: que no se guarde el borrador mientras se guarda el informe de verdad.
-    guardandoFinal.current = true;
-    clearTimeout(timerBorrador.current);
-    let yendose = false;
-    try {
-      // V40: lo que el técnico escribió sin tocar "+ Agregar" también cuenta;
-      // con "No", no se guardan o-rings.
-      let oringsFinal = informe.orings || [];
-      if (sencillo && respuestaOrings === "si" && nuevoOring.trim()) oringsFinal = [...oringsFinal, nuevoOring.trim()];
-      if (sencillo && respuestaOrings === "no") oringsFinal = [];
-      const informeFinal = { ...informe, orings: oringsFinal, marca: informe.marca.trim(), modelo: informe.modelo.trim(), tecnico: informe.tecnico.trim(), actualizado_en: new Date().toISOString() };
-
-      await registrarCambio(supabase, {
-        tabla: "ordenes_equipos",
-        registroId: orden.id,
-        accion: "editar",
-        datosAnteriores: orden,
-        datosNuevos: { ...orden, informe_mantenimiento: informeFinal },
-      });
-
-      const { error: err } = await supabase
-        .from("ordenes_equipos")
-        .update({ informe_mantenimiento: informeFinal, updated_at: new Date().toISOString() })
-        .eq("id", orden.id);
-
-      if (err) throw err;
-
-      // V50: el informe ya está guardado; su borrador ya no hace falta.
-      try {
-        await supabase.from("informes_borrador").delete().eq("orden_id", orden.id);
-      } catch {
-        // No importa: la ficha solo dice "a medias" si no hay informe.
-      }
-      setEstadoBorrador(null);
-
-      // "Recomendación de próximo mantenimiento" -- se guarda también en
-      // el EQUIPO, no solo en este Informe puntual (1-oct-2026, pedido
-      // explícito: "que cada equipo guarde esta info para yo poder
-      // consultar en alguna parte... saber que cliente llamar"). No
-      // bloquea el guardado del Informe si esto llega a fallar -- ya
-      // quedó guardado donde más importa.
-      if ((informeFinal.recomendacion === "6" || informeFinal.recomendacion === "12") && orden.equipo_id) {
-        const fechaRecomendada = sumarMeses(hoyISO(), Number(informeFinal.recomendacion));
-        try {
-          await supabase
-            .from("equipos_del_cliente")
-            .update({ proximo_mantenimiento_recomendado: fechaRecomendada })
-            .eq("id", orden.equipo_id);
-        } catch {
-          // No bloquea -- el Informe ya quedó guardado.
-        }
-      }
-
-      if (sencillo && alGuardar) {
-        // Se queda en "Guardando..." mientras se va (para que no lo toque dos veces).
-        yendose = true;
-        router.push(alGuardar);
-        router.refresh();
-        return;
-      }
-      setInforme(informeFinal);
-      setYaGenerado(true);
-      setRecienGuardado(true);
-      setVista("preview");
-    } catch (e) {
-      guardandoFinal.current = false;
-      setError("No se pudo guardar. Intenta de nuevo.");
-    } finally {
-      if (!yendose) setGuardando(false);
-    }
   }
 
   // La lista de o-rings con su campo para agregar (la usan el formulario de
@@ -304,28 +273,18 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
 
   return (
     <div className="card">
-      {/* V50: si se está guardando solo. */}
-      {!yaGenerado && estadoBorrador && (
+      {/* V50/V52: se guarda solo. */}
+      {estado && vista === "formulario" && (
         <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-          {estadoBorrador.t === "guardando" ? (
+          {estado.t === "guardando" ? (
             <span className="inf-estado">Guardando…</span>
-          ) : estadoBorrador.t === "ok" ? (
-            <span className="inf-estado ok">✓ Guardado · {horaBorrador(estadoBorrador.en)}</span>
+          ) : estado.t === "ok" ? (
+            <span className="inf-estado ok">✓ Guardado · {horaBorrador(estado.en)}</span>
           ) : (
             <span className="inf-estado" style={{ color: "var(--rojo)" }}>
-              No se pudo guardar solo. Revisa el internet.
+              No se pudo guardar. Revisa el internet.
             </span>
           )}
-        </div>
-      )}
-      {recienGuardado && volver && (
-        <div className="success-box no-print" style={{ marginTop: 0, marginBottom: 12 }}>
-          <b>✓ Informe guardado.</b>
-          <a href={volver.href} style={{ display: "block", marginTop: 8 }}>
-            <button type="button" className="btn btn-primary" style={{ marginTop: 0, width: "auto" }}>
-              {volver.texto}
-            </button>
-          </a>
         </div>
       )}
       {/* Arreglo de impresión (feedback sobre v40, pedido explícito) -- a
@@ -407,8 +366,9 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
 
           <div style={SECCION_ESTILO_SUTIL}>
             <div style={SECCION_LABEL_ESTILO_SUTIL}>Estado inicial del regulador</div>
-            <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}><b>Daños visibles:</b> {orden.regulador_danos_visibles || "Ninguno"}</div>
-            <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Problemas reportados por cliente:</b> {orden.regulador_problemas_reportados || "Ninguno reportado"}</div>
+            {/* V52: primero lo que reportó el cliente ("15"). */}
+            <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}><b>Problemas reportados por cliente:</b> {orden.regulador_problemas_reportados || "Ninguno reportado"}</div>
+            <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Daños visibles:</b> {orden.regulador_danos_visibles || "Ninguno"}</div>
           </div>
 
           </>
@@ -440,9 +400,8 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
           {sencillo && (
             <div style={SECCION_ESTILO}>
               <div style={SECCION_LABEL_ESTILO}>¿Cambiaste algún o-ring?</div>
-              <div className="tec-recordatorio" style={{ marginTop: 6 }}>
-                Los o-rings van incluidos en el mantenimiento. Si cambiaste alguno, tiene que salir en el informe: anótalo aquí.
-              </div>
+              {/* V52: con etiquetas ("40. 2B"). */}
+              <RecordatorioOrings style={{ marginTop: 6 }} />
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                 {[
                   { v: "no", label: "No" },
@@ -467,6 +426,10 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
             </div>
           )}
 
+          {/* V52: el técnico ya no le deja nota al cliente (nota "App Gus
+              interno": "Quita la opción de que [el técnico] pueda dejarle una
+              nota al cliente. Siento que habrán errores o cosas mal escritas"). */}
+          {!sencillo && (
           <div style={SECCION_ESTILO}>
             {/* Renombrada a "Nota" (1-oct-2026, pedido explícito, vinculada
                 con la "Nota" del Seguimiento -- ver informeDefault() en
@@ -475,7 +438,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 Informe para esta orden) -- el campo interno sigue
                 llamándose `observacion` para no tocar lo ya guardado. */}
             {/* V40: para el técnico, "Nota para el cliente" (la de su menú es interna). */}
-            <div style={SECCION_LABEL_ESTILO}>{sencillo ? "Nota para el cliente" : "Nota"}</div>
+            <div style={SECCION_LABEL_ESTILO}>Nota</div>
             <textarea rows={3} value={informe.observacion} onChange={(e) => set("observacion", e.target.value)} style={{ marginTop: 8 }} />
             {/* Botón para traer la Nota del Seguimiento a mano (feedback
                 sobre v50, pedido explícito: "no sale en el informe") -- la
@@ -502,6 +465,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 </button>
               )}
           </div>
+          )}
 
           {!sencillo && (
           <>
@@ -592,22 +556,30 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
             )}
           </div>
 
-          {error && <div className="error-box">{error}</div>}
-
-          {sencillo ? (
-            <button type="button" className="tec-btn verde" onClick={generarInforme} disabled={guardando} style={{ marginTop: 14 }}>
-              <IconCheck size={22} /> {guardando ? "Guardando..." : "Guardar informe"}
-            </button>
+          {/* V52: sin botón. Dice qué falta, o que ya está listo. */}
+          {listo ? (
+            <div className="inf-listo">
+              ✓ Informe listo. El cliente ya lo puede ver. Si cambias algo, se guarda solo.
+              {sencillo && alGuardar && (
+                <a href={alGuardar} style={{ display: "block", marginTop: 10, textDecoration: "none" }}>
+                  <span className="tec-btn azul" style={{ marginTop: 0 }}>
+                    <IconCheck size={20} /> Volver a mis trabajos
+                  </span>
+                </a>
+              )}
+              {!sencillo && volver && (
+                <a href={volver.href} style={{ display: "block", marginTop: 8 }}>
+                  <button type="button" className="btn btn-primary" style={{ marginTop: 0, width: "auto" }}>
+                    {volver.texto}
+                  </button>
+                </a>
+              )}
+            </div>
           ) : (
-            <ConInfo
-              style={{ marginTop: 10 }}
-              filaStyle={{ gap: 8 }}
-              texto="Se genera un PDF con este contenido para entregar al cliente."
-            >
-              <button type="button" className="btn btn-primary" onClick={generarInforme} disabled={guardando} style={{ flex: 1, width: "auto", marginTop: 0 }}>
-                {guardando ? "Guardando..." : "Generar informe (PDF)"}
-              </button>
-            </ConInfo>
+            <div className="inf-falta">
+              Falta: <b>{falta.join(", ")}</b>. Cuando {falta.length === 1 ? "lo marques" : "los marques"}, el informe queda listo solo.
+              {yaGenerado && " (Mientras tanto se queda como estaba.)"}
+            </div>
           )}
         </>
       ) : (

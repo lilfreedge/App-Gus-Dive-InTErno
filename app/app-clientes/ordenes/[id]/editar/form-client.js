@@ -1922,7 +1922,9 @@ export default function EditarSeguimientoForm({
               rows={2}
               value={notasTecnico}
               onChange={(e) => setNotasTecnico(e.target.value)}
-              placeholder="Opcional -- alguna recomendación o pendiente para que el buzo lo tenga en cuenta"
+              /* V52 ("13. ... habría que quitarle el mensaje que tiene porque es
+                 como dirigido al cliente"). */
+              placeholder="Opcional"
             />
             {errorNotas && <div className="error-box" style={{ marginTop: 8 }}>{errorNotas}</div>}
           </div>

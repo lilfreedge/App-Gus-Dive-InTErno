@@ -130,7 +130,6 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
               <div className="list-item" key={m.id} data-buscar="">
                 <div className="list-item-top">
                   <span className="list-item-title">
-                    <span className="folio-tag">#{m.folio}</span>
                     Mantenimiento de regulador
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -145,7 +144,7 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
                   </div>
                 </div>
                 <div className="list-item-meta">
-                  {m.full_name} · {formatFecha(m.created_at)}
+                  {m.full_name} · {formatFecha(m.created_at)} <span className="folio-fin">· #{m.folio}</span>
                 </div>
                 <div className="list-item-meta">{detalleMantenimientoTexto(m)}</div>
                 {/* V50: componentes que cambiaron en este mantenimiento. */}

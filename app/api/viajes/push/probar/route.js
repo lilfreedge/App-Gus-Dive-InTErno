@@ -21,7 +21,20 @@ export async function POST(request) {
   const k = await llavesPush(s);
   const origen = new URL(request.url).origin;
   webpush.setVapidDetails(origen.startsWith("https:") ? origen : "mailto:avisos@gusdivecenter.com", k.publica, k.privada);
-  const carga = JSON.stringify({ title: "Gus Dive · Buceos", body: "Así te van a llegar los avisos de los buceos.", url: "/viajes-buceos", tag: "prueba" });
+  // V52: también se prueba desde App Interno y App Equipos de clientes.
+  const desde = (() => {
+    try {
+      return new URL(request.headers.get("referer") || "").pathname;
+    } catch {
+      return "";
+    }
+  })();
+  const deBuceos = desde.startsWith("/viajes-buceos");
+  const carga = JSON.stringify(
+    deBuceos
+      ? { title: "Gus Dive · Buceos", body: "Así te van a llegar los avisos de los buceos.", url: "/viajes-buceos", tag: "prueba" }
+      : { title: "Gus Dive", body: "Así te van a llegar las notificaciones.", url: desde || "/", tag: "prueba" }
+  );
   let ok = 0;
   for (const sub of subs) {
     try {

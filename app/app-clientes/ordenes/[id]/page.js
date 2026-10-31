@@ -348,7 +348,7 @@ export default async function FichaOrdenPage({ params }) {
                       {puedeAsignar && (
                         <BotonAvisarWhatsApp
                           estilo="link"
-                          texto={aviso ? "Volver a avisar" : "Avisar en el grupo"}
+                          texto={aviso ? "Volver a avisar" : "Avisar en el grupo Taller Gus Dive"}
                           orden={o}
                           tecnico={
                             tecnicos.find((t) => t.id === o.tecnico_asignado_id) || {

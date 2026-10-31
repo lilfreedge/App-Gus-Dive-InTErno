@@ -8,7 +8,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { seccionesVisibles, ordenarSecciones, NAV_SECTIONS, SECCIONES_FIJAS } from "@/lib/nav";
 import { useReorderDrag } from "@/lib/useReorderDrag";
-import { IconLogout, IconGear, IconEdit, IconHistory, IconUsers, IconBook, IconShuffle, IconBell } from "./icons";
+import { IconLogout, IconGear, IconEdit, IconHistory, IconUsers, IconBook, IconShuffle } from "./icons";
+import CampanaNotificaciones from "./CampanaNotificaciones";
 
 export default function TopbarClient({
   nombre,
@@ -107,6 +108,15 @@ export default function TopbarClient({
           </div>
         </div>
 
+        {/* V52: la campanita al lado del ⚙ (a todos, "29"). */}
+        <div className="topbar-iconos">
+        <CampanaNotificaciones
+          app="interno"
+          tecnico={!esTitular && !isAdmin && !!permisos?.rol_tecnico}
+          puedeAdministrar={esTitular || isAdmin}
+          rutaAdmin="/admin/avisos"
+          rutaTodas="/notificaciones"
+        />
         <div className="gear-wrap" ref={menuRef}>
           <button
             className="gear-btn"
@@ -142,12 +152,6 @@ export default function TopbarClient({
                   <IconBook size={15} /> Manual
                 </Link>
               )}
-              {/* V51: avisos fijos de App Interno (Titular y administradores). */}
-              {(esTitular || isAdmin) && (
-                <Link href="/admin/avisos" className="settings-menu-link" onClick={() => setOpen(false)}>
-                  <IconBell size={15} /> Avisos fijos
-                </Link>
-              )}
               {esTitular && (
                 <Link
                   href="/admin/usuarios"
@@ -173,6 +177,7 @@ export default function TopbarClient({
               </button>
             </div>
           )}
+        </div>
         </div>
       </div>
       <div className="topbar-appname">App Interno</div>

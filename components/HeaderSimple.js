@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { IconGear, IconLogout, IconLock, IconCheck } from "./icons";
+import CampanaNotificaciones from "./CampanaNotificaciones";
 
 // Header liviano para pantallas fuera de "un espacio" (selector de espacio,
 // placeholder de App Clientes) -- mismo look navy que el topbar normal
@@ -30,7 +31,9 @@ import { IconGear, IconLogout, IconLock, IconCheck } from "./icons";
 // (el menú del técnico pone "Mi perfil" y "Entrar al app completo").
 // V40: `inicio` -- a dónde lleva el logo (por defecto, "¿A dónde quieres
 // entrar?"; el técnico ahí mismo vuelve a su menú).
-export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAprobacion = 0, sinBarra = false, enlaces = [], inicio = "/espacio" }) {
+// V52 -- `campana`: { app, appsAvisos, tecnico, rutaTodas } para poner la
+// campanita al lado del ⚙ (la pantalla del técnico, "29. a todos les sale").
+export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAprobacion = 0, sinBarra = false, enlaces = [], inicio = "/espacio", campana = null }) {
   const router = useRouter();
   const supabase = createClient();
   const [open, setOpen] = useState(false);
@@ -73,6 +76,8 @@ export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAp
           </div>
         </div>
 
+        <div className="topbar-iconos">
+        {campana && <CampanaNotificaciones {...campana} />}
         <div className="gear-wrap" ref={menuRef}>
           <button
             className="gear-btn"
@@ -107,6 +112,7 @@ export default function HeaderSimple({ nombre, etiqueta, esTitular, pendientesAp
               </button>
             </div>
           )}
+        </div>
         </div>
       </div>
       {etiqueta && !sinBarra && <div className="topbar-appname">{etiqueta}</div>}

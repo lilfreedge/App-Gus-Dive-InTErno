@@ -80,17 +80,6 @@ function Privacidad() {
   );
 }
 
-// V48 -- Link del grupo de WhatsApp del buceo (lo pone la tienda en el app).
-function BotonGrupo({ link }) {
-  if (!link) return null;
-  return (
-    <a className="pb-btn wa-sec" href={link} target="_blank" rel="noreferrer" style={{ display: "block", textDecoration: "none" }}>
-      <IconChat size={18} />
-      Entrar al grupo de WhatsApp
-    </a>
-  );
-}
-
 export default function PublicoViaje({ v, tienda }) {
   const opcionesPagan = v.opciones.filter((x) => !x.noPaga);
   const [paso, setPaso] = useState("doc");
@@ -409,7 +398,6 @@ export default function PublicoViaje({ v, tienda }) {
                         <IconChat size={18} /> Escribir por WhatsApp
                       </a>
                     )}
-                    <BotonGrupo link={buzo.linkGrupo} />
                     <SubirComprobante slug={v.slug} tipoDoc={tipoDoc} doc={doc} />
                     <button className="pb-btn sec" onClick={otraPersona}>
                       Inscribir a otra persona
@@ -707,7 +695,6 @@ export default function PublicoViaje({ v, tienda }) {
                         </a>
                       </>
                     )}
-                    {!resultado.enEspera && <BotonGrupo link={resultado.linkGrupo} />}
                     {!resultado.enEspera && <SubirComprobante slug={v.slug} tipoDoc={resultado.docDe.tipo} doc={resultado.docDe.doc} />}
                   </>
                 )}

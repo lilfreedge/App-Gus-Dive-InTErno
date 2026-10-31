@@ -139,6 +139,7 @@ export default async function TecnicoPage({ searchParams }) {
         esTitular={!!yo.es_titular}
         enlaces={enlacesMenu(yo)}
         inicio={`/tecnico${sufijoComo(viendoComo, persona)}`}
+        campana={viendoComo ? null : { app: "clientes", appsAvisos: ["interno", "clientes"], tecnico: true, rutaTodas: "/app-clientes/notificaciones" }}
       />
       <div className="page tec" style={{ paddingTop: 12 }}>
         {viendoComo && (

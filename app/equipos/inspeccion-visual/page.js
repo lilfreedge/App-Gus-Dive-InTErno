@@ -65,7 +65,6 @@ export default async function InspeccionVisualPage() {
               <div className="list-item" key={i.id} data-buscar="">
                 <div className="list-item-top">
                   <span className="list-item-title">
-                    <span className="folio-tag">#{i.folio}</span>
                     Inspección visual
                     <span className={i.resultado === "Aprobado" ? "badge badge-verde" : "badge badge-rojo"}>
                       {i.resultado}
@@ -88,7 +87,7 @@ export default async function InspeccionVisualPage() {
                   </div>
                 )}
                 <div className="list-item-meta">
-                  {i.full_name} · {formatFecha(i.created_at)}
+                  {i.full_name} · {formatFecha(i.created_at)} <span className="folio-fin">· #{i.folio}</span>
                 </div>
                 {i.nota && <div className="list-item-note">{i.nota}</div>}
               </div>

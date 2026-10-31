@@ -10,6 +10,7 @@ import { holdActivo, resumenHold, diasEnHold } from "@/lib/holds";
 import HoldConsultas from "@/components/HoldConsultas";
 import NotasInternas from "@/components/NotasInternas";
 import AvisosFijos from "@/components/AvisosFijos";
+import RecordatorioOrings from "@/components/RecordatorioOrings";
 import { manualesPara, tituloManual, linkManual } from "@/lib/manuales";
 import {
   guardarOrden,
@@ -30,7 +31,9 @@ import { ICheck, IPlus, IX, IFlecha, IAbajo, IMic, IDoc, IClientes, IComp, IReg,
 // salen en una hoja desde abajo. Siempre pregunta antes de "listo".
 
 const DIA_MS = 24 * 60 * 60 * 1000;
-const ATRASO_DIAS = 5; // igual que "Mis órdenes asignadas"
+// V52 (nota: "Pon el mensaje de los días atrasados al lado del No. orden y
+// que salga después de los 3 días"). Antes eran 5, como "Mis órdenes asignadas".
+const ATRASO_DIAS = 3;
 
 const sinTildes = (t) =>
   String(t || "")
@@ -270,12 +273,19 @@ export default function TecnicoInicio({
     );
   }
 
+  // V52: "12 días atrasada" al lado del No., solo después de 3 días.
+  function atraso(o) {
+    const dias = diasDesde(o.fecha, hoy);
+    if (dias === null || dias <= ATRASO_DIAS) return null;
+    return <span className="tec-atraso">{dias} días atrasada</span>;
+  }
+
   function lineaOrden(o) {
     const dias = diasDesde(o.fecha, hoy);
     const partes = [o.que_se_hara || "Sin servicio"];
+    // V52: lo de atrasada va al lado del No. (ver atraso()).
     if (dias === 0) partes.push("llegó hoy");
-    else if (dias !== null && dias > ATRASO_DIAS) partes.push(`lleva ${dias} días, atrasada`);
-    else if (dias !== null) partes.push(`llegó hace ${dias} día${dias === 1 ? "" : "s"}`);
+    else if (dias !== null && dias <= ATRASO_DIAS) partes.push(`llegó hace ${dias} día${dias === 1 ? "" : "s"}`);
     if (o.tipo_equipo === "Reguladores") partes.push(o.informe_mantenimiento ? "informe listo ✓" : o.informe_a_medias ? "informe a medias" : "falta el informe");
     return partes.join(" · ");
   }
@@ -283,16 +293,18 @@ export default function TecnicoInicio({
   // Lo que dijo el cliente, el cliente, la serie y la autorización (va
   // arriba en la orden abierta y en la que está esperando al cliente).
   function datosOrden(o) {
-    // V51: el manual de ese modelo, si hay (franja azul debajo del equipo).
+    // V51/V52: el manual de ese modelo, si hay; sutil, igual que en la orden
+    // ("30. ... al técnico pónselo como figura en la orden, más sutil").
     const susManuales = manualesPara(manuales, [o.equipo_marca_snapshot, o.equipo_modelo_snapshot].filter(Boolean).join(" "));
     return (
       <>
         {susManuales.map((m) => (
-          <a key={m.id} href={linkManual(m)} target="_blank" rel="noreferrer" className="manual-franja" style={{ marginTop: 0, marginBottom: 10 }}>
-            <span className={`manual-ic${m.url ? " link" : ""}`}>{m.url ? "LINK" : "PDF"}</span>
-            Manual del {tituloManual(m)}
-            <span className="abrir">Abrir ›</span>
-          </a>
+          <div key={m.id} style={{ marginBottom: 8 }}>
+            <a href={linkManual(m)} target="_blank" rel="noreferrer" className="manual-atajo" style={{ marginTop: 0, fontSize: 14 }}>
+              <span className={`manual-ic${m.url ? " link" : ""}`}>{m.url ? "LINK" : "PDF"}</span>
+              Manual del {tituloManual(m)} ›
+            </a>
+          </div>
         ))}
         {/* V40: en los reguladores, también los "Problemas reportados por
             cliente" y los "Daños visibles" que se anotaron al registrar la
@@ -396,9 +408,8 @@ export default function TecnicoInicio({
               {/* V40: recordatorio de los o-rings (pedido explícito: "los o-rings
                   están incluidos en el mantenimiento, y en caso de que se
                   cambien, esto debe de figurar en el informe"). */}
-              <div className="tec-recordatorio">
-                Los o-rings van incluidos en el mantenimiento. Si cambiaste alguno, tiene que salir en el informe.
-              </div>
+              {/* V52: con etiquetas ("40. 2B"). */}
+              <RecordatorioOrings />
               {o.informe_mantenimiento ? (
                 <div className="tec-chip ok">
                   <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -514,14 +525,18 @@ export default function TecnicoInicio({
           <div className="tec-card-main">
             {/* V40: lo principal es el número de orden ("el numero de orden
                 es lo principal"); debajo el equipo y la línea de siempre. */}
-            <div className="tec-titulo tec-no">No. {numero(o)}</div>
+            <div className="tec-titulo tec-no">
+              No. {numero(o)}
+              {atraso(o)}
+            </div>
             <div className="tec-equipo">{equipoDe(o)}</div>
             <div className="tec-linea rojo">{lineaOrden(o)}</div>
           </div>
           {/* V40: un botón, como "Registrar" del compresor, en vez de la
               flechita (pedido explícito: "que sean con botones ... no uses el
               dropdown ese porque se va a confundir"). Toda la tarjeta abre. */}
-          {!sola && <span className="tec-btn azul chico tec-btn-tarjeta">Trabajar</span>}
+          {/* V52: "Trabajar" pasa a "Registrar" (nota "App Gus interno"). */}
+          {!sola && <span className="tec-btn azul chico tec-btn-tarjeta">Registrar</span>}
         </Arriba>
         {sola && ordenAbierta(o)}
       </div>
@@ -588,7 +603,8 @@ export default function TecnicoInicio({
   }
 
   // V40: "Abrir" pasó a "Trabajar" (pedido explícito: "Cambia 'abrir' por 'trabajar'").
-  function grande({ href, onClick, icono, titulo, sub, boton = "Trabajar" }) {
+  // V52: y ahora "Registrar" (nota: "Cambiar 'trabajar' por 'registrar'").
+  function grande({ href, onClick, icono, titulo, sub, boton = "Registrar" }) {
     const dentro = (
       <>
           <span className="tec-icono azul">{icono}</span>

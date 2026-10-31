@@ -168,7 +168,6 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, pue
                       onChange={() => toggleSeleccionado(t.id)}
                     />
                   )}
-                  <span className="folio-tag">#{t.folio}</span>
                   Llenados de tanque
                   <span className={t.tipo_gas === "Nitrox" ? "badge badge-nitrox" : "badge"}>{t.tipo_gas}</span>
                 </span>
@@ -184,7 +183,7 @@ export default function LlenadosList({ llenados, puedeEditar, puedeFacturar, pue
                 </div>
               </div>
               <div className="list-item-meta">
-                {t.full_name} · {formatFecha(t.created_at)}
+                {t.full_name} · {formatFecha(t.created_at)} <span className="folio-fin">· #{t.folio}</span>
               </div>
               {t.nota && <div className="list-item-note">{t.nota}</div>}
               {/* V35 (opción A): la facturación va en su propia línea, abajo. */}

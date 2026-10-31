@@ -31,25 +31,23 @@ export default function MiActividad({ actividad }) {
                 <div className="list-item" key={`salida-${a.id}`}>
                   <div className="list-item-top">
                     <span className="list-item-title">
-                      <span className="folio-tag">#{a.folio}</span>
                       {a.articulo}
                       <span className="badge">{a.motivo}</span>
                     </span>
                     <span className="list-item-qty">{a.cantidad}</span>
                   </div>
-                  <div className="list-item-meta">Salida · {formatFecha(a.created_at)}</div>
+                  <div className="list-item-meta">Salida · {formatFecha(a.created_at)} <span className="folio-fin">· #{a.folio}</span></div>
                 </div>
               ) : (
                 <div className="list-item" key={`llenado-${a.id}`}>
                   <div className="list-item-top">
                     <span className="list-item-title">
-                      <span className="folio-tag">#{a.folio}</span>
                       Llenado de tanque
                       <span className={a.tipo_gas === "Nitrox" ? "badge badge-nitrox" : "badge"}>{a.tipo_gas}</span>
                     </span>
                     <span className="list-item-qty">{a.cantidad} tanque(s)</span>
                   </div>
-                  <div className="list-item-meta">Llenado · {formatFecha(a.created_at)}</div>
+                  <div className="list-item-meta">Llenado · {formatFecha(a.created_at)} <span className="folio-fin">· #{a.folio}</span></div>
                 </div>
               )
             )

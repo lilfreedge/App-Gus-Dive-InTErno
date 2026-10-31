@@ -45,7 +45,8 @@ export default function BotonAvisarWhatsApp({ orden, tecnico, miNombre = "", est
       .then(() => router.refresh());
   }
 
-  const etiqueta = texto || (estilo === "boton" ? "Avisar en el grupo por WhatsApp" : "Avisar en el grupo");
+  // V52 (nota: "en vez de decir 'avisar en el grupo' diga 'avisar en el grupo Taller Gus Dive'").
+  const etiqueta = texto || (estilo === "boton" ? "Avisar en el grupo Taller Gus Dive" : "Avisar en el grupo Taller Gus Dive");
 
   if (estilo === "link") {
     return (

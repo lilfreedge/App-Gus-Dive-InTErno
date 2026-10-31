@@ -151,7 +151,6 @@ export default async function FichaTanquePage({ params }) {
                 <div className="list-item" key={p.id}>
                   <div className="list-item-top">
                     <span className="list-item-title">
-                      <span className="folio-tag">#{p.folio}</span>
                       Prueba hidrostática
                       <span className={p.resultado === "Aprobado" ? "badge badge-verde" : "badge badge-rojo"}>
                         {p.resultado}
@@ -159,7 +158,7 @@ export default async function FichaTanquePage({ params }) {
                     </span>
                   </div>
                   <div className="list-item-meta">
-                    Fecha de la prueba: <b>{formatMesAnio(p.fecha_prueba)}</b>
+                    Fecha de la prueba: <b>{formatMesAnio(p.fecha_prueba)}</b> <span className="folio-fin">· #{p.folio}</span>
                   </div>
                   {envio && (
                     <div className="list-item-meta">
@@ -187,7 +186,6 @@ export default async function FichaTanquePage({ params }) {
               <div className="list-item" key={i.id}>
                 <div className="list-item-top">
                   <span className="list-item-title">
-                    <span className="folio-tag">#{i.folio}</span>
                     Inspección visual
                     <span className={i.resultado === "Aprobado" ? "badge badge-verde" : "badge badge-rojo"}>
                       {i.resultado}
@@ -202,7 +200,7 @@ export default async function FichaTanquePage({ params }) {
                       : formatFechaDDMMAAAADeDate(String(i.created_at).slice(0, 10))}
                   </b>
                 </div>
-                <div className="list-item-meta">Registrada por {i.full_name || "—"}</div>
+                <div className="list-item-meta">Registrada por {i.full_name || "—"} <span className="folio-fin">· #{i.folio}</span></div>
                 {i.nota && <div className="list-item-note">{i.nota}</div>}
               </div>
             ))

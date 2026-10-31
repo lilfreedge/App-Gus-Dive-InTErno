@@ -5,7 +5,7 @@ import { getProfileYUser, tieneAcceso, esOperativo, esRolEquipos } from "@/lib/r
 import { seccionesVisibles } from "@/lib/nav";
 import { obtenerPendientesInterno } from "@/lib/notificaciones";
 import AppHeader from "@/components/AppHeader";
-import { IconPackage, IconTank, IconAlert, IconLock, IconGear } from "@/components/icons";
+import { IconPackage, IconTank, IconAlert, IconLock, IconGear, IconCompressor, IconEye } from "@/components/icons";
 import InicioOperativo from "./operativo";
 import AvisosFijos from "@/components/AvisosFijos";
 import { avisosParaMi } from "@/lib/avisos-fijos-server";
@@ -55,6 +55,9 @@ export default async function DashboardPage({ searchParams }) {
   // reciente"): la actividad reciente trae lo mismo que Movimientos.
   const puedeVerMantenimientos = tieneAcceso(profile, "registrar_mantenimiento");
   const puedeVerInspecciones = tieneAcceso(profile, "registrar_inspeccion");
+  // V52 ("5. ok. incluye también algún trabajo que se le haga al
+  // compresor"): los mantenimientos e inspecciones de compresores.
+  const puedeVerCompresores = tieneAcceso(profile, "compresores");
   // Sin ninguna sección habilitada (solo "Inicio" en el menú de arriba):
   // en vez de una pantalla vacía, un aviso.
   const sinSecciones =
@@ -73,7 +76,7 @@ export default async function DashboardPage({ searchParams }) {
   else if (periodo === "mes") desde.setDate(desde.getDate() - 30);
   else desde.setDate(desde.getDate() - 7);
 
-  const [salidasRes, tanquesRes, ultimasSalidas, ultimosTanques, pendientes, ultimosMant, ultimasInsp] =
+  const [salidasRes, tanquesRes, ultimasSalidas, ultimosTanques, pendientes, ultimosMant, ultimasInsp, ultimosComp] =
     await Promise.all([
       puedeSalidas
         ? supabase
@@ -101,6 +104,9 @@ export default async function DashboardPage({ searchParams }) {
         : Promise.resolve({ data: [] }),
       puedeVerInspecciones
         ? supabase.from("inspecciones_con_nombre").select("*").order("created_at", { ascending: false }).limit(8).then((r) => r, () => ({ data: [] }))
+        : Promise.resolve({ data: [] }),
+      puedeVerCompresores
+        ? supabase.from("mantenimientos_compresores_con_nombre").select("*").order("created_at", { ascending: false }).limit(8).then((r) => r, () => ({ data: [] }))
         : Promise.resolve({ data: [] }),
     ]);
 
@@ -155,6 +161,16 @@ export default async function DashboardPage({ searchParams }) {
       resultado: i.resultado,
       cantidad: i.tanque_codigo_snapshot,
       detalle: i.nota,
+    })),
+    ...(ultimosComp.data || []).map((m) => ({
+      tipo: "compresor",
+      id: m.id,
+      created_at: m.created_at,
+      full_name: m.full_name || m.nombre_usuario_snapshot,
+      titulo: `${m.tipo_mantenimiento || "Mantenimiento"} de compresor`,
+      folio: m.folio,
+      cantidad: m.compresor_codigo_snapshot,
+      detalle: m.notas || m.proceso_piezas,
     })),
   ]
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -362,7 +378,7 @@ export default async function DashboardPage({ searchParams }) {
           </>
         )}
 
-        {(puedeSalidas || puedeVerLlenados || puedeVerMantenimientos || puedeVerInspecciones) && (
+        {(puedeSalidas || puedeVerLlenados || puedeVerMantenimientos || puedeVerInspecciones || puedeVerCompresores) && (
         <>
         <div className="section-title">
           Actividad reciente
@@ -379,11 +395,12 @@ export default async function DashboardPage({ searchParams }) {
                     ) : a.tipo === "mantenimiento" ? (
                       <IconGear size={14} />
                     ) : a.tipo === "inspeccion" ? (
-                      <IconAlert size={14} />
+                      <IconEye size={14} />
+                    ) : a.tipo === "compresor" ? (
+                      <IconCompressor size={14} />
                     ) : (
                       <IconTank size={14} />
                     )}{" "}
-                    {a.folio != null && <span className="folio-tag">#{a.folio}</span>}
                     {a.titulo}
                     {a.resultado && <span className={a.resultado === "Aprobado" ? "badge badge-verde" : "badge badge-rojo"}>{a.resultado}</span>}
                     {/* V40: el gas del llenado, con la misma etiqueta de la
@@ -396,6 +413,7 @@ export default async function DashboardPage({ searchParams }) {
                 </div>
                 <div className="list-item-meta">
                   {a.full_name} · {formatFecha(a.created_at)}
+                  {a.folio != null && <span className="folio-fin"> · #{a.folio}</span>}
                 </div>
                 {a.detalle && <div className="list-item-note">{a.detalle}</div>}
               </div>

@@ -25,7 +25,6 @@ export default function SalidasList({ salidas, puedeEditar, recibidos = null }) 
         <div className="list-item" key={s.id} data-buscar="">
           <div className="list-item-top">
             <span className="list-item-title">
-              <span className="folio-tag">#{s.folio}</span>
               {s.articulo}
               <span className="badge">{s.motivo}</span>
             </span>
@@ -42,7 +41,7 @@ export default function SalidasList({ salidas, puedeEditar, recibidos = null }) 
           </div>
           <div className="list-item-meta">
             {s.full_name} · {formatFecha(s.created_at)}
-            {s.autorizado_por ? ` · Autorizó: ${s.autorizado_por}` : ""}
+            {s.autorizado_por ? ` · Autorizó: ${s.autorizado_por}` : ""} <span className="folio-fin">· #{s.folio}</span>
           </div>
           {s.nota && <div className="list-item-note">{s.nota}</div>}
         </div>
