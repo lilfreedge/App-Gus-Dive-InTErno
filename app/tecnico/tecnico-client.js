@@ -6,7 +6,9 @@ import { createClient } from "@/lib/supabase/client";
 import FotoLightbox from "@/components/FotoLightbox";
 import ConInfo from "@/components/ConInfo";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { holdActivo, resumenHold, detalleHold, diasEnHold } from "@/lib/holds";
+import { holdActivo, resumenHold, diasEnHold } from "@/lib/holds";
+import HoldConsultas from "@/components/HoldConsultas";
+import NotasInternas from "@/components/NotasInternas";
 import {
   guardarOrden,
   codigosDe,
@@ -74,8 +76,7 @@ export default function TecnicoInicio({
   const [guardando, setGuardando] = useState(null);
   const [errores, setErrores] = useState({});
   const [busqueda, setBusqueda] = useState("");
-  const [consulta, setConsulta] = useState("");
-  const [codigoHold, setCodigoHold] = useState("");
+  const [consultas, setConsultas] = useState([""]);
   const [errorHoja, setErrorHoja] = useState("");
   const [tiendaAuto, setTiendaAuto] = useState({}); // órdenes a las que "listo" les puso "Se trabajó en tienda"
 
@@ -157,8 +158,7 @@ export default function TecnicoInicio({
   function abrirHoja(tipo, id) {
     setErrorHoja("");
     setBusqueda("");
-    setConsulta("");
-    setCodigoHold("");
+    setConsultas([""]);
     setHoja({ tipo, id });
   }
 
@@ -211,8 +211,9 @@ export default function TecnicoInicio({
   }
 
   async function ponerHold(o) {
-    if (!consulta.trim()) return setErrorHoja("Escribe qué hay que preguntarle al cliente.");
-    const nueva = await cambiar(o, cambiosHold(o, { consulta, codigo: codigoHold }), "hold");
+    const limpias = consultas.map((t) => t.trim()).filter(Boolean);
+    if (!limpias.length) return setErrorHoja("Escribe qué hay que preguntarle al cliente.");
+    const nueva = await cambiar(o, cambiosHold(o, { consultas: limpias }), "hold");
     if (!nueva) return;
     setHoja(null);
     cerrarOrden();
@@ -271,7 +272,7 @@ export default function TecnicoInicio({
     if (dias === 0) partes.push("llegó hoy");
     else if (dias !== null && dias > ATRASO_DIAS) partes.push(`lleva ${dias} días, atrasada`);
     else if (dias !== null) partes.push(`llegó hace ${dias} día${dias === 1 ? "" : "s"}`);
-    if (o.tipo_equipo === "Reguladores") partes.push(o.informe_mantenimiento ? "informe listo ✓" : "falta el informe");
+    if (o.tipo_equipo === "Reguladores") partes.push(o.informe_mantenimiento ? "informe listo ✓" : o.informe_a_medias ? "informe a medias" : "falta el informe");
     return partes.join(" · ");
   }
 
@@ -314,6 +315,8 @@ export default function TecnicoInicio({
             Autorización del cliente: <b style={{ color: "var(--texto)" }}>{o.autorizacion_cliente}</b>
           </div>
         )}
+        {/* V50: las notas internas de la orden ("si. Cualquiera puede"). */}
+        <NotasInternas ordenId={o.id} nombre={nombreQuienHace || nombre || ""} />
       </>
     );
   }
@@ -401,9 +404,13 @@ export default function TecnicoInicio({
                 // V40: un solo botón (pedido explícito: "unifica eso"); que falta
                 // ya lo dice la tarjeta de arriba y el número del paso.
                 accesos.informe ? (
-                  <Link href={conComo(`/app-clientes/ordenes/${o.id}/informe?from=tecnico`)} className="tec-btn azul">
-                    <IDoc /> Llenar el informe
-                  </Link>
+                  <>
+                    {/* V50: si se quedó a medias, sigue donde lo dejó. */}
+                    {o.informe_a_medias && <div className="tec-hint" style={{ marginTop: 0, marginBottom: 6 }}>Lo empezaste y se guardó a medias.</div>}
+                    <Link href={conComo(`/app-clientes/ordenes/${o.id}/informe?from=tecnico`)} className="tec-btn azul">
+                      <IDoc /> {o.informe_a_medias ? "Seguir llenando el informe" : "Llenar el informe"}
+                    </Link>
+                  </>
                 ) : (
                   <span className="tec-estado rojo">Falta el informe</span>
                 )
@@ -556,7 +563,7 @@ export default function TecnicoInicio({
         <div className="tec-open">
           <div className="tec-espera">
             <div className="tec-dijo-t">LO QUE HAY QUE PREGUNTARLE AL CLIENTE</div>
-            {detalleHold(h)}
+            <HoldConsultas hold={h} />
           </div>
           <div className="tec-hint" style={{ fontSize: 14.5, marginBottom: 6 }}>
             Cuando el cliente conteste, esta orden te sale otra vez en Mis trabajos.
@@ -714,25 +721,37 @@ export default function TecnicoInicio({
         <>
           <div className="tec-hoja-t">¿Qué hay que preguntarle al cliente?</div>
           <div style={{ fontSize: 14.5, color: "var(--texto-suave)" }}>
-            {equipoDe(o)} · No. {numero(o)}
+            {equipoDe(o)} · No. {numero(o)}. Una pregunta por punto: el cliente contesta cada una.
           </div>
-          <textarea
-            className="tec-area"
-            style={{ marginTop: 12, minHeight: 100 }}
-            value={consulta}
-            onChange={(e) => {
-              setConsulta(e.target.value);
-              setErrorHoja("");
-            }}
-            placeholder="Ej: la manguera está rota, ¿se la cambiamos?"
-          />
+          {/* V50: varias preguntas, una por punto (sin código de la pieza). */}
+          {consultas.map((t, i) => (
+            <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 12 }}>
+              <span className="hold-cons-n" style={{ background: "var(--azul)", marginTop: 12 }}>
+                {i + 1}
+              </span>
+              <textarea
+                className="tec-area"
+                style={{ marginTop: 0, minHeight: 70, flex: 1 }}
+                value={t}
+                onChange={(e) => {
+                  setConsultas(consultas.map((x, j) => (j === i ? e.target.value : x)));
+                  setErrorHoja("");
+                }}
+                placeholder={i === 0 ? "Ej: la manguera está rota, ¿se la cambiamos?" : "Otra pregunta"}
+              />
+              {consultas.length > 1 && (
+                <button type="button" className="tec-quitar" style={{ marginTop: 12 }} onClick={() => setConsultas(consultas.filter((_, j) => j !== i))}>
+                  Quitar
+                </button>
+              )}
+            </div>
+          ))}
+          <button type="button" className="tec-btn gris" style={{ marginTop: 10 }} onClick={() => setConsultas([...consultas, ""])}>
+            + Otra pregunta
+          </button>
           <div className="tec-hint">
             <IMic size={17} /> Puedes hablar: toca el micrófono del teclado.
           </div>
-          <div className="tec-item-t" style={{ marginTop: 12 }}>
-            Si hace falta una pieza, ¿cuál? <small style={{ fontWeight: 600, color: "var(--texto-suave)" }}>(si sabes)</small>
-          </div>
-          <input className="tec-input" value={codigoHold} onChange={(e) => setCodigoHold(e.target.value)} placeholder="Código o nombre de la pieza" />
           {errorHoja && <div className="tec-error">{errorHoja}</div>}
           <button type="button" className="tec-btn rojo" style={{ marginTop: 14 }} disabled={!!guardando} onClick={() => ponerHold(o)}>
             <IPausa /> {guardando === "hold" ? "Guardando..." : "Poner en Hold"}

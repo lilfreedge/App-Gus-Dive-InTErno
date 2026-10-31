@@ -12,6 +12,27 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V50",
+    fecha: "30 de octubre, 2026",
+    titulo: "Holds con una respuesta por consulta, notas internas en las órdenes, informe que se guarda solo, componentes del regulador al darle mantenimiento y solicitudes en Movimientos",
+    descripcion:
+      "App Equipos de clientes: al poner una orden en Hold se pueden escribir varias consultas, una por punto (\"+ Agregar otra consulta\"). En Actualizar estado de orden, cada consulta se contesta por separado con Sí o No y un comentario si hace falta; se puede guardar aunque falte alguna, y la orden sigue en Hold hasta que todas estén contestadas. Cuando están todas, sale del Hold sola y en la Bitácora queda cada consulta con su respuesta. Los Holds de antes se siguen viendo igual. En la ficha de la orden (y en la pantalla del técnico) hay \"Notas internas\": cualquiera escribe ahí cosas como dónde dejó el equipo; cada nota dice quién la escribió y cuándo, y el cliente nunca las ve. Cada quien puede quitar las suyas, y el Titular y los administradores, cualquiera. El informe de mantenimiento se va guardando solo mientras se llena (arriba dice \"Guardando…\" y después \"✓ Guardado\"); si se sale antes de terminar, al volver está como se dejó, la ficha dice \"Informe de mantenimiento · a medias\" con \"Seguir llenando el informe\", y al técnico le sale \"Seguir llenando el informe\". El cliente solo lo ve cuando se le da a guardar. App Interno: al registrar el mantenimiento de un regulador de la tienda salen sus componentes (1ra etapa, 2da etapa, octopus, manómetro y profundímetro) como los tenemos guardados; si uno es otro, se toca \"Cambió\" y se escribe el nuevo. Al guardar, el regulador queda con el componente nuevo y en el mantenimiento queda \"Cambió: …\" (antes → después), también en Movimientos y en los reportes. En los reportes, el mantenimiento de reguladores ahora dice la presión intermedia y los o-rings bien (antes decía \"Sí\"). Solicitudes al almacén: cuando un código se marca como recibido, sale en \"Movimientos\" de ese código (Base de datos) y en la pantalla de Movimientos, con un filtro nuevo \"Solicitudes\" (lo ve quien puede ver Solicitudes al almacén). El Titular puede borrar una solicitud con el basurero: pide el motivo, se borra completa con sus códigos y queda en el Historial, de donde se puede restaurar. En el asunto de los correos de avisos de Buceos va un guion en vez del punto del medio, que llegaba dañado. Necesita migration_75.sql.",
+  },
+  {
+    version: "V49",
+    fecha: "30 de octubre, 2026",
+    titulo: "Notas de App Gus interno: reguladores pendientes arriba, mantenimientos en Actividad reciente, Inicio por número de orden, Profundímetro en reguladores de alquiler y más",
+    descripcion:
+      "App Interno: en Mantenimiento de reguladores, los pendientes salen arriba de todo, en rojo, con cuántos son; cada uno lleva directo a registrar su mantenimiento (ya viene escogido). Los próximos a vencer van debajo, en amarillo, y después la lista de mantenimientos registrados. En Inicio, la Actividad reciente ahora trae también los mantenimientos de reguladores y las inspecciones visuales (igual que Movimientos), no solo salidas y llenados. Los reguladores de alquiler tienen Profundímetro al agregarlos, al editarlos y en su ficha (necesita migration_74.sql). App Equipos de clientes: todas las listas de Inicio (y el Inicio del técnico) van por número de orden, de menor a mayor. En el informe del regulador dice \"Problemas reportados por cliente\". Al poner en Hold ya no sale el campo \"Código de la pieza\" (los Holds viejos que lo tenían lo siguen enseñando). Los correos de avisos de Buceos ahora van también en texto, no solo en HTML, para que caigan menos en spam.",
+  },
+  {
+    version: "V48",
+    fecha: "27 de octubre, 2026",
+    titulo: "Buceos: grupo de WhatsApp con los contactos de los inscritos y el link del grupo",
+    descripcion:
+      "En cada buceo hay un botón \"Grupo de WhatsApp\". (1) Bajar contactos: baja un archivo con los contactos de los inscritos que todavía no están en el grupo (o de todos), con el nombre del buceo delante, por ejemplo \"La Caleta 9 nov · Ana Pérez\". Se abre en el celular, se guardan todos de una vez, y en WhatsApp, al crear el grupo o al añadir participantes, se busca \"La Caleta 9 nov\" y salen todos juntos. El staff no sale en el archivo. \"Marcar todos en el grupo\" los marca a todos de un golpe. (2) Link del grupo: se pega el enlace de invitación del grupo; a los que se inscriben por el link les sale \"Entrar al grupo de WhatsApp\" al terminar (y si vuelven a entrar con su cédula), y en el app hay un botón \"Mandar link\" para cada uno de los que faltan (también en la ficha de cada inscrito). Los de lista de espera no ven el link. Además, cuando un buceo está lleno, el link lo dice en grande y en naranja (\"Cupo lleno\" arriba y un aviso de que puede anotarse en la lista de espera), porque antes casi no se veía.",
+  },
+  {
     version: "V47",
     fecha: "27 de octubre, 2026",
     titulo: "El app se llama Buceos, y las tallas salen solo para lo que el buzo marca, en lista",

@@ -18,7 +18,8 @@ export default async function TecnicoReguladorPage({ searchParams }) {
 
   const { data: reguladores } = await supabase
     .from("reguladores_alquiler")
-    .select("id, codigo, descripcion")
+    // V50: con sus componentes (1ra etapa, 2da etapa, etc.) para el mantenimiento.
+    .select("*")
     .eq("activo", true)
     .order("codigo");
 

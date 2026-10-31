@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { filaAViaje, filaABuzo, buzoAFila, nuevoId } from "@/lib/viajes/datos";
-import { formatoCedula, soloDigitos, celOculto, nombreCorto, primerNombre, estadoViaje, PREGUNTAS, fechaCorta, palabraViaje } from "@/lib/viajes/modelo";
+import { formatoCedula, soloDigitos, celOculto, nombreCorto, primerNombre, estadoViaje, PREGUNTAS, fechaCorta, palabraViaje, linkGrupoValido } from "@/lib/viajes/modelo";
 import { avisar } from "@/lib/viajes/avisos";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +54,8 @@ export async function POST(request) {
       // V47: qué tallas ya tenemos, para no volver a pedirlas.
       tallasGuardadas: { bcd: !!b.tallas?.bcd, wetsuit: !!b.tallas?.wetsuit, chapaletas: !!b.tallas?.chapaletas },
       yaInscrito: !!ya && ya.estado !== "quitado",
+      // V48: el link del grupo de WhatsApp solo se lo damos al que está inscrito.
+      linkGrupo: ya?.estado === "inscrito" && linkGrupoValido(v.linkGrupo) ? String(v.linkGrupo).trim() : "",
     });
   }
 
@@ -199,5 +201,5 @@ export async function POST(request) {
     );
   }
 
-  return NextResponse.json({ ok: true, nombre: primerNombre(b.nombre), nombreCompleto: b.nombre, enEspera, codigo });
+  return NextResponse.json({ ok: true, nombre: primerNombre(b.nombre), nombreCompleto: b.nombre, enEspera, codigo, linkGrupo: !enEspera && linkGrupoValido(v.linkGrupo) ? String(v.linkGrupo).trim() : "" });
 }

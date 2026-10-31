@@ -23,11 +23,20 @@ export default async function MovimientosPage() {
   // que todavía no existe), esa lista queda vacía y la pantalla sigue.
   const todos = (vista) =>
     todasLasFilas(supabase, vista, (q) => q.select("*").order("created_at", { ascending: false }).order("id")).catch(() => []);
-  const [salidas, llenados, inspecciones, mantenimientos] = await Promise.all([
+  const [salidas, llenados, inspecciones, mantenimientos, recibidos] = await Promise.all([
     todos("salidas_con_nombre"),
     todos("llenados_con_nombre"),
     todos("inspecciones_con_nombre"),
     todos("mantenimientos_con_nombre"),
+    // V50: los códigos que llegaron por Solicitudes al almacén ("12. si").
+    // Solo los ve quien puede ver Solicitudes al almacén.
+    todasLasFilas(supabase, "solicitudes_almacen_items", (q) =>
+      q
+        .select("*, solicitud:solicitudes_almacen(folio, nombre_usuario_snapshot, nota, created_at)")
+        .not("recibido_at", "is", null)
+        .order("recibido_at", { ascending: false })
+        .order("id")
+    ).catch(() => []),
   ]);
 
   const movimientos = [
@@ -35,7 +44,8 @@ export default async function MovimientosPage() {
     ...(llenados || []).map((t) => ({ ...t, tipo: "llenado" })),
     ...(inspecciones || []).map((i) => ({ ...i, tipo: "inspeccion" })),
     ...(mantenimientos || []).map((m) => ({ ...m, tipo: "mantenimiento" })),
-  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    ...(recibidos || []).map((r) => ({ ...r, tipo: "solicitud", fecha_mov: r.recibido_at })),
+  ].sort((a, b) => new Date(b.fecha_mov || b.created_at) - new Date(a.fecha_mov || a.created_at));
 
   return (
     <div>

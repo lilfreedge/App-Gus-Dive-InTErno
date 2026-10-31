@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ICheck, IPlus, IX, IMic } from "../iconos";
+import ComponentesRegulador from "@/components/ComponentesRegulador";
+import { componentesCambiados, cambiosTexto } from "@/lib/mantenimiento-regulador";
 
 // V38 -- Mantenimiento de regulador de la tienda, versión sencilla del
 // técnico (maqueta-v38-3.html, A7): cuál regulador (botones con el código y
@@ -19,7 +21,14 @@ const sinTildes = (t) =>
 export default function ReguladorPasos({ userId, nombreUsuario, reguladores = [], volverA = "/tecnico" }) {
   const supabase = createClient();
   const [busqueda, setBusqueda] = useState("");
-  const [reguladorId, setReguladorId] = useState("");
+  const [reguladorId, setReguladorIdRaw] = useState("");
+  // V50: componentes que cambiaron ({ campo: nuevo }); se limpian al cambiar de regulador.
+  const [nuevosComp, setNuevosComp] = useState({});
+  const [cambiosGuardados, setCambiosGuardados] = useState([]);
+  const setReguladorId = (id) => {
+    setReguladorIdRaw(id);
+    setNuevosComp({});
+  };
   const [ultrasonido, setUltrasonido] = useState(null);
   const [presion, setPresion] = useState("");
   const [oRings, setORings] = useState([]);
@@ -49,11 +58,14 @@ export default function ReguladorPasos({ userId, nombreUsuario, reguladores = []
   async function guardar() {
     setError("");
     if (!reguladorId) return setError("Escoge el regulador (paso 1).");
-    if (ultrasonido === null) return setError("Marca si lo pasaste por el ultrasonido (paso 2).");
+    if (ultrasonido === null) return setError("Marca si lo pasaste por el ultrasonido (paso 3).");
     // Si escribe solo el número, se guarda con "PSI" (como el ejemplo del
     // formulario de siempre: "135 PSI").
     const p = presion.trim();
     const presionFinal = p ? (/^\d+([.,]\d+)?$/.test(p) ? `${p.replace(",", ".")} PSI` : p) : null;
+    if (Object.values(nuevosComp).some((v) => !String(v || "").trim()))
+      return setError('Escribe el componente nuevo, o toca "No cambió" (paso 2).');
+    const cambios = componentesCambiados(regulador, nuevosComp);
     setGuardando(true);
     const { error: err } = await supabase.from("mantenimientos_reguladores").insert({
       user_id: userId,
@@ -64,9 +76,16 @@ export default function ReguladorPasos({ userId, nombreUsuario, reguladores = []
       presion_intermedia: presionFinal,
       o_rings: oRings.length > 0 ? oRings : null,
       detalle: nota.trim() || null,
+      ...(cambios.length ? { componentes_cambios: cambios } : {}),
     });
     setGuardando(false);
-    if (err) return setError("No se pudo guardar. Intenta de nuevo.");
+    if (err)
+      return setError(
+        /componentes_cambios/.test(err.message || "")
+          ? "Para guardar componentes cambiados falta correr migration_75.sql en Supabase."
+          : "No se pudo guardar. Intenta de nuevo."
+      );
+    setCambiosGuardados(cambios);
     setGuardado(true);
     if (typeof window !== "undefined") window.scrollTo(0, 0);
   }
@@ -80,6 +99,9 @@ export default function ReguladorPasos({ userId, nombreUsuario, reguladores = []
           </div>
           <div style={{ fontSize: 21, fontWeight: 800 }}>¡Guardado!</div>
           <div style={{ fontSize: 15, color: "var(--texto-suave)", marginTop: 4 }}>Regulador {regulador?.codigo}</div>
+          {cambiosGuardados.length > 0 && (
+            <div style={{ fontSize: 14.5, color: "var(--verde)", fontWeight: 700, marginTop: 6 }}>Cambió: {cambiosTexto(cambiosGuardados)}</div>
+          )}
           <Link href={volverA} className="tec-btn azul" style={{ marginTop: 16 }}>
             Volver a mis trabajos
           </Link>
@@ -95,6 +117,7 @@ export default function ReguladorPasos({ userId, nombreUsuario, reguladores = []
               setORings([]);
               setNota("");
               setBusqueda("");
+              setCambiosGuardados([]);
             }}
           >
             Registrar otro regulador
@@ -151,8 +174,21 @@ export default function ReguladorPasos({ userId, nombreUsuario, reguladores = []
         </div>
       </div>
 
+      {/* V50: los componentes del regulador, como están guardados. */}
       <div className="tec-paso">
         <div className="tec-paso-n">2</div>
+        <div className="tec-paso-body">
+          <div className="tec-paso-t">Componentes</div>
+          {regulador ? (
+            <ComponentesRegulador regulador={regulador} nuevos={nuevosComp} setNuevos={setNuevosComp} grande />
+          ) : (
+            <div className="tec-hint">Escoge primero el regulador.</div>
+          )}
+        </div>
+      </div>
+
+      <div className="tec-paso">
+        <div className="tec-paso-n">3</div>
         <div className="tec-paso-body">
           <div className="tec-paso-t">¿Lo pasaste por el ultrasonido?</div>
           <div className="tec-grid2">
@@ -167,7 +203,7 @@ export default function ReguladorPasos({ userId, nombreUsuario, reguladores = []
       </div>
 
       <div className="tec-paso">
-        <div className="tec-paso-n">3</div>
+        <div className="tec-paso-n">4</div>
         <div className="tec-paso-body">
           <div className="tec-paso-t">
             Presión intermedia <small>(si aplica)</small>
@@ -184,7 +220,7 @@ export default function ReguladorPasos({ userId, nombreUsuario, reguladores = []
       </div>
 
       <div className="tec-paso">
-        <div className="tec-paso-n">4</div>
+        <div className="tec-paso-n">5</div>
         <div className="tec-paso-body">
           <div className="tec-paso-t">
             O-rings que cambiaste <small>(si cambiaste)</small>
@@ -235,7 +271,7 @@ export default function ReguladorPasos({ userId, nombreUsuario, reguladores = []
       </div>
 
       <div className="tec-paso">
-        <div className="tec-paso-n">5</div>
+        <div className="tec-paso-n">6</div>
         <div className="tec-paso-body">
           <div className="tec-paso-t">
             Nota <small>(si hace falta)</small>

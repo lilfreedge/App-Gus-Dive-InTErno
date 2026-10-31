@@ -4,7 +4,7 @@ import { useState } from "react";
 import { PREGUNTAS, fechaLarga, rd, soloDigitos, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos, palabraViaje, tallasPara } from "@/lib/viajes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "./Piezas";
-import { IconCheck, IconClip, IconCalendar, IconClock, IconLock, IconChat } from "@/components/icons";
+import { IconCheck, IconClip, IconCalendar, IconClock, IconLock, IconChat, IconAlert } from "@/components/icons";
 
 // V42 -- Lo que ve el buzo en el link de inscripción (maqueta-viajes-v2).
 // Se identifica con su cédula o pasaporte; el celular queda para escribirle.
@@ -77,6 +77,17 @@ function Privacidad() {
       <IconLock size={15} />
       <span>Gus Dive Center no comparte esta información con nadie. Solo la usamos para llevar el registro de nuestros buzos.</span>
     </div>
+  );
+}
+
+// V48 -- Link del grupo de WhatsApp del buceo (lo pone la tienda en el app).
+function BotonGrupo({ link }) {
+  if (!link) return null;
+  return (
+    <a className="pb-btn wa-sec" href={link} target="_blank" rel="noreferrer" style={{ display: "block", textDecoration: "none" }}>
+      <IconChat size={18} />
+      Entrar al grupo de WhatsApp
+    </a>
   );
 }
 
@@ -276,7 +287,15 @@ export default function PublicoViaje({ v, tienda }) {
             </li>
           )}
         </ul>
-        {v.abierto && <div className="pb-cupo">{quedan > 0 ? `Quedan ${quedan} cupo${quedan === 1 ? "" : "s"}` : "Cupo lleno. Puedes anotarte en la lista de espera"}</div>}
+        {v.abierto &&
+          (quedan > 0 ? (
+            <div className="pb-cupo">{`Quedan ${quedan} cupo${quedan === 1 ? "" : "s"}`}</div>
+          ) : (
+            // V48: pedido "que llame más la atención, casi no se ve ahora".
+            <div className="pb-cupo lleno">
+              <IconAlert size={15} /> Cupo lleno
+            </div>
+          ))}
       </div>
       <div className="pb-body">
         {!v.abierto ? (
@@ -288,6 +307,14 @@ export default function PublicoViaje({ v, tienda }) {
           <>
             {paso !== "fin" && (
               <>
+                {quedan <= 0 && (
+                  <div className="pb-lleno">
+                    <IconAlert size={20} />
+                    <div>
+                      <b>Este {palabra} ya está lleno.</b> Puedes anotarte en la lista de espera y te avisaremos si se abre un cupo.
+                    </div>
+                  </div>
+                )}
                 {opcionesPagan.map((x) => (
                   <div key={x.id} className="pb-op-info">
                     <b>{x.nombre}</b> · {precioTexto(v, x)}
@@ -382,6 +409,7 @@ export default function PublicoViaje({ v, tienda }) {
                         <IconChat size={18} /> Escribir por WhatsApp
                       </a>
                     )}
+                    <BotonGrupo link={buzo.linkGrupo} />
                     <SubirComprobante slug={v.slug} tipoDoc={tipoDoc} doc={doc} />
                     <button className="pb-btn sec" onClick={otraPersona}>
                       Inscribir a otra persona
@@ -679,6 +707,7 @@ export default function PublicoViaje({ v, tienda }) {
                         </a>
                       </>
                     )}
+                    {!resultado.enEspera && <BotonGrupo link={resultado.linkGrupo} />}
                     {!resultado.enEspera && <SubirComprobante slug={v.slug} tipoDoc={resultado.docDe.tipo} doc={resultado.docDe.doc} />}
                   </>
                 )}

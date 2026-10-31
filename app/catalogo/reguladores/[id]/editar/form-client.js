@@ -14,6 +14,7 @@ export default function EditarReguladorForm({ regulador }) {
   const [segundaEtapa, setSegundaEtapa] = useState(regulador.segunda_etapa || "");
   const [octopus, setOctopus] = useState(regulador.octopus || "");
   const [manometro, setManometro] = useState(regulador.manometro || "");
+  const [profundimetro, setProfundimetro] = useState(regulador.profundimetro || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -37,6 +38,9 @@ export default function EditarReguladorForm({ regulador }) {
       segunda_etapa: segundaEtapa.trim() || null,
       octopus: octopus.trim() || null,
       manometro: manometro.trim() || null,
+      // Solo si la columna ya existe (migration_74) o si se escribió algo,
+      // para que editar no falle si todavía no se corrió la migración.
+      ...("profundimetro" in regulador || profundimetro.trim() ? { profundimetro: profundimetro.trim() || null } : {}),
     };
 
     await registrarCambio(supabase, {
@@ -119,6 +123,17 @@ export default function EditarReguladorForm({ regulador }) {
         value={manometro}
         onChange={(e) => setManometro(e.target.value)}
         placeholder="Ej: Scubapro"
+      />
+
+      {/* V49 (nota: "al editar o agregar un equipo de alquiler, incluye la
+          parte de profundímetro"). Columna nueva: migration_74.sql. */}
+      <label htmlFor="profundimetro">Profundímetro</label>
+      <input
+        id="profundimetro"
+        type="text"
+        value={profundimetro}
+        onChange={(e) => setProfundimetro(e.target.value)}
+        placeholder="Ej: Sin profundímetro"
       />
 
       {error && <div className="error-box">{error}</div>}

@@ -100,6 +100,14 @@ export default async function TecnicoPage({ searchParams }) {
     for (const e of eqs || []) series[e.id] = e.serie || null;
   }
 
+  // V50: informes de mantenimiento que se quedaron a medias (se guardan solos).
+  const idsSinInforme = ordenes.filter((o) => o.tipo_equipo === "Reguladores" && !o.informe_mantenimiento).map((o) => o.id);
+  const aMedias = {};
+  if (idsSinInforme.length) {
+    const { data: bs } = await supabase.from("informes_borrador").select("orden_id, actualizado_en").in("orden_id", idsSinInforme);
+    for (const b of bs || []) aMedias[b.orden_id] = b.actualizado_en;
+  }
+
   const recordatorios = (rec.items || [])
     .filter((it) => it.estado === "vencido" || it.estado === "pronto")
     .map((it) => ({
@@ -136,7 +144,11 @@ export default async function TecnicoPage({ searchParams }) {
         <TecnicoInicio
           nombre={nombre}
           nombreQuienHace={yo.full_name || ""}
-          ordenesIniciales={ordenes.map((o) => ({ ...o, serie: o.equipo_id ? series[o.equipo_id] || null : null }))}
+          ordenesIniciales={ordenes.map((o) => ({
+            ...o,
+            serie: o.equipo_id ? series[o.equipo_id] || null : null,
+            informe_a_medias: aMedias[o.id] || null,
+          }))}
           piezas={piezasRes.data || []}
           recordatorios={recordatorios}
           accesos={accesos}

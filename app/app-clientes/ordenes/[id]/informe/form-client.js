@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registrarCambio } from "@/lib/audit-client";
@@ -46,13 +46,19 @@ const TEXTO_SUTIL_ESTILO = { fontSize: 13, color: "var(--texto-suave)" };
 // V40 -- `sencillo` (el técnico): solo el formulario, sin pestañas, sin
 // Imprimir ni Enviar por correo, y el botón dice "Guardar informe". Al
 // guardar se va solo a `alGuardar` (su menú, Actualizar estado o la orden).
-export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido = "", volver = null, sencillo = false, alGuardar = null }) {
+// V50 -- `borrador` ({ datos, actualizado_en, nombre }): lo que se había
+// ido guardando solo (tabla informes_borrador, migration_75.sql). Mientras
+// el informe no se haya guardado, todo lo que se llena se va guardando solo
+// ("Guardando…" / "✓ Guardado"), aunque esté a medias; al volver, sale como
+// se dejó. Respuesta a la maqueta: "6. Excelente".
+export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido = "", volver = null, sencillo = false, alGuardar = null, borrador = null }) {
   const supabase = createClient();
   const router = useRouter();
+  const datosBorrador = !orden.informe_mantenimiento && borrador?.datos ? borrador.datos : null;
 
   const [informe, setInforme] = useState(() => ({
     ...informeDefault(orden, tecnicoSugerido, serie),
-    ...(orden.informe_mantenimiento || {}),
+    ...(orden.informe_mantenimiento || datosBorrador?.informe || {}),
   }));
   const [yaGenerado, setYaGenerado] = useState(!!orden.informe_mantenimiento);
   const [recienGuardado, setRecienGuardado] = useState(false);
@@ -73,11 +79,73 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
   // cuando son repuestos") -- misma lógica de lista que "Códigos a cobrar"
   // en el wizard, pero local al formulario (se guarda junto con todo lo
   // demás al hacer clic en "Generar informe", no de inmediato).
-  const [nuevoOring, setNuevoOring] = useState("");
+  const [nuevoOring, setNuevoOring] = useState(() => datosBorrador?.nuevoOring || "");
   // V40: respuesta del técnico a "¿Cambiaste algún o-ring?" (null = sin contestar).
   const [respuestaOrings, setRespuestaOrings] = useState(() =>
-    (informe.orings || []).length > 0 ? "si" : orden.informe_mantenimiento ? "no" : null
+    (informe.orings || []).length > 0
+      ? "si"
+      : orden.informe_mantenimiento
+        ? "no"
+        : datosBorrador?.respuestaOrings === "si" || datosBorrador?.respuestaOrings === "no"
+          ? datosBorrador.respuestaOrings
+          : null
   );
+
+  // V50 -- Se guarda solo mientras el informe no exista todavía.
+  // estadoBorrador: null (nada que decir) | { t: "guardando" } |
+  // { t: "ok", en } | { t: "error" }.
+  const [estadoBorrador, setEstadoBorrador] = useState(() => (datosBorrador ? { t: "ok", en: borrador.actualizado_en } : null));
+  const borradorActivo = useRef(true); // se apaga si la tabla todavía no existe
+  const primeraVez = useRef(true);
+  const guardandoFinal = useRef(false);
+  const timerBorrador = useRef(null);
+  const yoId = useRef(null);
+
+  useEffect(() => {
+    if (primeraVez.current) {
+      primeraVez.current = false;
+      return;
+    }
+    if (yaGenerado || !borradorActivo.current || guardandoFinal.current) return;
+    setEstadoBorrador({ t: "guardando" });
+    clearTimeout(timerBorrador.current);
+    timerBorrador.current = setTimeout(async () => {
+      if (guardandoFinal.current) return;
+      try {
+        if (!yoId.current) {
+          const { data } = await supabase.auth.getUser();
+          yoId.current = data?.user?.id || null;
+        }
+        const en = new Date().toISOString();
+        const { error: e } = await supabase.from("informes_borrador").upsert(
+          {
+            orden_id: orden.id,
+            datos: { informe, respuestaOrings, nuevoOring },
+            actualizado_en: en,
+            actualizado_por: yoId.current,
+            nombre: tecnicoSugerido || "",
+          },
+          { onConflict: "orden_id" }
+        );
+        if (e) {
+          // Sin migration_75.sql la tabla no existe: no se guarda solo y no se dice nada.
+          if (["42P01", "PGRST205", "PGRST204"].includes(e.code) || /does not exist|could not find/i.test(e.message || "")) {
+            borradorActivo.current = false;
+            setEstadoBorrador(null);
+          } else {
+            setEstadoBorrador({ t: "error" });
+          }
+          return;
+        }
+        if (!guardandoFinal.current) setEstadoBorrador({ t: "ok", en });
+      } catch {
+        setEstadoBorrador({ t: "error" });
+      }
+    }, 900);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [informe, respuestaOrings, nuevoOring]);
+
+  useEffect(() => () => clearTimeout(timerBorrador.current), []);
   function agregarOring() {
     const valor = nuevoOring.trim();
     if (!valor) return;
@@ -114,6 +182,9 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
     }
 
     setGuardando(true);
+    // V50: que no se guarde el borrador mientras se guarda el informe de verdad.
+    guardandoFinal.current = true;
+    clearTimeout(timerBorrador.current);
     let yendose = false;
     try {
       // V40: lo que el técnico escribió sin tocar "+ Agregar" también cuenta;
@@ -137,6 +208,14 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
         .eq("id", orden.id);
 
       if (err) throw err;
+
+      // V50: el informe ya está guardado; su borrador ya no hace falta.
+      try {
+        await supabase.from("informes_borrador").delete().eq("orden_id", orden.id);
+      } catch {
+        // No importa: la ficha solo dice "a medias" si no hay informe.
+      }
+      setEstadoBorrador(null);
 
       // "Recomendación de próximo mantenimiento" -- se guarda también en
       // el EQUIPO, no solo en este Informe puntual (1-oct-2026, pedido
@@ -168,6 +247,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
       setRecienGuardado(true);
       setVista("preview");
     } catch (e) {
+      guardandoFinal.current = false;
       setError("No se pudo guardar. Intenta de nuevo.");
     } finally {
       if (!yendose) setGuardando(false);
@@ -219,8 +299,25 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
 
   const componentesTexto = componentesRecibidosTexto(orden.regulador_componentes);
 
+  const horaBorrador = (iso) =>
+    new Intl.DateTimeFormat("es-DO", { timeZone: "America/Santo_Domingo", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+
   return (
     <div className="card">
+      {/* V50: si se está guardando solo. */}
+      {!yaGenerado && estadoBorrador && (
+        <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+          {estadoBorrador.t === "guardando" ? (
+            <span className="inf-estado">Guardando…</span>
+          ) : estadoBorrador.t === "ok" ? (
+            <span className="inf-estado ok">✓ Guardado · {horaBorrador(estadoBorrador.en)}</span>
+          ) : (
+            <span className="inf-estado" style={{ color: "var(--rojo)" }}>
+              No se pudo guardar solo. Revisa el internet.
+            </span>
+          )}
+        </div>
+      )}
       {recienGuardado && volver && (
         <div className="success-box no-print" style={{ marginTop: 0, marginBottom: 12 }}>
           <b>✓ Informe guardado.</b>
@@ -311,7 +408,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
           <div style={SECCION_ESTILO_SUTIL}>
             <div style={SECCION_LABEL_ESTILO_SUTIL}>Estado inicial del regulador</div>
             <div style={{ marginTop: 8, ...TEXTO_SUTIL_ESTILO }}><b>Daños visibles:</b> {orden.regulador_danos_visibles || "Ninguno"}</div>
-            <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Problemas reportados:</b> {orden.regulador_problemas_reportados || "Ninguno reportado"}</div>
+            <div style={{ marginTop: 4, ...TEXTO_SUTIL_ESTILO }}><b>Problemas reportados por cliente:</b> {orden.regulador_problemas_reportados || "Ninguno reportado"}</div>
           </div>
 
           </>

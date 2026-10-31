@@ -13,6 +13,7 @@ export default function NuevoReguladorForm() {
   const [segundaEtapa, setSegundaEtapa] = useState("");
   const [octopus, setOctopus] = useState("");
   const [manometro, setManometro] = useState("");
+  const [profundimetro, setProfundimetro] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [guardado, setGuardado] = useState(false);
@@ -33,6 +34,7 @@ export default function NuevoReguladorForm() {
       segunda_etapa: segundaEtapa.trim() || null,
       octopus: octopus.trim() || null,
       manometro: manometro.trim() || null,
+      ...(profundimetro.trim() ? { profundimetro: profundimetro.trim() } : {}),
     });
     setLoading(false);
 
@@ -51,6 +53,7 @@ export default function NuevoReguladorForm() {
     setSegundaEtapa("");
     setOctopus("");
     setManometro("");
+    setProfundimetro("");
     setGuardado(true);
     router.refresh();
   }
@@ -111,6 +114,17 @@ export default function NuevoReguladorForm() {
         value={manometro}
         onChange={(e) => setManometro(e.target.value)}
         placeholder="Ej: Scubapro"
+      />
+
+      {/* V49 (nota: "al editar o agregar un equipo de alquiler, incluye la
+          parte de profundímetro"). Columna nueva: migration_74.sql. */}
+      <label htmlFor="profundimetro">Profundímetro</label>
+      <input
+        id="profundimetro"
+        type="text"
+        value={profundimetro}
+        onChange={(e) => setProfundimetro(e.target.value)}
+        placeholder="Ej: Sin profundímetro"
       />
 
       {error && <div className="error-box">{error}</div>}

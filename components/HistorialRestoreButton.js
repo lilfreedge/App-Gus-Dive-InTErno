@@ -24,7 +24,20 @@ export default function HistorialRestoreButton({ cambio }) {
     setLoading(true);
 
     try {
-      const { error: insertError } = await supabase.from(cambio.tabla).insert(cambio.datos_anteriores);
+      // V50: una solicitud al almacén se guardó con sus códigos adentro
+      // (`items`): primero vuelve la solicitud y después sus códigos.
+      const esSolicitud = cambio.tabla === "solicitudes_almacen";
+      const { items: itemsSolicitud, ...filaSolicitud } = cambio.datos_anteriores || {};
+      const { error: insertError } = await supabase
+        .from(cambio.tabla)
+        .insert(esSolicitud ? filaSolicitud : cambio.datos_anteriores);
+      if (!insertError && esSolicitud && Array.isArray(itemsSolicitud) && itemsSolicitud.length) {
+        const { error: errItems } = await supabase.from("solicitudes_almacen_items").insert(itemsSolicitud);
+        if (errItems) {
+          alert("Volvió la solicitud, pero no sus códigos." + (errItems.message ? `\n\n(${errItems.message})` : ""));
+          return;
+        }
+      }
 
       if (insertError) {
         // Se deja el detalle del error en consola y (para Titular/Admin,

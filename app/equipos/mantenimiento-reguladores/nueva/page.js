@@ -6,7 +6,7 @@ import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevoMantenimientoForm from "./form-client";
 
-export default async function NuevoMantenimientoPage() {
+export default async function NuevoMantenimientoPage({ searchParams }) {
   const supabase = createClient();
   await requireInterno(supabase, "registrar_mantenimiento");
   const {
@@ -21,7 +21,8 @@ export default async function NuevoMantenimientoPage() {
 
   const { data: reguladores } = await supabase
     .from("reguladores_alquiler")
-    .select("id, codigo, descripcion")
+    // V50: con sus componentes (1ra etapa, 2da etapa, etc.) para el mantenimiento.
+    .select("*")
     .eq("activo", true)
     .order("codigo");
 
@@ -46,6 +47,7 @@ export default async function NuevoMantenimientoPage() {
           userId={user.id}
           nombreUsuario={profile?.full_name || user.email}
           reguladores={reguladores || []}
+          inicial={(reguladores || []).some((r) => r.id === searchParams?.regulador) ? searchParams.regulador : ""}
         />
       </div>
     </div>

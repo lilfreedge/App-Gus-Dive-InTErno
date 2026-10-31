@@ -5,6 +5,8 @@ import RegistroActions from "./RegistroActions";
 import { formatFecha } from "@/lib/format";
 import BuscadorLista from "./BuscadorLista";
 import { IconPackage, IconTank, IconAlert, IconGear } from "./icons";
+import { detalleMantenimientoTexto, cambiosTexto } from "@/lib/mantenimiento-regulador";
+import SolicitudRecibidaItem from "./SolicitudRecibidaItem";
 
 const FILTROS = [
   { valor: "todos", label: "Todos" },
@@ -12,6 +14,7 @@ const FILTROS = [
   { valor: "llenado", label: "Llenados" },
   { valor: "inspeccion", label: "Inspecciones" },
   { valor: "mantenimiento", label: "Mantenimientos" },
+  { valor: "solicitud", label: "Solicitudes" },
 ];
 
 // Combina salidas, llenados de tanques, inspecciones visuales y
@@ -74,6 +77,11 @@ export default function MovimientosList({ movimientos, puedeEditar }) {
                   {m.nota && <div className="list-item-note">{m.nota}</div>}
                 </div>
               );
+            }
+
+            // V50: lo que llegó por Solicitudes al almacén.
+            if (m.tipo === "solicitud") {
+              return <SolicitudRecibidaItem key={"solicitud-" + m.id} item={m} conIcono />;
             }
 
             if (m.tipo === "llenado") {
@@ -159,6 +167,12 @@ export default function MovimientosList({ movimientos, puedeEditar }) {
                 <div className="list-item-meta">
                   {m.full_name} · {formatFecha(m.created_at)}
                 </div>
+                <div className="list-item-meta">{detalleMantenimientoTexto(m)}</div>
+                {cambiosTexto(m.componentes_cambios) && (
+                  <div className="list-item-meta" style={{ color: "var(--verde)", fontWeight: 700 }}>
+                    Cambió: {cambiosTexto(m.componentes_cambios)}
+                  </div>
+                )}
                 {m.detalle && <div className="list-item-note">{m.detalle}</div>}
               </div>
             );

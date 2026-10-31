@@ -4,12 +4,21 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import SelectorBusqueda from "@/components/SelectorBusqueda";
+import ComponentesRegulador from "@/components/ComponentesRegulador";
+import { componentesCambiados } from "@/lib/mantenimiento-regulador";
 
-export default function NuevoMantenimientoForm({ userId, nombreUsuario, reguladores }) {
+export default function NuevoMantenimientoForm({ userId, nombreUsuario, reguladores, inicial = "" }) {
   const router = useRouter();
   const supabase = createClient();
 
-  const [reguladorId, setReguladorId] = useState(reguladores[0]?.id || "");
+  // V49: al tocar un pendiente en la lista, ya viene escogido.
+  const [reguladorId, setReguladorIdRaw] = useState(inicial || reguladores[0]?.id || "");
+  // V50: componentes que cambiaron ({ campo: nuevo }); se limpian al cambiar de regulador.
+  const [nuevosComp, setNuevosComp] = useState({});
+  const setReguladorId = (id) => {
+    setReguladorIdRaw(id);
+    setNuevosComp({});
+  };
   const [limpiezaUltrasonido, setLimpiezaUltrasonido] = useState(false);
   const [presionIntermedia, setPresionIntermedia] = useState("");
   // o_rings: array de {descripcion, parte}
@@ -42,6 +51,11 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
     }
 
     const regulador = reguladores.find((r) => r.id === reguladorId);
+    const cambios = componentesCambiados(regulador, nuevosComp);
+    if (Object.values(nuevosComp).some((v) => !String(v || "").trim())) {
+      setError('Escribe el componente nuevo, o toca "No cambió".');
+      return;
+    }
 
     setLoading(true);
 
@@ -54,12 +68,18 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
       presion_intermedia: presionIntermedia.trim() || null,
       o_rings: oRings.length > 0 ? oRings : null,
       detalle: nota.trim() || null,
+      // V50: solo si cambió algo (así funciona aunque falte migration_75.sql).
+      ...(cambios.length ? { componentes_cambios: cambios } : {}),
     });
 
     setLoading(false);
 
     if (error) {
-      setError("No se pudo guardar. Intenta de nuevo.");
+      setError(
+        /componentes_cambios/.test(error.message || "")
+          ? "Para guardar componentes cambiados falta correr migration_75.sql en Supabase."
+          : "No se pudo guardar. Intenta de nuevo."
+      );
       return;
     }
 
@@ -79,6 +99,18 @@ export default function NuevoMantenimientoForm({ userId, nombreUsuario, regulado
         placeholder="Escribe para buscar regulador por código..."
         vacio="No hay reguladores activos"
       />
+
+      {/* V50: componentes del regulador, como están guardados. */}
+      {reguladorId && (
+        <>
+          <label>Componentes del regulador</label>
+          <ComponentesRegulador
+            regulador={reguladores.find((r) => r.id === reguladorId)}
+            nuevos={nuevosComp}
+            setNuevos={setNuevosComp}
+          />
+        </>
+      )}
 
       <label>Limpieza ultrasonido</label>
       <div className="radio-pills">

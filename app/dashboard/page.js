@@ -5,7 +5,7 @@ import { getProfileYUser, tieneAcceso, esOperativo, esRolEquipos } from "@/lib/r
 import { seccionesVisibles } from "@/lib/nav";
 import { obtenerPendientesInterno } from "@/lib/notificaciones";
 import AppHeader from "@/components/AppHeader";
-import { IconPackage, IconTank, IconAlert, IconLock } from "@/components/icons";
+import { IconPackage, IconTank, IconAlert, IconLock, IconGear } from "@/components/icons";
 import InicioOperativo from "./operativo";
 
 const ETIQUETAS_PERIODO = {
@@ -49,6 +49,10 @@ export default async function DashboardPage({ searchParams }) {
   const puedeRegistrarLlenado = tieneAcceso(profile, "registrar_llenado");
   const puedeVerLlenados = puedeRegistrarLlenado || tieneAcceso(profile, "facturacion");
   const puedeVerTodoMovimientos = tieneAcceso(profile, "movimientos");
+  // V49 (nota: "Registré un mantenimiento de reg y no aparece en actividad
+  // reciente"): la actividad reciente trae lo mismo que Movimientos.
+  const puedeVerMantenimientos = tieneAcceso(profile, "registrar_mantenimiento");
+  const puedeVerInspecciones = tieneAcceso(profile, "registrar_inspeccion");
   // Sin ninguna sección habilitada (solo "Inicio" en el menú de arriba):
   // en vez de una pantalla vacía, un aviso.
   const sinSecciones =
@@ -67,7 +71,7 @@ export default async function DashboardPage({ searchParams }) {
   else if (periodo === "mes") desde.setDate(desde.getDate() - 30);
   else desde.setDate(desde.getDate() - 7);
 
-  const [salidasRes, tanquesRes, ultimasSalidas, ultimosTanques, pendientes] =
+  const [salidasRes, tanquesRes, ultimasSalidas, ultimosTanques, pendientes, ultimosMant, ultimasInsp] =
     await Promise.all([
       puedeSalidas
         ? supabase
@@ -90,6 +94,12 @@ export default async function DashboardPage({ searchParams }) {
       // año) del dashboard -- son alertas del momento, no estadísticas del
       // periodo. Lógica compartida con /espacio en lib/notificaciones.js.
       obtenerPendientesInterno(supabase, profile),
+      puedeVerMantenimientos
+        ? supabase.from("mantenimientos_con_nombre").select("*").order("created_at", { ascending: false }).limit(8).then((r) => r, () => ({ data: [] }))
+        : Promise.resolve({ data: [] }),
+      puedeVerInspecciones
+        ? supabase.from("inspecciones_con_nombre").select("*").order("created_at", { ascending: false }).limit(8).then((r) => r, () => ({ data: [] }))
+        : Promise.resolve({ data: [] }),
     ]);
 
   const totalSalidas = (salidasRes.data || []).length;
@@ -122,6 +132,27 @@ export default async function DashboardPage({ searchParams }) {
       gas: t.tipo_gas || "Aire",
       cantidad: t.cantidad,
       detalle: t.nota,
+    })),
+    ...(ultimosMant.data || []).map((m) => ({
+      tipo: "mantenimiento",
+      id: m.id,
+      created_at: m.created_at,
+      full_name: m.full_name,
+      titulo: "Mantenimiento de regulador",
+      folio: m.folio,
+      cantidad: m.regulador_codigo_snapshot,
+      detalle: m.detalle,
+    })),
+    ...(ultimasInsp.data || []).map((i) => ({
+      tipo: "inspeccion",
+      id: i.id,
+      created_at: i.created_at,
+      full_name: i.full_name,
+      titulo: "Inspección visual",
+      folio: i.folio,
+      resultado: i.resultado,
+      cantidad: i.tanque_codigo_snapshot,
+      detalle: i.nota,
     })),
   ]
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -325,7 +356,7 @@ export default async function DashboardPage({ searchParams }) {
           </>
         )}
 
-        {(puedeSalidas || puedeVerLlenados) && (
+        {(puedeSalidas || puedeVerLlenados || puedeVerMantenimientos || puedeVerInspecciones) && (
         <>
         <div className="section-title">
           Actividad reciente
@@ -337,14 +368,24 @@ export default async function DashboardPage({ searchParams }) {
               <div className="list-item" key={a.tipo + a.id}>
                 <div className="list-item-top">
                   <span className="list-item-title">
-                    {a.tipo === "salida" ? <IconPackage size={14} /> : <IconTank size={14} />}{" "}
+                    {a.tipo === "salida" ? (
+                      <IconPackage size={14} />
+                    ) : a.tipo === "mantenimiento" ? (
+                      <IconGear size={14} />
+                    ) : a.tipo === "inspeccion" ? (
+                      <IconAlert size={14} />
+                    ) : (
+                      <IconTank size={14} />
+                    )}{" "}
+                    {a.folio != null && <span className="folio-tag">#{a.folio}</span>}
                     {a.titulo}
+                    {a.resultado && <span className={a.resultado === "Aprobado" ? "badge badge-verde" : "badge badge-rojo"}>{a.resultado}</span>}
                     {/* V40: el gas del llenado, con la misma etiqueta de la
                         lista de llenados (Nitrox en verde suave). */}
                     {a.gas && <span className={a.gas === "Nitrox" ? "badge badge-nitrox" : "badge"}>{a.gas}</span>}
                   </span>
                   <span className="list-item-qty">
-                    {a.tipo === "salida" ? a.cantidad : `${a.cantidad} tanque(s)`}
+                    {a.tipo === "tanque" ? `${a.cantidad} tanque(s)` : a.cantidad}
                   </span>
                 </div>
                 <div className="list-item-meta">

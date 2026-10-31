@@ -1,16 +1,27 @@
 import RegistroActions from "./RegistroActions";
 import { formatFecha } from "@/lib/format";
+import SolicitudRecibidaItem from "./SolicitudRecibidaItem";
 
 // Lista de salidas reutilizada por /salidas y por "Ver movimientos" del
 // catálogo (filtrado por artículo).
-export default function SalidasList({ salidas, puedeEditar }) {
-  if (!salidas || salidas.length === 0) {
-    return <div className="empty">Aún no hay salidas registradas.</div>;
+// V50 -- `recibidos` (solo en "Movimientos de" un código): lo que llegó de
+// ese código por Solicitudes al almacén, mezclado con las salidas por fecha.
+export default function SalidasList({ salidas, puedeEditar, recibidos = null }) {
+  const filas = [
+    ...(salidas || []).map((s) => ({ tipo: "salida", fecha: s.created_at, s })),
+    ...(recibidos || []).map((r) => ({ tipo: "recibido", fecha: r.recibido_at, r })),
+  ].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+  if (filas.length === 0) {
+    return <div className="empty">{recibidos ? "Aún no hay movimientos de este código." : "Aún no hay salidas registradas."}</div>;
   }
 
   return (
     <div>
-      {salidas.map((s) => (
+      {filas.map(({ tipo, s, r }) =>
+        tipo === "recibido" ? (
+          <SolicitudRecibidaItem key={`r-${r.id}`} item={r} />
+        ) : (
         <div className="list-item" key={s.id} data-buscar="">
           <div className="list-item-top">
             <span className="list-item-title">
@@ -35,7 +46,8 @@ export default function SalidasList({ salidas, puedeEditar }) {
           </div>
           {s.nota && <div className="list-item-note">{s.nota}</div>}
         </div>
-      ))}
+        )
+      )}
     </div>
   );
 }

@@ -5,16 +5,50 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatFecha } from "@/lib/format";
 import { estadoSolicitud, ETIQUETA_ESTADO, ordenarItems } from "@/lib/solicitudes";
+import { registrarCambio } from "@/lib/audit-client";
+import { IconTrash } from "@/components/icons";
 
 // Una solicitud con sus códigos. Cada código se marca como recibido por
 // separado (pedido explícito: "codigo por codigo, por si algo no llega"),
 // con fecha y quién lo recibió; "Deshacer" por si se marcó sin querer.
-export default function SolicitudCard({ solicitud, userId, nombreUsuario }) {
+// V50 -- `puedeBorrar` (solo el Titular, "14. yo"): basurero con motivo,
+// igual que las Salidas (maqueta-v50-borrar-solicitudes.html, "13. si").
+// Se borra la solicitud completa con sus códigos y queda en el Historial.
+export default function SolicitudCard({ solicitud, userId, nombreUsuario, puedeBorrar = false }) {
   const router = useRouter();
   const supabase = createClient();
   const [ocupado, setOcupado] = useState(null);
   const [error, setError] = useState("");
   const [avisando, setAvisando] = useState(false);
+  const [borrando, setBorrando] = useState(false); // modal abierto
+  const [motivo, setMotivo] = useState("");
+  const [motivoError, setMotivoError] = useState(false);
+  const [quitando, setQuitando] = useState(false);
+
+  async function borrarSolicitud() {
+    const m = motivo.trim();
+    if (!m) return setMotivoError(true);
+    setQuitando(true);
+    setError("");
+    // El Historial guarda la solicitud completa (con sus códigos) por si hay que restaurarla.
+    const { items: its, ...fila } = solicitud;
+    await registrarCambio(supabase, {
+      tabla: "solicitudes_almacen",
+      registroId: solicitud.id,
+      accion: "borrar",
+      datosAnteriores: { ...fila, items: ordenarItems(its) },
+      motivo: m,
+    });
+    const { error: err } = await supabase.from("solicitudes_almacen").delete().eq("id", solicitud.id);
+    setQuitando(false);
+    if (err) {
+      setBorrando(false);
+      setError("No se pudo borrar la solicitud. Intenta de nuevo.");
+      return;
+    }
+    setBorrando(false);
+    router.refresh();
+  }
 
   const items = ordenarItems(solicitud.items);
   const estado = estadoSolicitud(items);
@@ -60,7 +94,26 @@ export default function SolicitudCard({ solicitud, userId, nombreUsuario }) {
             {solicitud.nombre_usuario_snapshot || "—"} · {formatFecha(solicitud.created_at)}
           </div>
         </div>
-        <span className={`badge ${etiqueta.badge}`}>{etiqueta.texto}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span className={`badge ${etiqueta.badge}`}>{etiqueta.texto}</span>
+          {puedeBorrar && (
+            <div className="row-actions">
+              <button
+                type="button"
+                className="icon-btn icon-btn-danger"
+                onClick={() => {
+                  setMotivo("");
+                  setMotivoError(false);
+                  setBorrando(true);
+                }}
+                aria-label="Borrar"
+                title="Borrar"
+              >
+                <IconTrash size={15} />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <table className="table-mini" style={{ marginTop: 10 }}>
@@ -150,6 +203,47 @@ export default function SolicitudCard({ solicitud, userId, nombreUsuario }) {
       </div>
 
       {error && <div className="error-box">{error}</div>}
+
+      {borrando && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !quitando) setBorrando(false);
+          }}
+        >
+          <div className="modal-panel">
+            <div className="modal-title">Borrar solicitud #{solicitud.folio}</div>
+            <div className="hint-text" style={{ marginTop: 6 }}>
+              Se borra completa, con {items.length === 1 ? "su código" : `sus ${items.length} códigos`}. Queda anotada en el Historial.
+            </div>
+            <div className={motivoError ? "field-error" : ""}>
+              <label style={{ marginTop: 14 }}>
+                Motivo <span className="req">*</span>
+              </label>
+              <textarea
+                rows={3}
+                placeholder="Explica por qué se borra esta solicitud"
+                value={motivo}
+                onChange={(e) => {
+                  setMotivo(e.target.value);
+                  if (motivoError && e.target.value.trim()) setMotivoError(false);
+                }}
+                disabled={quitando}
+                autoFocus
+              />
+              {motivoError && <div className="error-msg">⚠ Este campo es obligatorio</div>}
+            </div>
+            <div className="modal-actions">
+              <button className="btn secondary" type="button" onClick={() => setBorrando(false)} disabled={quitando}>
+                Cancelar
+              </button>
+              <button className="btn danger" type="button" onClick={borrarSolicitud} disabled={quitando}>
+                {quitando ? "Borrando..." : "Borrar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -39,7 +39,9 @@ export default async function InicioTecnico({ supabase, profile, userId }) {
     .neq("estado", "Entregado")
     .order("fecha");
 
-  const abiertas = data || [];
+  // V49: por número de orden, de menor a mayor (igual que el Inicio general).
+  const numeroDe = (o) => Number(String(o.no_orden_fisico ?? o.folio ?? "").replace(/\D/g, "")) || 0;
+  const abiertas = [...(data || [])].sort((a, b) => numeroDe(a) - numeroDe(b));
   const mias = abiertas.filter((o) => o.tecnico_asignado_id === userId);
   const porTrabajar = mias.filter((o) => o.estado === "Pendiente por trabajar");
   const enProceso = mias.filter((o) => o.estado === "En proceso");

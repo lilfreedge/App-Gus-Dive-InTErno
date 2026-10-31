@@ -42,6 +42,14 @@ export default async function InformeMantenimientoPage({ params, searchParams })
     serie = equipo?.serie || null;
   }
 
+  // V50: lo que se había ido guardando solo (si el informe no existe todavía).
+  // Sin migration_75.sql la tabla no existe y no trae nada.
+  let borrador = null;
+  if (!orden.informe_mantenimiento) {
+    const { data: b } = await supabase.from("informes_borrador").select("*").eq("orden_id", params.id).maybeSingle();
+    borrador = b || null;
+  }
+
   // "Volver": a donde se abrió el informe -- el menú del técnico
   // (?from=tecnico), Actualizar estado (?from=actualizar) o la orden.
   const como = /^[0-9a-f-]{36}$/i.test(searchParams?.como || "") ? searchParams.como : null;
@@ -80,6 +88,7 @@ export default async function InformeMantenimientoPage({ params, searchParams })
             serie={serie}
             tecnicoSugerido={profile?.full_name || ""}
             sencillo
+            borrador={borrador}
             alGuardar={searchParams?.from === "tecnico" ? `${volverHref}&informe=ok` : volverHref}
           />
         </div>
@@ -129,6 +138,7 @@ export default async function InformeMantenimientoPage({ params, searchParams })
           orden={orden}
           serie={serie}
           tecnicoSugerido={profile?.full_name || ""}
+          borrador={borrador}
           volver={
             searchParams?.from === "tecnico"
               ? { href: volverHref, texto: "← Volver a mis trabajos" }

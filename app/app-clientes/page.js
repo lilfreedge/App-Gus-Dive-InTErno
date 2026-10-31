@@ -123,8 +123,13 @@ export default async function AppClientesPage() {
   // Excluir de "Pendientes por trabajar" las que ya salieron a
   // hidrostática/reparación y todavía no vuelven -- ya se ven en sus
   // propias secciones más abajo (pedido explícito, para no duplicar).
-  const porTrabajar = (porTrabajarRaw || []).filter(
-    (o) => !((o.fecha_envio || o.fecha_envio_hidrostatica) && !o.fecha_retorno_tienda)
+  // V49 (nota: "me interesa que salgan las cosas por número de orden. O sea
+  // en orden, no a lo loco"): todas las listas de Inicio van por número de
+  // orden, de menor a mayor.
+  const numeroDe = (o) => Number(String(o.no_orden_fisico ?? o.folio ?? "").replace(/\D/g, "")) || 0;
+  const porNumero = (l) => [...(l || [])].sort((a, b) => numeroDe(a) - numeroDe(b));
+  const porTrabajar = porNumero(
+    (porTrabajarRaw || []).filter((o) => !((o.fecha_envio || o.fecha_envio_hidrostatica) && !o.fecha_retorno_tienda))
   );
 
   // V39 -- a quién está asignada cada orden (pedido explícito: "que los que
@@ -147,7 +152,7 @@ export default async function AppClientesPage() {
   // Aviso rojo de Hold activo hace más de 3 días (feature Hold,
   // 27-sep-2026, pedido explícito: "si, 3 dias") -- se cuenta desde que
   // empezó el Hold (hold.fecha_inicio), no desde el ingreso de la orden.
-  const enEsperaConHold = (enEspera || []).map((o) => ({
+  const enEsperaConHold = porNumero(enEspera).map((o) => ({
     ...o,
     hold_fecha_inicio: holdActivo(o.holds)?.fecha_inicio || null,
   }));
@@ -163,7 +168,7 @@ export default async function AppClientesPage() {
   // ver lib/procesos-ordenes.js). Solo en Inicio, a propósito ("y no se
   // donde mas") -- Registro de Órdenes y la ficha siguen mostrando el
   // badge genérico "Pendiente por despachar".
-  const porEntregarConVerificacion = (porEntregar || []).map((o) => ({
+  const porEntregarConVerificacion = porNumero(porEntregar).map((o) => ({
     ...o,
     necesita_verificar: !o.verificado_por && requiereVerificacion(ajustes, o.tipo_equipo),
   }));
@@ -242,7 +247,7 @@ export default async function AppClientesPage() {
         <div className="section-title">Órdenes en prueba hidrostáticas ({(enHidrostatica || []).length})</div>
         <ListaOrdenes
           nombresTecnicos={nombresTecnicos}
-          ordenes={enHidrostatica}
+          ordenes={porNumero(enHidrostatica)}
           vacio="No hay órdenes en prueba hidrostática."
           fechaCampo="fecha_envio_hidrostatica"
           fechaLabel="Fecha enviado"
@@ -253,7 +258,7 @@ export default async function AppClientesPage() {
         <div className="section-title">Órdenes enviadas a reparación ({(enReparacion || []).length})</div>
         <ListaOrdenes
           nombresTecnicos={nombresTecnicos}
-          ordenes={enReparacion}
+          ordenes={porNumero(enReparacion)}
           vacio="No hay órdenes enviadas a reparación."
           fechaCampo="fecha_envio"
           fechaLabel="Fecha enviado"

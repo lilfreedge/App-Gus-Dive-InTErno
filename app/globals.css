@@ -2767,6 +2767,79 @@ a.pb-btn { text-align: center; box-sizing: border-box; }
 .pb-datos svg { flex: none; opacity: 0.85; }
 .pb-priv { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; line-height: 1.4; color: #5c6b78; background: #f4f8fb; border-radius: 10px; padding: 8px 10px; margin-top: 12px; text-align: left; }
 .pb-priv svg { flex: none; margin-top: 1px; color: #1b7fae; }
+/* V50: consultas del Hold en puntos, cada una con su respuesta */
+.hold-cons { list-style: none; margin: 8px 0 4px; padding: 0; display: grid; gap: 8px; }
+.hold-cons li { display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; }
+.hold-cons.chico { gap: 5px; margin: 4px 0; }
+.hold-cons.chico li { font-size: 12.5px; gap: 8px; }
+.hold-cons-n { flex: none; width: 22px; height: 22px; border-radius: 11px; background: var(--rojo); color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+.hold-cons.chico .hold-cons-n { width: 18px; height: 18px; font-size: 11px; background: var(--texto-suave); }
+.hold-cons-txt { flex: 1; min-width: 0; }
+.hold-cons-com { display: block; color: var(--texto-suave); font-size: 0.9em; margin-top: 1px; }
+.hold-cons-r { flex: none; font-size: 11.5px; font-weight: 800; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.hold-cons-r.sin { background: var(--tarjeta); color: #8a6d00; border: 1px solid #e0c46a; }
+.hold-cons-r.si { background: var(--exito-fondo); color: var(--verde); border: 1px solid var(--exito-borde); }
+.hold-cons-r.no { background: var(--tarjeta); color: var(--rojo); border: 1px solid var(--error-borde); }
+.hold-resp { border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; margin-top: 8px; background: var(--tarjeta); }
+.hold-resp-t { display: flex; gap: 8px; font-size: 14px; margin-bottom: 8px; }
+.hold-resp-bt { display: flex; gap: 6px; flex-wrap: wrap; }
+.hold-resp-bt button { width: auto; margin-top: 0; padding: 7px 16px; }
+.hold-resp input { margin-top: 8px; }
+.hold-modal-fila { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.hold-modal-fila .hold-cons-n { background: var(--azul); }
+.hold-modal-fila input { flex: 1; margin: 0; }
+.hold-modal-quitar { background: none; border: 0; color: var(--rojo); font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13px; }
+/* V50: notas internas de la orden */
+.notas-int { border: 1px solid var(--borde); border-radius: 12px; background: var(--superficie-suave); padding: 12px 14px; margin-top: 16px; }
+.notas-int-t { font-weight: 800; font-size: 12.5px; letter-spacing: 0.03em; color: var(--texto-suave); text-transform: uppercase; display: flex; gap: 6px; align-items: center; }
+.nota-i { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 9px; padding: 8px 10px; margin-top: 8px; font-size: 14.5px; white-space: pre-wrap; }
+.nota-i-meta { display: flex; justify-content: space-between; gap: 8px; color: var(--texto-suave); font-size: 12px; margin-bottom: 2px; white-space: normal; }
+.nota-i-meta button { background: none; border: 0; color: var(--rojo); font-weight: 700; cursor: pointer; font-family: inherit; font-size: 12px; padding: 0; }
+.nota-add { display: flex; gap: 8px; margin-top: 10px; }
+.nota-add input { flex: 1; margin: 0; }
+.nota-add button { width: auto; margin: 0; padding: 10px 14px; }
+/* V50: informe a medias */
+.inf-estado { font-size: 12.5px; font-weight: 700; color: var(--texto-suave); white-space: nowrap; }
+.inf-estado.ok { color: var(--verde); }
+.inf-medias { border: 2px solid #e0a800; background: rgba(224, 168, 0, 0.08); border-radius: 12px; padding: 12px 14px; margin-top: 14px; }
+.inf-medias-t { font-weight: 800; color: #8a6500; font-size: 13px; letter-spacing: 0.02em; }
+/* V50: componentes del regulador al registrar su mantenimiento */
+.comp-fila { display: grid; grid-template-columns: 110px 1fr auto; gap: 8px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--superficie-suave); font-size: 14.5px; }
+.comp-fila:last-child { border-bottom: 0; }
+.comp-fila-l { color: var(--texto-suave); font-weight: 700; font-size: 13px; }
+.comp-fila input { margin: 0; }
+.comp-fila.cambio { background: rgba(44, 158, 91, 0.08); border-radius: 8px; padding-left: 6px; padding-right: 6px; }
+.comp-antes { display: block; font-size: 12px; color: var(--texto-suave); text-decoration: line-through; }
+.comp-btn { border: 1px solid var(--borde); background: var(--tarjeta); border-radius: 8px; padding: 5px 10px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--azul-texto); white-space: nowrap; }
+@media (max-width: 480px) { .comp-fila { grid-template-columns: 1fr auto; } .comp-fila-l { grid-column: 1 / -1; } }
+/* V49: reguladores pendientes por mantenimiento, arriba y en rojo */
+.mant-pend { background: var(--error-fondo); border: 2px solid var(--rojo); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; }
+.mant-pend.proximo { background: var(--superficie-suave); border-color: #e0a800; }
+.mant-pend-t { display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--rojo); font-size: 16px; margin-bottom: 10px; }
+.mant-pend.proximo .mant-pend-t { color: #9a6b00; font-size: 15px; }
+.mant-pend-lista { display: flex; flex-wrap: wrap; gap: 8px; }
+.mant-pend-chip { display: inline-flex; flex-direction: column; gap: 1px; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; padding: 7px 11px; text-decoration: none; color: var(--texto); min-width: 92px; }
+.mant-pend-chip b { font-size: 15px; }
+.mant-pend-chip span { font-size: 12px; color: var(--texto-suave); }
+a.mant-pend-chip:hover { border-color: var(--rojo); }
+/* V48: cupo lleno que se vea */
+.pb-cupo.lleno { background: #fff1e6; color: #b23c17; border: 2px solid #e8590c; font-size: 14px; font-weight: 800; padding: 5px 12px; display: inline-flex; align-items: center; gap: 6px; }
+.pb-lleno { display: flex; gap: 10px; align-items: flex-start; background: #fff1e6; border: 2px solid #e8590c; color: #8a2f12; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; font-size: 14.5px; line-height: 1.4; }
+.pb-lleno svg { flex: none; color: #e8590c; margin-top: 1px; }
+/* V48: grupo de WhatsApp (contactos + link) */
+.vj-gw-paso { padding: 12px 0; border-bottom: 1px solid var(--borde); }
+.vj-gw-paso:last-child { border-bottom: none; padding-bottom: 0; }
+.vj-gw-paso:first-child { padding-top: 0; }
+.vj-gw-t { font-weight: 800; margin-bottom: 4px; }
+.vj-gw-botones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.vj-gw-confirmar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
+.vj-gw-link { display: flex; gap: 8px; margin-top: 8px; }
+.vj-gw-link input { flex: 1; min-width: 0; }
+.vj-gw-lista { display: grid; gap: 6px; }
+.vj-gw-fila { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
+.vj-gw-fila a { display: inline-flex; gap: 6px; align-items: center; text-decoration: none; white-space: nowrap; }
+.pb-btn.wa-sec { background: #fff; color: #1f8f4e; border: 1.5px solid #1f8f4e; }
+.pb-btn.wa-sec svg { vertical-align: -3px; margin-right: 6px; }
 /* V47: solo las tallas de lo que marcó, en lista y con su nombre */
 .pb-tallas { display: grid; gap: 8px; margin-top: 10px; }
 .pb-tallas label { display: block; min-width: 0; margin: 0; padding: 0; }

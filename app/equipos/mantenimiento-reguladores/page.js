@@ -5,9 +5,11 @@ import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
+import { IconAlert } from "@/components/icons";
 import { hoyISO, sumarDias } from "@/lib/fechas";
 import BuscadorLista from "@/components/BuscadorLista";
 import { todasLasFilas } from "@/lib/todas-las-filas";
+import { detalleMantenimientoTexto, cambiosTexto } from "@/lib/mantenimiento-regulador";
 
 export default async function MantenimientoReguladoresPage({ searchParams }) {
   const supabase = createClient();
@@ -70,6 +72,57 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
           </Link>
         )}
 
+        {/* V49 (nota: "que los mantenimientos pendientes figuren por encima
+            del listado de mantenimientos. Debería de llamar más la
+            atención"): arriba, en rojo, cada uno lleva a registrar su
+            mantenimiento. */}
+        {reguladoresPendientes.length > 0 && (
+          <div className="mant-pend">
+            <div className="mant-pend-t">
+              <IconAlert size={18} />
+              {reguladoresPendientes.length} regulador{reguladoresPendientes.length === 1 ? "" : "es"} pendiente
+              {reguladoresPendientes.length === 1 ? "" : "s"} por mantenimiento
+            </div>
+            <div className="mant-pend-lista">
+              {reguladoresPendientes.map((r) => {
+                const texto = r.proximo_mantenimiento ? `vencido desde ${formatFechaDDMMAAAADeDate(r.proximo_mantenimiento)}` : "nunca tuvo";
+                const contenido = (
+                  <>
+                    <b>{r.codigo}</b>
+                    <span>{texto}</span>
+                  </>
+                );
+                return puedeRegistrar ? (
+                  <Link key={r.id} href={`/equipos/mantenimiento-reguladores/nueva?regulador=${r.id}`} className="mant-pend-chip">
+                    {contenido}
+                  </Link>
+                ) : (
+                  <span key={r.id} className="mant-pend-chip">
+                    {contenido}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {reguladoresProximos.length > 0 && (
+          <div className="mant-pend proximo">
+            <div className="mant-pend-t">Próximos a vencer (2 semanas o menos)</div>
+            <div className="mant-pend-lista">
+              {reguladoresProximos.map((r) => (
+                <span key={r.id} className="mant-pend-chip">
+                  <b>{r.codigo}</b>
+                  <span>{formatFechaDDMMAAAADeDate(r.proximo_mantenimiento)}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="section-title" style={{ marginTop: 8 }}>
+          Mantenimientos registrados
+        </div>
         <BuscadorLista placeholder="Buscar regulador o persona...">
         <div className="card">
           {mantenimientos && mantenimientos.length > 0 ? (
@@ -94,15 +147,13 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
                 <div className="list-item-meta">
                   {m.full_name} · {formatFecha(m.created_at)}
                 </div>
-                <div className="list-item-meta">
-                  {[
-                    `Limpieza ultrasonido: ${m.limpieza_ultrasonido ? "Sí" : "No"}`,
-                    m.presion_intermedia ? `Presión intermedia: ${m.presion_intermedia}` : "Presión intermedia: —",
-                    Array.isArray(m.o_rings) && m.o_rings.length > 0
-                      ? `O-rings: ${m.o_rings.map((r) => r.descripcion + (r.parte ? ` (${r.parte})` : "")).join(", ")}`
-                      : "O-rings: Ninguno",
-                  ].join(" · ")}
-                </div>
+                <div className="list-item-meta">{detalleMantenimientoTexto(m)}</div>
+                {/* V50: componentes que cambiaron en este mantenimiento. */}
+                {cambiosTexto(m.componentes_cambios) && (
+                  <div className="list-item-meta" style={{ color: "var(--verde)", fontWeight: 700 }}>
+                    Cambió: {cambiosTexto(m.componentes_cambios)}
+                  </div>
+                )}
                 {m.detalle && <div className="list-item-note">{m.detalle}</div>}
               </div>
             ))
@@ -112,47 +163,6 @@ export default async function MantenimientoReguladoresPage({ searchParams }) {
         </div>
         </BuscadorLista>
 
-        {reguladoresPendientes.length > 0 && (
-          <>
-            <div className="section-title" style={{ marginTop: 24 }}>
-              Reguladores pendientes por mantenimiento
-            </div>
-            <div className="card">
-              {reguladoresPendientes.map((r) => (
-                <div className="list-item" key={r.id}>
-                  <div className="list-item-top">
-                    <span className="list-item-title">{r.codigo}</span>
-                    <span className="badge badge-rojo">
-                      {r.proximo_mantenimiento
-                        ? `Vencido desde ${formatFechaDDMMAAAADeDate(r.proximo_mantenimiento)}`
-                        : "Nunca tuvo mantenimiento"}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {reguladoresProximos.length > 0 && (
-          <>
-            <div className="section-title" style={{ marginTop: 24 }}>
-              Mantenimiento próximo a vencer (2 semanas o menos)
-            </div>
-            <div className="card">
-              {reguladoresProximos.map((r) => (
-                <div className="list-item" key={r.id}>
-                  <div className="list-item-top">
-                    <span className="list-item-title">{r.codigo}</span>
-                    <span className="list-item-qty">
-                      {formatFechaDDMMAAAADeDate(r.proximo_mantenimiento)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
       </div>
     </div>
   );

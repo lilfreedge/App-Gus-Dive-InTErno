@@ -13,8 +13,11 @@ import { formatFecha, formatFechaDDMMAAAADeDate, formatFechaDDMMAAAA } from "@/l
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
 import { requiereVerificacion } from "@/lib/procesos-ordenes";
-import { holdActivo, diasEnHold, labelTipoHold, detalleHold } from "@/lib/holds";
+import { holdActivo, diasEnHold, labelTipoHold } from "@/lib/holds";
+import HoldConsultas from "@/components/HoldConsultas";
+import NotasInternas from "@/components/NotasInternas";
 import { edicionesDeLaOrden } from "@/lib/bitacora-orden";
+import { borradorYaTiene } from "@/lib/informe-mantenimiento";
 import FotoLightbox from "@/components/FotoLightbox";
 import { IconRefresh } from "@/components/icons";
 import { hoyISO } from "@/lib/fechas";
@@ -118,6 +121,12 @@ export default async function FichaOrdenPage({ params }) {
   const esRegulador = o.tipo_equipo === "Reguladores";
   // "Hold" (27-sep-2026, reemplaza el check "En espera" -- ver lib/holds.js).
   const hold = holdActivo(o.holds);
+  // V50: el informe de mantenimiento que se quedó a medias (se guarda solo).
+  let borradorInforme = null;
+  if (esRegulador && !o.informe_mantenimiento) {
+    const { data: b } = await supabase.from("informes_borrador").select("*").eq("orden_id", o.id).maybeSingle();
+    borradorInforme = b || null;
+  }
   const bitacora = o.bitacora_orden || [];
   // Lista de Códigos a cobrar para mostrar en bullets (feedback en vivo,
   // 6-oct-2026, pedido explícito: "los codigos a cobrar escritos se vean
@@ -419,6 +428,28 @@ export default async function FichaOrdenPage({ params }) {
             {o.notas && <Campo etiqueta="Notas" valor={o.notas} full />}
           </div>
 
+          {/* V50: informe que se quedó a medias (maqueta-v50-notas.html, 3b). */}
+          {borradorInforme && (
+            <div className="inf-medias">
+              <div className="inf-medias-t">INFORME DE MANTENIMIENTO · A MEDIAS</div>
+              <div style={{ fontSize: 14, marginTop: 4 }}>
+                Guardado el {fechaHoraRD(borradorInforme.actualizado_en)}
+                {borradorInforme.nombre ? ` por ${borradorInforme.nombre}` : ""}.{" "}
+                {borradorYaTiene(borradorInforme.datos?.informe) || ""} Falta terminarlo.
+              </div>
+              {puedeVerInforme && o.estado !== "Entregado" && (
+                <Link href={`/app-clientes/ordenes/${o.id}/informe`}>
+                  <button className="btn btn-primary" type="button" style={{ width: "auto", marginTop: 10, padding: "10px 14px" }}>
+                    Seguir llenando el informe
+                  </button>
+                </Link>
+              )}
+            </div>
+          )}
+
+          {/* V50: notas internas (dónde quedó el equipo, etc.). El cliente no las ve. */}
+          <NotasInternas ordenId={o.id} nombre={profile?.full_name || ""} puedeQuitarTodas={puedeAnular} />
+
           {/* Banner de Hold activo (27-sep-2026, pedido explícito: "visible
               banner on ficha... showing the motivo" -- se resuelve desde
               "Actualizar estado de orden", con la Decisión del cliente). */}
@@ -439,7 +470,7 @@ export default async function FichaOrdenPage({ params }) {
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--rojo)" }}>
                 ORDEN EN HOLD — {labelTipoHold(hold)}
               </div>
-              <div style={{ fontSize: 14.5, marginTop: 4 }}>{detalleHold(hold)}</div>
+              <HoldConsultas hold={hold} />
               <div className="hint-text" style={{ marginTop: 4 }}>
                 Desde el {formatFechaDDMMAAAADeDate(hold.fecha_inicio)} ({diasEnHold(hold)} día{diasEnHold(hold) === 1 ? "" : "s"} en Hold) — resuélvelo desde &quot;Actualizar estado de orden&quot;.
               </div>
@@ -461,13 +492,9 @@ export default async function FichaOrdenPage({ params }) {
                   .map((h) => (
                     <div key={h.id} style={{ fontSize: 12.5, padding: "8px 10px", background: "var(--superficie-suave)", borderRadius: 8 }}>
                       <div style={{ fontWeight: 600 }}>
-                        {labelTipoHold(h)} — {detalleHold(h)}
+                        {labelTipoHold(h)} · {formatFechaDDMMAAAADeDate(h.fecha_inicio)} → {formatFechaDDMMAAAADeDate(h.fecha_resolucion)}
                       </div>
-                      <div className="hint-text" style={{ marginTop: 2 }}>
-                        Decisión del cliente: {h.decision === "si" ? "Sí" : h.decision === "no" ? "No" : "—"}
-                        {h.decision_nota ? ` — ${h.decision_nota}` : ""} · {formatFechaDDMMAAAADeDate(h.fecha_inicio)} →{" "}
-                        {formatFechaDDMMAAAADeDate(h.fecha_resolucion)}
-                      </div>
+                      <HoldConsultas hold={h} chico />
                     </div>
                   ))}
               </div>

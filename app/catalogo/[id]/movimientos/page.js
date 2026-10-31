@@ -20,11 +20,19 @@ export default async function MovimientosArticuloPage({ params }) {
 
   if (!articulo) notFound();
 
-  const { data: salidas } = await supabase
-    .from("salidas_con_nombre")
-    .select("*")
-    .eq("articulo_id", params.id)
-    .limit(200);
+  // V50: también lo que llegó de este código por Solicitudes al almacén (ya
+  // recibido). Solo lo ve quien puede ver Solicitudes al almacén (el Titular
+  // siempre); si no, la lista sale como antes.
+  const [{ data: salidas }, { data: recibidos }] = await Promise.all([
+    supabase.from("salidas_con_nombre").select("*").eq("articulo_id", params.id).limit(200),
+    supabase
+      .from("solicitudes_almacen_items")
+      .select("*, solicitud:solicitudes_almacen(folio, nombre_usuario_snapshot, nota, created_at)")
+      .eq("articulo_id", params.id)
+      .not("recibido_at", "is", null)
+      .order("recibido_at", { ascending: false })
+      .limit(200),
+  ]);
 
   return (
     <div>
@@ -43,7 +51,7 @@ export default async function MovimientosArticuloPage({ params }) {
         {articulo.descripcion && <p className="page-subtitle">{articulo.descripcion}</p>}
 
         <div className="card">
-          <SalidasList salidas={salidas} puedeEditar />
+          <SalidasList salidas={salidas} puedeEditar recibidos={recibidos || []} />
         </div>
       </div>
     </div>

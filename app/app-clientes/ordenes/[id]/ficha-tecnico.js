@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { formatFechaDDMMAAAADeDate, formatFechaDDMMAAAA } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { labelTipoHold, detalleHold, diasEnHold } from "@/lib/holds";
+import { labelTipoHold, diasEnHold } from "@/lib/holds";
+import HoldConsultas from "@/components/HoldConsultas";
 import FotoLightbox from "@/components/FotoLightbox";
 import { IconRefresh } from "@/components/icons";
 
@@ -125,7 +126,7 @@ export default function FichaOrdenTecnico({
             }}
           >
             <div style={{ fontSize: 13, fontWeight: 700, color: "var(--rojo)" }}>ORDEN EN HOLD — {labelTipoHold(hold)}</div>
-            <div style={{ fontSize: 14.5, marginTop: 4 }}>{detalleHold(hold)}</div>
+            <HoldConsultas hold={hold} />
             <div className="hint-text" style={{ marginTop: 4 }}>
               Desde el {formatFechaDDMMAAAADeDate(hold.fecha_inicio)} ({diasEnHold(hold)} día{diasEnHold(hold) === 1 ? "" : "s"} en Hold)
             </div>

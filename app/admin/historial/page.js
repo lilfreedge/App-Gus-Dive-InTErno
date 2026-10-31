@@ -9,6 +9,7 @@ import BorrarTodoHistorialButton from "@/components/BorrarTodoHistorialButton";
 import { formatFecha, formatFechaDDMMAAAADeDate, formatMesAnio } from "@/lib/format";
 import BuscadorLista from "@/components/BuscadorLista";
 import { todasLasFilas } from "@/lib/todas-las-filas";
+import { detalleMantenimientoTexto, cambiosTexto } from "@/lib/mantenimiento-regulador";
 
 export default async function HistorialCambiosPage() {
   const supabase = createClient();
@@ -96,6 +97,8 @@ function textoBuscar(cambio) {
     d.regulador_codigo_snapshot,
     d.codigo,
     d.nombre,
+    // V50: solicitudes borradas (sus códigos).
+    ...(Array.isArray(d.items) ? d.items.map((i) => i.codigo_snapshot) : []),
   ]
     .filter(Boolean)
     .join(" ");
@@ -109,6 +112,7 @@ function tituloRegistro(tabla) {
   if (tabla === "mantenimientos_reguladores") return "Mantenimiento de regulador";
   if (tabla === "pruebas_hidrostaticas") return "Prueba hidrostática";
   if (tabla === "envios_hidrostatica") return "Envío a prueba hidrostática";
+  if (tabla === "solicitudes_almacen") return "Solicitud al almacén";
   return "Cambio de nombre";
 }
 
@@ -464,14 +468,18 @@ function contenido(tabla, d) {
     }`;
   }
   if (tabla === "mantenimientos_reguladores") {
-    const partes = [
-      d.regulador_codigo_snapshot || "?",
-      `Limpieza ultrasonido: ${d.limpieza_ultrasonido ? "Sí" : "No"}`,
-      `Presión intermedia: ${d.presion_intermedia ? "Sí" : "No"}`,
-      `O-rings: ${d.o_rings || "Ninguno"}`,
-    ];
+    // V50: la presión y los o-rings bien (antes decía "Sí"), y lo que cambió.
+    const partes = [d.regulador_codigo_snapshot || "?", detalleMantenimientoTexto(d)];
+    if (cambiosTexto(d.componentes_cambios)) partes.push(`Cambió: ${cambiosTexto(d.componentes_cambios)}`);
     if (d.detalle) partes.push(d.detalle);
     return partes.join(" · ");
+  }
+  // V50: solicitud al almacén borrada, con sus códigos.
+  if (tabla === "solicitudes_almacen") {
+    const its = Array.isArray(d.items) ? d.items : [];
+    return its.length
+      ? its.map((i) => `${i.codigo_snapshot} x${i.cantidad}${i.recibido_at ? " (recibido)" : ""}`).join(", ")
+      : "Sin códigos";
   }
   return "";
 }

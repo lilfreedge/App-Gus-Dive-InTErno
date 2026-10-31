@@ -82,7 +82,13 @@ export default async function SolicitudesPage({ searchParams }) {
         ) : (
           <BuscadorLista placeholder="Buscar No. de solicitud, persona o código...">
             {lista.map((s) => (
-              <SolicitudCard key={s.id} solicitud={s} userId={user.id} nombreUsuario={profile?.full_name || user.email} />
+              <SolicitudCard
+                key={s.id}
+                solicitud={s}
+                userId={user.id}
+                nombreUsuario={profile?.full_name || user.email}
+                puedeBorrar={esTitular}
+              />
             ))}
           </BuscadorLista>
         )}

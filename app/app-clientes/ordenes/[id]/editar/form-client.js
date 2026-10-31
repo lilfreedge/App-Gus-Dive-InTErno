@@ -11,12 +11,14 @@ import {
   holdActivo,
   diasEnHold,
   resumenHold,
-  detalleHold,
   crearHold,
   editarHold,
-  resolverHold,
   labelTipoHold,
+  consultasDe,
+  responderHold,
+  respuestasHoldTexto,
 } from "@/lib/holds";
+import HoldConsultas from "@/components/HoldConsultas";
 import { useDenegado } from "@/lib/useDenegado";
 import { IconLock, IconCheck } from "@/components/icons";
 import ConInfo from "@/components/ConInfo";
@@ -240,17 +242,20 @@ export default function EditarSeguimientoForm({
   const [holdModalAbierto, setHoldModalAbierto] = useState(false);
   const [holdEditando, setHoldEditando] = useState(false);
   const [confirmandoHold, setConfirmandoHold] = useState(false);
-  const [consulta, setConsulta] = useState("");
-  const [codigo, setCodigo] = useState("");
+  // V50: varias consultas, una por punto, cada una con su respuesta.
+  const [consultasHold, setConsultasHold] = useState([""]);
   const [holdError, setHoldError] = useState("");
   const [guardandoHold, setGuardandoHold] = useState(false);
 
-  const [decisionSel, setDecisionSel] = useState("");
-  const [decisionNota, setDecisionNota] = useState("");
+  // Respuestas del cliente a cada consulta del Hold activo (null = las guardadas).
+  const [respuestasEdit, setRespuestasEdit] = useState(null);
+  const respuestasHold = respuestasEdit || consultasDe(hold).map((c) => ({ respuesta: c.respuesta, comentario: c.comentario || "" }));
+  const setRespuesta = (i, cambios) =>
+    setRespuestasEdit(respuestasHold.map((r, j) => (j === i ? { ...r, ...cambios } : r)));
+  const consultasLimpias = consultasHold.map((t) => t.trim()).filter(Boolean);
 
   function abrirHoldModal() {
-    setConsulta("");
-    setCodigo("");
+    setConsultasHold([""]);
     setHoldError("");
     setHoldEditando(false);
     setConfirmandoHold(false);
@@ -261,8 +266,7 @@ export default function EditarSeguimientoForm({
   // puestos (item 6).
   function abrirEditarHold() {
     if (!hold) return;
-    setConsulta(hold.consulta || "");
-    setCodigo(hold.codigo || "");
+    setConsultasHold(consultasDe(hold).map((c) => c.texto));
     setHoldError("");
     setHoldEditando(true);
     setConfirmandoHold(false);
@@ -276,7 +280,7 @@ export default function EditarSeguimientoForm({
   }
 
   async function confirmarHold() {
-    if (!consulta.trim()) {
+    if (!consultasLimpias.length) {
       setHoldError("Escribe la consulta para el cliente.");
       return;
     }
@@ -289,11 +293,11 @@ export default function EditarSeguimientoForm({
     setHoldError("");
     try {
       if (holdEditando && hold) {
-        const editado = editarHold(hold, { consulta, codigo });
+        const editado = editarHold(hold, { consultas: consultasLimpias });
         const holdsNuevo = ordenLocal.holds.map((h) => (h.id === hold.id ? editado : h));
         await guardarCampos({ holds: holdsNuevo, motivo_espera: resumenHold(editado) });
       } else {
-        const nuevo = crearHold({ consulta, codigo });
+        const nuevo = crearHold({ consultas: consultasLimpias });
         await guardarCampos({
           holds: [...ordenLocal.holds, nuevo],
           en_espera: true,
@@ -303,6 +307,7 @@ export default function EditarSeguimientoForm({
       setHoldModalAbierto(false);
       setConfirmandoHold(false);
       setHoldEditando(false);
+      setRespuestasEdit(null);
     } catch (e) {
       setHoldError(mensajeError(e));
     } finally {
@@ -310,63 +315,43 @@ export default function EditarSeguimientoForm({
     }
   }
 
-  // "Decisión del cliente" (Sí/No + nota opcional) resuelve el Hold y
-  // saca la orden de espera sola -- no hay un botón aparte de "Quitar de
-  // Hold".
-  async function resolverHoldActivo() {
-    if (!hold || !decisionSel) {
+  // V50 -- Lo que contestó el cliente en cada consulta. Se puede guardar
+  // aunque falte alguna (la orden sigue en Hold, "1. sí"); cuando están
+  // todas contestadas, el Hold se resuelve y la orden sale de Hold sola.
+  // Ya NO se agrega nada a "Códigos a cobrar" al autorizar (pedido del
+  // 29-sep-2026: "que no salga ese hold en codigos a cobrar"); la Bitácora
+  // de la orden guarda las consultas con sus respuestas.
+  async function guardarRespuestasHold() {
+    if (!hold || !respuestasHold.some((r) => r.respuesta)) {
       denegado.denegar("resolverHold");
       return;
     }
     setGuardandoHold(true);
     setHoldError("");
     try {
-      const resuelto = resolverHold(hold, { decision: decisionSel, decisionNota });
-      const holdsNuevo = ordenLocal.holds.map((h) => (h.id === hold.id ? resuelto : h));
-
-      // Ya NO se agrega a "Códigos a cobrar" al autorizar (revertido,
-      // feedback en vivo, 29-sep-2026, pedido explícito: "que no salga ese
-      // hold en codigos a cobrar, debe de ser un error. no pinta nada
-      // ahi") -- esto reemplaza el comportamiento anterior ("siii,
-      // buenisimo", feedback sobre v38/v40) que sí lo agregaba
-      // automáticamente cuando la decisión era "Sí". El texto que se
-      // agregaba ahí (la consulta del Hold, o su código) no es en realidad
-      // un código de catálogo -- se prestaba a confusión mezclado con los
-      // códigos reales de esa caja. La autorización del cliente sigue
-      // quedando registrada igual de completa en la Bitácora de la orden
-      // (bitacoraNuevo, justo abajo), con el detalle completo y la
-      // decisión -- si de verdad se usó una pieza, se sigue pudiendo
-      // agregar a mano a Códigos a cobrar como siempre.
-      const repuestosNuevo = ordenLocal.repuestos_usados_detalle;
-
-      const bitacoraNuevo = [
-        {
-          fecha: hoyISO(),
-          tipo: "hold_resuelto",
-          // detalleHold() en vez de resumenHold() (pedido explícito,
-          // mid-flow, con captura de pantalla de la Bitácora: "que
-          // aparezca todo el detalle") -- resumenHold() es a propósito
-          // corto (para el badge) y se comía el código/motivo opcional.
-          texto: `${labelTipoHold(hold)} — ${detalleHold(hold)}`,
-          detalle: `Decisión del cliente: ${decisionSel === "si" ? "Sí" : "No"}${
-            decisionNota.trim() ? ` — ${decisionNota.trim()}` : ""
-          }`,
-          fecha_inicio_hold: hold.fecha_inicio,
-        },
-        ...ordenLocal.bitacora_orden,
-      ];
-
-      await guardarCampos({
-        holds: holdsNuevo,
-        en_espera: false,
-        motivo_espera: null,
-        repuestos_usados_detalle: repuestosNuevo,
-        repuestos_usados: repuestosNuevo.map((r) => r.nombre).join(", ") || null,
-        bitacora_orden: bitacoraNuevo,
-      });
-
-      setDecisionSel("");
-      setDecisionNota("");
+      const nuevo = responderHold(hold, respuestasHold);
+      const holdsNuevo = ordenLocal.holds.map((h) => (h.id === hold.id ? nuevo : h));
+      if (nuevo.activo) {
+        await guardarCampos({ holds: holdsNuevo, motivo_espera: resumenHold(nuevo) });
+      } else {
+        const bitacoraNuevo = [
+          {
+            fecha: hoyISO(),
+            tipo: "hold_resuelto",
+            texto: `${labelTipoHold(nuevo)} — ${consultasDe(nuevo).map((c, i, l) => `${l.length > 1 ? `${i + 1}. ` : ""}${c.texto}`).join(" · ")}`,
+            detalle: `Respuesta del cliente: ${respuestasHoldTexto(nuevo)}`,
+            fecha_inicio_hold: hold.fecha_inicio,
+          },
+          ...ordenLocal.bitacora_orden,
+        ];
+        await guardarCampos({
+          holds: holdsNuevo,
+          en_espera: false,
+          motivo_espera: null,
+          bitacora_orden: bitacoraNuevo,
+        });
+      }
+      setRespuestasEdit(null);
     } catch (e) {
       setHoldError(mensajeError(e));
     } finally {
@@ -1007,47 +992,53 @@ export default function EditarSeguimientoForm({
                 </button>
               )}
             </div>
-            <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: "var(--texto-suave)" }}>Consulta para cliente</div>
-            <div style={{ marginTop: 2, fontSize: 14 }}>{detalleHold(hold)}</div>
             <div className="hint-text" style={{ marginTop: 8 }}>
-              Desde el {formatFechaDDMMAAAADeDate(hold.fecha_inicio)} ({diasEnHold(hold)} día{diasEnHold(hold) === 1 ? "" : "s"} en Hold)
+              Desde el {formatFechaDDMMAAAADeDate(hold.fecha_inicio)} ({diasEnHold(hold)} día{diasEnHold(hold) === 1 ? "" : "s"} en Hold). Marca lo que contestó el cliente en cada
+              punto. Si todavía falta alguno, la orden sigue en Hold.
             </div>
 
-            <div style={{ marginTop: 12 }}>
-              <label style={{ marginTop: 0 }}>¿El cliente autoriza?</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  type="button"
-                  className={decisionSel === "si" ? "btn btn-primary" : "btn secondary"}
-                  onClick={() => setDecisionSel("si")}
-                  style={{ marginTop: 0, width: "auto" }}
-                >
-                  Sí
-                </button>
-                <button
-                  type="button"
-                  className={decisionSel === "no" ? "btn btn-primary" : "btn secondary"}
-                  onClick={() => setDecisionSel("no")}
-                  style={{ marginTop: 0, width: "auto" }}
-                >
-                  No
-                </button>
-              </div>
-              <input
-                type="text"
-                value={decisionNota}
-                onChange={(e) => setDecisionNota(e.target.value)}
-                placeholder="Nota (opcional)"
-                style={{ marginTop: 8 }}
-              />
+            <div style={{ marginTop: 6 }}>
+              {consultasDe(hold).map((c, i) => (
+                <div key={i} className="hold-resp">
+                  <div className="hold-resp-t">
+                    <span className="hold-cons-n">{i + 1}</span>
+                    <span>{c.texto}</span>
+                  </div>
+                  <div className="hold-resp-bt">
+                    {[
+                      ["si", "Sí"],
+                      ["no", "No"],
+                    ].map(([v, t]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        className={respuestasHold[i]?.respuesta === v ? "btn btn-primary" : "btn secondary"}
+                        onClick={() => setRespuesta(i, { respuesta: respuestasHold[i]?.respuesta === v ? null : v })}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={respuestasHold[i]?.comentario || ""}
+                    onChange={(e) => setRespuesta(i, { comentario: e.target.value })}
+                    placeholder="Comentario del cliente (opcional)"
+                  />
+                </div>
+              ))}
               <button
                 type="button"
                 className={denegado.clase("resolverHold", "btn secondary")}
-                onClick={resolverHoldActivo}
+                onClick={guardarRespuestasHold}
                 disabled={guardandoHold}
-                style={{ marginTop: 8, width: "auto" }}
+                style={{ marginTop: 10, width: "auto" }}
               >
-                {guardandoHold ? "Guardando..." : "Guardar decisión y salir de Hold"}
+                {guardandoHold
+                  ? "Guardando..."
+                  : respuestasHold.every((r) => r.respuesta)
+                  ? "Guardar respuestas y salir de Hold"
+                  : "Guardar respuestas"}
               </button>
               {holdError && <div className="error-msg">⚠ {holdError}</div>}
             </div>
@@ -1072,8 +1063,13 @@ export default function EditarSeguimientoForm({
                   {holdEditando ? "Vas a guardar estos cambios en el Hold:" : "Vas a poner esta orden en Hold:"}
                 </div>
                 <div style={{ marginTop: 8, padding: 10, background: "var(--superficie-suave)", borderRadius: 8, fontSize: 14 }}>
-                  <div>{consulta.trim()}</div>
-                  {codigo.trim() && <div className="hint-text" style={{ marginTop: 4 }}>Código: {codigo.trim()}</div>}
+                  <ol style={{ margin: 0, paddingLeft: 20 }}>
+                    {consultasLimpias.map((t, i) => (
+                      <li key={i} style={{ marginBottom: 4 }}>
+                        {t}
+                      </li>
+                    ))}
+                  </ol>
                 </div>
                 {holdError && <div className="error-msg">⚠ {holdError}</div>}
                 <div className="modal-actions">
@@ -1088,18 +1084,34 @@ export default function EditarSeguimientoForm({
             ) : (
               <>
                 <label style={{ marginTop: 14 }}>
-                  Consulta para cliente <span className="req">*</span>
+                  Consultas para el cliente <span className="req">*</span>
                 </label>
-                <textarea
-                  rows={3}
-                  value={consulta}
-                  onChange={(e) => setConsulta(e.target.value)}
-                  placeholder="Qué hay que consultarle al cliente"
-                  autoFocus
-                />
+                <div className="hint-text" style={{ margin: "0 0 8px" }}>
+                  Una consulta por punto. El cliente contesta cada una por separado.
+                </div>
+                {consultasHold.map((t, i) => (
+                  <div key={i} className="hold-modal-fila">
+                    <span className="hold-cons-n">{i + 1}</span>
+                    <input
+                      type="text"
+                      value={t}
+                      onChange={(e) => setConsultasHold(consultasHold.map((x, j) => (j === i ? e.target.value : x)))}
+                      placeholder="Qué hay que consultarle al cliente"
+                      autoFocus={i === consultasHold.length - 1}
+                    />
+                    {consultasHold.length > 1 && (
+                      <button type="button" className="hold-modal-quitar" onClick={() => setConsultasHold(consultasHold.filter((_, j) => j !== i))}>
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button type="button" className="btn secondary" style={{ width: "auto", marginTop: 0, padding: "8px 12px" }} onClick={() => setConsultasHold([...consultasHold, ""])}>
+                  + Agregar otra consulta
+                </button>
 
-                <label style={{ marginTop: 10 }}>Código de la pieza (opcional)</label>
-                <input type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="Opcional" list="piezas-catalogo" />
+                {/* V49 (nota: "Quita la sección de poner código de la pieza"). Los
+                    Holds viejos que tenían código lo siguen enseñando. */}
 
                 {holdError && <div className="error-msg">⚠ {holdError}</div>}
 
@@ -1131,13 +1143,9 @@ export default function EditarSeguimientoForm({
               .map((h) => (
                 <div key={h.id} style={{ fontSize: 12.5, padding: "8px 10px", background: "var(--superficie-suave)", borderRadius: 8 }}>
                   <div style={{ fontWeight: 600 }}>
-                    {labelTipoHold(h)} — {detalleHold(h)}
+                    {labelTipoHold(h)} · {formatFechaDDMMAAAADeDate(h.fecha_inicio)} → {formatFechaDDMMAAAADeDate(h.fecha_resolucion)}
                   </div>
-                  <div className="hint-text" style={{ marginTop: 2 }}>
-                    Decisión del cliente: {h.decision === "si" ? "Sí" : h.decision === "no" ? "No" : "—"}
-                    {h.decision_nota ? ` — ${h.decision_nota}` : ""} · {formatFechaDDMMAAAADeDate(h.fecha_inicio)} →{" "}
-                    {formatFechaDDMMAAAADeDate(h.fecha_resolucion)}
-                  </div>
+                  <HoldConsultas hold={h} chico />
                 </div>
               ))}
           </div>

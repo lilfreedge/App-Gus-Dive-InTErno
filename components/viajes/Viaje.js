@@ -31,7 +31,11 @@ import {
   resumenTalla,
   puntos,
   palabraViaje,
+  etiquetaGrupo,
+  vcfGrupo,
+  linkGrupoValido,
 } from "@/lib/viajes/modelo";
+import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { Chip, Modal, IconoWA, CampoCel, Atras, Buscar } from "./Piezas";
 import { IconLink, IconChat, IconReport, IconLock, IconUnlock, IconCheck, IconX, IconClip, IconAlert, IconClipboard, IconPrint } from "@/components/icons";
 
@@ -43,6 +47,7 @@ const comprobanteNuevo = (x) => (x.comprobantes || []).some((c) => !c.visto);
 // =====================================================================
 export function Viaje(props) {
   const { db, ops, p, id, tab, ir, avisar } = props;
+  const [grupoAbierto, setGrupoAbierto] = useState(false);
   const v = db.viajes.find((x) => x.id === id);
   const r = resumenViaje(db, v);
   const ev = estadoViaje(v);
@@ -86,11 +91,17 @@ export function Viaje(props) {
             <button className="btn secondary vj-btn" onClick={() => copiar(link, "Link de inscripción copiado")}>
               <IconLink size={16} /> Copiar link
             </button>
+            {p.grupo && (
+              <button className="btn secondary vj-btn" onClick={() => setGrupoAbierto(true)}>
+                <IconoWA on /> Grupo de WhatsApp
+              </button>
+            )}
             <button className="btn secondary vj-btn" onClick={() => copiar((v.mensajeGrupo || "").replace("[día]", fechaLarga(v.fecha)), "Mensaje para el grupo copiado")}>
               <IconChat size={16} /> Mensaje para el grupo
             </button>
           </>
         )}
+        {grupoAbierto && <GrupoWA {...q} cerrar={() => setGrupoAbierto(false)} />}
         <button className="btn secondary vj-btn" onClick={() => ir(`reporte:${v.id}`)}>
           <IconReport size={16} /> Reporte
         </button>
@@ -237,7 +248,7 @@ function Inscritos(props) {
           </div>
         ) : (
           <div>
-            <b>{inscritos.filter((x) => x.grupo).length}</b>
+            <b>{inscritos.filter((x) => x.grupo && x.rol !== "staff").length}</b>
             <span>en el grupo</span>
           </div>
         )}
@@ -362,6 +373,127 @@ function Inscritos(props) {
       )}
       {abierto && <PanelInscrito {...props} x={db.inscripciones.find((y) => y.id === abierto)} cerrar={() => setAbierto(null)} cambiar={cambiar} />}
     </>
+  );
+}
+
+// ------------------------------------------------------------- grupo de WhatsApp
+// V48 -- Pidió las dos opciones: bajar los contactos para meterlos ellos mismos
+// al grupo, y el link del grupo para los que se inscriban después.
+const linkInvitacion = (v, b) =>
+  `https://wa.me/${numeroWhatsApp(b.cel)}?text=${encodeURIComponent(`Hola ${String(b.nombre || "").split(" ")[0]}, este es el link del grupo de WhatsApp de ${v.nombre} del ${fechaLarga(v.fecha)}\n${String(v.linkGrupo).trim()}`)}`;
+
+function GrupoWA({ db, ops, v, p, cambiarViaje, cerrar, avisar }) {
+  const [link, setLink] = useState(v.linkGrupo || "");
+  const [marcando, setMarcando] = useState(false);
+  const ins = db.inscripciones.filter((x) => x.viajeId === v.id && x.estado === "inscrito");
+  const buzoDe = (x) => db.buzos.find((b) => b.id === x.buzoId) || { nombre: "—", cel: "" };
+  const buzos = ins.filter((x) => x.rol !== "staff");
+  const faltan = buzos.filter((x) => !x.grupo);
+  const sinCel = (lista) => lista.filter((x) => !buzoDe(x).cel).length;
+  const et = etiquetaGrupo(v);
+  const guardado = linkGrupoValido(v.linkGrupo);
+
+  function bajar(lista) {
+    const texto = vcfGrupo(
+      v,
+      lista.map((x) => buzoDe(x))
+    );
+    const url = URL.createObjectURL(new Blob([texto], { type: "text/vcard;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${et}.vcf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    avisar(`Bajaste ${lista.length - sinCel(lista)} contacto${lista.length - sinCel(lista) === 1 ? "" : "s"}`);
+  }
+  async function marcarTodos() {
+    for (const x of ins.filter((y) => !y.grupo)) await ops.cambiarIns(x, { grupo: true }, `Grupo de WhatsApp: ${buzoDe(x).nombre}`, "No", "Sí");
+    setMarcando(false);
+    avisar("Todos marcados en el grupo");
+  }
+  const guardarLink = () => {
+    const t = link.trim();
+    if (t && !linkGrupoValido(t)) return avisar("Ese link no es de un grupo de WhatsApp (empieza con https://chat.whatsapp.com/)");
+    cambiarViaje({ linkGrupo: t }, "Link del grupo de WhatsApp", v.linkGrupo ? "Tenía" : "—", t ? "Puesto" : "Quitado");
+    avisar(t ? "Link del grupo guardado" : "Link del grupo quitado");
+  };
+
+  return (
+    <Modal titulo="Grupo de WhatsApp" sub={`${v.nombre} · ${fechaLarga(v.fecha)}`} cerrar={cerrar}>
+      <div className="vj-gw-paso">
+        <div className="vj-gw-t">1. Meter a los inscritos</div>
+        <div className="hint-text">
+          Baja los contactos y ábrelos en tu celular para guardarlos todos de una vez. Después, en WhatsApp, crea el grupo (o entra a “Añadir participantes”) y busca <b>“{et}”</b>. Salen todos juntos.
+        </div>
+        <div className="vj-gw-botones">
+          <button className="btn btn-primary vj-btn" disabled={!faltan.length} onClick={() => bajar(faltan)}>
+            Bajar contactos de los que faltan ({faltan.length})
+          </button>
+          {faltan.length !== buzos.length && (
+            <button className="btn secondary vj-btn" disabled={!buzos.length} onClick={() => bajar(buzos)}>
+              Todos los inscritos ({buzos.length})
+            </button>
+          )}
+        </div>
+        {sinCel(faltan) > 0 && <div className="hint-text" style={{ marginTop: 6 }}>{sinCel(faltan)} no tiene{sinCel(faltan) === 1 ? "" : "n"} celular guardado y no sale{sinCel(faltan) === 1 ? "" : "n"} en el archivo.</div>}
+        <div style={{ marginTop: 10 }}>
+          {marcando ? (
+            <div className="vj-gw-confirmar">
+              <span>¿Marcar a todos como que ya están en el grupo?</span>
+              <button className="btn btn-primary vj-mini" onClick={marcarTodos}>
+                Sí, marcar
+              </button>
+              <button className="btn secondary vj-mini" onClick={() => setMarcando(false)}>
+                No
+              </button>
+            </div>
+          ) : (
+            <button className="btn secondary vj-mini" disabled={!ins.some((x) => !x.grupo)} onClick={() => setMarcando(true)}>
+              <IconCheck size={14} /> Marcar todos en el grupo
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="vj-gw-paso">
+        <div className="vj-gw-t">2. Link del grupo (para los que se inscriban después)</div>
+        <div className="hint-text">
+          En WhatsApp, en la info del grupo, toca “Invitar al grupo mediante enlace” y copia el enlace. Pégalo aquí. Los que se inscriban por el link lo ven al terminar, y se lo puedes mandar a cada uno.
+        </div>
+        <div className="vj-gw-link">
+          <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://chat.whatsapp.com/…" />
+          <button className="btn btn-primary vj-mini" disabled={link.trim() === (v.linkGrupo || "")} onClick={guardarLink}>
+            {link.trim() ? "Guardar" : "Quitar"}
+          </button>
+        </div>
+        {guardado && faltan.length > 0 && (
+          <>
+            <div className="hint-text" style={{ margin: "10px 0 4px" }}>
+              Mandarle el link a los que faltan
+            </div>
+            <div className="vj-gw-lista">
+              {faltan.map((x) => {
+                const b = buzoDe(x);
+                return (
+                  <div key={x.id} className="vj-gw-fila">
+                    <span>{b.nombre}</span>
+                    {b.cel ? (
+                      <a className="btn secondary vj-mini" href={linkInvitacion(v, b)} target="_blank" rel="noreferrer">
+                        <IconoWA on /> Mandar link
+                      </a>
+                    ) : (
+                      <span className="hint-text">sin celular</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    </Modal>
   );
 }
 
@@ -508,6 +640,11 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
             <input type="checkbox" checked={x.grupo} disabled={!p.grupo || ro} onChange={(ev2) => cambiar(x, { grupo: ev2.target.checked }, "Grupo de WhatsApp", x.grupo ? "Sí" : "No", ev2.target.checked ? "Sí" : "No")} />
             {x.grupo ? "Ya está en el grupo" : "Todavía no está en el grupo"}
           </label>
+          {!x.grupo && linkGrupoValido(v.linkGrupo) && b?.cel && (
+            <a className="btn secondary vj-mini" style={{ marginTop: 8, display: "inline-flex", gap: 6, alignItems: "center", textDecoration: "none" }} href={linkInvitacion(v, b)} target="_blank" rel="noreferrer">
+              <IconoWA on /> Mandarle el link del grupo
+            </a>
+          )}
         </>
       )}
 

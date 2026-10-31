@@ -51,6 +51,7 @@ export default async function FichaReguladorPage({ params }) {
             <Campo etiqueta="2da etapa" valor={regulador.segunda_etapa || "—"} />
             <Campo etiqueta="Octopus" valor={regulador.octopus || "—"} />
             <Campo etiqueta="Manómetro" valor={regulador.manometro || "—"} />
+            <Campo etiqueta="Profundímetro" valor={regulador.profundimetro || "—"} />
             <Campo etiqueta="Próximo mantenimiento">
               {regulador.proximo_mantenimiento ? (
                 formatFechaDDMMAAAADeDate(regulador.proximo_mantenimiento)
