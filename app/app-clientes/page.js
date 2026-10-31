@@ -9,6 +9,8 @@ import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { holdActivo } from "@/lib/holds";
 import { requiereVerificacion } from "@/lib/procesos-ordenes";
 import { nombreCorto } from "@/lib/tecnicos";
+import AvisosFijos from "@/components/AvisosFijos";
+import { avisosParaMi } from "@/lib/avisos-fijos-server";
 
 const BADGE_ESTADO = {
   "En proceso": "badge-amarillo",
@@ -173,11 +175,15 @@ export default async function AppClientesPage() {
     necesita_verificar: !o.verificado_por && requiereVerificacion(ajustes, o.tipo_equipo),
   }));
 
+  // V51: avisos fijos de App Equipos de clientes.
+  const avisosFijos = await avisosParaMi(supabase, { apps: ["clientes"], persona: profile });
+
   return (
     <div>
       <AppHeaderClientes />
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsClientesServer />
+        <AvisosFijos avisos={avisosFijos} />
 
         {/* Botón "+ Registrar orden" -- alineado a la derecha (28-sep-2026,
             pedido explícito: "el boton que sale en inicio de 'registar

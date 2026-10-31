@@ -2893,3 +2893,38 @@ a.mant-pend-chip:hover { border-color: var(--rojo); }
 .vj-rec-pie { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ecd9b4; font-size: 12.5px; color: var(--texto-suave); }
 /* V44: fecha de hoy al lado de "Hola, …" en todas las apps */
 .topbar-fecha { white-space: nowrap; }
+
+/* ---------- V51: avisos fijos y manuales ---------- */
+.avisos-fijos { margin-bottom: 14px; }
+.af { border-radius: 10px; padding: 11px 14px; margin-top: 10px; display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; }
+.af:first-child { margin-top: 0; }
+.af.rojo { background: var(--error-fondo); border: 2px solid var(--rojo); color: #8a2020; }
+.af.amarillo { background: rgba(224, 168, 0, 0.1); border: 2px solid #e0a800; color: #6b4a07; }
+.af.azul { background: #e8f1f8; border: 2px solid #57707f; color: #1f3b4d; }
+.af-t { flex: 1; min-width: 0; }
+.af-t b { white-space: pre-wrap; }
+.af small { display: block; opacity: 0.8; font-size: 12.5px; margin-top: 2px; }
+.af-listo { border: 0; background: #fff; border-radius: 8px; padding: 7px 12px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; color: inherit; box-shadow: 0 0 0 1px currentColor inset; white-space: nowrap; }
+.avisos-fijos.grande .af { font-size: 16px; padding: 13px 14px; }
+.avisos-fijos.grande .af-listo { font-size: 15px; padding: 9px 14px; }
+.af-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.af-pills button { border: 1px solid var(--borde); background: var(--tarjeta); border-radius: 999px; padding: 7px 12px; font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; color: var(--texto-suave); }
+.af-pills button.sel { background: var(--azul); border-color: var(--azul); color: #fff; }
+.af-persona { display: flex !important; gap: 10px; align-items: center; padding: 8px 0; margin: 0 !important; border-bottom: 1px solid var(--superficie-suave); font-size: 15px; font-weight: 500 !important; }
+.af-persona input { width: auto; margin: 0; }
+.af-persona small { color: var(--texto-suave); }
+.af-mini { width: auto !important; margin: 0 !important; padding: 6px 12px !important; font-size: 13px !important; }
+.leido { font-size: 13px; color: var(--texto-suave); margin-top: 6px; }
+.manual-ic { width: 38px; height: 46px; border-radius: 6px; background: #c0392b; color: #fff; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.manual-ic.link { background: #2b6cb0; }
+.manual-fila { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--superficie-suave); }
+.manual-fila:last-child { border-bottom: 0; }
+.manual-fila-t { flex: 1; min-width: 0; }
+.manual-fila-t b { display: block; font-size: 15px; }
+.manual-fila-t span { font-size: 13px; color: var(--texto-suave); }
+.manual-atajo { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--azul-claro); text-decoration: none; }
+.manual-atajo:hover { text-decoration: underline; }
+.manual-atajo .manual-ic { width: 15px; height: 19px; font-size: 6px; border-radius: 3px; }
+.manual-franja { display: flex; align-items: center; gap: 10px; background: #e8f1f8; border: 1px solid #b9d3e6; border-radius: 10px; padding: 10px 12px; margin-top: 8px; color: #1f3b4d; font-weight: 700; font-size: 15px; text-decoration: none; }
+.manual-franja .manual-ic { width: 22px; height: 28px; font-size: 7px; border-radius: 4px; }
+.manual-franja .abrir { margin-left: auto; color: var(--azul-claro); font-size: 14px; white-space: nowrap; }

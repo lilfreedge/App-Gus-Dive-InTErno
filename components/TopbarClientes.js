@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { NAV_SECTIONS_CLIENTES, SECCIONES_FIJAS_CLIENTES, ordenarSeccionesClientes, puedeVerSeccionClientes } from "@/lib/nav-clientes";
 import { useReorderDrag } from "@/lib/useReorderDrag";
-import { IconLogout, IconGear, IconEdit, IconShuffle, IconLock, IconHistory } from "./icons";
+import { IconLogout, IconGear, IconEdit, IconShuffle, IconLock, IconHistory, IconBell } from "./icons";
 
 // Topbar de App Equipos Clientes (23-sep-2026, primera versión real --
 // hasta ahora esta app era un placeholder "próximamente" con
@@ -136,6 +136,12 @@ export default function TopbarClientes({
                   onClick={() => setOpen(false)}
                 >
                   <IconHistory size={15} /> Changelog
+                </Link>
+              )}
+              {/* V51: avisos fijos de App Equipos de clientes (Titular y administradores). */}
+              {(esTitular || isAdmin) && (
+                <Link href="/app-clientes/administracion/avisos" className="settings-menu-link" onClick={() => setOpen(false)}>
+                  <IconBell size={15} /> Avisos fijos
                 </Link>
               )}
               {esTitular && (

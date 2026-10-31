@@ -8,6 +8,9 @@ import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import EstadoCompresor from "./estado-client";
+import ManualesAtajo from "@/components/ManualesAtajo";
+import { cargarManuales } from "@/lib/manuales-server";
+import { manualesPara } from "@/lib/manuales";
 
 // Ficha de un compresor: datos + acceso a su historial + registrar un
 // mantenimiento (ya preseleccionado este compresor) + horómetro más
@@ -38,6 +41,9 @@ export default async function FichaCompresorPage({ params }) {
   ]);
 
   if (!compresor) notFound();
+
+  // V51: el manual de ese modelo, si hay.
+  const susManuales = manualesPara(await cargarManuales(supabase), `${compresor.marca || ""} ${compresor.modelo || ""}`);
 
   // V37: la próxima inspección sale de los Recordatorios (el de cada 14
   // días, que ahora se puede cambiar); si no hay ninguno, la de antes.
@@ -86,6 +92,7 @@ export default async function FichaCompresorPage({ params }) {
             <Campo etiqueta="Descripción" valor={compresor.descripcion} />
             <Campo etiqueta="Marca" valor={compresor.marca} />
             <Campo etiqueta="Modelo" valor={compresor.modelo} />
+            {susManuales.length > 0 && <ManualesAtajo manuales={susManuales} />}
             <Campo etiqueta="No. Bloque" valor={compresor.no_bloque} />
             <Campo etiqueta="Serie" valor={compresor.serie} />
             <Campo etiqueta="Horómetro más reciente">

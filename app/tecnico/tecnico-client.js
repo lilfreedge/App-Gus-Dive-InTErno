@@ -9,6 +9,8 @@ import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { holdActivo, resumenHold, diasEnHold } from "@/lib/holds";
 import HoldConsultas from "@/components/HoldConsultas";
 import NotasInternas from "@/components/NotasInternas";
+import AvisosFijos from "@/components/AvisosFijos";
+import { manualesPara, tituloManual, linkManual } from "@/lib/manuales";
 import {
   guardarOrden,
   codigosDe,
@@ -62,6 +64,8 @@ export default function TecnicoInicio({
   abrirId = null,
   como = null,
   informeGuardado = false,
+  avisosFijos = [],
+  manuales = [],
 }) {
   const supabase = createClient();
   const [ordenes, setOrdenes] = useState(ordenesIniciales);
@@ -279,8 +283,17 @@ export default function TecnicoInicio({
   // Lo que dijo el cliente, el cliente, la serie y la autorización (va
   // arriba en la orden abierta y en la que está esperando al cliente).
   function datosOrden(o) {
+    // V51: el manual de ese modelo, si hay (franja azul debajo del equipo).
+    const susManuales = manualesPara(manuales, [o.equipo_marca_snapshot, o.equipo_modelo_snapshot].filter(Boolean).join(" "));
     return (
       <>
+        {susManuales.map((m) => (
+          <a key={m.id} href={linkManual(m)} target="_blank" rel="noreferrer" className="manual-franja" style={{ marginTop: 0, marginBottom: 10 }}>
+            <span className={`manual-ic${m.url ? " link" : ""}`}>{m.url ? "LINK" : "PDF"}</span>
+            Manual del {tituloManual(m)}
+            <span className="abrir">Abrir ›</span>
+          </a>
+        ))}
         {/* V40: en los reguladores, también los "Problemas reportados por
             cliente" y los "Daños visibles" que se anotaron al registrar la
             orden (el técnico ya no los ve en el informe). */}
@@ -853,6 +866,9 @@ export default function TecnicoInicio({
         {total === 0 ? "No tienes nada pendiente. ¡Buen trabajo!" : total === 1 ? "Tienes 1 pendiente." : `Tienes ${total} pendientes.`}
       </div>
 
+      {/* V51: avisos fijos (solo los que lo escogen a él). */}
+      <AvisosFijos avisos={avisosFijos} grande soloVer={!!como} />
+
       <div className="tec-sec">Mis trabajos</div>
       {total === 0 && (
         <div className="tec-card">
@@ -888,7 +904,7 @@ export default function TecnicoInicio({
         </>
       )}
 
-      {(accesos.compresores || accesos.reguladores || listosHoy.length > 0) && <div className="tec-sec">También puedes</div>}
+      <div className="tec-sec">También puedes</div>
       {accesos.compresores && (
         grande({ href: conComo("/tecnico/compresores"), icono: <IComp />, titulo: "Compresores", sub: "Ver cómo están y registrar mantenimiento" })
       )}
@@ -901,6 +917,16 @@ export default function TecnicoInicio({
           boton: "Registrar",
         })
       )}
+      {/* V51: los manuales ("El rol de técnico debe de tener acceso a estos
+          manuales"; "25. si. quita 'Los manuales de los equipos' pon
+          'Manuales de reguladores y compresores'"). */}
+      {grande({
+        href: conComo("/tecnico/manuales"),
+        icono: <IDoc />,
+        titulo: "Manuales",
+        sub: "Manuales de reguladores y compresores",
+        boton: "Ver",
+      })}
       {/* V40: "Listos hoy" ya no se despliega aquí: es una tarjeta con su
           botón, como las demás, y se abre en su propia pantalla (pedido
           explícito: "no uses el dropdown ese porque se va a confundir"). */}

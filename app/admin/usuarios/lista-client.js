@@ -54,6 +54,7 @@ export const PERMISOS_DEFAULT = {
   correos_semanales: false,
   equipos_clientes: false,
   solicitudes_almacen: false,
+  manuales_editar: false,
 };
 
 // V30 -- "Usuarios y permisos" por usuario (opción B de la maqueta, pedido
@@ -142,6 +143,14 @@ export const SECCIONES = [
       },
       { clave: "solicitudes_almacen", label: "Solicitudes al almacén", Icono: IconPackage },
       { clave: "historial", label: "Anulaciones y ediciones", Icono: IconHistory },
+      // V51 ("19. solo yo por ahora pero pon para poder dar acceso"): ver los
+      // manuales lo pueden todos; esto es para agregar y quitar (en los dos apps).
+      {
+        clave: "manuales_editar",
+        label: "Agregar y quitar manuales",
+        sub: "Todos ven los manuales; esto es para subirlos y quitarlos (en los dos apps)",
+        Icono: IconBook,
+      },
     ],
   },
   {

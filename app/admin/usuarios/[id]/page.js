@@ -37,6 +37,7 @@ const PERMISOS_DEFAULT = {
   correos_semanales: false,
   equipos_clientes: false,
   solicitudes_almacen: false,
+  manuales_editar: false,
 };
 
 // Mismos íconos y etiquetas que la tabla de permisos (lista-client.js) --
@@ -67,6 +68,7 @@ const PERMISOS_LABELS = [
   { clave: "correos_semanales", label: "Correos semanales", Icono: IconMail },
   { clave: "solicitudes_almacen", label: "Solicitudes al almacén", Icono: IconPackage },
   { clave: "historial", label: "Anulaciones y ediciones", Icono: IconHistory },
+  { clave: "manuales_editar", label: "Agregar y quitar manuales", Icono: IconBook },
   { clave: "changelog", label: "Changelog", Icono: IconHistory },
   { clave: "manual", label: "Manual", Icono: IconBook },
   { clave: "equipos_clientes", label: "App Equipos de clientes", Icono: IconUsers },

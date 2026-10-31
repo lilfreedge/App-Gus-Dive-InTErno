@@ -6,6 +6,8 @@ import { tecnicosConCarga } from "@/lib/tecnicos";
 import { hoyISO } from "@/lib/fechas";
 import { quienEs, accesosDe, primerNombre, enlacesMenu, sufijoComo } from "./datos";
 import TecnicoInicio from "./tecnico-client";
+import { avisosParaMi } from "@/lib/avisos-fijos-server";
+import { cargarManuales } from "@/lib/manuales-server";
 
 // V38 -- Menú del técnico: "Mis trabajos" (antes "Lo que te toca"; ver datos.js).
 // - Arriba, todo lo que le toca de las dos apps juntas: sus órdenes
@@ -108,6 +110,12 @@ export default async function TecnicoPage({ searchParams }) {
     for (const b of bs || []) aMedias[b.orden_id] = b.actualizado_en;
   }
 
+  // V51: avisos fijos (solo los que lo escogen a él) y manuales.
+  const [avisosFijos, manuales] = await Promise.all([
+    avisosParaMi(supabase, { apps: ["interno", "clientes"], persona }),
+    cargarManuales(supabase),
+  ]);
+
   const recordatorios = (rec.items || [])
     .filter((it) => it.estado === "vencido" || it.estado === "pronto")
     .map((it) => ({
@@ -156,6 +164,8 @@ export default async function TecnicoPage({ searchParams }) {
           abrirId={searchParams?.abrir || null}
           como={viendoComo ? persona.id : null}
           informeGuardado={searchParams?.informe === "ok"}
+          avisosFijos={avisosFijos}
+          manuales={manuales}
         />
       </div>
     </div>

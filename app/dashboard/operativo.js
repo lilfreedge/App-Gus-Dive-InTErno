@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import AppHeader from "@/components/AppHeader";
 import { IconTank } from "@/components/icons";
 import FormLlenadoOperativo from "./operativo-form";
+import AvisosFijos from "@/components/AvisosFijos";
+import { avisosParaMi } from "@/lib/avisos-fijos-server";
 
 // Inicio del rol "Operativo" (V30, pedido explícito, punto 7 de las notas
 // del 8-oct-2026: "Su única función será registrar llenados. En inicio
@@ -85,10 +87,14 @@ export default async function InicioOperativo({ profile }) {
   const totalSemana = aire + nitrox;
   const totalHoy = (deHoy || []).reduce((acc, l) => acc + (Number(l.cantidad) || 0), 0);
 
+  // V51: avisos fijos de App Interno.
+  const avisosFijos = await avisosParaMi(supabase, { apps: ["interno"], persona: profile });
+
   return (
     <div>
       <AppHeader />
       <div className="page" style={{ paddingTop: 20 }}>
+        <AvisosFijos avisos={avisosFijos} />
         <FormLlenadoOperativo userId={profile.id} nombreUsuario={profile.full_name} />
 
         <div className="section-title">

@@ -7,6 +7,8 @@ import { obtenerPendientesInterno } from "@/lib/notificaciones";
 import AppHeader from "@/components/AppHeader";
 import { IconPackage, IconTank, IconAlert, IconLock, IconGear } from "@/components/icons";
 import InicioOperativo from "./operativo";
+import AvisosFijos from "@/components/AvisosFijos";
+import { avisosParaMi } from "@/lib/avisos-fijos-server";
 
 const ETIQUETAS_PERIODO = {
   semana: "esta semana",
@@ -158,11 +160,15 @@ export default async function DashboardPage({ searchParams }) {
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 8);
 
+  // V51: avisos fijos de App Interno.
+  const avisosFijos = await avisosParaMi(supabase, { apps: ["interno"], persona: profile });
+
   return (
     <div>
       <AppHeader />
 
       <div className="page">
+        <AvisosFijos avisos={avisosFijos} />
         {sinSecciones && (
           <div className="card" style={{ textAlign: "center", padding: "28px 18px" }}>
             <div style={{ color: "var(--texto-suave)", marginBottom: 8 }}>

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requireInterno, tieneAlguno } from "@/lib/roles";
+import { requireInterno, tieneAlguno, esOperativo, getProfileYUser } from "@/lib/roles";
 import { MAS_PERMISOS } from "@/lib/nav";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
-import { IconCatalog, IconReport, IconHistory, IconShuffle, IconCalendar } from "@/components/icons";
+import { IconCatalog, IconReport, IconHistory, IconShuffle, IconCalendar, IconBook } from "@/components/icons";
 
 // Hub "Más": une Catálogo, Historial y Reportes en un solo botón del menú
 // superior para no sobrecargarlo (antes eran 3 botones fijos aparte).
@@ -58,13 +58,24 @@ const OPCIONES = [
     permiso: "historial",
     Icono: IconHistory,
   },
+  // V51: los manuales los ven todos (los mismos que en App Equipos de clientes).
+  {
+    href: "/manuales",
+    titulo: "Manuales",
+    descripcion: "Manuales de reguladores y compresores.",
+    permiso: null,
+    Icono: IconBook,
+  },
 ];
 
 export default async function MasPage() {
   const supabase = createClient();
-  const { profile } = await requireInterno(supabase, MAS_PERMISOS);
+  // V51: "Más" lo ve todo el que entra a App Interno (por los Manuales); el
+  // Operativo, solo si su rol le da alguna opción, como antes.
+  const { profile: yo } = await getProfileYUser(supabase);
+  const { profile } = await requireInterno(supabase, esOperativo(yo) ? MAS_PERMISOS : []);
 
-  const opciones = OPCIONES.filter((o) => tieneAlguno(profile, Array.isArray(o.permiso) ? o.permiso : [o.permiso]));
+  const opciones = OPCIONES.filter((o) => !o.permiso || tieneAlguno(profile, Array.isArray(o.permiso) ? o.permiso : [o.permiso]));
 
   return (
     <div>

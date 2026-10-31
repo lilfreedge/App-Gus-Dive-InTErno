@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V51",
+    fecha: "31 de octubre, 2026",
+    titulo: "Avisos fijos en Inicio y Manuales en los dos apps",
+    descripcion:
+      "Avisos fijos: el Titular y los administradores los crean en ⚙ › Avisos fijos (uno en App Interno y otro en App Equipos de clientes) y salen arriba del Inicio de ese app. Cada aviso tiene color (rojo, amarillo o azul) y funciona de tres formas: fijo (hasta que lo quites o hasta una fecha), se repite (cada día, cada semana o cada mes) o una sola vez (un día). Se le pone a todos (menos a los técnicos) o a las personas que escojas; al técnico solo le salen los que lo escogen a él, en su pantalla. Si quieres saber quién lo leyó, lleva el botón \"Listo\": al tocarlo se le quita a esa persona y a quien lo puso le llega al celular (si tiene las notificaciones activadas) y por correo. En la lista de avisos se ve quién lo leyó y quién falta. En los de una sola vez con \"Listo\" se escoge si sale solo ese día o si sigue saliendo hasta que lo marquen. \"Quitar\" no borra el aviso: lo apaga y se puede volver a poner. Manuales: en Más de los dos apps (la misma lista) y en la pantalla del técnico (tarjeta \"Manuales\"), por tipo de equipo y con buscador; cada manual es un PDF o un enlace. Cuando un equipo tiene manual (por marca y modelo), sale un atajo: arriba en la orden, en la pantalla del técnico con la orden abierta, y en la ficha de los reguladores de alquiler y de los compresores. Todos ven los manuales; agregarlos y quitarlos, solo el Titular, o a quien le dé \"Agregar y quitar manuales\" en Administración. \"Más\" ahora sale para todos en los dos apps. Necesita migration_76.sql.",
+  },
+  {
     version: "V50",
     fecha: "30 de octubre, 2026",
     titulo: "Holds con una respuesta por consulta, notas internas en las órdenes, informe que se guarda solo, componentes del regulador al darle mantenimiento y solicitudes en Movimientos",

@@ -6,6 +6,9 @@ import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
+import ManualesAtajo from "@/components/ManualesAtajo";
+import { cargarManuales } from "@/lib/manuales-server";
+import { manualesPara } from "@/lib/manuales";
 
 // Ficha de un regulador de alquiler: todos sus datos de solo lectura, más
 // accesos a su historial de mantenimiento y (si hay permiso) a editarlo.
@@ -21,6 +24,12 @@ export default async function FichaReguladorPage({ params }) {
     .single();
 
   if (!regulador) notFound();
+
+  // V51: los manuales de sus piezas (1ra etapa, 2da etapa, etc.).
+  const susManuales = manualesPara(
+    await cargarManuales(supabase),
+    [regulador.primera_etapa, regulador.segunda_etapa, regulador.octopus, regulador.manometro, regulador.profundimetro, regulador.descripcion].filter(Boolean)
+  );
 
   return (
     <div>
@@ -62,6 +71,8 @@ export default async function FichaReguladorPage({ params }) {
               )}
             </Campo>
           </div>
+
+          <ManualesAtajo manuales={susManuales} titulo />
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 24 }}>
             <Link href={`/equipos/mantenimiento-reguladores?regulador=${regulador.id}`}>

@@ -4,7 +4,7 @@ import { requirePermiso } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
-import { IconCatalog, IconReport, IconHistory, IconClipboard, IconPhone } from "@/components/icons";
+import { IconCatalog, IconReport, IconHistory, IconClipboard, IconPhone, IconBook } from "@/components/icons";
 
 // Hub "Más" de App Clientes (23-sep-2026, pedido explícito: "agregar un
 // botón de 'mas' al lado de historial de ordenes... igual como que en
@@ -127,6 +127,13 @@ const OPCIONES = [
     descripcion: "Ediciones y movimientos anulados de órdenes y equipos.",
     Icono: IconHistory,
     permiso: "equipos_clientes_historial",
+  },
+  // V51: los manuales los ven todos (los mismos que en App Interno).
+  {
+    href: "/app-clientes/manuales",
+    titulo: "Manuales",
+    descripcion: "Manuales de reguladores y compresores.",
+    Icono: IconBook,
   },
 ];
 

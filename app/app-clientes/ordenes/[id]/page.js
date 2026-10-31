@@ -18,6 +18,8 @@ import HoldConsultas from "@/components/HoldConsultas";
 import NotasInternas from "@/components/NotasInternas";
 import { edicionesDeLaOrden } from "@/lib/bitacora-orden";
 import { borradorYaTiene } from "@/lib/informe-mantenimiento";
+import { cargarManuales } from "@/lib/manuales-server";
+import { manualesPara, tituloManual, linkManual } from "@/lib/manuales";
 import FotoLightbox from "@/components/FotoLightbox";
 import { IconRefresh } from "@/components/icons";
 import { hoyISO } from "@/lib/fechas";
@@ -121,6 +123,8 @@ export default async function FichaOrdenPage({ params }) {
   const esRegulador = o.tipo_equipo === "Reguladores";
   // "Hold" (27-sep-2026, reemplaza el check "En espera" -- ver lib/holds.js).
   const hold = holdActivo(o.holds);
+  // V51: los manuales de este equipo (por marca y modelo).
+  const manualesEquipo = manualesPara(await cargarManuales(supabase), [o.equipo_marca_snapshot, o.equipo_modelo_snapshot].filter(Boolean).join(" "));
   // V50: el informe de mantenimiento que se quedó a medias (se guarda solo).
   let borradorInforme = null;
   if (esRegulador && !o.informe_mantenimiento) {
@@ -245,6 +249,16 @@ export default async function FichaOrdenPage({ params }) {
               </Link>
             )}
           </div>
+          {/* V51: atajo al manual de ese modelo, arriba y sutil ("23. A. pero
+              ponlo más sutil el botón"). Solo sale si hay manual. */}
+          {manualesEquipo.map((m) => (
+            <div key={m.id}>
+              <a href={linkManual(m)} target="_blank" rel="noreferrer" className="manual-atajo">
+                <span className={`manual-ic${m.url ? " link" : ""}`}>{m.url ? "LINK" : "PDF"}</span>
+                Manual del {tituloManual(m)} ›
+              </a>
+            </div>
+          ))}
         </div>
 
         <div className="card">

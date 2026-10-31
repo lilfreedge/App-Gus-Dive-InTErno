@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { seccionesVisibles, ordenarSecciones, NAV_SECTIONS, SECCIONES_FIJAS } from "@/lib/nav";
 import { useReorderDrag } from "@/lib/useReorderDrag";
-import { IconLogout, IconGear, IconEdit, IconHistory, IconUsers, IconBook, IconShuffle } from "./icons";
+import { IconLogout, IconGear, IconEdit, IconHistory, IconUsers, IconBook, IconShuffle, IconBell } from "./icons";
 
 export default function TopbarClient({
   nombre,
@@ -140,6 +140,12 @@ export default function TopbarClient({
                   onClick={() => setOpen(false)}
                 >
                   <IconBook size={15} /> Manual
+                </Link>
+              )}
+              {/* V51: avisos fijos de App Interno (Titular y administradores). */}
+              {(esTitular || isAdmin) && (
+                <Link href="/admin/avisos" className="settings-menu-link" onClick={() => setOpen(false)}>
+                  <IconBell size={15} /> Avisos fijos
                 </Link>
               )}
               {esTitular && (
