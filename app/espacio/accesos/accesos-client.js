@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler } from "@/components/icons";
+import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler, IconEstudiantes } from "@/components/icons";
 
 const PERMISOS_DEFAULT_LOCAL = {
   equipos_clientes: false,
@@ -12,6 +12,8 @@ const PERMISOS_DEFAULT_LOCAL = {
   acceso_viajes: false,
   // V37: acceso a Alquiler (migration_70.sql).
   acceso_alquiler: false,
+  // Control Estudiantes (migration_78.sql).
+  acceso_estudiantes: false,
 };
 
 // Tabla de accesos por app (26-sep-2026) -- mismo patrón de togglePermiso
@@ -42,6 +44,10 @@ export default function AccesosClient({ perfiles, miId }) {
               <IconUsers size={15} style={{ display: "block", margin: "0 auto 3px" }} />
               Equipos de clientes
             </th>
+            <th title="Control Estudiantes">
+              <IconEstudiantes size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+              Control Estudiantes
+            </th>
             <th title="App Interno">
               <IconTiendaTanque size={15} style={{ display: "block", margin: "0 auto 3px" }} />
               App Interno
@@ -69,6 +75,7 @@ export default function AccesosClient({ perfiles, miId }) {
                   <td>—</td>
                   <td>—</td>
                   <td>—</td>
+                  <td>—</td>
                 </tr>
               );
             }
@@ -86,6 +93,14 @@ export default function AccesosClient({ perfiles, miId }) {
                     checked={!!permisos.equipos_clientes}
                     disabled={loadingId === p.id}
                     onChange={(e) => togglePermiso(p, "equipos_clientes", e.target.checked)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={!!permisos.acceso_estudiantes}
+                    disabled={loadingId === p.id}
+                    onChange={(e) => togglePermiso(p, "acceso_estudiantes", e.target.checked)}
                   />
                 </td>
                 <td>

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getProfileYUser, tieneAcceso, esOperativo, esTecnico } from "@/lib/roles";
 import { obtenerPendientesInterno, obtenerPendientesClientes } from "@/lib/notificaciones";
 import HeaderSimple from "@/components/HeaderSimple";
-import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler } from "@/components/icons";
+import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler, IconEstudiantes } from "@/components/icons";
 
 // Ítem 7 del backlog (22-sep-2026): pantalla que aparece justo después de
 // iniciar sesión, para elegir en qué espacio entrar -- "App Clientes"
@@ -50,6 +50,8 @@ export default async function EspacioPage({ searchParams }) {
   const tieneViajes = tieneAcceso(profile, "acceso_viajes");
   // V37: Alquiler, mismo patrón (migration_70.sql).
   const tieneAlquiler = tieneAcceso(profile, "acceso_alquiler");
+  // Control Estudiantes (migration_78.sql).
+  const tieneEstudiantes = tieneAcceso(profile, "acceso_estudiantes");
 
   // Conteo de cuentas esperando aprobación (item 10, 1-oct-2026) -- solo
   // le hace falta al Titular, para el badge del menú de ajustes.
@@ -121,6 +123,19 @@ export default async function EspacioPage({ searchParams }) {
       const [a, m, d] = prox[0].fecha.split("-").map(Number);
       const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
       proximoViaje = `Próximo: ${prox[0].nombre.split(/[,(]/)[0].trim()} · ${d} ${MES[m - 1]}`;
+    }
+  }
+
+  // Control Estudiantes: certificaciones que llegaron y falta avisar, y
+  // cuántos están en curso. Si falta migration_78.sql, sale sin líneas.
+  const lineasEstudiantes = [];
+  let enCurso = 0;
+  if (tieneEstudiantes) {
+    const { data: est, error: eEst } = await supabase.from("est_estudiantes").select("estado").in("estado", ["curso", "certificacion"]);
+    if (!eEst && est) {
+      const porAvisar = est.filter((x) => x.estado === "certificacion").length;
+      enCurso = est.filter((x) => x.estado === "curso").length;
+      if (porAvisar > 0) lineasEstudiantes.push(`${porAvisar} certificaci${porAvisar === 1 ? "ón" : "ones"} por avisar`);
     }
   }
 
@@ -203,7 +218,7 @@ export default async function EspacioPage({ searchParams }) {
   // falta el caso aparte de "sin acceso a ninguna app": ahora siempre hay
   // al menos esa tarjeta para mostrar.
   // V35: Viajes/Buceos ahora también depende de su acceso.
-  const totalTarjetas = (tieneClientes ? 1 : 0) + (tieneInterno ? 1 : 0) + (tieneViajes ? 1 : 0) + (tieneAlquiler ? 1 : 0);
+  const totalTarjetas = (tieneClientes ? 1 : 0) + (tieneInterno ? 1 : 0) + (tieneViajes ? 1 : 0) + (tieneAlquiler ? 1 : 0) + (tieneEstudiantes ? 1 : 0);
   const soloUna = totalTarjetas === 1;
 
   return (
@@ -242,89 +257,116 @@ export default async function EspacioPage({ searchParams }) {
           )
         )}
 
+        {/* Control Estudiantes (1-nov-2026, "Ponlo debajo app equipos clientes.
+            Buceos ponlo debajo de app interno y alquiler debajo de buceos";
+            "Pon los apps que se vean a la par, no así como está, se ve
+            desorganizado"): dos columnas, izquierda Equipos de clientes y
+            Control Estudiantes, derecha App Interno, Buceos y Alquiler; las
+            de una misma fila tienen el mismo alto. Si alguien solo tiene apps
+            de una columna, van seguidas sin huecos. */}
         <div
           className="espacio-grid"
           style={soloUna ? { gridTemplateColumns: "1fr", maxWidth: 280, margin: "18px auto 0" } : undefined}
         >
-          {tieneClientes && (
-            <Link href="/app-clientes" className="card espacio-card">
-              <div className="espacio-icon espacio-icon-clientes">
-                <IconUsers size={TAM_ICONO} />
-              </div>
-              <div className="espacio-title">App Equipos de clientes</div>
-              <div className="espacio-notif">
-                {lineasClientes.length > 0 ? (
-                  lineasClientes.map((linea) => (
-                    <div className="espacio-notif-alerta" key={linea}>
-                      {linea}
-                    </div>
-                  ))
-                ) : (
-                  "Sin novedades."
-                )}
-              </div>
-            </Link>
-          )}
-
-          {tieneInterno && (
-            <Link href="/dashboard" className="card espacio-card">
-              <div className="espacio-icon espacio-icon-interno">
-                <IconTiendaTanque size={TAM_ICONO} />
-              </div>
-              <div className="espacio-title">App Interno</div>
-              <div className="espacio-notif">
-                {lineasInterno.length > 0 ? (
-                  lineasInterno.map((linea) => (
-                    <div className="espacio-notif-alerta" key={linea}>
-                      {linea}
-                    </div>
-                  ))
-                ) : (
-                  "Sin novedades."
-                )}
-              </div>
-            </Link>
-          )}
-
-          {/* "Viajes/Buceos" (6-oct-2026, pedido explícito: "quiero agregar
-              un boton para hacer un app nuevo mas adelante... junto con
-              los botones de los app") -- placeholder visible para
-              cualquiera que llegue a /espacio, sin permiso propio todavía
-              (mismo patrón que tuvo "App Equipos de clientes" cuando era
-              solo una idea, ver comentario al inicio de este archivo).
-              Desde V42 es el app de verdad; V44: avisos y próximo viaje. */}
-          {tieneViajes && (
-            <Link href="/viajes-buceos" className="card espacio-card">
-              <div className="espacio-icon espacio-icon-viajes">
-                <IconBuzos size={TAM_ICONO} />
-              </div>
-              <div className="espacio-title">Buceos</div>
-              <div className="espacio-notif">
-                {lineasViajes.map((linea) => (
-                  <div className="espacio-notif-alerta" key={linea}>
-                    {linea}
+          {filasDeTarjetas(
+            [
+              tieneClientes && (
+                <Link key="clientes" href="/app-clientes" className="card espacio-card">
+                  <div className="espacio-icon espacio-icon-clientes">
+                    <IconUsers size={TAM_ICONO} />
                   </div>
-                ))}
-                {proximoViaje || (lineasViajes.length ? "" : "Sin buceos próximos.")}
-              </div>
-            </Link>
-          )}
-
-          {/* V37 -- "Alquiler" (pedido explícito: "debajo de app interno...
-              ponlo coming soon"): queda debajo de App Interno porque va
-              después de Viajes en la cuadrícula de 2. Rojo GUS (#CD392A). */}
-          {tieneAlquiler && (
-            <Link href="/alquiler" className="card espacio-card">
-              <div className="espacio-icon espacio-icon-alquiler">
-                <IconAlquiler size={TAM_ICONO} />
-              </div>
-              <div className="espacio-title">Alquiler</div>
-              <div className="espacio-badge">Próximamente</div>
-              <div className="espacio-notif">Aún en construcción.</div>
-            </Link>
+                  <div className="espacio-title">App Equipos de clientes</div>
+                  <div className="espacio-notif">
+                    {lineasClientes.length > 0
+                      ? lineasClientes.map((linea) => (
+                          <div className="espacio-notif-alerta" key={linea}>
+                            {linea}
+                          </div>
+                        ))
+                      : "Sin novedades."}
+                  </div>
+                </Link>
+              ),
+              tieneEstudiantes && (
+                <Link key="estudiantes" href="/control-estudiantes" className="card espacio-card">
+                  <div className="espacio-icon espacio-icon-estudiantes">
+                    <IconEstudiantes size={TAM_ICONO} />
+                  </div>
+                  <div className="espacio-title">Control Estudiantes</div>
+                  <div className="espacio-notif">
+                    {lineasEstudiantes.map((linea) => (
+                      <div className="espacio-notif-alerta" key={linea}>
+                        {linea}
+                      </div>
+                    ))}
+                    {enCurso > 0 ? `${enCurso} estudiante${enCurso === 1 ? "" : "s"} en curso` : lineasEstudiantes.length ? "" : "Sin novedades."}
+                  </div>
+                </Link>
+              ),
+            ],
+            [
+              tieneInterno && (
+                <Link key="interno" href="/dashboard" className="card espacio-card">
+                  <div className="espacio-icon espacio-icon-interno">
+                    <IconTiendaTanque size={TAM_ICONO} />
+                  </div>
+                  <div className="espacio-title">App Interno</div>
+                  <div className="espacio-notif">
+                    {lineasInterno.length > 0
+                      ? lineasInterno.map((linea) => (
+                          <div className="espacio-notif-alerta" key={linea}>
+                            {linea}
+                          </div>
+                        ))
+                      : "Sin novedades."}
+                  </div>
+                </Link>
+              ),
+              tieneViajes && (
+                <Link key="viajes" href="/viajes-buceos" className="card espacio-card">
+                  <div className="espacio-icon espacio-icon-viajes">
+                    <IconBuzos size={TAM_ICONO} />
+                  </div>
+                  <div className="espacio-title">Buceos</div>
+                  <div className="espacio-notif">
+                    {lineasViajes.map((linea) => (
+                      <div className="espacio-notif-alerta" key={linea}>
+                        {linea}
+                      </div>
+                    ))}
+                    {proximoViaje || (lineasViajes.length ? "" : "Sin buceos próximos.")}
+                  </div>
+                </Link>
+              ),
+              tieneAlquiler && (
+                <Link key="alquiler" href="/alquiler" className="card espacio-card">
+                  <div className="espacio-icon espacio-icon-alquiler">
+                    <IconAlquiler size={TAM_ICONO} />
+                  </div>
+                  <div className="espacio-title">Alquiler</div>
+                  <div className="espacio-badge">Próximamente</div>
+                  <div className="espacio-notif">Aún en construcción.</div>
+                </Link>
+              ),
+            ]
           )}
         </div>
       </div>
     </div>
   );
+}
+
+// Las tarjetas en dos columnas, fila por fila: izquierda, derecha,
+// izquierda, derecha… con un hueco invisible donde una columna tiene menos.
+// Si una de las dos columnas no tiene ninguna, van seguidas.
+function filasDeTarjetas(izquierda, derecha) {
+  const izq = izquierda.filter(Boolean);
+  const der = derecha.filter(Boolean);
+  if (!izq.length || !der.length) return [...izq, ...der];
+  const filas = [];
+  for (let i = 0; i < Math.max(izq.length, der.length); i++) {
+    filas.push(izq[i] || <div key={`hueco-izq-${i}`} className="espacio-hueco" aria-hidden="true" />);
+    filas.push(der[i] || <div key={`hueco-der-${i}`} className="espacio-hueco" aria-hidden="true" />);
+  }
+  return filas;
 }

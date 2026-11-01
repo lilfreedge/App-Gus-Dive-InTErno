@@ -34,6 +34,7 @@ export default async function AccesosAppsPage() {
   const conAccesoInterno = noTitulares.filter((p) => !!p.permisos?.acceso_app_interno).length;
   const conAccesoViajes = noTitulares.filter((p) => !!p.permisos?.acceso_viajes).length;
   const conAccesoAlquiler = noTitulares.filter((p) => !!p.permisos?.acceso_alquiler).length;
+  const conAccesoEstudiantes = noTitulares.filter((p) => !!p.permisos?.acceso_estudiantes).length;
 
   // Mismo badge de "Usuarios nuevos" que /espacio (item 10, 1-oct-2026) --
   // para que el Titular lo vea sin importar en cuál de las dos pantallas
@@ -61,6 +62,10 @@ export default async function AccesosAppsPage() {
             <div className="stat-card">
               <div className="stat-value">{conAccesoClientes} de {totalUsuarios}</div>
               <div className="stat-label">Con acceso a Equipos de clientes</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{conAccesoEstudiantes} de {totalUsuarios}</div>
+              <div className="stat-label">Con acceso a Control Estudiantes</div>
             </div>
             <div className="stat-card">
               <div className="stat-value">{conAccesoInterno} de {totalUsuarios}</div>

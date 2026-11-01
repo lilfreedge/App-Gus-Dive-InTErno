@@ -23,7 +23,9 @@ export default async function ChangelogPage({ searchParams }) {
   const desdeClientes = searchParams?.desde === "clientes";
   // V42: también desde Viajes/Buceos.
   const desdeViajes = searchParams?.desde === "viajes";
-  const volver = desdeClientes ? "/app-clientes" : desdeViajes ? "/viajes-buceos" : "/dashboard";
+  // Control Estudiantes.
+  const desdeEstudiantes = searchParams?.desde === "estudiantes";
+  const volver = desdeClientes ? "/app-clientes" : desdeViajes ? "/viajes-buceos" : desdeEstudiantes ? "/control-estudiantes" : "/dashboard";
   const supabase = createClient();
   const { profile } = await getProfileYUser(supabase);
   if (!tieneAcceso(profile, "changelog")) {
@@ -32,7 +34,7 @@ export default async function ChangelogPage({ searchParams }) {
 
   return (
     <div>
-      {desdeClientes ? <AppHeaderClientes /> : desdeViajes ? <HeaderSimple nombre="" etiqueta="Buceos" inicio="/viajes-buceos" /> : <AppHeader />}
+      {desdeClientes ? <AppHeaderClientes /> : desdeViajes ? <HeaderSimple nombre="" etiqueta="Buceos" inicio="/viajes-buceos" /> : desdeEstudiantes ? <HeaderSimple nombre="" etiqueta="Control Estudiantes" inicio="/control-estudiantes" /> : <AppHeader />}
       <div className="page" style={{ paddingTop: 24 }}>
         <Link href={volver} className="back-link">
           ← Volver

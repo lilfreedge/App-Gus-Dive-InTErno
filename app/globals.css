@@ -239,6 +239,12 @@ html[data-theme="dark"] .btn.secondary.btn-hold {
   /* V37: rojo GUS (pedido explícito: "intentemos con el rojo de gus"). */
   background: #cd392a;
 }
+.espacio-icon.espacio-icon-estudiantes {
+  /* Control Estudiantes: naranja sutil ("46. No, será naranja sutil").
+     1-nov: probamos el rojo de Alquiler y se devolvió ("no, devuélvelo a sus
+     colores como estaban"). */
+  background: #874520;
+}
 
 /* V33 -- "¿A dónde quieres entrar?" sin barra de color arriba (opción C de
    la maqueta): esa pantalla no es de ninguna app, así que no lleva el color
@@ -1125,6 +1131,7 @@ textarea {
 }
 
 .espacio-title {
+  margin-bottom: 10px;
   font-weight: 700;
   font-size: 14.5px;
   color: var(--azul-texto);
@@ -1142,8 +1149,14 @@ textarea {
   border-radius: 999px;
 }
 
+/* Las tarjetas de una misma fila quedan del mismo alto ("Pon los apps que se
+   vean a la par"): la línea de abajo se va al fondo de cada tarjeta. */
+.espacio-hueco {
+  visibility: hidden;
+}
+
 .espacio-notif {
-  margin-top: 14px;
+  margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid var(--borde);
   width: 100%;
@@ -2984,3 +2997,116 @@ a.mant-pend-chip:hover { border-color: var(--rojo); }
 .vj-rep-menu button:disabled { opacity: 0.5; cursor: default; }
 .vj-rep-menu b { display: block; font-size: 14.5px; }
 .vj-rep-menu span { display: block; font-size: 12.5px; color: var(--texto-suave); margin-top: 2px; }
+
+/* ===== Control Estudiantes (migration_78.sql) =====
+   Naranja sutil, cobre ("46. No, será naranja sutil"; 1-nov: "devuélvelo a
+   sus colores como estaban"). */
+.ce-app { --ce: #874520; --ce-claro: #f6ebe3; --ce-texto: #6b3517; }
+html[data-theme="dark"] .ce-app { --ce-claro: #3a2618; --ce-texto: #f0c7a4; }
+.ce-topbar { background: var(--ce, #874520) !important; }
+.ce-app .btn-primary { background: var(--ce); border-color: var(--ce); color: #fff; }
+.ce-app .btn-primary:hover { filter: brightness(1.08); }
+.ce-app .vj-filtro.sel, .ce-app .ce-filtro.sel { background: var(--ce); border-color: var(--ce); color: #fff; }
+.ce-cuadros { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 12px 0 4px; }
+.ce-cuadro { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 12px; text-align: left; cursor: pointer; font-family: inherit; color: inherit; }
+.ce-cuadro b { display: block; font-size: 24px; color: var(--ce-texto); line-height: 1.1; }
+.ce-cuadro span { font-size: 12.5px; font-weight: 700; color: var(--texto-suave); }
+.ce-cuadro.rojo b { color: var(--rojo); }
+.ce-est { display: block; width: 100%; text-align: left; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; font-family: inherit; color: inherit; }
+.ce-est:hover { border-color: var(--ce); }
+.ce-est-t { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.ce-est-t b { font-size: 15px; }
+.ce-est-m { font-size: 12.5px; color: var(--texto-suave); margin-top: 2px; }
+.ce-debe { color: var(--rojo); font-weight: 700; }
+.ce-recordar { color: #9a5b0e; font-weight: 700; }
+.ce-barra { height: 6px; background: var(--superficie-suave); border-radius: 999px; margin-top: 8px; overflow: hidden; }
+.ce-barra i { display: block; height: 100%; background: var(--ce); border-radius: 999px; }
+.ce-chip { display: inline-block; font-size: 11.5px; font-weight: 800; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.ce-chip.curso { background: var(--ce-claro); color: var(--ce-texto); }
+.ce-chip.alm { background: #fff3dc; color: #9a5b0e; }
+.ce-chip.ok { background: var(--exito-fondo); color: var(--verde); }
+.ce-chip.rojo { background: var(--error-fondo); color: var(--rojo); }
+.ce-chip.gris { background: var(--superficie-suave); color: var(--texto-suave); }
+.ce-pasos { display: flex; margin: 12px 0 4px; }
+.ce-paso { flex: 1; text-align: center; font-size: 11px; font-weight: 700; color: var(--texto-suave); }
+.ce-paso i { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--superficie-suave); color: var(--texto-suave); margin: 0 auto 3px; font-style: normal; font-size: 12px; font-weight: 800; }
+.ce-paso.ok i { background: var(--verde); color: #fff; }
+.ce-paso.ya i { background: var(--ce); color: #fff; }
+.ce-paso.ya { color: var(--ce-texto); }
+.ce-etapa { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+.ce-etapa h4 { margin: 0 0 6px; font-size: 15px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ce-etapa h4 svg { color: var(--verde); }
+.ce-etapa.gris { opacity: 0.6; }
+.ce-ck { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--superficie-suave); font-size: 14px; }
+.ce-ck:last-of-type { border-bottom: 0; }
+.ce-ck select { width: auto; margin: 0; padding: 5px 8px; font-size: 13px; }
+.ce-seg { display: inline-flex; border: 1px solid var(--borde); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+.ce-seg button { padding: 5px 9px; font-size: 12px; font-weight: 700; color: var(--texto-suave); background: var(--tarjeta); border: 0; border-left: 1px solid var(--borde); cursor: pointer; font-family: inherit; margin: 0; width: auto; }
+.ce-seg button:first-child { border-left: 0; }
+.ce-seg button:disabled { cursor: default; }
+.ce-seg button.listo { background: var(--exito-fondo); color: var(--verde); }
+.ce-seg button.pendiente { background: #fff3dc; color: #9a5b0e; }
+.ce-seg button.na { background: var(--superficie-suave); color: var(--texto); }
+.ce-dato { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 7px 0; border-bottom: 1px solid var(--superficie-suave); }
+.ce-dato > span:first-child { color: var(--texto-suave); }
+.ce-dato > span:last-child { text-align: right; }
+.ce-pago-top { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0 8px; }
+.ce-pago-top div { background: var(--superficie-suave); border-radius: 10px; padding: 8px; text-align: center; }
+.ce-pago-top b { display: block; font-size: 15px; }
+.ce-pago-top span { font-size: 11.5px; color: var(--texto-suave); font-weight: 700; }
+.ce-pago-top .debe b { color: var(--rojo); }
+.ce-concilia { width: 24px !important; height: 24px; padding: 0 !important; margin: 0 !important; border-radius: 50%; border: 1.5px solid var(--borde); background: var(--tarjeta); color: #b8c2ca; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.ce-concilia.si { background: var(--exito-fondo); border-color: var(--exito-borde); color: var(--verde); }
+.ce-docs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.ce-doc { display: inline-flex; align-items: center; gap: 6px; background: var(--superficie-suave); border: 1px solid var(--borde); border-radius: 10px; padding: 8px 12px; font-size: 13px; font-weight: 700; color: var(--texto-suave); font-family: inherit; width: auto; margin: 0; cursor: pointer; }
+.ce-doc.ok { background: var(--exito-fondo); border-color: var(--exito-borde); color: var(--verde); }
+.ce-nota { font-size: 13.5px; padding: 8px 0; border-bottom: 1px solid var(--superficie-suave); }
+.ce-nota:last-child { border-bottom: 0; }
+.ce-nota small { display: block; color: var(--texto-suave); font-size: 12px; }
+.ce-rapidos { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.ce-rapidos button { border: 1px dashed var(--ce); color: var(--ce-texto); background: transparent; border-radius: 999px; padding: 4px 10px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; width: auto; margin: 0; }
+.ce-input { width: 100%; margin: 0 !important; }
+.ce-input-corto { width: 110px !important; margin: 0 !important; padding: 6px 8px !important; font-size: 14px !important; }
+.ce-form { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.ce-form label { display: flex; flex-direction: column; gap: 3px; font-size: 13px; font-weight: 700; color: var(--texto-suave); }
+.ce-form label input, .ce-form label select { margin: 0; }
+.ce-form-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (max-width: 520px) { .ce-form-fila { grid-template-columns: 1fr; } }
+.ce-checks { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.ce-checks label { flex-direction: row; align-items: center; gap: 6px; font-weight: 600; color: var(--texto); font-size: 13.5px; }
+.ce-checks input { width: auto; margin: 0; }
+.ce-curso { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+.ce-pz { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.ce-pz span { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 9px; background: var(--ce-claro); color: var(--ce-texto); }
+.ce-pz span.na { background: var(--superficie-suave); color: #9aa7b1; text-decoration: line-through; }
+.ce-wa { background: #1f8f4e !important; color: #fff !important; border-color: #1f8f4e !important; display: inline-flex; align-items: center; gap: 6px; }
+.ce-mas { display: block; width: 100%; text-align: left; font-family: inherit; color: inherit; background: var(--tarjeta); }
+.ce-firmo { display: block; background: none; border: 0; padding: 0; margin: 2px 0 0; width: auto; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--verde); cursor: pointer; text-align: left; }
+.ce-adm-fila { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; font-family: inherit; color: inherit; text-align: left; }
+/* Control Estudiantes: el link del estudiante y "Me interesa" (mismo estilo
+   que el link de Buceos, en el naranja del app). */
+.ce-pub { --ce: #874520; --ce-claro: #f6ebe3; --ce-texto: #6b3517; }
+.ce-pub .pb-head { color: var(--ce-texto); }
+.ce-pub .pb-btn { background: var(--ce); color: #fff; }
+.ce-pub .pb-btn.sec { background: #fff; color: var(--ce-texto); border: 1.5px solid #cfd8de; }
+.ce-pub .pb-seg button.sel { color: var(--ce-texto); }
+.ce-pub .pb-copiar { border-color: var(--ce); color: var(--ce-texto); }
+.ce-pub .pb-cuenta-n { color: var(--ce-texto); }
+.ce-pub-wa { display: block; text-align: center; text-decoration: none; background: #1f8f4e !important; color: #fff !important; box-sizing: border-box; }
+.ce-pub-l { display: block; font-size: 13px; font-weight: 700; color: #5c6b78; margin: 6px 0 4px; }
+.ce-pub-prog { display: flex; gap: 4px; margin: 2px 0 2px; }
+.ce-pub-prog i { flex: 1; height: 4px; border-radius: 4px; background: #dfe6ea; }
+.ce-pub-prog i.ya { background: var(--ce); }
+.ce-pub-foto { display: flex; gap: 10px; align-items: flex-start; border: 2px dashed #cfd8de; border-radius: 12px; padding: 12px; margin-top: 8px; cursor: pointer; color: var(--ce-texto); text-align: left; }
+.ce-pub-foto svg { flex-shrink: 0; margin-top: 1px; }
+.ce-pub-foto b { display: block; font-size: 14.5px; }
+.ce-pub-foto small { display: block; color: #5c6b78; font-size: 12.5px; margin-top: 2px; }
+.ce-pub-foto.ok { border-style: solid; border-color: #bfe8cf; background: #e9f8ef; color: #1d6b3d; }
+.ce-pub-firma { width: 100%; height: 130px; border: 1.5px solid #cfd8de; border-radius: 12px; background: #fff; touch-action: none; display: block; margin-bottom: 4px; }
+.ce-pub-curso { border-top: 1px solid #e3eaef; padding-top: 10px; margin-top: 10px; }
+.ce-pub-et { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; font-size: 14.5px; }
+.ce-pub-et i { width: 18px; height: 18px; border-radius: 50%; background: #dfe6ea; flex-shrink: 0; margin-top: 2px; }
+.ce-pub-et i.ok { background: #1f8f4e; }
+.ce-pub-et i.ya { background: var(--ce); }
+.ce-pub-pago { background: #f4f8fb; border-radius: 10px; padding: 9px 11px; font-size: 14px; margin-top: 8px; }
+.ce-pub-trampa { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }

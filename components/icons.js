@@ -437,6 +437,17 @@ export function IconBuzos(props) {
   return <Base {...props}><g transform="translate(-0.6 -1.0) scale(0.56)"><g fill="currentColor" stroke="none"><circle cx="4.6" cy="8.4" r="2.3"/><path d="M6.4 8.6c2.6.6 5.4 1.8 7.8 3.2l-.9 1.8c-2.6-1-5-2-7.6-3z"/><rect x="7.6" y="5.6" width="5.6" height="2.2" rx="1.1" transform="rotate(22 10.4 6.7)"/><path d="M7.6 10.2l1.2 1-4.4 3.2-.9-1.2z"/><path d="M13.4 11.6l4.4.6-.2 1.4-4.6-.2zM13 12.6l3.8 2.6-.8 1.2-3.8-2.4z"/><path d="M17.6 11.8l4.6-1.4.2 2.8-4.6.6zM16.4 14.8l4.2 2.4-1.4 2.2-3.6-3.2z"/></g></g><g transform="translate(10.2 4.4) scale(0.56)"><g fill="currentColor" stroke="none"><circle cx="4.6" cy="8.4" r="2.3"/><path d="M6.4 8.6c2.6.6 5.4 1.8 7.8 3.2l-.9 1.8c-2.6-1-5-2-7.6-3z"/><rect x="7.6" y="5.6" width="5.6" height="2.2" rx="1.1" transform="rotate(22 10.4 6.7)"/><path d="M7.6 10.2l1.2 1-4.4 3.2-.9-1.2z"/><path d="M13.4 11.6l4.4.6-.2 1.4-4.6-.2zM13 12.6l3.8 2.6-.8 1.2-3.8-2.4z"/><path d="M17.6 11.8l4.6-1.4.2 2.8-4.6.6zM16.4 14.8l4.2 2.4-1.4 2.2-3.6-3.2z"/></g></g><g transform="translate(1.2 11.2) scale(0.56)"><g fill="currentColor" stroke="none"><circle cx="4.6" cy="8.4" r="2.3"/><path d="M6.4 8.6c2.6.6 5.4 1.8 7.8 3.2l-.9 1.8c-2.6-1-5-2-7.6-3z"/><rect x="7.6" y="5.6" width="5.6" height="2.2" rx="1.1" transform="rotate(22 10.4 6.7)"/><path d="M7.6 10.2l1.2 1-4.4 3.2-.9-1.2z"/><path d="M13.4 11.6l4.4.6-.2 1.4-4.6-.2zM13 12.6l3.8 2.6-.8 1.2-3.8-2.4z"/><path d="M17.6 11.8l4.6-1.4.2 2.8-4.6.6zM16.4 14.8l4.2 2.4-1.4 2.2-3.6-3.2z"/></g></g></Base>;
 }
 
+// Control Estudiantes: birrete de graduación.
+export function IconEstudiantes(props) {
+  return (
+    <Base {...props}>
+      <path d="M2 9l10-4 10 4-10 4z" />
+      <path d="M6 11v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V11" />
+      <path d="M22 9v5" />
+    </Base>
+  );
+}
+
 // V37 -- Alquiler: wetsuit largo (mangas y piernas) y un tanque, sin careta
 // (pedido explícito: "W4 sin la careta", plan-v37-ronda4.html).
 export function IconAlquiler(props) {
