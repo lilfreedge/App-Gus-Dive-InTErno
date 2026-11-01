@@ -255,7 +255,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                       agregarOring();
                     }
                   }}
-                  placeholder="Cuál o-ring, ej. '1ra etapa'"
+                  placeholder="Ej. R008, R012, R112"
                   style={{ marginTop: 0 }}
                 />
                 <button type="button" className="btn secondary" onClick={agregarOring} style={{ marginTop: 0, width: "auto" }}>
@@ -477,8 +477,11 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
               más abajo). */}
           <div style={SECCION_ESTILO}>
             {/* V32: la letra chica "Opcional..." pasa al botón ⓘ. */}
-            <ConInfo texto="Opcional -- si no se cambió ninguno, déjalo vacío.">
-              <div style={SECCION_LABEL_ESTILO}>Cambio de o-rings</div>
+            {/* V54: antes "Cambio de o-rings" (nota "App Gus interno", 1-nov:
+                "que diga 'Indicar cuales o ring fueron utilizados' algo asi,
+                que propones?"; escogió "67. C"). En el informe impreso sigue "Cambio de o-rings". */}
+            <ConInfo texto="Opcional -- anota cada o-ring que se cambió. Si no se cambió ninguno, déjalo vacío.">
+              <div style={SECCION_LABEL_ESTILO}>Indica cuáles o-rings se cambiaron</div>
             </ConInfo>
             {controlesOrings()}
           </div>

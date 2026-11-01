@@ -392,6 +392,10 @@ export default function TecnicoInicio({
                 )}
               </div>
             ))}
+            {/* V54: el recuadro de Incluido / Se cobra va aquí, cerca de
+                "Agregar código" (nota "App Gus interno", 1-nov: "Mueve ese
+                recuadro y ponlo arriba cerca de agregar codigo"). */}
+            {esRegulador && <RecordatorioOrings style={{ marginTop: 8 }} />}
             {accesos.actualizar && (
               <button type="button" className="tec-btn borde" onClick={() => abrirHoja("codigo", o.id)}>
                 <IPlus /> Agregar código
@@ -405,11 +409,11 @@ export default function TecnicoInicio({
             <div className={`tec-paso-n${o.informe_mantenimiento ? " ok" : ""}`}>{++n}</div>
             <div className="tec-paso-body">
               <div className="tec-paso-t">Informe de mantenimiento</div>
-              {/* V40: recordatorio de los o-rings (pedido explícito: "los o-rings
-                  están incluidos en el mantenimiento, y en caso de que se
-                  cambien, esto debe de figurar en el informe"). */}
-              {/* V52: con etiquetas ("40. 2B"). */}
-              <RecordatorioOrings />
+              {/* V54: aquí queda solo el recordatorio corto; el recuadro de
+                  Incluido / Se cobra subió al paso de los códigos (nota "App
+                  Gus interno", 1-nov: "abajo pon un recordatorio que lo o
+                  rings deben de figurar en el informe"). */}
+              <div className="tec-recordatorio">Si cambiaste o-rings, tienen que salir en el informe.</div>
               {o.informe_mantenimiento ? (
                 <div className="tec-chip ok">
                   <span style={{ display: "flex", gap: 8, alignItems: "center" }}>

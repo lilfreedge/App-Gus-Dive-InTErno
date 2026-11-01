@@ -2965,6 +2965,9 @@ a.mant-pend-chip:hover { border-color: var(--rojo); }
 .campana-btn { position: relative; }
 .campana-n { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: #d93a2b; color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid var(--azul); box-sizing: border-box; }
 .campana-menu { width: 360px; max-width: calc(100vw - 24px); padding: 0; overflow: hidden; }
+/* V54: en el celular el menú de la campanita se salía por la izquierda
+   (la campanita no está pegada al borde, el ⚙ va a su derecha). */
+@media (max-width: 520px) { .campana-menu { position: fixed; top: 64px; left: 12px; right: 12px; width: auto; max-width: none; } }
 .campana-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px 8px; color: var(--texto); }
 .campana-head b { font-size: 15px; }
 .campana-link { background: none; border: 0; color: var(--azul-claro); font-weight: 700; font-size: 12.5px; cursor: pointer; font-family: inherit; padding: 0; }
@@ -3004,6 +3007,9 @@ a.mant-pend-chip:hover { border-color: var(--rojo); }
 .ce-app { --ce: #874520; --ce-claro: #f6ebe3; --ce-texto: #6b3517; }
 html[data-theme="dark"] .ce-app { --ce-claro: #3a2618; --ce-texto: #f0c7a4; }
 .ce-topbar { background: var(--ce, #874520) !important; }
+/* V54: sin el anillo azul del navegador en las pestañas (nota 1-nov, foto de Más). */
+.ce-topbar .topnav-link:focus { outline: none; }
+.ce-topbar .topnav-link:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.85); outline-offset: 2px; }
 .ce-app .btn-primary { background: var(--ce); border-color: var(--ce); color: #fff; }
 .ce-app .btn-primary:hover { filter: brightness(1.08); }
 .ce-app .vj-filtro.sel, .ce-app .ce-filtro.sel { background: var(--ce); border-color: var(--ce); color: #fff; }
@@ -3080,7 +3086,15 @@ html[data-theme="dark"] .ce-app { --ce-claro: #3a2618; --ce-texto: #f0c7a4; }
 .ce-pz span { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 9px; background: var(--ce-claro); color: var(--ce-texto); }
 .ce-pz span.na { background: var(--superficie-suave); color: #9aa7b1; text-decoration: line-through; }
 .ce-wa { background: #1f8f4e !important; color: #fff !important; border-color: #1f8f4e !important; display: inline-flex; align-items: center; gap: 6px; }
-.ce-mas { display: block; width: 100%; text-align: left; font-family: inherit; color: inherit; background: var(--tarjeta); }
+.ce-mas-lista { padding: 2px 16px; }
+.ce-mas { display: block; width: 100%; text-align: left; font-family: inherit; font-size: inherit; color: inherit; background: transparent; border: 0; border-bottom: 1px solid var(--borde); border-radius: 0; margin: 0; padding: 14px 26px 14px 0; }
+.ce-mas:last-child { border-bottom: 0; }
+.ce-mas:hover { background: transparent; }
+.ce-mas:hover .list-item-title { color: var(--ce); }
+.ce-mas:focus-visible { outline: 2px solid var(--ce); outline-offset: 2px; border-radius: 6px; }
+.ce-mas .list-item-title { font-size: 15.5px; display: inline-flex; align-items: center; gap: 6px; }
+.ce-mas .list-item-title svg { color: var(--ce); margin: 0; vertical-align: 0; }
+.ce-mas .list-item-meta { margin-top: 4px; font-size: 13.5px; }
 .ce-firmo { display: block; background: none; border: 0; padding: 0; margin: 2px 0 0; width: auto; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--verde); cursor: pointer; text-align: left; }
 .ce-adm-fila { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; font-family: inherit; color: inherit; text-align: left; }
 /* Control Estudiantes: el link del estudiante y "Me interesa" (mismo estilo

@@ -2,58 +2,126 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buzoAFila } from "@/lib/viajes/datos";
 import { buscarPorDoc, celCoincide, logLink } from "@/lib/estudiantes/servidor";
+import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// Control Estudiantes -- el estudiante sube desde el link su foto, la foto
-// de su cédula, el comprobante de pago o su firma. Se verifica con su
-// cédula/pasaporte y su celular. Va al bucket privado "estudiantes-docs".
-const TIPOS = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf"];
-const QUE = { foto: "su foto", cedula: "la foto de su cédula", comprobante: "su comprobante de pago", firma: "su firma" };
+// Control Estudiantes -- el estudiante sube desde el link su foto, su cédula
+// (foto, escaneo o PDF), el comprobante de pago o su firma. Se verifica con
+// su cédula/pasaporte y su celular. Va al bucket privado "estudiantes-docs".
+//
+// V54 (nota "App Gus interno", 1-nov: "No me esta dejando subir mi cédula,
+// pon que acepte formato png jpg, pdf o heic" -- salía "Failed to fetch"):
+// el archivo ya no pasa por aquí, porque Vercel corta lo que pese más de
+// ~4.5 MB. Ahora son dos llamadas en JSON:
+//   accion "firmar" -> revisa quién es y qué sube, y da un permiso para
+//                      subirlo directo al almacenamiento (createSignedUploadUrl)
+//   accion "listo"  -> revisa que el archivo esté ahí y lo pone en su ficha
+// Lo de antes (el archivo en un FormData) se deja para los archivos chicos
+// de un link que alguien tenga abierto desde antes de esta versión.
+const BUCKET = "estudiantes-docs";
+const MAX = 10 * 1024 * 1024;
+const IMAGENES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+const PERMITIDOS = {
+  foto: IMAGENES,
+  cedula: [...IMAGENES, "application/pdf"],
+  comprobante: [...IMAGENES, "application/pdf"],
+  firma: ["image/png"],
+};
+const QUE = { foto: "su foto", cedula: "su cédula", comprobante: "su comprobante de pago", firma: "su firma" };
+const MSJ_TIPO = { foto: "Sube una foto (JPG, PNG o HEIC).", cedula: "Sube una foto o un escaneo (JPG, PNG, HEIC o PDF).", comprobante: "Sube una foto (JPG, PNG, HEIC) o un PDF.", firma: "Vuelve a firmar." };
+const EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic", "image/heif": "heif", "application/pdf": "pdf" };
 
-export async function POST(request) {
-  const form = await request.formData().catch(() => null);
-  if (!form) return NextResponse.json({ error: "No llegó el archivo." }, { status: 400 });
-  const tipoDoc = form.get("tipoDoc") === "pasaporte" ? "pasaporte" : "cedula";
-  const que = String(form.get("que") || "");
-  const file = form.get("archivo");
-  if (!QUE[que]) return NextResponse.json({ error: "No sabemos qué es ese archivo." }, { status: 400 });
-  if (!file || typeof file === "string") return NextResponse.json({ error: "No llegó el archivo." }, { status: 400 });
-  if (file.size > 10 * 1024 * 1024) return NextResponse.json({ error: "El archivo pesa más de 10 MB." }, { status: 400 });
-  const tipoArchivo = file.type || "";
-  if (!TIPOS.includes(tipoArchivo) || (que !== "comprobante" && tipoArchivo === "application/pdf")) return NextResponse.json({ error: que === "comprobante" ? "Sube una foto (JPG, PNG) o un PDF." : "Sube una foto (JPG o PNG)." }, { status: 400 });
+const mal = (error, status = 400) => NextResponse.json({ error }, { status });
 
-  const s = createServiceClient();
-  const b = await buscarPorDoc(s, tipoDoc, form.get("doc"));
-  if (!b || !celCoincide(b, form.get("cel"))) return NextResponse.json({ error: "No pudimos confirmar tus datos. Escríbenos por WhatsApp." }, { status: 400 });
+// Quién es, qué sube y a cuál de sus cursos va. Devuelve { error } o todo lo necesario.
+async function preparar(s, datos) {
+  const tipoDoc = datos.tipoDoc === "pasaporte" ? "pasaporte" : "cedula";
+  const que = String(datos.que || "");
+  if (!QUE[que]) return { error: "No sabemos qué es ese archivo." };
+  const tipo = String(datos.tipo || "");
+  if (!PERMITIDOS[que].includes(tipo)) return { error: MSJ_TIPO[que] };
+  if (!(Number(datos.tamano) > 0)) return { error: "No llegó el archivo." };
+  if (Number(datos.tamano) > MAX) return { error: "El archivo pesa más de 10 MB." };
+
+  const b = await buscarPorDoc(s, tipoDoc, datos.doc);
+  if (!b || !celCoincide(b, datos.cel)) return { error: "No pudimos confirmar tus datos. Escríbenos por WhatsApp." };
 
   // El curso: el que diga, si es suyo; si no, el más reciente que tenga abierto.
-  const { data: cursos } = await s.from("est_estudiantes").select("id, comprobantes, pasos, estado").eq("buzo_id", b.id).order("creado_en", { ascending: false });
+  const { data: cursos } = await s.from("est_estudiantes").select("id, curso, comprobantes, pasos, estado").eq("buzo_id", b.id).order("creado_en", { ascending: false });
   const abiertos = (cursos || []).filter((x) => !["cancelado"].includes(x.estado));
-  const est = abiertos.find((x) => x.id === String(form.get("estudianteId") || "")) || abiertos.find((x) => x.estado !== "entregada") || abiertos[0];
-  if (["comprobante", "firma"].includes(que) && !est) return NextResponse.json({ error: "No tienes un curso registrado." }, { status: 400 });
+  const est = abiertos.find((x) => x.id === String(datos.estudianteId || "")) || abiertos.find((x) => x.estado !== "entregada") || abiertos[0];
+  if (["comprobante", "firma"].includes(que) && !est) return { error: "No tienes un curso registrado." };
+  if (que === "comprobante" && (est.comprobantes || []).length >= 10) return { error: "Ya subiste varios comprobantes. Escríbenos por WhatsApp." };
+  const carpeta = ["foto", "cedula"].includes(que) ? `buzo-${b.id}` : est.id;
+  return { b, que, tipo, abiertos, est, carpeta };
+}
 
-  const ext = tipoArchivo === "application/pdf" ? "pdf" : (tipoArchivo.split("/")[1] || "jpg").replace("jpeg", "jpg");
-  const ruta = `${["foto", "cedula"].includes(que) ? `buzo-${b.id}` : est.id}/${que}-${Date.now()}.${ext}`;
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const { error: eSubir } = await s.storage.from("estudiantes-docs").upload(ruta, bytes, { contentType: tipoArchivo, upsert: false });
-  if (eSubir) return NextResponse.json({ error: "No se pudo subir. Intenta de nuevo." }, { status: 500 });
-
+// Lo pone en su ficha (y en sus cursos abiertos) y lo anota en la Bitácora.
+async function aplicar(s, { b, que, abiertos, est }, ruta, nombre) {
+  const ahora = new Date().toISOString();
   if (que === "foto" || que === "cedula") {
     await s.from("viajes_buzos").update(buzoAFila(que === "foto" ? { foto: ruta } : { docFoto: ruta })).eq("id", b.id);
     // En sus cursos abiertos, ese paso queda Listo.
     const paso = que === "foto" ? "foto" : "identificacion";
     for (const x of abiertos.filter((y) => y.estado === "curso" && (y.pasos || {})[paso] === "pendiente")) {
-      await s.from("est_estudiantes").update({ pasos: { ...x.pasos, [paso]: "listo" }, actualizado_en: new Date().toISOString() }).eq("id", x.id);
+      await s.from("est_estudiantes").update({ pasos: { ...x.pasos, [paso]: "listo" }, actualizado_en: ahora }).eq("id", x.id);
     }
   } else if (que === "comprobante") {
-    if ((est.comprobantes || []).length >= 10) return NextResponse.json({ error: "Ya subiste varios comprobantes. Escríbenos por WhatsApp." }, { status: 400 });
-    const c = { ruta, nombre: String(file.name || `comprobante.${ext}`).slice(0, 80), en: new Date().toISOString(), via: "link" };
-    await s.from("est_estudiantes").update({ comprobantes: [...(est.comprobantes || []), c], actualizado_en: new Date().toISOString() }).eq("id", est.id);
+    const ext = ruta.split(".").pop();
+    const c = { ruta, nombre: String(nombre || `comprobante.${ext}`).slice(0, 80), en: ahora, via: "link" };
+    await s.from("est_estudiantes").update({ comprobantes: [...(est.comprobantes || []), c], actualizado_en: ahora }).eq("id", est.id);
+    // V54: aviso en la campanita ("62. si").
+    await avisarEquipoEst(s, { permiso: "pagos", titulo: "Comprobante de pago nuevo", texto: `${b.nombre}${est.curso ? ` · ${est.curso}` : ""}`, url: `/control-estudiantes/estudiante/${est.id}` });
   } else {
-    await s.from("est_estudiantes").update({ firma: ruta, actualizado_en: new Date().toISOString() }).eq("id", est.id);
+    await s.from("est_estudiantes").update({ firma: ruta, actualizado_en: ahora }).eq("id", est.id);
   }
   await logLink(s, est?.id || null, `Subió ${QUE[que]} por el link: ${b.nombre}`);
+}
+
+export async function POST(request) {
+  const s = createServiceClient();
+  const esJson = (request.headers.get("content-type") || "").includes("application/json");
+
+  if (esJson) {
+    const body = await request.json().catch(() => ({}));
+    const p = await preparar(s, body);
+    if (p.error) return mal(p.error);
+
+    if (body.accion === "firmar") {
+      const ruta = `${p.carpeta}/${p.que}-${Date.now()}.${EXT[p.tipo]}`;
+      const { data, error } = await s.storage.from(BUCKET).createSignedUploadUrl(ruta);
+      if (error || !data?.token) return mal("No se pudo preparar la subida. Intenta de nuevo.", 500);
+      return NextResponse.json({ ruta, token: data.token });
+    }
+
+    if (body.accion === "listo") {
+      // Que sea un archivo de esta persona, de esto, y que ya esté subido.
+      const ruta = String(body.ruta || "");
+      const m = ruta.match(/^([^/]+)\/([a-z]+)-\d+\.([a-z]+)$/);
+      if (!m || m[1] !== p.carpeta || m[2] !== p.que || m[3] !== EXT[p.tipo]) return mal("No pudimos confirmar el archivo. Intenta de nuevo.");
+      const nombreArchivo = ruta.slice(p.carpeta.length + 1);
+      const { data: hay } = await s.storage.from(BUCKET).list(p.carpeta, { search: nombreArchivo, limit: 5 });
+      if (!(hay || []).some((x) => x.name === nombreArchivo)) return mal("El archivo no llegó. Intenta de nuevo.");
+      await aplicar(s, p, ruta, body.nombre);
+      return NextResponse.json({ ok: true });
+    }
+
+    return mal("Acción desconocida.");
+  }
+
+  // Lo de antes: el archivo viene en un FormData (solo sirve para archivos chicos).
+  const form = await request.formData().catch(() => null);
+  if (!form) return mal("No llegó el archivo.");
+  const file = form.get("archivo");
+  if (!file || typeof file === "string") return mal("No llegó el archivo.");
+  const p = await preparar(s, { tipoDoc: form.get("tipoDoc"), doc: form.get("doc"), cel: form.get("cel"), que: form.get("que"), estudianteId: form.get("estudianteId"), tipo: file.type || "", tamano: file.size });
+  if (p.error) return mal(p.error);
+  const ruta = `${p.carpeta}/${p.que}-${Date.now()}.${EXT[p.tipo]}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const { error: eSubir } = await s.storage.from(BUCKET).upload(ruta, bytes, { contentType: p.tipo, upsert: false });
+  if (eSubir) return mal("No se pudo subir. Intenta de nuevo.", 500);
+  await aplicar(s, p, ruta, file.name);
   return NextResponse.json({ ok: true });
 }

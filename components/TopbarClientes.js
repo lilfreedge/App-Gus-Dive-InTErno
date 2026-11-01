@@ -117,15 +117,18 @@ export default function TopbarClientes({
           </div>
         </div>
 
-        {/* V52: la campanita al lado del ⚙ (a todos, "29"). */}
+        {/* V52: la campanita al lado del ⚙ (a todos, "29"). V54: menos al
+            técnico (nota 1-nov: "Vamos a quitarle la campanita al técnico,
+            porque cuando uno le da, te lleva dentro del app y no debe de ser"). */}
         <div className="topbar-iconos">
-        <CampanaNotificaciones
-          app="clientes"
-          tecnico={tecnico}
-          puedeAdministrar={esTitular || isAdmin}
-          rutaAdmin="/app-clientes/administracion/avisos"
-          rutaTodas="/app-clientes/notificaciones"
-        />
+        {!tecnico && (
+          <CampanaNotificaciones
+            app="clientes"
+            puedeAdministrar={esTitular || isAdmin}
+            rutaAdmin="/app-clientes/administracion/avisos"
+            rutaTodas="/app-clientes/notificaciones"
+          />
+        )}
         <div className="gear-wrap" ref={menuRef}>
           <button className="gear-btn" onClick={() => setOpen((o) => !o)} aria-label="Ajustes">
             <IconGear size={18} />

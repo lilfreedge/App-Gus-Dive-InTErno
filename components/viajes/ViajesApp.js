@@ -290,13 +290,22 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
       const ins = db.inscripciones.filter((x) => x.viajeId === v.id);
       const pagados = ins.reduce((a, x) => a + (x.pagos || []).length, 0);
       try {
+        // V54 (1-nov: "permíteme borrar buceos... ahora mismo no puedo"):
+        // sin el permiso de la base (migration_77.sql) Supabase no da error,
+        // pero no borra nada, y el buceo volvía a salir. Ahora se revisa que
+        // de verdad se borró, y la bitácora se anota solo si se borró.
+        const { data: borrados, error: eBorrar } = await supabase.from("viajes").delete().eq("id", v.id).select("id");
+        if (eBorrar) throw eBorrar;
+        if (!borrados?.length) {
+          avisar("No se pudo borrar: falta correr en Supabase el SQL todo_v54_una_sola_vez.sql (trae el permiso para borrar buceos).");
+          return false;
+        }
         await log(
           null,
           `Borró el ${palabraViaje(v)}: ${v.nombre} (${v.fecha})`,
           `${ins.length} inscrito${ins.length === 1 ? "" : "s"}${pagados ? `, ${pagados} pago${pagados === 1 ? "" : "s"}` : ""}`,
           `Borrado. Motivo: ${motivo}`
         );
-        await guardar(supabase.from("viajes").delete().eq("id", v.id));
         local((d) => ({ ...d, viajes: d.viajes.filter((x) => x.id !== v.id), inscripciones: d.inscripciones.filter((x) => x.viajeId !== v.id) }));
         return true;
       } catch (e) {

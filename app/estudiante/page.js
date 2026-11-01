@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { filaACurso } from "@/lib/estudiantes/datos";
 import { TIENDA } from "@/lib/viajes/servidor";
+import { CUENTAS_CURSOS, TITULAR_CURSOS, RNC_CURSOS } from "@/lib/estudiantes/modelo";
 import EstudiantePublico from "@/components/estudiantes/Publico";
 
 export const dynamic = "force-dynamic";
@@ -12,5 +13,6 @@ export default async function EstudiantePage() {
   const s = createServiceClient();
   const { data } = await s.from("est_cursos").select("*").eq("activo", true).order("orden").order("nombre");
   const cursos = (data || []).map(filaACurso).map((c) => ({ id: c.id, nombre: c.nombre, precio: c.precio }));
-  return <EstudiantePublico cursos={cursos} tienda={{ whatsapp: TIENDA.whatsapp, titular: TIENDA.titular, cuentas: TIENDA.cuentas }} />;
+  // V54: las cuentas de los cursos, no las de los buceos (nota 1-nov).
+  return <EstudiantePublico cursos={cursos} tienda={{ whatsapp: TIENDA.whatsapp, titular: TITULAR_CURSOS || TIENDA.titular, rnc: RNC_CURSOS, cuentas: CUENTAS_CURSOS }} />;
 }

@@ -10,6 +10,12 @@ import { IconoWA } from "./Piezas";
 // archivo (algunas computadoras), baja el PDF para arrastrarlo al chat.
 // El PDF se prepara antes de tocar el botón: si se prepara después, el
 // iPhone no deja abrir el menú de compartir.
+// Celular o tableta (el iPad dice "Macintosh", pero tiene pantalla táctil).
+function esCelular() {
+  const ua = navigator.userAgent || "";
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+}
+
 export default function EnviarPdf({ v, g, avisar, className = "btn btn-primary vj-btn", texto = "Enviar por WhatsApp" }) {
   const [archivo, setArchivo] = useState(null);
   const clave = JSON.stringify([v.nombre, v.fecha, v.salida, g]);
@@ -31,7 +37,7 @@ export default function EnviarPdf({ v, g, avisar, className = "btn btn-primary v
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clave]);
 
-  function bajar(f) {
+  function bajar(f, abreWhatsApp) {
     const url = URL.createObjectURL(f);
     const a = document.createElement("a");
     a.href = url;
@@ -40,11 +46,20 @@ export default function EnviarPdf({ v, g, avisar, className = "btn btn-primary v
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
-    avisar("Se bajó el PDF. Arrástralo al chat en WhatsApp para mandarlo.");
+    avisar(abreWhatsApp ? "Se bajó el PDF. En WhatsApp, abre el chat y arrastra el PDF ahí." : "Se bajó el PDF. Arrástralo al chat en WhatsApp para mandarlo.");
   }
 
   function enviar() {
     if (!archivo) return;
+    // V54: en la computadora, el menú de compartir de la Mac no trae WhatsApp
+    // (nota "App Gus interno", 1-nov: "En buceos, no me lleva a whatsapp
+    // cuando le doy al boton"). Ahí se baja el PDF y se abre WhatsApp Web
+    // para arrastrarlo al chat. En el celular sigue el menú de compartir.
+    if (!esCelular()) {
+      bajar(archivo, true);
+      window.open("https://web.whatsapp.com/", "_blank", "noopener");
+      return;
+    }
     let puede = false;
     try {
       puede = !!navigator.canShare && navigator.canShare({ files: [archivo] });

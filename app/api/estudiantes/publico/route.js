@@ -5,6 +5,7 @@ import { filaACurso, filaAEst } from "@/lib/estudiantes/datos";
 import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula } from "@/lib/viajes/modelo";
 import { pasosIniciales, pagado, debe, nombreEtapa } from "@/lib/estudiantes/modelo";
 import { docValido, buscarPorDoc, celCoincide, logLink } from "@/lib/estudiantes/servidor";
+import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -123,5 +124,7 @@ export async function POST(request) {
   const { error: eEst } = await s.from("est_estudiantes").insert(fila);
   if (eEst) return NextResponse.json({ error: "No se pudo registrar el curso. Intenta de nuevo." }, { status: 500 });
   await logLink(s, fila.id, `Se registró por el link: ${buzo.nombre} (${curso.nombre})`);
+  // V54: aviso en la campanita ("62. si").
+  await avisarEquipoEst(s, { permiso: "estudiantes", titulo: "Nuevo estudiante por el link", texto: `${buzo.nombre} · ${curso.nombre}`, url: `/control-estudiantes/estudiante/${fila.id}` });
   return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio });
 }

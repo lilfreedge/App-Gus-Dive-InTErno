@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { soloDigitos } from "@/lib/viajes/modelo";
+import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -30,5 +31,7 @@ export async function POST(request) {
   });
   if (error) return NextResponse.json({ error: "No se pudo enviar. Intenta de nuevo." }, { status: 500 });
   await s.from("est_bitacora").insert({ nombre: "Link", texto: `Dejó sus datos en "Me interesa": ${nombre}${body.curso ? ` (${body.curso})` : ""}` });
+  // V54: aviso en la campanita ("62. si").
+  await avisarEquipoEst(s, { permiso: "interesados", titulo: "Interesado nuevo", texto: `${nombre}${body.curso ? ` · ${String(body.curso).slice(0, 80)}` : ""}`, url: "/control-estudiantes/interesados" });
   return NextResponse.json({ ok: true });
 }

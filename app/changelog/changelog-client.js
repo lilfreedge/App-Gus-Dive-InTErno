@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V54",
+    fecha: "1 de noviembre, 2026",
+    titulo: "Arreglos de la nota del 1 de noviembre: link del estudiante, técnico, orden y Buceos",
+    descripcion:
+      "Link del estudiante: la cédula (o el pasaporte) ya sube aunque la foto pese mucho; se acepta foto, escaneo o PDF (JPG, PNG, PDF o HEIC) y dice \"Tu cédula\" en vez de \"Foto de tu cédula\". Las fotos grandes se achican solas antes de subir y van directo al almacenamiento (antes salía \"Failed to fetch\"); si se cae el internet, lo dice claro. Al volver a entrar, en \"Ver cómo va mi curso\" salen los dos documentos siempre, con ✓ el que ya está. Se quitó \"Ya te tenemos registrado de antes\". La pantalla final ya no pide el pago ni habla de la certificación: dice que ya tenemos sus datos y que le escribimos por WhatsApp. Las cuentas para pagar ahora son las de Gus Dive SRL (Banco Popular, corriente en pesos y en dólares, con el RNC) y salen cuando ve cómo va su curso, no en la pantalla final. Control Estudiantes: campanita al lado del ⚙ con un aviso cuando alguien se registra por el link, sube un comprobante de pago o deja sus datos en Me interesa (le llega a quien tiene el permiso de eso; el Titular y los administradores, siempre); necesita migration_79.sql. Los botones de Más se ven como una lista normal. En el celular, el menú de la campanita (en todos los apps) ya no se sale de la pantalla. Técnico: sin campanita; el recuadro Incluido / Se cobra subió al paso de los códigos, cerca de \"Agregar código\", y en el paso del informe queda el recordatorio de que los o-rings tienen que salir en el informe. Informe: \"Cambio de o-rings\" ahora dice \"Indica cuáles o-rings se cambiaron\", con el ejemplo \"Ej. R008, R012, R112\". Orden: \"Ver recibo de la orden\" subió al lado de \"Informe de mantenimiento\". Listado de clientes: sin \"Seleccionar todo\" ni casillas; para borrar un cliente, se entra al cliente y al final está \"Borrar este cliente\" (si tiene equipos u órdenes, dice que primero hay que borrar esos). Buceos: en la computadora, \"Enviar por WhatsApp\" baja el PDF y abre WhatsApp Web para arrastrarlo al chat (el menú de compartir de la Mac no trae WhatsApp); en el celular sigue igual. Manuales: si un PDF no sube, ahora dice por qué (muy pesado, sin permiso, se cortó el internet u otro detalle). Borrar un buceo: si la base todavía no tiene el permiso (falta correr el SQL), ahora lo dice claro en vez de parecer que se borró.",
+  },
+  {
     version: "V53",
     fecha: "1 de noviembre, 2026",
     titulo: "App nuevo: Control Estudiantes, y las tarjetas de los apps a la par",

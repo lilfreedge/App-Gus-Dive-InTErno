@@ -8,6 +8,7 @@ import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { hoyISO } from "@/lib/fechas";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { IconEdit } from "@/components/icons";
+import BorrarCliente from "@/components/BorrarCliente";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
@@ -31,6 +32,9 @@ export default async function FichaClientePage({ params }) {
   // pedido explícito) -- permiso granular propio, exclusivo de
   // Administradores (ver COLUMNAS_ADMIN en permisos-client.js).
   const puedeEditarCliente = tieneAcceso(profile, "equipos_clientes_editar_cliente");
+  // V54: borrar va aquí, al final de la ficha (antes era "Seleccionar todo"
+  // en el listado). Mismo permiso que tenía ese botón.
+  const puedeEliminar = !!profile?.es_titular || !!profile?.permisos?.equipos_clientes_editar_cliente;
 
   const { data: cliente } = await supabase
     .from("clientes_equipos")
@@ -212,6 +216,7 @@ export default async function FichaClientePage({ params }) {
             ))
           )}
         </div>
+        {puedeEliminar && <BorrarCliente id={cliente.id} nombre={cliente.nombre} equipos={(equipos || []).length} ordenes={(ordenes || []).length} />}
       </div>
     </div>
   );

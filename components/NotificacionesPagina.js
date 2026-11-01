@@ -9,7 +9,7 @@ import { formatFecha } from "@/lib/format";
 // V52 -- "Ver todas y configurar" de la campanita (App Interno y App Equipos
 // de clientes): todas las notificaciones, marcarlas leídas y activar el
 // celular (las mismas notificaciones del celular que Buceos).
-export default function NotificacionesPagina({ app, puedeAdministrar = false, rutaAdmin = null }) {
+export default function NotificacionesPagina({ app, puedeAdministrar = false, rutaAdmin = null, explicacion = null, sinCelular = false }) {
   const supabase = createClient();
   const [lista, setLista] = useState(null);
   const [msg, setMsg] = useState("");
@@ -41,7 +41,8 @@ export default function NotificacionesPagina({ app, puedeAdministrar = false, ru
     <div>
       {msg && <div className="success-box">{msg}</div>}
       <div className="hint-text" style={{ margin: "0 0 12px" }}>
-        Cuando alguien marca &quot;Listo&quot; en un aviso fijo que tú pusiste, te llega aquí, por correo y al celular (si lo activas abajo).
+        {/* V54: Control Estudiantes pone su propia explicación. */}
+        {explicacion || "Cuando alguien marca \"Listo\" en un aviso fijo que tú pusiste, te llega aquí, por correo y al celular (si lo activas abajo)."}
       </div>
       {puedeAdministrar && rutaAdmin && (
         <Link href={rutaAdmin}>
@@ -74,8 +75,13 @@ export default function NotificacionesPagina({ app, puedeAdministrar = false, ru
           </a>
         ))}
       </div>
-      <div className="section-title">En este celular o computadora</div>
-      <CelularAvisos avisar={avisar} />
+      {/* V54: Control Estudiantes por ahora solo avisa en la campanita. */}
+      {!sinCelular && (
+        <>
+          <div className="section-title">En este celular o computadora</div>
+          <CelularAvisos avisar={avisar} />
+        </>
+      )}
     </div>
   );
 }

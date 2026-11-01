@@ -248,6 +248,17 @@ export default async function FichaOrdenPage({ params }) {
                 </button>
               </Link>
             )}
+            {/* V54: "Ver Recibo de la orden" sube aquí, al lado del Informe
+                (nota "App Gus interno", 1-nov: "pon el boton de 'ver recibo
+                de orden' Arriba al lado del informe de mantenimiento"). Antes
+                vivía en la ficha, arriba de la copia de Códigos a cobrar. */}
+            {puedeVerReportes && (
+              <Link href={`/app-clientes/reportes/${o.id}`}>
+                <button className="btn secondary" type="button" style={{ marginTop: 0, width: "auto", padding: "9px 14px", fontSize: 13 }}>
+                  Ver recibo de la orden
+                </button>
+              </Link>
+            )}
           </div>
           {/* V51: atajo al manual de ese modelo, arriba y sutil ("23. A. pero
               ponlo más sutil el botón"). Solo sale si hay manual. */}
@@ -366,25 +377,6 @@ export default async function FichaOrdenPage({ params }) {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {puedeVerReportes && (
-                <Link
-                  href={`/app-clientes/reportes/${o.id}`}
-                  style={{
-                    alignSelf: "flex-end",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: "var(--azul-claro)",
-                    background: "var(--superficie-suave)",
-                    border: "1px solid var(--borde)",
-                    borderRadius: 6,
-                    padding: "6px 11px",
-                    textDecoration: "none",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Ver Recibo de la orden
-                </Link>
-              )}
               <div
                 style={{
                   background: "var(--superficie-suave)",

@@ -139,7 +139,9 @@ export default async function TecnicoPage({ searchParams }) {
         esTitular={!!yo.es_titular}
         enlaces={enlacesMenu(yo)}
         inicio={`/tecnico${sufijoComo(viendoComo, persona)}`}
-        campana={viendoComo ? null : { app: "clientes", appsAvisos: ["interno", "clientes"], tecnico: true, rutaTodas: "/app-clientes/notificaciones" }}
+        // V54: sin campanita para el técnico (nota 1-nov). Sus avisos fijos
+        // le siguen saliendo arriba de su menú.
+        campana={null}
       />
       <div className="page tec" style={{ paddingTop: 12 }}>
         {viendoComo && (

@@ -6,6 +6,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { achicar, tipoDe } from "@/lib/estudiantes/subir";
+import CampanaNotificaciones from "@/components/CampanaNotificaciones";
+import NotificacionesPagina from "@/components/NotificacionesPagina";
 import { IconGear, IconLogout, IconShuffle, IconHistory, IconUsers } from "@/components/icons";
 import { cargarTodo, estAFila, buzoAFila, cursoAFila, interesadoAFila, nuevoId } from "@/lib/estudiantes/datos";
 import { Inicio, Lista, Mas, Bitacora } from "./Inicio";
@@ -62,6 +65,11 @@ function Topbar({ yo, links, activo, ir }) {
             <FechaHoy />
           </div>
         </div>
+        {/* V54: la campanita, como en los otros apps ("62. si": aviso cuando
+            alguien se registra por el link, sube un comprobante o llega un
+            interesado nuevo). */}
+        <div className="topbar-iconos">
+        <CampanaNotificaciones app="estudiantes" rutaTodas={`${BASE}/notificaciones`} />
         <div className="gear-wrap" ref={menuRef}>
           <button className="gear-btn" onClick={() => setOpen((o) => !o)} aria-label="Ajustes">
             <IconGear size={18} />
@@ -92,6 +100,7 @@ function Topbar({ yo, links, activo, ir }) {
               </button>
             </div>
           )}
+        </div>
         </div>
       </div>
       <div className="topbar-appname">CONTROL ESTUDIANTES</div>
@@ -244,10 +253,13 @@ export default function EstudiantesApp({ p, yo, personas }) {
       if (e || !data?.signedUrl) return avisar("No se pudo abrir el archivo.");
       window.open(data.signedUrl, "_blank", "noopener");
     },
-    async subirArchivo(est, archivo, tipo) {
+    async subirArchivo(est, original, tipo) {
+      // V54: las fotos grandes se achican antes, y el tipo de un HEIC o un
+      // PDF se saca del nombre si el navegador no lo dice (lib/estudiantes/subir.js).
+      const archivo = await achicar(original);
       const ext = (archivo.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
       const ruta = `${est.id}/${tipo}-${Date.now()}.${ext}`;
-      const { error: e } = await supabase.storage.from("estudiantes-docs").upload(ruta, archivo, { contentType: archivo.type || undefined });
+      const { error: e } = await supabase.storage.from("estudiantes-docs").upload(ruta, archivo, { contentType: tipoDe(archivo) || undefined });
       if (e) {
         avisar(`No se pudo subir: ${e.message}`);
         return null;
@@ -287,6 +299,13 @@ export default function EstudiantesApp({ p, yo, personas }) {
   else if (ruta === "cursos") cuerpo = <Cursos {...q} />;
   else if (ruta === "mas") cuerpo = <Mas {...q} />;
   else if (ruta === "bitacora") cuerpo = <Bitacora {...q} />;
+  else if (ruta === "notificaciones")
+    cuerpo = (
+      <>
+        <h1 className="page-title">Notificaciones</h1>
+        <NotificacionesPagina app="estudiantes" explicacion="Te llega aquí cuando alguien se registra por el link, sube un comprobante de pago o deja sus datos en Me interesa (según lo que puedes hacer en Control Estudiantes)." sinCelular />
+      </>
+    );
   else if (ruta === "administracion") cuerpo = yo.esTitular ? <AdminEst {...q} /> : <Inicio {...q} />;
   else cuerpo = <Inicio {...q} />;
 

@@ -33,8 +33,15 @@ export default function ManualForm({ manual = null, volverA = "/manuales" }) {
       let archivo_path = modo === "pdf" ? manual?.archivo_path || null : null;
       if (modo === "pdf" && archivo) {
         const ruta = `${crypto.randomUUID()}.pdf`;
-        const { error: eSubir } = await supabase.storage.from("manuales").upload(ruta, archivo, { contentType: "application/pdf" });
-        if (eSubir) throw new Error("No se pudo subir el PDF. Intenta de nuevo.");
+        let eSubir = null;
+        try {
+          ({ error: eSubir } = await supabase.storage.from("manuales").upload(ruta, archivo, { contentType: "application/pdf" }));
+        } catch (ex) {
+          eSubir = ex;
+        }
+        // V54 (1-nov: "No me está dejando guardar manual"): antes salía solo
+        // "No se pudo subir el PDF"; ahora dice por qué, para saber qué arreglar.
+        if (eSubir) throw new Error(motivoSubida(eSubir, archivo));
         archivo_path = ruta;
       }
       const fila = {
@@ -53,7 +60,7 @@ export default function ManualForm({ manual = null, volverA = "/manuales" }) {
       const { error: e } = manual
         ? await supabase.from("manuales").update(fila).eq("id", manual.id)
         : await supabase.from("manuales").insert(fila);
-      if (e) throw new Error("No se pudo guardar. Intenta de nuevo.");
+      if (e) throw new Error(`No se pudo guardar. Detalle: ${e.message}`);
       router.push(volverA);
       router.refresh();
     } catch (e) {
@@ -139,4 +146,16 @@ export default function ManualForm({ manual = null, volverA = "/manuales" }) {
       )}
     </div>
   );
+}
+
+// V54 -- Por qué no subió el PDF, en palabras claras (y el detalle técnico
+// al final, para poder arreglarlo si es otra cosa).
+function motivoSubida(e, archivo) {
+  const m = String(e?.message || e || "");
+  const mb = archivo ? (archivo.size / 1024 / 1024).toFixed(1) : "?";
+  if (/exceed|too large|maximum allowed size|payload|413/i.test(m)) return `El PDF pesa ${mb} MB y Supabase no deja subir uno tan grande. Prueba con uno más liviano o pega un enlace (por ejemplo, de Google Drive).`;
+  if (/row-level security|policy|unauthorized|403/i.test(m)) return "No tienes permiso para subir manuales (Administración › Agregar y quitar manuales).";
+  if (/mime|content type/i.test(m)) return "Tiene que ser un PDF.";
+  if (/failed to fetch|network|load failed|timeout|aborted/i.test(m) || e?.name === "TypeError") return `Se cortó la subida (el PDF pesa ${mb} MB). Revisa el internet e intenta de nuevo, o pega un enlace.`;
+  return `No se pudo subir el PDF (${mb} MB). Detalle: ${m || "sin detalle"}`;
 }

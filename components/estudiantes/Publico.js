@@ -5,6 +5,7 @@ import { soloDigitos, formatoCedula, rd, fechaCorta } from "@/lib/viajes/modelo"
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck, IconLock, IconCamera } from "@/components/icons";
+import { subirArchivo } from "@/lib/estudiantes/subir";
 
 // Control Estudiantes -- el link de registro del estudiante (público, sin
 // cuenta). Reemplaza el formulario de Google. Opción D de la maqueta:
@@ -17,18 +18,8 @@ async function api(cuerpo) {
   if (!r.ok) throw new Error(j.error || "Algo salió mal. Intenta de nuevo.");
   return j;
 }
-async function subirArchivo(id, que, archivo, estudianteId) {
-  const fd = new FormData();
-  fd.append("tipoDoc", id.tipoDoc);
-  fd.append("doc", id.doc);
-  fd.append("cel", id.cel);
-  fd.append("que", que);
-  if (estudianteId) fd.append("estudianteId", estudianteId);
-  fd.append("archivo", archivo);
-  const r = await fetch("/api/estudiantes/archivo", { method: "POST", body: fd });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error || "No se pudo subir.");
-}
+// V54: subirArchivo vive en lib/estudiantes/subir.js (achica las fotos
+// grandes y las sube directo al almacenamiento; antes salía "Failed to fetch").
 
 function Subir({ id, que, titulo, sub, accept = "image/*", capture, estudianteId, listo, alSubir }) {
   const [estado, setEstado] = useState(listo ? "ok" : null);
@@ -36,7 +27,6 @@ function Subir({ id, que, titulo, sub, accept = "image/*", capture, estudianteId
     const f = e.target.files?.[0];
     e.target.value = "";
     if (!f) return;
-    if (f.size > 10 * 1024 * 1024) return setEstado({ error: "El archivo pesa más de 10 MB." });
     setEstado("subiendo");
     try {
       await subirArchivo(id, que, f, estudianteId);
@@ -56,6 +46,23 @@ function Subir({ id, que, titulo, sub, accept = "image/*", capture, estudianteId
       </span>
       <input type="file" accept={accept} capture={capture} hidden onChange={elegir} />
     </label>
+  );
+}
+
+// V54: la cédula o el pasaporte, en foto, escaneo o PDF (nota 1-nov: "pon que
+// acepte formato png jpg, pdf o heic" y "En vez foto, pongamos 'cédula'... O
+// algo relacionado con escaneo"). Sin capture, para que pueda escoger la
+// cámara o un archivo.
+function SubirCedula({ id, tipoDoc, listo }) {
+  return (
+    <Subir
+      id={id}
+      que="cedula"
+      titulo={tipoDoc === "pasaporte" ? "Tu pasaporte" : "Tu cédula"}
+      sub="Una foto o un escaneo donde se lea bien (JPG, PNG, PDF o HEIC)."
+      accept="image/*,application/pdf,.heic,.heif"
+      listo={listo}
+    />
   );
 }
 
@@ -254,7 +261,8 @@ export default function EstudiantePublico({ cursos, tienda }) {
         {paso === "hola" && buzo && (
           <div className="pb-card">
             <div className="pb-t">¡Hola, {buzo.primer}!</div>
-            <div className="pb-h">Ya te tenemos registrado de antes. ¿Qué quieres hacer?</div>
+            {/* V54: sin "Ya te tenemos registrado de antes" (nota 1-nov). */}
+            <div className="pb-h">¿Qué quieres hacer?</div>
             <button className="pb-op" onClick={() => ir("cel")}>
               Registrarme en un curso
               <div className="pb-op-sub">Solo te pedimos lo que nos falta.</div>
@@ -365,7 +373,7 @@ export default function EstudiantePublico({ cursos, tienda }) {
             <div className="pb-t">Documentos</div>
             <div className="pb-h">Con esto no tienes que traer copias a la tienda. Si ahora no puedes, lo haces después entrando otra vez con tu cédula.</div>
             <Subir id={id} que="foto" titulo="Una foto tuya de frente" sub="Para tu certificación. Con buena luz y sin lentes de sol." capture="user" listo={buzo && !falta.foto} />
-            <Subir id={id} que="cedula" titulo={tipoDoc === "pasaporte" ? "Foto de tu pasaporte" : "Foto de tu cédula"} sub="Que se lea bien." capture="environment" listo={buzo && !falta.cedula} />
+            <SubirCedula id={id} tipoDoc={tipoDoc} listo={buzo && !falta.cedula} />
             <label className="ce-pub-l" style={{ marginTop: 12 }}>
               Firma de tu record de entrenamiento
             </label>
@@ -385,10 +393,12 @@ export default function EstudiantePublico({ cursos, tienda }) {
               <IconCheck size={34} />
             </div>
             <div className="pb-t">¡Listo, {res.primer}!</div>
+            {/* V54: sin lo del pago ni lo de la certificación (nota 1-nov: "porque
+                le esta pidiendo eso si el estudiante ni sabe aún el curso... No
+                hace sentido, el buzo ni siquiera ha empezado el curso"). */}
             <div className="pb-h">
-              {res.ya ? `Ya estabas registrado en ${res.curso}.` : `Ya estás registrado en ${res.curso}.`} Te avisaremos por WhatsApp cuando tu certificación esté lista.
+              {res.ya ? `Ya te teníamos en ${res.curso}.` : `Ya tenemos tus datos para ${res.curso}.`} Te escribiremos por WhatsApp para coordinar.
             </div>
-            <Pago tienda={tienda} precio={res.precio} id={id} estudianteId={res.estudianteId} />
             <a className="pb-btn ce-pub-wa" href={wa} target="_blank" rel="noopener noreferrer">
               Escribir por WhatsApp
             </a>
@@ -439,15 +449,13 @@ export default function EstudiantePublico({ cursos, tienda }) {
                 {e.debe !== 0 && <Pago tienda={tienda} id={id} estudianteId={e.id} soloSubir={e.precio == null} />}
               </div>
             ))}
-            {(estado.falta?.foto || estado.falta?.cedula) && (
-              <>
-                <div className="pb-h" style={{ marginTop: 12 }}>
-                  Nos falta:
-                </div>
-                {estado.falta.foto && <Subir id={id} que="foto" titulo="Una foto tuya de frente" capture="user" />}
-                {estado.falta.cedula && <Subir id={id} que="cedula" titulo={tipoDoc === "pasaporte" ? "Foto de tu pasaporte" : "Foto de tu cédula"} capture="environment" />}
-              </>
-            )}
+            {/* V54: los dos documentos siempre, con ✓ el que ya está (nota 1-nov:
+                "Aqui desapareció la foto de frente que subí"). */}
+            <div className="pb-h" style={{ marginTop: 12 }}>
+              Tus documentos:
+            </div>
+            <Subir id={id} que="foto" titulo="Una foto tuya de frente" capture="user" listo={!estado.falta?.foto} />
+            <SubirCedula id={id} tipoDoc={tipoDoc} listo={!estado.falta?.cedula} />
             <a className="pb-btn ce-pub-wa" href={wa} target="_blank" rel="noopener noreferrer">
               Escribir por WhatsApp
             </a>
@@ -470,34 +478,34 @@ function Pago({ tienda, precio, id, estudianteId, soloSubir }) {
     setCopiado(n);
     setTimeout(() => setCopiado(""), 1800);
   };
+  const subir = <Subir id={id} que="comprobante" titulo="Subir comprobante de pago" sub="Foto o PDF de la transferencia." accept="image/*,application/pdf,.heic,.heif" estudianteId={estudianteId} />;
+  if (soloSubir || !tienda.cuentas?.length) return subir;
   return (
     <div className="pb-comp">
-      {!soloSubir && (
-        <>
-          <b>Para pagar{precio != null ? ` (${rd(precio)})` : ""}</b>
-          <div className="pb-h" style={{ margin: "2px 0 6px" }}>
-            Transferencia a nombre de {tienda.titular}. Puedes pagar por partes.
+      {/* V54: las cuentas de los cursos no son las de los buceos (nota 1-nov:
+          "Aqui los datos bancarios cambian"; "70.": Gus Dive SRL, pesos y
+          dólares, con el RNC). Están en CUENTAS_CURSOS (lib/estudiantes/modelo.js). */}
+      <b>Para pagar{precio != null ? ` (${rd(precio)})` : ""}</b>
+      <div className="pb-h" style={{ margin: "2px 0 6px" }}>
+        Transferencia a nombre de {tienda.titular}
+        {tienda.rnc ? ` (RNC ${tienda.rnc})` : ""}. Puedes pagar por partes.
+      </div>
+      <div className="pb-cuentas">
+        {tienda.cuentas.map((c) => (
+          <div key={c.numero} className="pb-cuenta">
+            <div>
+              <div className="pb-cuenta-t">
+                {c.banco} · {c.tipo}
+              </div>
+              <div className="pb-cuenta-n">{c.numero}</div>
+            </div>
+            <button className="pb-copiar" onClick={() => copiar(c.numero)}>
+              {copiado === c.numero ? "Copiado" : "Copiar"}
+            </button>
           </div>
-          <div className="pb-cuentas">
-            {tienda.cuentas
-              .filter((c) => c.moneda === "DOP")
-              .map((c) => (
-                <div key={c.numero} className="pb-cuenta">
-                  <div>
-                    <div className="pb-cuenta-t">
-                      {c.banco} · {c.tipo}
-                    </div>
-                    <div className="pb-cuenta-n">{c.numero}</div>
-                  </div>
-                  <button className="pb-copiar" onClick={() => copiar(c.numero)}>
-                    {copiado === c.numero ? "Copiado" : "Copiar"}
-                  </button>
-                </div>
-              ))}
-          </div>
-        </>
-      )}
-      <Subir id={id} que="comprobante" titulo="Subir comprobante de pago" sub="Foto o PDF de la transferencia." accept="image/*,application/pdf" estudianteId={estudianteId} />
+        ))}
+      </div>
+      {subir}
     </div>
   );
 }

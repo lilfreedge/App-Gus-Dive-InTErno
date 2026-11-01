@@ -204,7 +204,10 @@ export function Mas({ yo, ir }) {
   return (
     <>
       <h1 className="page-title">Más</h1>
-      <div className="list">
+      {/* V54: como tarjeta con filas (nota "App Gus interno", 1-nov: "Estos
+          botones se ven extraños, arreglar"); antes salían con el borde de
+          botón del navegador. */}
+      <div className="card ce-mas-lista">
         <button className="list-item toca ce-mas" onClick={() => ir("bitacora")}>
           <span className="list-item-title">
             <IconHistory size={16} /> Bitácora

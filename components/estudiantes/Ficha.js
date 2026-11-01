@@ -513,7 +513,8 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
             ) : p.estudiantes ? (
               <label key={d.k} className="ce-doc" style={{ cursor: "pointer" }}>
                 <IconCamera size={15} /> {subiendo === d.k ? "Subiendo…" : `Subir ${d.t.toLowerCase()}`}
-                <input type="file" accept="image/*" hidden onChange={(e) => subir(e, d.k)} />
+                {/* V54: la cédula también en PDF o HEIC (nota 1-nov). */}
+                <input type="file" accept={d.k === "cedula" ? "image/*,application/pdf,.heic,.heif" : "image/*"} hidden onChange={(e) => subir(e, d.k)} />
               </label>
             ) : (
               <span key={d.k} className="ce-doc">
