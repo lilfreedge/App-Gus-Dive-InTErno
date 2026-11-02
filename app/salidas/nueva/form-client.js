@@ -130,7 +130,7 @@ export default function NuevaSalidaForm({ userId, nombreUsuario, articulos }) {
       {errores.motivo && <div className="error-msg">⚠ {errores.motivo}</div>}
 
       <label htmlFor="autorizadoPor">
-        Autorizado por <span style={{ color: "var(--rojo)" }}>*</span>
+        Autorizado/responsable <span style={{ color: "var(--rojo)" }}>*</span>
       </label>
       <select
         id="autorizadoPor"

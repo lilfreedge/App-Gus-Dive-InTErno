@@ -168,168 +168,241 @@ export function Inicio({ db, p, ir, avisar }) {
 // precio, próximas fechas con cupos y "+ Agregar fecha".
 export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
   const [filtro, setFiltro] = useState(FILTROS.some((f) => f.k === filtroInicial) ? filtroInicial : "curso");
-  const [cursoSel, setCursoSel] = useState("");
-  const activos = db.cursos.filter((c) => c.activo);
-  const delCurso = (e) => !cursoSel || e.cursoId === cursoSel || (!e.cursoId && db.cursos.find((c) => c.id === cursoSel)?.nombre === e.curso);
-  const base = db.estudiantes.filter(delCurso);
+  const [abierto, setAbierto] = useState(null); // id de la fecha abierta, "sin" o "espera:<curso>"
+  const [form, setForm] = useState(null); // crear o editar un curso (una fecha)
+  // V57 -- "123": solo los cursos abiertos (cada fecha es un curso), con
+  // cuántos estudiantes tiene; "+ Crear curso"; la lista de espera por curso.
+  // Ya no salen los botones de todo el catálogo (eso está en Más > Base de
+  // datos). "Por etapa" se queda abajo mientras se decide cómo ponerlo.
+  const hoy = hoyISO();
+  const haceUnaSemana = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const deFecha = (f) => db.estudiantes.filter((e) => e.fechaId === f.id && e.estado !== "cancelado");
+  const abiertos = (db.fechas || [])
+    .filter((f) => f.activo && (f.inicio >= haceUnaSemana || deFecha(f).some((e) => e.estado === "curso")))
+    .sort((a, b) => a.inicio.localeCompare(b.inicio));
+  const sinFecha = db.estudiantes.filter((e) => e.estado === "curso" && !e.fechaId);
+  const espera = db.estudiantes.filter((e) => e.estado === "espera");
+  const esperaPorCurso = [...new Set(espera.map((e) => cursoDe(db, e)?.id || e.curso))].map((k) => ({
+    k,
+    c: db.cursos.find((c) => c.id === k) || null,
+    nombre: db.cursos.find((c) => c.id === k)?.nombre || k,
+    gente: espera.filter((e) => (cursoDe(db, e)?.id || e.curso) === k),
+  }));
   const fx = FILTROS.find((f) => f.k === filtro);
-  const lista = base.filter((e) => fx.f(e, db)).sort((a, b) => buzoDe(db, a).nombre.localeCompare(buzoDe(db, b).nombre));
-  const c = db.cursos.find((x) => x.id === cursoSel);
+  const lista = db.estudiantes.filter((e) => fx.f(e, db)).sort((a, b) => buzoDe(db, a).nombre.localeCompare(buzoDe(db, b).nombre));
+  const porNombre = (a, b) => buzoDe(db, a).nombre.localeCompare(buzoDe(db, b).nombre);
+  const n = (k) => `${k} estudiante${k === 1 ? "" : "s"}`;
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <h1 className="page-title" style={{ margin: 0 }}>
-          Cursos
+          Cursos abiertos
         </h1>
-        {p.estudiantes && (
-          <button className="btn btn-primary vj-btn" onClick={() => ir("nuevo")}>
-            <IconPlus size={16} /> Nuevo estudiante
-          </button>
-        )}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {p.cursos && !db.sinFechas && (
+            <button className="btn btn-primary vj-btn" onClick={() => setForm({ cursoId: "", inicio: "", cupo: "", instructor: "", nota: "" })}>
+              <IconPlus size={16} /> Crear curso
+            </button>
+          )}
+          {p.estudiantes && (
+            <button className="btn secondary vj-btn" onClick={() => ir("nuevo")}>
+              <IconPlus size={16} /> Nuevo estudiante
+            </button>
+          )}
+        </div>
       </div>
-      <div className="ce-etq-fila">Curso</div>
-      <div className="vj-filtros ce-cursos-chips">
-        <button className={`vj-filtro${!cursoSel ? " sel" : ""}`} onClick={() => setCursoSel("")}>
-          Todos
-        </button>
-        {activos.map((x) => (
-          <button key={x.id} className={`vj-filtro${cursoSel === x.id ? " sel" : ""}`} onClick={() => setCursoSel(x.id)}>
-            {x.nombre}
+      {db.sinFechas && <div className="hint-text">Falta correr el SQL de la V55 en Supabase para poder crear cursos con fecha.</div>}
+      {form && !form.id && <FormCurso db={db} form={form} setForm={setForm} yo={yo} ops={ops} avisar={avisar} />}
+
+      {abiertos.map((f) => {
+        const c = db.cursos.find((x) => x.id === f.cursoId);
+        const gente = deFecha(f).sort(porNombre);
+        const esta = abierto === f.id;
+        return (
+          <div key={f.id} className={`ce-abierto${esta ? " sel" : ""}`}>
+            <button type="button" className="ce-abierto-top" onClick={() => setAbierto(esta ? null : f.id)} aria-expanded={esta}>
+              <span style={{ minWidth: 0 }}>
+                <b>{c?.nombre || "Curso"}</b>
+                <span className="hint-text" style={{ display: "block", margin: 0 }}>
+                  {f.inicio < hoy ? "Empezó" : "Empieza"} el {fechaCursoCorta(f.inicio)}
+                  {f.instructor ? ` · ${f.instructor}` : ""}
+                  {f.nota ? ` · ${f.nota}` : ""}
+                </span>
+              </span>
+              <span className="ce-abierto-n">{n(gente.length)}</span>
+            </button>
+            {esta && (
+              <div className="ce-abierto-cuerpo">
+                {gente.map((e) => (
+                  <FilaEstudiante key={e.id} db={db} est={e} ir={ir} />
+                ))}
+                {!gente.length && <div className="hint-text">Todavía no tiene estudiantes.</div>}
+                {p.cursos &&
+                  (form?.id === f.id ? (
+                    <FormCurso db={db} form={form} setForm={setForm} yo={yo} ops={ops} avisar={avisar} />
+                  ) : (
+                    <button className="btn secondary vj-mini" style={{ marginTop: 8 }} onClick={() => setForm({ id: f.id, cursoId: f.cursoId, inicio: f.inicio, cupo: f.cupo == null ? "" : String(f.cupo), instructor: f.instructor, nota: f.nota })}>
+                      <IconEdit size={14} /> Editar este curso
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {!abiertos.length && !db.sinFechas && <div className="card hint-text">No hay cursos abiertos. Toca &quot;Crear curso&quot; para abrir uno.</div>}
+
+      {sinFecha.length > 0 && (
+        <div className={`ce-abierto${abierto === "sin" ? " sel" : ""}`}>
+          <button type="button" className="ce-abierto-top" onClick={() => setAbierto(abierto === "sin" ? null : "sin")}>
+            <span>
+              <b>En curso, sin fecha</b>
+              <span className="hint-text" style={{ display: "block", margin: 0 }}>
+                Anotados antes de las fechas, o con una fecha escrita a mano.
+              </span>
+            </span>
+            <span className="ce-abierto-n">{n(sinFecha.length)}</span>
           </button>
-        ))}
-      </div>
-      {c && <TarjetaCurso db={db} c={c} p={p} yo={yo} ops={ops} avisar={avisar} verEspera={() => setFiltro("espera")} />}
-      <div className="ce-etq-fila">En qué van</div>
+          {abierto === "sin" && (
+            <div className="ce-abierto-cuerpo">
+              {sinFecha.sort(porNombre).map((e) => (
+                <FilaEstudiante key={e.id} db={db} est={e} ir={ir} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="section-title">Lista de espera</div>
+      {esperaPorCurso.map((g) => {
+        const k = `espera:${g.k}`;
+        return (
+          <div key={k} className={`ce-abierto${abierto === k ? " sel" : ""}`}>
+            <button type="button" className="ce-abierto-top" onClick={() => setAbierto(abierto === k ? null : k)}>
+              <span>
+                <b>{g.nombre}</b>
+              </span>
+              <span className="ce-abierto-n espera">{g.gente.length} esperando</span>
+            </button>
+            {abierto === k && (
+              <div className="ce-abierto-cuerpo">
+                {g.gente.sort(porNombre).map((e) => (
+                  <FilaEstudiante key={e.id} db={db} est={e} ir={ir} />
+                ))}
+                {p.cursos && g.c && !db.sinFechas && (
+                  <button className="btn secondary vj-mini" style={{ marginTop: 8 }} onClick={() => setForm({ cursoId: g.c.id, inicio: "", cupo: "", instructor: "", nota: "" })}>
+                    <IconPlus size={14} /> Crear un curso de {g.nombre}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {!esperaPorCurso.length && <div className="card hint-text">Nadie en lista de espera.</div>}
+
+      <div className="section-title">Por etapa</div>
       <div className="vj-filtros">
         {FILTROS.map((f) => (
           <button key={f.k} className={`vj-filtro ce-filtro${filtro === f.k ? " sel" : ""}`} onClick={() => setFiltro(f.k)}>
-            {f.t} <span>{base.filter((e) => f.f(e, db)).length}</span>
+            {f.t} <span>{db.estudiantes.filter((e) => f.f(e, db)).length}</span>
           </button>
         ))}
       </div>
       {lista.map((e) => (
         <FilaEstudiante key={e.id} db={db} est={e} ir={ir} />
       ))}
-      {!lista.length && <div className="card hint-text">{`Nadie en "${fx.t}"${c ? ` de ${c.nombre}` : ""}.`}</div>}
+      {!lista.length && <div className="card hint-text">{`Nadie en "${fx.t}".`}</div>}
     </>
   );
 }
 
-// La tarjeta del curso escogido: precio, próximas fechas y agregar fecha.
-function TarjetaCurso({ db, c, p, yo, ops, avisar, verEspera }) {
-  const [form, setForm] = useState(null); // { id?, inicio, cupo, instructor, nota }
-  const fechas = fechasDe(db, c.id);
-  const enEspera = db.estudiantes.filter((e) => e.estado === "espera" && e.cursoId === c.id).length;
+// V57 -- Crear o editar un curso (una fecha de un curso de la Base de datos).
+function FormCurso({ db, form, setForm, yo, ops, avisar }) {
   const lunes = lunesProximos(26);
+  const c = db.cursos.find((x) => x.id === form.cursoId);
+  const enEspera = c ? db.estudiantes.filter((e) => e.estado === "espera" && e.cursoId === c.id).length : 0;
   async function guardar() {
+    if (!c) return avisar("Escoge el curso.");
     if (!form.inicio) return avisar("Escoge el lunes en que empieza.");
     if (form.cupo !== "" && !(Number(form.cupo) > 0)) return avisar("El cupo tiene que ser un número.");
     const nueva = !form.id;
-    const f = { id: form.id || nuevoId(), cursoId: c.id, inicio: form.inicio, cupo: form.cupo === "" ? null : Number(form.cupo), instructor: form.instructor, nota: form.nota.trim(), activo: true };
+    const f = { id: form.id || nuevoId(), cursoId: c.id, inicio: form.inicio, cupo: form.cupo === "" ? null : Number(form.cupo), instructor: form.instructor, nota: (form.nota || "").trim(), activo: true };
     const ok = await ops.guardarFecha(f, nueva, c);
     if (ok) setForm(null);
   }
   return (
-    <div className="ce-etapa ce-tarjeta-curso">
-      <div className="ce-est-t">
-        <b style={{ fontSize: 16 }}>{c.nombre}</b>
-        <span className="ce-chip curso">{c.precio == null ? "Sin precio" : rd(c.precio)}</span>
+    <div className="ce-form ce-form-curso" style={{ marginTop: 10 }}>
+      <b>{form.id ? "Editar este curso" : "Crear curso"}</b>
+      {!form.id && enEspera > 0 && <div className="tec-recordatorio">Hay {enEspera} en lista de espera de {c.nombre}. Cuando lo crees, pásalos desde su ficha.</div>}
+      <div className="ce-form-fila">
+        <label>
+          Curso
+          <select value={form.cursoId} disabled={!!form.id} onChange={(e) => setForm({ ...form, cursoId: e.target.value })}>
+            <option value="">Escoge…</option>
+            {db.cursos
+              .filter((x) => x.activo || x.id === form.cursoId)
+              .map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.nombre}
+                </option>
+              ))}
+          </select>
+        </label>
+        <label>
+          Empieza el (siempre lunes)
+          <select value={form.inicio} onChange={(e) => setForm({ ...form, inicio: e.target.value })}>
+            <option value="">Escoge…</option>
+            {[...new Set([...(form.id ? [form.inicio] : []), ...lunes])].map((l) => (
+              <option key={l} value={l}>
+                {fechaCursoCorta(l)}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
-      <div className="ce-etq-fila" style={{ marginTop: 8 }}>
-        Próximas fechas
+      <div className="ce-form-fila">
+        <label>
+          Cupo
+          <input inputMode="numeric" value={form.cupo} onChange={(e) => setForm({ ...form, cupo: e.target.value.replace(/\D/g, "") })} placeholder="Sin límite" />
+        </label>
+        <label>
+          Instructor
+          <select value={form.instructor} onChange={(e) => setForm({ ...form, instructor: e.target.value })}>
+            <option value="">Por definir</option>
+            {db.instructores
+              .filter((i) => i.activo || i.nombre === form.instructor)
+              .map((i) => (
+                <option key={i.id}>{i.nombre}</option>
+              ))}
+          </select>
+        </label>
       </div>
-      {db.sinFechas && <div className="hint-text">Falta correr el SQL de la V55 en Supabase para poder poner fechas.</div>}
-      {fechas.map((f) => (
-        <div key={f.id} className="ce-fecha">
-          <span>
-            <b>{fechaCursoCorta(f.inicio)}</b>
-            {f.inicio < hoyISO() && <span className="hint-text" style={{ margin: 0 }}> · ya empezó</span>}
-            <div className="hint-text" style={{ margin: 0 }}>
-              {[textoCupo(db, f), f.instructor, f.nota].filter(Boolean).join(" · ")}
-            </div>
-          </span>
-          {p.cursos && (
-            <button className="btn secondary vj-mini" onClick={() => setForm({ id: f.id, inicio: f.inicio, cupo: f.cupo == null ? "" : String(f.cupo), instructor: f.instructor, nota: f.nota })}>
-              <IconEdit size={14} /> Editar
-            </button>
-          )}
-        </div>
-      ))}
-      {!fechas.length && !db.sinFechas && <div className="hint-text">No tiene fechas. En el link, este curso sale como &quot;Lista de espera&quot;.</div>}
-      {enEspera > 0 && (
-        <div className="hint-text" style={{ marginTop: 4 }}>
-          <a className="vj-link" onClick={verEspera}>
-            {enEspera} en lista de espera
-          </a>
-        </div>
-      )}
-      {form ? (
-        <div className="ce-form" style={{ marginTop: 8 }}>
-          {!form.id && enEspera > 0 && <div className="tec-recordatorio">Hay {enEspera} en lista de espera de {c.nombre}. Cuando guardes la fecha, pásalos desde el filtro &quot;Lista de espera&quot;.</div>}
-          <div className="ce-form-fila">
-            <label>
-              Empieza el (siempre lunes)
-              <select value={form.inicio} onChange={(e) => setForm({ ...form, inicio: e.target.value })}>
-                <option value="">Escoge…</option>
-                {[...new Set([...(form.id ? [form.inicio] : []), ...lunes])].map((l) => (
-                  <option key={l} value={l}>
-                    {fechaCursoCorta(l)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Cupo
-              <input inputMode="numeric" value={form.cupo} onChange={(e) => setForm({ ...form, cupo: e.target.value.replace(/\D/g, "") })} placeholder="Sin límite" />
-            </label>
-          </div>
-          <div className="ce-form-fila">
-            <label>
-              Instructor
-              <select value={form.instructor} onChange={(e) => setForm({ ...form, instructor: e.target.value })}>
-                <option value="">Por definir</option>
-                {db.instructores
-                  .filter((i) => i.activo || i.nombre === form.instructor)
-                  .map((i) => (
-                    <option key={i.id}>{i.nombre}</option>
-                  ))}
-              </select>
-            </label>
-            <label>
-              Nota (opcional)
-              <input value={form.nota} onChange={(e) => setForm({ ...form, nota: e.target.value })} placeholder="Ej. en la tarde" />
-            </label>
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button className="btn btn-primary vj-btn" onClick={guardar}>
-              Guardar fecha
-            </button>
-            <button className="btn secondary vj-btn" onClick={() => setForm(null)}>
-              Cancelar
-            </button>
-            {form.id && yo.esTitular && (
-              <button
-                className="btn secondary vj-btn vj-rojo-txt"
-                onClick={async () => {
-                  const n = ocupados(db, form.id);
-                  if (n > 0 && !window.confirm(`Esta fecha tiene ${n} estudiante${n === 1 ? "" : "s"}. Se quedan sin fecha. ¿Borrarla?`)) return;
-                  const ok = await ops.borrarFecha({ id: form.id, inicio: form.inicio }, c);
-                  if (ok) setForm(null);
-                }}
-              >
-                Borrar fecha
-              </button>
-            )}
-          </div>
-        </div>
-      ) : (
-        p.cursos &&
-        !db.sinFechas && (
-          <button className="btn secondary vj-mini" style={{ marginTop: 8 }} onClick={() => setForm({ inicio: "", cupo: "", instructor: "", nota: "" })}>
-            <IconPlus size={14} /> Agregar fecha
+      <label>
+        Nota (opcional)
+        <input value={form.nota} onChange={(e) => setForm({ ...form, nota: e.target.value })} placeholder="Ej. en la tarde" />
+      </label>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+        <button className="btn btn-primary vj-btn" onClick={guardar}>
+          {form.id ? "Guardar" : "Crear curso"}
+        </button>
+        <button className="btn secondary vj-btn" onClick={() => setForm(null)}>
+          Cancelar
+        </button>
+        {form.id && yo.esTitular && (
+          <button
+            className="btn secondary vj-btn vj-rojo-txt"
+            onClick={async () => {
+              const k = ocupados(db, form.id);
+              if (k > 0 && !window.confirm(`Este curso tiene ${k} estudiante${k === 1 ? "" : "s"}. Se quedan sin fecha. ¿Borrarlo?`)) return;
+              const ok = await ops.borrarFecha({ id: form.id, inicio: form.inicio }, c);
+              if (ok) setForm(null);
+            }}
+          >
+            Borrar este curso
           </button>
-        )
-      )}
+        )}
+      </div>
     </div>
   );
 }

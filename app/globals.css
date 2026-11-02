@@ -1170,56 +1170,31 @@ textarea {
   font-weight: 700;
 }
 
-/* V56 -- apps "en construcción" (maqueta-v56b): gris con candado, pero la
-   tarjeta abre normal y sigue mostrando sus avisos. */
-.espacio-icon {
-  position: relative;
-}
+/* V56/V57 -- apps "en construcción": cada una con su color, pero apagado
+   ("déjales su color, solo que ponlos con un tono así como apagado y quítale
+   ese candado"). La tarjeta abre normal y sigue mostrando sus avisos. */
 .espacio-card.espacio-construccion {
-  background: #f7f9fa;
+  background: #f9fafb;
 }
 .espacio-card.espacio-construccion .espacio-icon {
-  background: #c9d2d9;
-  color: #fff;
+  opacity: 0.55;
+  filter: saturate(0.55);
 }
 .espacio-card.espacio-construccion .espacio-title {
-  color: #8a97a2;
-}
-.espacio-candado {
-  position: absolute;
-  right: -4px;
-  bottom: -4px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #5c6b78;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #f7f9fa;
+  color: #7b8a96;
 }
 .espacio-badge-construccion {
   margin-top: -4px;
   margin-bottom: 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 html[data-theme="dark"] .espacio-card.espacio-construccion {
-  background: #121d27;
+  background: #131f2a;
 }
 html[data-theme="dark"] .espacio-card.espacio-construccion .espacio-icon {
-  background: #3a4a58;
-  color: #c9d2d9;
+  opacity: 0.5;
 }
 html[data-theme="dark"] .espacio-card.espacio-construccion .espacio-title {
   color: #8fa1b0;
-}
-html[data-theme="dark"] .espacio-candado {
-  background: #8fa1b0;
-  color: #0b141c;
-  border-color: #121d27;
 }
 
 .folio-tag {
@@ -3234,3 +3209,150 @@ html[data-theme="dark"] .ce-app { --ce-claro: #3a3010; --ce-texto: #f3d77a; }
 .ce-pub-semana span:first-child { font-weight: 800; white-space: nowrap; }
 .ce-pub-semana span:last-child { text-align: right; }
 .ce-pub-aviso { background: var(--ce-claro); border-radius: 12px; padding: 12px; color: var(--ce-texto); font-size: 14.5px; line-height: 1.45; }
+
+/* V57 -- "dame ese poder absoluto": quitar un pago o una nota (Titular). */
+.ce-quitar {
+  border: 1px solid var(--borde);
+  background: var(--tarjeta);
+  color: #b33a3a;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 1px 7px;
+  cursor: pointer;
+  line-height: 1.5;
+}
+.ce-quitar.si {
+  background: #b33a3a;
+  border-color: #b33a3a;
+  color: #fff;
+}
+.ce-quitar-conf {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #b33a3a;
+  font-weight: 600;
+}
+
+/* V57 -- "pon el botón de inscribir otra persona más pequeño". */
+.pb-btn.pb-chico {
+  width: auto;
+  display: block;
+  margin: 14px auto 0;
+  padding: 8px 18px;
+  font-size: 13.5px;
+  min-height: 0;
+}
+
+/* V57 -- "133. Opción B": precio como información, no como botón. */
+.pb-inc { padding: 4px 4px 10px; margin-bottom: 6px; }
+.pb-inc-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 14px; }
+.pb-inc-top > b { font-size: 15px; }
+.pb-inc-top span { color: #5c6b78; font-size: 13.5px; }
+.pb-inc-top span b { color: #06324f; font-size: 18px; }
+.pb-inc-no { display: block; margin-top: 10px; font-size: 14px; }
+.pb-check { list-style: none; margin: 6px 0 0; padding: 0; font-size: 14px; }
+.pb-check li { display: flex; gap: 8px; align-items: baseline; padding: 2px 0; }
+.pb-check li::before { content: "✓"; color: #1f8f4e; font-weight: 900; }
+.pb-check.no li::before { content: "✕"; color: #b33a3a; font-weight: 900; font-size: 12px; }
+
+/* V57 -- Control Estudiantes > Cursos abiertos ("123"). */
+.ce-abierto { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; margin-top: 10px; overflow: hidden; }
+.ce-abierto.sel { border-color: #d8c47a; }
+.ce-abierto-top { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; background: none; border: 0; cursor: pointer; text-align: left; color: var(--texto); font: inherit; }
+.ce-abierto-top b { font-size: 15px; }
+.ce-abierto-n { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--ce-claro, #fdf3cf); color: var(--ce-texto, #5c4700); white-space: nowrap; }
+.ce-abierto-n.espera { background: var(--superficie-suave); color: var(--texto-suave); }
+.ce-abierto-cuerpo { padding: 0 14px 12px; border-top: 1px dashed var(--borde); }
+.ce-form-curso { background: #fffdf5; border: 1px solid #f0dc93; border-radius: 12px; padding: 12px; }
+html[data-theme="dark"] .ce-form-curso { background: #1c2a38; border-color: #3a4a58; }
+
+/* V57 -- ficha como perfil (lista de espera, "122"). */
+.ce-perfil { display: flex; gap: 14px; align-items: center; margin: 6px 0 4px; }
+.ce-avatar { width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0; object-fit: cover; background: linear-gradient(135deg, #c8d3dc, #9fb0bd); color: #fff; font-weight: 800; font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* V57 -- Descargo de Responsabilidad al final del Recibo de la orden. */
+.recibo-descargo { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--borde); font-size: 12.5px; line-height: 1.5; color: var(--texto); }
+.recibo-descargo b { display: block; }
+.recibo-descargo li b, .recibo-descargo p b { display: inline; }
+.recibo-descargo-t { font-size: 15px; margin-bottom: 2px; }
+.recibo-descargo p { margin: 8px 0; }
+.recibo-descargo ol { margin: 6px 0; padding-left: 20px; }
+.recibo-descargo li { margin: 6px 0; }
+@media print { .recibo-descargo { font-size: 10.5px; } }
+
+/* V57 -- App Equipos de clientes > Inicio: el nombre de la fecha una sola vez,
+   al lado del título de cada sección, alineado con las fechas. */
+.section-fecha { font-size: 11.5px; font-weight: 600; color: var(--texto-suave); padding-right: 21px; text-align: right; }
+
+/* ======================================================= V57 -- App Alquiler (rojo GUS) */
+.alq-app { --alq: #cd392a; --alq-claro: #fbeae8; }
+html[data-theme="dark"] .alq-app { --alq-claro: #3a1d19; }
+.alq-topbar { background: #cd392a !important; color: #fff; }
+.alq-topbar .topbar-sub, .alq-topbar .topbar-appname { color: #fff !important; }
+.alq-topbar .topbar-appname { opacity: 0.85; }
+.alq-topbar .topnav-link { color: #fff; background: rgba(255, 255, 255, 0.16); opacity: 1; }
+.alq-topbar .topnav-link-active { background: #fff; color: #cd392a; }
+.alq-topbar .gear-btn { color: #fff; border-color: rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.12); }
+.alq-app .btn-primary { background: var(--alq); border-color: var(--alq); color: #fff; }
+.alq-app .vj-filtro.sel { background: var(--alq); border-color: var(--alq); color: #fff; }
+.alq-aviso { display: block; width: 100%; text-align: left; border: 1px solid #f0d49b; background: #fff6e0; color: #7a5210; border-radius: 10px; padding: 10px 12px; font-weight: 700; font-size: 13.5px; margin-bottom: 8px; cursor: pointer; font-family: inherit; }
+.alq-aviso.rojo { border-color: #f3c9c3; background: var(--alq-claro); color: #a3291c; }
+html[data-theme="dark"] .alq-aviso { background: #3a2e14; border-color: #5a4720; color: #f3d77a; }
+.alq-cuadros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
+.alq-cuadro { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 14px 8px; text-align: center; cursor: pointer; font-family: inherit; color: var(--texto); }
+.alq-cuadro b { display: block; font-size: 24px; color: var(--alq); }
+.alq-cuadro b.rojo { color: #b33a3a; }
+.alq-cuadro span { font-size: 12px; color: var(--texto-suave); font-weight: 600; }
+.alq-fila { display: block; width: 100%; text-align: left; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px 14px; margin-top: 8px; cursor: pointer; font-family: inherit; color: var(--texto); }
+.alq-fila-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 2px; }
+.alq-estado { font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: #e8f2fb; color: #1e6091; }
+.alq-estado.atrasado { background: #fdecec; color: #b33a3a; }
+.alq-estado.devuelto { background: #eef8f1; color: #2c9e5b; }
+.alq-estado.parcial { background: #fff6e0; color: #7a5210; }
+.alq-estado-grande { margin-top: 10px; border-radius: 10px; padding: 10px 12px; font-weight: 700; font-size: 14px; background: #e8f2fb; color: #1e6091; }
+.alq-estado-grande.atrasado { background: #fdecec; color: #b33a3a; }
+.alq-estado-grande.devuelto { background: #eef8f1; color: #2c9e5b; }
+.alq-falta { display: inline-block; margin-top: 4px; font-size: 11.5px; font-weight: 800; color: #a3291c; background: var(--alq-claro); border-radius: 999px; padding: 2px 9px; }
+.alq-falta.grande { display: block; border-radius: 10px; padding: 8px 12px; font-size: 13px; margin-top: 8px; }
+.alq-form .alq-l { display: block; font-size: 12px; font-weight: 700; color: var(--texto-suave); margin: 12px 0 4px; }
+.alq-fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 560px) { .alq-fila2 { grid-template-columns: 1fr; } }
+.alq-cliente { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; }
+.alq-cliente b { flex: 1 1 auto; }
+.alq-nueva { display: grid; gap: 8px; }
+.alq-nueva .btn { justify-self: start; }
+.alq-sug { border: 1px solid var(--borde); border-radius: 10px; margin-top: 6px; overflow: hidden; }
+.alq-sug button { display: block; width: 100%; text-align: left; padding: 9px 12px; border: 0; border-top: 1px solid var(--borde); background: var(--tarjeta); cursor: pointer; font-family: inherit; color: var(--texto); font-size: 13.5px; }
+.alq-sug button:first-child { border-top: 0; }
+.alq-seg { display: flex; border: 1px solid var(--borde); border-radius: 10px; overflow: hidden; }
+.alq-seg button { flex: 1; border: 0; background: var(--tarjeta); padding: 10px 6px; font-weight: 700; font-size: 13px; cursor: pointer; color: var(--texto-suave); font-family: inherit; }
+.alq-seg button.sel { background: var(--alq); color: #fff; }
+.alq-seg button:disabled { opacity: 0.45; cursor: not-allowed; }
+.alq-devuelve { font-size: 13px; margin-top: 8px; }
+.alq-devuelve b { color: var(--alq); }
+.alq-lineas { margin-top: 8px; border: 1px solid var(--borde); border-radius: 10px; overflow: hidden; }
+.alq-linea { display: grid; grid-template-columns: 64px 1fr auto auto; gap: 8px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--borde); font-size: 13.5px; }
+.alq-linea:first-child { border-top: 0; }
+.alq-linea code, .alq-ck code { font-weight: 800; color: var(--alq); font-family: inherit; }
+.alq-linea.total { background: var(--superficie-suave); }
+.alq-x { border: 0; background: none; color: #b33a3a; font-weight: 800; cursor: pointer; font-size: 16px; padding: 0 4px; }
+.alq-x.editar { color: var(--texto-suave); }
+.alq-total { display: flex; justify-content: space-between; align-items: center; background: var(--alq-claro); border: 1px solid #f3c9c3; border-radius: 12px; padding: 12px 14px; margin-top: 12px; }
+.alq-total span { font-weight: 700; }
+.alq-total small { display: block; font-weight: 600; color: var(--texto-suave); font-size: 12px; }
+.alq-total b { font-size: 22px; color: var(--alq); }
+.alq-retorno { margin-top: 10px; }
+.alq-ck { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 14px; cursor: pointer; }
+.alq-ck.todo { font-weight: 700; border-bottom: 1px dashed var(--borde); padding-bottom: 8px; margin-bottom: 2px; }
+.alq-ck input { width: auto; margin: 0; }
+.alq-mora { margin-left: auto; font-size: 12px; font-weight: 800; color: #b33a3a; }
+.alq-hecho { border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; background: #eef8f1; border: 1px solid #cbe8d5; font-size: 14px; }
+.alq-hecho.mora { background: var(--alq-claro); border-color: #f3c9c3; }
+.alq-disponible { color: #2c9e5b !important; font-weight: 600; }
+.alq-alquilado { color: #1e6091 !important; font-weight: 600; }
+.alq-bit { padding: 10px 14px; border-top: 1px solid var(--borde); font-size: 13.5px; }
+.alq-bit:first-child { border-top: 0; }
+.alq-mas-card .hub-link-icon { background: #cd392a; color: #fff; }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { DESCARGO } from "@/lib/descargo";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso } from "@/lib/roles";
 import { construirPDFOrdenCliente, filasReporteOrdenCliente, filasReciboClienteOrden } from "@/lib/reportes-clientes";
@@ -45,6 +46,7 @@ export async function GET(request, { params }) {
     titulo: `${vista === "completo" ? "Recibo completo" : "Recibo"} — Orden #${numero}`,
     subtitulo: `${o.cliente_nombre_snapshot || ""}`,
     filas,
+    descargo: DESCARGO,
   });
 
   return new NextResponse(pdfBuffer, {

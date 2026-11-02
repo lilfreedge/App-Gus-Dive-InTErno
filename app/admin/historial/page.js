@@ -202,7 +202,7 @@ function filasSalida(d, dn) {
     { label: "Artículo / pieza", antes: d.articulo || "—", despues: dn?.articulo || "—" },
     { label: "Cantidad", antes: d.cantidad ?? "—", despues: dn?.cantidad ?? "—" },
     { label: "Motivo", antes: d.motivo || "—", despues: dn?.motivo || "—" },
-    { label: "Autorizado por", antes: d.autorizado_por || "—", despues: dn?.autorizado_por || "—" },
+    { label: "Autorizado/responsable", antes: d.autorizado_por || "—", despues: dn?.autorizado_por || "—" },
     { label: "Nota", antes: d.nota || "—", despues: dn?.nota || "—" },
   ];
 }

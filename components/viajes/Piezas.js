@@ -123,8 +123,8 @@ export function IconoWA({ on }) {
   );
 }
 
-export function CampoCel({ value, onChange, className = "", placeholder = "809-000-0000" }) {
-  return <input className={className} inputMode="tel" value={value} placeholder={placeholder} onChange={(e) => onChange(formatoCel(e.target.value))} />;
+export function CampoCel({ value, onChange, className = "", placeholder = "809-000-0000", onKeyDown }) {
+  return <input className={className} inputMode="tel" value={value} placeholder={placeholder} onChange={(e) => onChange(formatoCel(e.target.value))} onKeyDown={onKeyDown} />;
 }
 
 export function Atras({ onClick, children }) {

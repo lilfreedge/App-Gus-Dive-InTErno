@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Atras } from "@/components/viajes/Piezas";
 import { IconoWA, CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck, IconEdit, IconCamera, IconEye } from "@/components/icons";
@@ -45,6 +45,53 @@ import { nuevoId } from "@/lib/estudiantes/datos";
 const NIVELES = ["Open Water Diver", "OWD + Nitrox", "Advanced OWD", "Rescue Diver", "Divemaster", "Instructor Course", "Freediving"];
 const cuando = (s) => (s?.en ? `${fechaDeIso(s.en)}${s.por ? ` · ${s.por}` : ""}` : "");
 
+// V57 -- "dame ese poder absoluto": el Titular puede quitar un pago o una
+// nota de seguimiento puesta por error. Pide confirmar en el mismo lugar.
+function QuitarMini({ que, alQuitar }) {
+  const [seguro, setSeguro] = useState(false);
+  if (!seguro)
+    return (
+      <button type="button" className="ce-quitar" title={`Quitar ${que}`} onClick={() => setSeguro(true)}>
+        Quitar
+      </button>
+    );
+  return (
+    <span className="ce-quitar-conf">
+      ¿Quitar {que}?
+      <button type="button" className="ce-quitar si" onClick={() => (setSeguro(false), alQuitar())}>
+        Sí
+      </button>
+      <button type="button" className="ce-quitar" onClick={() => setSeguro(false)}>
+        No
+      </button>
+    </span>
+  );
+}
+
+// V57 -- La foto de perfil (la que subió en el link) en la ficha.
+function Avatar({ ruta, nombre, ops }) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    let vivo = true;
+    if (ruta && ops.urlArchivo) ops.urlArchivo(ruta).then((u) => vivo && setUrl(u || ""));
+    return () => {
+      vivo = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ruta]);
+  const iniciales = String(nombre || "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((x) => x[0].toUpperCase())
+    .join("");
+  return url ? (
+    <img className="ce-avatar" src={url} alt={nombre} onClick={() => ops.verArchivo(ruta)} />
+  ) : (
+    <div className="ce-avatar">{iniciales || "?"}</div>
+  );
+}
+
 function Hecho({ titulo, sello, extra }) {
   return (
     <div className="ce-dato">
@@ -79,6 +126,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
   const fecha = est.fechaId ? (db.fechas || []).find((f) => f.id === est.fechaId) : null;
   const fechasLibres = c ? fechasDe(db, c.id, { soloFuturas: true }).filter((f) => quedan(db, f) !== 0) : [];
   const puedeAlgo = p.estudiantes || p.almacen || p.entregar;
+  const enEspera = est.estado === "espera";
 
   function marcarPaso(k, v) {
     const antes = (est.pasos || {})[k] || "pendiente";
@@ -124,9 +172,32 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
   return (
     <>
       <Atras onClick={() => ir("estudiantes")}>Estudiantes</Atras>
-      <h1 className="page-title" style={{ margin: "4px 0 2px" }}>
-        {b.nombre}
-      </h1>
+      {enEspera ? (
+        <div className="ce-perfil">
+          <Avatar ruta={b.foto} nombre={b.nombre} ops={ops} />
+          <div style={{ minWidth: 0 }}>
+            <h1 className="page-title" style={{ margin: "0 0 2px" }}>
+              {b.nombre}
+            </h1>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+              {b.docFoto && (
+                <button className="btn secondary vj-mini" onClick={() => ops.verArchivo(b.docFoto)}>
+                  Ver cédula
+                </button>
+              )}
+              {b.cel && (
+                <a className="btn secondary vj-mini" href={linkWhatsApp(b.cel, "")} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                  WhatsApp
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <h1 className="page-title" style={{ margin: "4px 0 2px" }}>
+          {b.nombre}
+        </h1>
+      )}
       <div className="hint-text" style={{ fontSize: 14 }}>
         {[est.curso, est.escuela, est.instructor, est.estado === "espera" ? "lista de espera" : est.fechaInicio ? `${est.fechaInicio > hoyISO() ? "empieza" : "empezó"} el ${fechaCorta(est.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
         {est.via === "link" ? " · se registró por el link" : ""}
@@ -162,17 +233,19 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
             )}
           </div>
         )}
-        <div className="ce-pasos">
+        {!enEspera && <div className="ce-pasos">
           {ETAPAS.map((e, i) => (
             <div key={e.k} className={`ce-paso${i < idx ? " ok" : i === idx ? " ya" : ""}`}>
               <i>{i < idx ? <IconCheck size={13} /> : i + 1}</i>
               {e.t}
             </div>
           ))}
-        </div>
+        </div>}
         </>
       )}
 
+      {/* V57 ("122. ok"): en lista de espera no salen los pasos del curso; la ficha es como un perfil. */}
+      {!enEspera && (<>
       {/* ---------------------------------------------------- 1. El curso */}
       <div className="ce-etapa">
         <h4>
@@ -238,6 +311,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
         {etapas.mandado && <Hecho titulo="Mandado a procesar" sello={etapas.mandado} />}
       </div>
 
+      </>)}
       {/* ---------------------------------------------------- Pago */}
       <div className="ce-etapa">
         <h4>
@@ -290,6 +364,12 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
                 </button>
               ) : (
                 x.conciliado && <IconCheck size={13} />
+              )}
+              {yo.esTitular && (
+                <QuitarMini
+                  que="este pago"
+                  alQuitar={() => cambiar({ pagos: est.pagos.filter((y) => y.id !== x.id) }, "Quitó un pago", `${rd(x.monto)} (${x.forma}, ${fechaCorta(x.fecha)})`, "Quitado")}
+                />
               )}
             </span>
           </div>
@@ -351,6 +431,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
           ))}
       </div>
 
+      {!enEspera && (<>
       {/* ---------------------------------------------------- 2. Procesando (antes "Almacén", "86. si") */}
       <div className={`ce-etapa${idx < 1 ? " gris" : ""}`}>
         <h4>
@@ -452,6 +533,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
         )}
       </div>
 
+      </>)}
       {/* ---------------------------------------------------- Seguimiento */}
       <div className="ce-etapa">
         <h4>Seguimiento</h4>
@@ -460,6 +542,12 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
             {x.texto}
             <small>
               {x.por} · {fechaDeIso(x.en)}
+              {yo.esTitular && (
+                <>
+                  {" "}
+                  <QuitarMini que="esta nota" alQuitar={() => cambiar({ seguimiento: est.seguimiento.filter((_, j) => j !== i) }, "Quitó una nota de seguimiento", x.texto, "Quitada")} />
+                </>
+              )}
             </small>
           </div>
         ))}
@@ -559,7 +647,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
       <div className="ce-etapa">
         <h4>
           Datos del curso
-          {p.estudiantes && !editCurso && ["curso", "espera"].includes(est.estado) && (
+          {p.estudiantes && !editCurso && (["curso", "espera"].includes(est.estado) || yo.esTitular) && (
             <button className="btn secondary vj-mini" onClick={() => setEditCurso(true)}>
               <IconEdit size={14} /> Editar
             </button>

@@ -49,7 +49,7 @@ export function Cursos({ db, p, yo, ops, ir }) {
               <span>
                 <b>{c.nombre}</b> <span className="ce-chip curso">{c.precio == null ? "Sin precio" : rd(c.precio)}</span>
                 {ESCUELAS.length > 1 && <span className="ce-chip gris">{c.escuelas.join(" · ") || "—"}</span>}
-                {c.semana && <span className="ce-chip gris">Con su semana</span>}
+                {c.semana && <span className="ce-chip gris">Itinerario</span>}
               </span>
               {p.cursos && (
                 <button className="btn secondary vj-mini" onClick={() => setEdit(c)}>
@@ -182,7 +182,7 @@ function EditarCurso({ c, ops, yo, cerrar }) {
         {/* V55: cómo es la semana (le sale al estudiante en el link al escoger
             la fecha; "79": por ahora solo Open Water). */}
         <div className="hint-text" style={{ margin: "4px 0 0" }}>
-          Cómo es la semana (opcional; empieza el lunes). Le sale al estudiante al escoger la fecha.
+          Itinerario (opcional; empieza el lunes). Le sale al estudiante al escoger la fecha.
         </div>
         <div className="ce-semana-form">
           {DIAS_SEMANA.map((d, i) => (

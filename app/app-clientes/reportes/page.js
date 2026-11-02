@@ -53,10 +53,7 @@ export default async function ReportesPage() {
           ]}
         />
         <h1 className="page-title">Recibos e Informes</h1>
-        <p className="page-subtitle">
-          Reporte de seguimiento e informe de mantenimiento por orden, armados con lo que ya se fue registrando -- por ahora, solo para
-          Reguladores.
-        </p>
+        {/* V57: sin el texto de debajo del título (pedido del 2-nov: "quitar"). */}
 
         <ReportesClient ordenes={ordenes || []} puedeVerInforme={puedeVerInforme} />
       </div>

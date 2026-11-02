@@ -220,8 +220,15 @@ export default function EstudiantesApp({ p, yo, personas }) {
     },
     async borrarEst(est, motivo, nombre) {
       try {
+        // V57: se revisa que de verdad se borró (sin el permiso, Supabase no
+        // da error pero no borra nada).
+        const { data, error: e } = await supabase.from("est_estudiantes").delete().eq("id", est.id).select("id");
+        if (e) throw e;
+        if (!data?.length) {
+          avisar("No se pudo borrar: solo el Titular puede borrar. Si eres tú, falta correr en Supabase el SQL todo_v55_una_sola_vez.sql.");
+          return false;
+        }
         await log(null, `Borró un estudiante: ${nombre} (${est.curso})`, null, `Borrado. Motivo: ${motivo}`);
-        await guardar(supabase.from("est_estudiantes").delete().eq("id", est.id));
         local((d) => ({ ...d, estudiantes: d.estudiantes.filter((x) => x.id !== est.id) }));
         return true;
       } catch (e) {
@@ -313,6 +320,29 @@ export default function EstudiantesApp({ p, yo, personas }) {
       } catch (e) {
         fallo(e);
       }
+    },
+    // V57: borrar un interesado (solo el Titular).
+    async borrarInteresado(x) {
+      try {
+        const { data, error: e } = await supabase.from("est_interesados").delete().eq("id", x.id).select("id");
+        if (e) throw e;
+        if (!data?.length) {
+          avisar("No se pudo borrar ese interesado.");
+          return false;
+        }
+        await log(null, `Borró un interesado: ${x.nombre}`, x.curso || null, "Borrado");
+        local((d) => ({ ...d, interesados: d.interesados.filter((y) => y.id !== x.id) }));
+        avisar("Interesado borrado");
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
+    // V57: la dirección (por 10 minutos) de una foto, para verla en la ficha.
+    async urlArchivo(ruta) {
+      const { data } = await supabase.storage.from("estudiantes-docs").createSignedUrl(ruta, 600);
+      return data?.signedUrl || "";
     },
     async verArchivo(ruta) {
       const { data, error: e } = await supabase.storage.from("estudiantes-docs").createSignedUrl(ruta, 600);

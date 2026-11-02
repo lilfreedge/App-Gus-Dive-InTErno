@@ -20,7 +20,20 @@ async function api(cuerpo) {
 
 // El buzo sube el comprobante (foto o PDF). Se verifica en el servidor con
 // su cédula/pasaporte que está inscrito en el viaje.
-function SubirComprobante({ slug, tipoDoc, doc }) {
+// V57: "2 buceos, embarcación, guía y Parque Nacional" -> una lista.
+function partesIncluye(texto) {
+  const t = String(texto || "").trim();
+  if (!t) return [];
+  if (/\n/.test(t)) return puntos(t);
+  return t
+    .replace(/\.$/, "")
+    .split(/\s*,\s*|\s+y\s+(?=[^,]*$)/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((x) => x.charAt(0).toUpperCase() + x.slice(1));
+}
+
+function SubirComprobante({ slug, tipoDoc, doc, cuentas, copiar, copiado, monto }) {
   const [estado, setEstado] = useState(null); // null | "subiendo" | { nombre } | { error }
   async function subir(file) {
     if (!file) return;
@@ -48,10 +61,48 @@ function SubirComprobante({ slug, tipoDoc, doc }) {
         </div>
       ) : (
         <>
-          <div style={{ fontWeight: 800 }}>¿Ya pagaste? Sube el comprobante</div>
-          <div className="pb-h" style={{ margin: "2px 0 8px" }}>
-            Foto o PDF de la transferencia. También puedes subirlo después entrando a este mismo link con tu cédula.
-          </div>
+          {cuentas ? (
+            <>
+              {/* V57 -- "si quieres reservar tu cupo desde ahora puedes hacer el
+                  pago desde ya" ("134. sí"): con las cuentas aquí mismo. */}
+              <div style={{ fontWeight: 800 }}>¿Quieres asegurar tu cupo? Puedes pagar desde ya</div>
+              <div className="pb-h" style={{ margin: "2px 0 8px" }}>
+                {cuentas.length
+                  ? `Haz la transferencia${monto ? ` (${monto})` : ""} a ${cuentas.length === 1 ? "esta cuenta" : "una de estas cuentas"} y sube aquí el comprobante.`
+                  : "Te escribimos por WhatsApp con los datos para el pago. Cuando pagues, sube aquí el comprobante."}
+              </div>
+              {cuentas.length > 0 && (
+                <div className="pb-cuentas" style={{ marginBottom: 8 }}>
+                  {cuentas.map((c) => (
+                    <div key={c.numero} className="pb-cuenta">
+                      <div style={{ minWidth: 0 }}>
+                        <div className="pb-cuenta-t">
+                          {c.banco} · {c.tipo} en {c.moneda === "USD" ? "dólares (US$)" : "pesos (RD$)"}
+                        </div>
+                        <div className="pb-cuenta-n">{c.numero}</div>
+                      </div>
+                      <button type="button" className="pb-copiar" onClick={() => copiar(c.numero)}>
+                        {copiado === c.numero ? (
+                          <>
+                            <IconCheck size={14} /> Copiado
+                          </>
+                        ) : (
+                          "Copiar"
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div style={{ fontWeight: 800 }}>¿Ya pagaste? Sube el comprobante</div>
+              <div className="pb-h" style={{ margin: "2px 0 8px" }}>
+                Foto o PDF de la transferencia. También puedes subirlo después entrando a este mismo link con tu cédula.
+              </div>
+            </>
+          )}
           <label className="pb-btn sec" style={{ display: "block", textAlign: "center" }}>
             {estado === "subiendo" ? (
               "Subiendo…"
@@ -63,6 +114,7 @@ function SubirComprobante({ slug, tipoDoc, doc }) {
             <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} disabled={estado === "subiendo"} onChange={(e) => subir(e.target.files?.[0])} />
           </label>
           {estado?.error && <div className="pb-error">{estado.error}</div>}
+          {cuentas && <div className="pb-h" style={{ margin: "6px 0 0", fontSize: 12.5 }}>Si pagas después, entra a este mismo link con tu cédula y lo subes.</div>}
         </>
       )}
     </div>
@@ -304,7 +356,35 @@ export default function PublicoViaje({ v, tienda }) {
                     </div>
                   </div>
                 )}
-                {opcionesPagan.map((x) => (
+                {/* V57 -- "133. Opción B": con un solo precio, una lista "Incluye"
+                    con palomitas y el precio "por buzo" al lado (antes era un
+                    cuadro que parecía un botón). Debajo, "No incluye". */}
+                {opcionesPagan.length === 1 && !v.habitaciones ? (
+                  <div className="pb-inc">
+                    <div className="pb-inc-top">
+                      <b>Incluye</b>
+                      <span>
+                        <b>{precioTexto(v, opcionesPagan[0])}</b> por {String(opcionesPagan[0].nombre || "persona").toLowerCase()}
+                      </span>
+                    </div>
+                    <ul className="pb-check">
+                      {[...partesIncluye(opcionesPagan[0].incluye), ...puntos(v.incluye)].map((t) => (
+                        <li key={t}>{t}</li>
+                      ))}
+                    </ul>
+                    {v.noIncluye && (
+                      <>
+                        <b className="pb-inc-no">No incluye</b>
+                        <ul className="pb-check no">
+                          {puntos(v.noIncluye).map((t) => (
+                            <li key={t}>{t}</li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                  </div>
+                ) : null}
+                {!(opcionesPagan.length === 1 && !v.habitaciones) && opcionesPagan.map((x) => (
                   <div key={x.id} className="pb-op-info">
                     <b>{x.nombre}</b> · {precioTexto(v, x)}
                     {v.habitaciones ? " por persona" : ""}
@@ -312,7 +392,7 @@ export default function PublicoViaje({ v, tienda }) {
                     {x.incluye && !(v.habitaciones && /^precio por persona\.?$/i.test(x.incluye.trim())) && <div>{x.incluye}</div>}
                   </div>
                 ))}
-                {v.incluye && (
+                {v.incluye && !(opcionesPagan.length === 1 && !v.habitaciones) && (
                   <div className="pb-op-info">
                     <b>Incluye</b>
                     <ul className="pb-lista">
@@ -330,6 +410,16 @@ export default function PublicoViaje({ v, tienda }) {
                         </ul>
                       </>
                     )}
+                  </div>
+                )}
+                {!v.incluye && v.noIncluye && !(opcionesPagan.length === 1 && !v.habitaciones) && (
+                  <div className="pb-op-info">
+                    <b>No incluye</b>
+                    <ul className="pb-lista">
+                      {puntos(v.noIncluye).map((t) => (
+                        <li key={t}>{t}</li>
+                      ))}
+                    </ul>
                   </div>
                 )}
                 {eq.nota && <div className="pb-nota">{eq.nota}</div>}
@@ -398,11 +488,13 @@ export default function PublicoViaje({ v, tienda }) {
                         <IconChat size={18} /> Escribir por WhatsApp
                       </a>
                     )}
-                    <SubirComprobante slug={v.slug} tipoDoc={tipoDoc} doc={doc} />
-                    <button className="pb-btn sec" onClick={otraPersona}>
+                    <SubirComprobante slug={v.slug} tipoDoc={tipoDoc} doc={doc} cuentas={cuentas} copiar={copiar} copiado={copiado} monto={opcionesPagan.length === 1 ? (v.reserva ? `reserva de ${rd(v.reserva.monto)}` : precioTexto(v, opcionesPagan[0])) : ""} />
+                    {/* V57: "pon el botón de inscribir otra persona más pequeño";
+                        sin "← Atrás" aquí ("quita la flechita"): volvía al paso
+                        de la cédula, que es lo mismo que inscribir a otra persona. */}
+                    <button className="pb-btn sec pb-chico" onClick={otraPersona}>
                       Inscribir a otra persona
                     </button>
-                    <BotonAtras />
                   </>
                 ) : (
                   <>
@@ -698,7 +790,7 @@ export default function PublicoViaje({ v, tienda }) {
                     {!resultado.enEspera && <SubirComprobante slug={v.slug} tipoDoc={resultado.docDe.tipo} doc={resultado.docDe.doc} />}
                   </>
                 )}
-                <button className="pb-btn sec" onClick={otraPersona}>
+                <button className="pb-btn sec pb-chico" onClick={otraPersona}>
                   Inscribir a otra persona
                 </button>
               </div>

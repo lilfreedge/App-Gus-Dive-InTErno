@@ -272,7 +272,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
                 Pasaporte
               </button>
             </div>
-            <input className="pb-input" inputMode={tipoDoc === "cedula" ? "numeric" : "text"} value={doc} onChange={(e) => setDoc(tipoDoc === "cedula" ? formatoCedula(e.target.value) : e.target.value.toUpperCase())} placeholder={tipoDoc === "cedula" ? "000-0000000-0" : "Número de pasaporte"} />
+            <input className="pb-input" inputMode={tipoDoc === "cedula" ? "numeric" : "text"} value={doc} onChange={(e) => setDoc(tipoDoc === "cedula" ? formatoCedula(e.target.value) : e.target.value.toUpperCase())} placeholder={tipoDoc === "cedula" ? "000-0000000-0" : "Número de pasaporte"} onKeyDown={(e) => e.key === "Enter" && doc && !cargando && buscar()} />
             {error && <div className="pb-error">{error}</div>}
             <button className="pb-btn" disabled={cargando || !doc} onClick={buscar}>
               {cargando ? "Buscando…" : "Seguir"}
@@ -304,7 +304,12 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
           <div className="pb-card">
             <div className="pb-t">Tu celular</div>
             <div className="pb-h">{buzo?.tieneCel ? `Para confirmar que eres tú, escribe tu celular (el que termina en ${String(buzo.cel).slice(-4)}).` : "Escribe tu celular. Por ahí te escribimos."}</div>
-            <CampoCel className="pb-input" value={cel} onChange={setCel} />
+            <CampoCel
+              className="pb-input"
+              value={cel}
+              onChange={setCel}
+              onKeyDown={(e) => e.key === "Enter" && !cargando && soloDigitos(cel).length === 10 && (paso === "cel-estado" ? verEstado() : ir("datos"))}
+            />
             {error && <div className="pb-error">{error}</div>}
             <button className="pb-btn" disabled={cargando || soloDigitos(cel).length !== 10} onClick={() => (paso === "cel-estado" ? verEstado() : ir("datos"))}>
               {cargando ? "Un momento…" : "Seguir"}
@@ -482,7 +487,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             <Subir id={id} que="foto" titulo="Una foto tuya de frente" sub="Para tu certificación. Con buena luz y sin lentes de sol." capture="user" listo={buzo && !falta.foto} />
             <SubirCedula id={id} tipoDoc={tipoDoc} listo={buzo && !falta.cedula} />
             <label className="ce-pub-l" style={{ marginTop: 12 }}>
-              Firma de tu record de entrenamiento
+              Firma para tu récord de entrenamiento
             </label>
             <div className="pb-h" style={{ margin: 0 }}>
               Firma con el dedo dentro del recuadro.

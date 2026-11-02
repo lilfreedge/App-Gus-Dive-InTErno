@@ -174,6 +174,9 @@ export default async function AppClientesPage() {
     ...o,
     necesita_verificar: !o.verificado_por && requiereVerificacion(ajustes, o.tipo_equipo),
   }));
+  // V57: las que faltan por verificar van en su propio paso.
+  const porVerificar = porEntregarConVerificacion.filter((o) => o.necesita_verificar);
+  const listasParaEntregar = porEntregarConVerificacion.filter((o) => !o.necesita_verificar);
 
   // V51: avisos fijos de App Equipos de clientes.
   const avisosFijos = await avisosParaMi(supabase, { apps: ["clientes"], persona: profile });
@@ -202,6 +205,7 @@ export default async function AppClientesPage() {
 
         <div className="section-title" style={{ marginTop: 0 }}>
           Órdenes pendientes por trabajar ({porTrabajar.length})
+          <span className="section-fecha">Fecha de ingreso a tienda</span>
         </div>
         <ListaOrdenes
           nombresTecnicos={nombresTecnicos}
@@ -212,7 +216,26 @@ export default async function AppClientesPage() {
           avisoAtrasadaDias={5}
         />
 
-        <div className="section-title">Órdenes pendientes por entregar ({(porEntregar || []).length})</div>
+        {/* V57 -- "las órdenes que estén en pendientes de entregar pero que
+            estén pendientes de verificar para despachar, ponlo en un paso
+            aparte que se llame pendiente verificar, así no nos confundimos". */}
+        <div className="section-title">
+          Pendiente verificar ({porVerificar.length})
+          <span className="section-fecha">Fecha listo para entrega</span>
+        </div>
+        <ListaOrdenes
+          nombresTecnicos={nombresTecnicos}
+          ordenes={porVerificar}
+          vacio="No hay órdenes pendientes de verificar."
+          fechaCampo="fecha_listo_entrega"
+          fechaLabel="Fecha listo para entrega"
+          mostrarSinVerificar
+        />
+
+        <div className="section-title">
+          Órdenes pendientes por entregar ({listasParaEntregar.length})
+          <span className="section-fecha">Fecha listo para entrega</span>
+        </div>
         {/* Aviso de "pendiente verificar" (28-sep-2026, pedido explícito: "que
             me aparezca una notificacion a mi en inicio y no se donde mas, para
             orden que esten en este paso yo ir a verificarlo"). Ampliado a todos
@@ -221,7 +244,7 @@ export default async function AppClientesPage() {
             esta la orden") -- antes solo lo veían Titular/Administrador. */}
         <ListaOrdenes
           nombresTecnicos={nombresTecnicos}
-          ordenes={porEntregarConVerificacion}
+          ordenes={listasParaEntregar}
           vacio="No hay órdenes pendientes por entregar."
           fechaCampo="fecha_listo_entrega"
           fechaLabel="Fecha listo para entrega"
@@ -238,7 +261,10 @@ export default async function AppClientesPage() {
         {/* "En Hold" (pedido explícito, ronda grande de feedback,
             27-sep-2026: renombrar "Órdenes en espera" en Inicio y también
             el badge "En espera" en todos lados). */}
-        <div className="section-title">Órdenes en Hold ({(enEspera || []).length})</div>
+        <div className="section-title">
+          Órdenes en Hold ({(enEspera || []).length})
+          <span className="section-fecha">Fecha de ingreso a tienda</span>
+        </div>
         <ListaOrdenes
           nombresTecnicos={nombresTecnicos}
           ordenes={enEsperaConHold}
@@ -250,7 +276,10 @@ export default async function AppClientesPage() {
           avisoHoldDias={3}
         />
 
-        <div className="section-title">Órdenes en prueba hidrostáticas ({(enHidrostatica || []).length})</div>
+        <div className="section-title">
+          Órdenes en prueba hidrostáticas ({(enHidrostatica || []).length})
+          <span className="section-fecha">Fecha enviado</span>
+        </div>
         <ListaOrdenes
           nombresTecnicos={nombresTecnicos}
           ordenes={porNumero(enHidrostatica)}
@@ -261,7 +290,10 @@ export default async function AppClientesPage() {
           diasAfueraMinimo={15}
         />
 
-        <div className="section-title">Órdenes enviadas a reparación ({(enReparacion || []).length})</div>
+        <div className="section-title">
+          Órdenes enviadas a reparación ({(enReparacion || []).length})
+          <span className="section-fecha">Fecha enviado</span>
+        </div>
         <ListaOrdenes
           nombresTecnicos={nombresTecnicos}
           ordenes={porNumero(enReparacion)}
@@ -361,7 +393,8 @@ function ListaOrdenes({
                   {o.en_espera && <span className="badge badge-rojo">En Hold</span>}
                 </span>
                 <span className="list-item-qty" style={{ textAlign: "right", flexShrink: 0 }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--texto-suave)" }}>{fechaLabel}</div>
+                  {/* V57: el nombre de la fecha sale una sola vez, arriba al lado del título
+                      ("que no se vea tantas veces repetidas"). */}
                   <div>{fechaValor ? formatFechaDDMMAAAADeDate(fechaValor) : "—"}</div>
                 </span>
               </div>

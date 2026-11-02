@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getProfileYUser, tieneAcceso, esOperativo, esTecnico } from "@/lib/roles";
 import { obtenerPendientesInterno, obtenerPendientesClientes } from "@/lib/notificaciones";
 import HeaderSimple from "@/components/HeaderSimple";
-import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler, IconEstudiantes, IconLock } from "@/components/icons";
+import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler, IconEstudiantes } from "@/components/icons";
 
 // Ítem 7 del backlog (22-sep-2026): pantalla que aparece justo después de
 // iniciar sesión, para elegir en qué espacio entrar -- "App Clientes"
@@ -23,23 +23,16 @@ const TAM_ICONO = 30;
 // "En construcción", pero abre normal para quien tenga el acceso y sigue
 // mostrando sus avisos. "93. yo te aviso": cuando una esté lista, se saca
 // de esta lista en la actualización siguiente.
+// V57 ("118. bien pero déjales su color, solo que ponlos con un tono así como
+// apagado y quítale ese candado, no me gusta"): su color, apagado, sin candado.
 const EN_CONSTRUCCION = new Set(["estudiantes", "viajes", "alquiler"]);
 
 function claseTarjeta(k) {
   return EN_CONSTRUCCION.has(k) ? "card espacio-card espacio-construccion" : "card espacio-card";
 }
-function Candado({ k }) {
-  return EN_CONSTRUCCION.has(k) ? (
-    <span className="espacio-candado" aria-hidden="true">
-      <IconLock size={11} />
-    </span>
-  ) : null;
-}
 function EtiquetaConstruccion({ k }) {
   return EN_CONSTRUCCION.has(k) ? (
-    <div className="espacio-badge espacio-badge-construccion">
-      <IconLock size={10} /> En construcción
-    </div>
+    <div className="espacio-badge espacio-badge-construccion">En construcción</div>
   ) : null;
 }
 
@@ -162,6 +155,27 @@ export default async function EspacioPage({ searchParams }) {
       const porAvisar = est.filter((x) => x.estado === "certificacion").length;
       enCurso = est.filter((x) => x.estado === "curso").length;
       if (porAvisar > 0) lineasEstudiantes.push(`${porAvisar} certificaci${porAvisar === 1 ? "ón" : "ones"} por avisar`);
+    }
+  }
+
+  // V57 -- Alquiler: los que faltan por número de factura ("127": "que aparezca
+  // una notificación alante diciendo que hace falta número de factura") y los
+  // atrasados. Si falta migration_82.sql, sale sin líneas.
+  const lineasAlquiler = [];
+  let afueraAlquiler = 0;
+  if (tieneAlquiler) {
+    const hoyRD = new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10);
+    const [{ data: alqs, error: eA }, { data: fuera, error: eF }] = await Promise.all([
+      supabase.from("alq_alquileres").select("id, factura, devolver").order("fecha", { ascending: false }).limit(2000),
+      supabase.from("alq_items").select("alquiler_id").is("devuelto_en", null).limit(5000),
+    ]);
+    if (!eA && !eF && alqs) {
+      const abiertos = new Set((fuera || []).map((x) => x.alquiler_id));
+      afueraAlquiler = abiertos.size;
+      const atrasados = alqs.filter((a) => abiertos.has(a.id) && a.devolver < hoyRD).length;
+      const sinFact = alqs.filter((a) => !String(a.factura || "").trim()).length;
+      if (sinFact) lineasAlquiler.push(`${sinFact} alquiler${sinFact === 1 ? "" : "es"} sin número de factura`);
+      if (atrasados) lineasAlquiler.push(`${atrasados} alquiler${atrasados === 1 ? "" : "es"} atrasado${atrasados === 1 ? "" : "s"}`);
     }
   }
 
@@ -317,7 +331,6 @@ export default async function EspacioPage({ searchParams }) {
                 <Link key="estudiantes" href="/control-estudiantes" className={claseTarjeta("estudiantes")}>
                   <div className="espacio-icon espacio-icon-estudiantes">
                     <IconEstudiantes size={TAM_ICONO} />
-                    <Candado k="estudiantes" />
                   </div>
                   <div className="espacio-title">Control Estudiantes</div>
                   <EtiquetaConstruccion k="estudiantes" />
@@ -354,7 +367,6 @@ export default async function EspacioPage({ searchParams }) {
                 <Link key="viajes" href="/viajes-buceos" className={claseTarjeta("viajes")}>
                   <div className="espacio-icon espacio-icon-viajes">
                     <IconBuzos size={TAM_ICONO} />
-                    <Candado k="viajes" />
                   </div>
                   <div className="espacio-title">Buceos</div>
                   <EtiquetaConstruccion k="viajes" />
@@ -372,11 +384,17 @@ export default async function EspacioPage({ searchParams }) {
                 <Link key="alquiler" href="/alquiler" className={claseTarjeta("alquiler")}>
                   <div className="espacio-icon espacio-icon-alquiler">
                     <IconAlquiler size={TAM_ICONO} />
-                    <Candado k="alquiler" />
                   </div>
                   <div className="espacio-title">Alquiler</div>
-                  {EN_CONSTRUCCION.has("alquiler") ? <EtiquetaConstruccion k="alquiler" /> : <div className="espacio-badge">Próximamente</div>}
-                  <div className="espacio-notif">Sin novedades.</div>
+                  <EtiquetaConstruccion k="alquiler" />
+                  <div className="espacio-notif">
+                    {lineasAlquiler.map((linea) => (
+                      <div className="espacio-notif-alerta" key={linea}>
+                        {linea}
+                      </div>
+                    ))}
+                    {afueraAlquiler > 0 ? `${afueraAlquiler} alquiler${afueraAlquiler === 1 ? "" : "es"} afuera` : lineasAlquiler.length ? "" : "Sin novedades."}
+                  </div>
                 </Link>
               ),
             ]

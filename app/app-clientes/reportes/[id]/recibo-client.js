@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DESCARGO } from "@/lib/descargo";
 import BotonImprimir from "@/components/BotonImprimir";
 import EnviarReporteClient from "./enviar-client";
 
@@ -83,6 +84,24 @@ export default function ReciboClient({ orden: o, filasSimple, filasCompleto }) {
               mismo lugar/estilo que ya usa la ficha de la orden. */}
           <div className="folio-discreto" style={{ marginTop: 10, textAlign: "right" }}>
             folio #{o.folio}
+          </div>
+          {/* V57: el Descargo de Responsabilidad al final del Recibo. */}
+          <div className="recibo-descargo">
+            <b className="recibo-descargo-t">{DESCARGO.titulo}</b>
+            <b>{DESCARGO.subtitulo}</b>
+            {DESCARGO.intro.map((t) => (
+              <p key={t}>{t}</p>
+            ))}
+            <ol>
+              {DESCARGO.puntos.map((x) => (
+                <li key={x.t}>
+                  <b>{x.t}:</b> {x.texto}
+                </li>
+              ))}
+            </ol>
+            <p>
+              <b>{DESCARGO.cierre}</b>
+            </p>
           </div>
         </div>
       </div>

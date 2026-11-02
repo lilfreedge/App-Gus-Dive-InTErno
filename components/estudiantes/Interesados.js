@@ -13,7 +13,7 @@ import { copiarLink } from "./Inicio";
 // inscriben. "Inscribir" los pasa a Estudiantes.
 const VACIO = { nombre: "", cel: "", curso: "", cuando: "", fuente: "Instagram", nota: "", recordar: "" };
 
-export function Interesados({ db, p, ops, ir, avisar }) {
+export function Interesados({ db, p, yo, ops, ir, avisar }) {
   const [filtro, setFiltro] = useState("nuevo");
   const [q, setQ] = useState("");
   const [nuevo, setNuevo] = useState(null);
@@ -104,7 +104,7 @@ export function Interesados({ db, p, ops, ir, avisar }) {
         </div>
       ))}
       {!lista.length && <div className="card hint-text">{t ? "No hay nadie con esa búsqueda." : "No hay nadie aquí."}</div>}
-      {abierto && <DetalleInteresado x={db.interesados.find((y) => y.id === abierto.id) || abierto} db={db} p={p} ops={ops} ir={ir} cursos={cursos} cerrar={() => setAbierto(null)} />}
+      {abierto && <DetalleInteresado x={db.interesados.find((y) => y.id === abierto.id) || abierto} db={db} p={p} yo={yo} ops={ops} ir={ir} cursos={cursos} cerrar={() => setAbierto(null)} />}
     </>
   );
 }
@@ -160,8 +160,10 @@ function FormInteresado({ f, setF, cursos }) {
   );
 }
 
-function DetalleInteresado({ x, db, p, ops, ir, cursos, cerrar }) {
+function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar }) {
   const [f, setF] = useState(x);
+  // V57 -- "dame ese poder absoluto": el Titular puede borrar un interesado.
+  const [borrando, setBorrando] = useState(false);
   const est = x.estudianteId ? db.estudiantes.find((e) => e.id === x.estudianteId) : null;
   return (
     <Modal titulo={x.nombre} sub={x.via === "link" ? `Llegó por el link · ${fechaDeIso(x.creadoEn)}` : fechaDeIso(x.creadoEn)} cerrar={cerrar}>
@@ -199,6 +201,28 @@ function DetalleInteresado({ x, db, p, ops, ir, cursos, cerrar }) {
           </button>
         )}
       </div>
+      {yo?.esTitular && (
+        <div className="vj-borrar" style={{ marginTop: 14 }}>
+          {borrando ? (
+            <>
+              <b>¿Borrar a {x.nombre} de Interesados?</b>
+              <div className="hint-text">No se puede deshacer. Queda anotado en la bitácora.{est ? " Su ficha de estudiante no se toca." : ""}</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button className="btn vj-btn vj-rojo" onClick={async () => (await ops.borrarInteresado(x)) && cerrar()}>
+                  Sí, borrar
+                </button>
+                <button className="btn secondary vj-btn" onClick={() => setBorrando(false)}>
+                  No
+                </button>
+              </div>
+            </>
+          ) : (
+            <button className="btn secondary vj-mini vj-rojo-txt" onClick={() => setBorrando(true)}>
+              Borrar este interesado…
+            </button>
+          )}
+        </div>
+      )}
     </Modal>
   );
 }

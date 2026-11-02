@@ -297,7 +297,7 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
         const { data: borrados, error: eBorrar } = await supabase.from("viajes").delete().eq("id", v.id).select("id");
         if (eBorrar) throw eBorrar;
         if (!borrados?.length) {
-          avisar("No se pudo borrar: falta correr en Supabase el SQL todo_v54_una_sola_vez.sql (trae el permiso para borrar buceos).");
+          avisar("No se pudo borrar: falta correr en Supabase el SQL todo_v55_una_sola_vez.sql (trae el permiso para borrar buceos).");
           return false;
         }
         await log(
