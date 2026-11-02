@@ -1170,6 +1170,58 @@ textarea {
   font-weight: 700;
 }
 
+/* V56 -- apps "en construcción" (maqueta-v56b): gris con candado, pero la
+   tarjeta abre normal y sigue mostrando sus avisos. */
+.espacio-icon {
+  position: relative;
+}
+.espacio-card.espacio-construccion {
+  background: #f7f9fa;
+}
+.espacio-card.espacio-construccion .espacio-icon {
+  background: #c9d2d9;
+  color: #fff;
+}
+.espacio-card.espacio-construccion .espacio-title {
+  color: #8a97a2;
+}
+.espacio-candado {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #5c6b78;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #f7f9fa;
+}
+.espacio-badge-construccion {
+  margin-top: -4px;
+  margin-bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+html[data-theme="dark"] .espacio-card.espacio-construccion {
+  background: #121d27;
+}
+html[data-theme="dark"] .espacio-card.espacio-construccion .espacio-icon {
+  background: #3a4a58;
+  color: #c9d2d9;
+}
+html[data-theme="dark"] .espacio-card.espacio-construccion .espacio-title {
+  color: #8fa1b0;
+}
+html[data-theme="dark"] .espacio-candado {
+  background: #8fa1b0;
+  color: #0b141c;
+  border-color: #121d27;
+}
+
 .folio-tag {
   color: var(--texto-suave);
   font-weight: 600;

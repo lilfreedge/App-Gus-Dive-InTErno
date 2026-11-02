@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V56",
+    fecha: "2 de noviembre, 2026",
+    titulo: "Control Estudiantes, Buceos y Alquiler marcados \"En construcción\"",
+    descripcion:
+      "En \"¿A dónde quieres entrar?\", las tarjetas de Control Estudiantes, Buceos y Alquiler salen en gris, con un candado y la etiqueta \"En construcción\", porque todavía no están listas al 100%. Es solo para que se vea: el que tiene acceso entra igual que antes, las tarjetas siguen mostrando sus avisos (por ejemplo, los avisos nuevos y el próximo buceo) y los links públicos (registro de estudiantes, Me interesa e inscripción a buceos) siguen funcionando. Cuando cada una esté lista, se le quita el \"En construcción\".",
+  },
+  {
     version: "V55",
     fecha: "2 de noviembre, 2026",
     titulo: "Control Estudiantes en amarillo con el logo de SNSI, próximos cursos con fechas y cupos, lista de espera, y las bitácoras de Buceos por tipo",

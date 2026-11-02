@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getProfileYUser, tieneAcceso, esOperativo, esTecnico } from "@/lib/roles";
 import { obtenerPendientesInterno, obtenerPendientesClientes } from "@/lib/notificaciones";
 import HeaderSimple from "@/components/HeaderSimple";
-import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler, IconEstudiantes } from "@/components/icons";
+import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler, IconEstudiantes, IconLock } from "@/components/icons";
 
 // Ítem 7 del backlog (22-sep-2026): pantalla que aparece justo después de
 // iniciar sesión, para elegir en qué espacio entrar -- "App Clientes"
@@ -16,6 +16,32 @@ import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler, IconEstudiantes }
 // menú de ajustes (ver components/TopbarClient.js).
 // V37: íconos de las tarjetas más grandes (antes 22), todos iguales.
 const TAM_ICONO = 30;
+
+// V56 -- apps "en construcción" (maqueta-v56b; pedido: "deja el acceso de
+// los apps a todos aunque se vean así bloqueadas, ¿le llegas? y ponle en
+// construcción"). Es solo el look: la tarjeta sale en gris con candado y
+// "En construcción", pero abre normal para quien tenga el acceso y sigue
+// mostrando sus avisos. "93. yo te aviso": cuando una esté lista, se saca
+// de esta lista en la actualización siguiente.
+const EN_CONSTRUCCION = new Set(["estudiantes", "viajes", "alquiler"]);
+
+function claseTarjeta(k) {
+  return EN_CONSTRUCCION.has(k) ? "card espacio-card espacio-construccion" : "card espacio-card";
+}
+function Candado({ k }) {
+  return EN_CONSTRUCCION.has(k) ? (
+    <span className="espacio-candado" aria-hidden="true">
+      <IconLock size={11} />
+    </span>
+  ) : null;
+}
+function EtiquetaConstruccion({ k }) {
+  return EN_CONSTRUCCION.has(k) ? (
+    <div className="espacio-badge espacio-badge-construccion">
+      <IconLock size={10} /> En construcción
+    </div>
+  ) : null;
+}
 
 export default async function EspacioPage({ searchParams }) {
   const supabase = createClient();
@@ -288,11 +314,13 @@ export default async function EspacioPage({ searchParams }) {
                 </Link>
               ),
               tieneEstudiantes && (
-                <Link key="estudiantes" href="/control-estudiantes" className="card espacio-card">
+                <Link key="estudiantes" href="/control-estudiantes" className={claseTarjeta("estudiantes")}>
                   <div className="espacio-icon espacio-icon-estudiantes">
                     <IconEstudiantes size={TAM_ICONO} />
+                    <Candado k="estudiantes" />
                   </div>
                   <div className="espacio-title">Control Estudiantes</div>
+                  <EtiquetaConstruccion k="estudiantes" />
                   <div className="espacio-notif">
                     {lineasEstudiantes.map((linea) => (
                       <div className="espacio-notif-alerta" key={linea}>
@@ -323,11 +351,13 @@ export default async function EspacioPage({ searchParams }) {
                 </Link>
               ),
               tieneViajes && (
-                <Link key="viajes" href="/viajes-buceos" className="card espacio-card">
+                <Link key="viajes" href="/viajes-buceos" className={claseTarjeta("viajes")}>
                   <div className="espacio-icon espacio-icon-viajes">
                     <IconBuzos size={TAM_ICONO} />
+                    <Candado k="viajes" />
                   </div>
                   <div className="espacio-title">Buceos</div>
+                  <EtiquetaConstruccion k="viajes" />
                   <div className="espacio-notif">
                     {lineasViajes.map((linea) => (
                       <div className="espacio-notif-alerta" key={linea}>
@@ -339,13 +369,14 @@ export default async function EspacioPage({ searchParams }) {
                 </Link>
               ),
               tieneAlquiler && (
-                <Link key="alquiler" href="/alquiler" className="card espacio-card">
+                <Link key="alquiler" href="/alquiler" className={claseTarjeta("alquiler")}>
                   <div className="espacio-icon espacio-icon-alquiler">
                     <IconAlquiler size={TAM_ICONO} />
+                    <Candado k="alquiler" />
                   </div>
                   <div className="espacio-title">Alquiler</div>
-                  <div className="espacio-badge">Próximamente</div>
-                  <div className="espacio-notif">Aún en construcción.</div>
+                  {EN_CONSTRUCCION.has("alquiler") ? <EtiquetaConstruccion k="alquiler" /> : <div className="espacio-badge">Próximamente</div>}
+                  <div className="espacio-notif">Sin novedades.</div>
                 </Link>
               ),
             ]
