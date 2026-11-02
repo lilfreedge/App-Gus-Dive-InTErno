@@ -10,8 +10,9 @@ import { achicar, tipoDe } from "@/lib/estudiantes/subir";
 import CampanaNotificaciones from "@/components/CampanaNotificaciones";
 import NotificacionesPagina from "@/components/NotificacionesPagina";
 import { IconGear, IconLogout, IconShuffle, IconHistory, IconUsers } from "@/components/icons";
-import { cargarTodo, estAFila, buzoAFila, cursoAFila, interesadoAFila, nuevoId } from "@/lib/estudiantes/datos";
-import { Inicio, Lista, Mas, Bitacora } from "./Inicio";
+import { cargarTodo, estAFila, buzoAFila, cursoAFila, interesadoAFila, fechaAFila, nuevoId } from "@/lib/estudiantes/datos";
+import { fechaCursoCorta } from "@/lib/estudiantes/modelo";
+import { Inicio, Lista, Mas, Bitacora, Directorio } from "./Inicio";
 import { Ficha } from "./Ficha";
 import { Nuevo } from "./Nuevo";
 import { Cursos } from "./Cursos";
@@ -29,7 +30,9 @@ export function rutaDeUrl(path) {
   const p = (path || "").replace(/^\/control-estudiantes\/?/, "").split("/").filter(Boolean);
   if (!p.length) return "inicio";
   if (p[0] === "estudiante" && p[1]) return `estudiante:${p[1]}`;
-  if (p[0] === "estudiantes" && p[1]) return `estudiantes:${p[1]}`;
+  // V55: los filtros pasaron a Cursos; los enlaces viejos siguen sirviendo.
+  if (p[0] === "estudiantes" && p[1]) return `cursos:${p[1]}`;
+  if (p[0] === "cursos" && p[1]) return `cursos:${p[1]}`;
   if (p[0] === "nuevo" && p[1]) return `nuevo:${p[1]}`;
   return p[0];
 }
@@ -57,9 +60,15 @@ function Topbar({ yo, links, activo, ir }) {
     <div className="topbar ce-topbar">
       <div className="topbar-inner">
         <div>
-          <a className="topbar-logo-link" href={BASE} onClick={(e) => (e.preventDefault(), ir("inicio"))} aria-label="Ir al inicio">
-            <Image src="/logo-gus-icon.png" alt="Gus Dive" width={64} height={22} className="topbar-logo" priority />
-          </a>
+          {/* V54: el logo de SNSI, la escuela que representan, al lado del de
+              GUS (maqueta-v54b: "76. 1"). */}
+          <div className="ce-logos">
+            <a className="topbar-logo-link" href={BASE} onClick={(e) => (e.preventDefault(), ir("inicio"))} aria-label="Ir al inicio">
+              <Image src="/logo-gus-icon.png" alt="Gus Dive" width={64} height={22} className="topbar-logo" priority />
+            </a>
+            <span className="ce-logos-sep" />
+            <img src="/logo-snsi.png" alt="SNSI" className="ce-logo-snsi" />
+          </div>
           <div className="topbar-sub">
             Hola, {yo.corto}
             <FechaHoy />
@@ -198,7 +207,9 @@ export default function EstudiantesApp({ p, yo, personas }) {
       }));
       try {
         if (buzoNuevo) await guardar(supabase.from("viajes_buzos").insert(buzoAFila(buzoNuevo)));
-        await guardar(supabase.from("est_estudiantes").insert({ ...estAFila(est), creado_por: yo.id }));
+        const fila = { ...estAFila(est), creado_por: yo.id };
+        if (fila.fecha_id == null) delete fila.fecha_id; // por si falta el SQL de la V55
+        await guardar(supabase.from("est_estudiantes").insert(fila));
         if (interesado) await guardar(supabase.from("est_interesados").update(interesadoAFila({ estado: "inscrito", estudianteId: est.id })).eq("id", interesado.id));
         await log(est.id, `Registró un estudiante: ${(buzoNuevo || db.buzos.find((b) => b.id === est.buzoId))?.nombre || ""} (${est.curso})`);
         return true;
@@ -226,6 +237,61 @@ export default function EstudiantesApp({ p, yo, personas }) {
         await log(null, `${esNuevo ? "Agregó el curso" : "Cambió el curso"}: ${c.nombre}`);
       } catch (e) {
         fallo(e);
+      }
+    },
+    // V55: borrar un curso (solo el Titular; sus fechas se van con él).
+    async borrarCurso(c) {
+      try {
+        const { data, error: e } = await supabase.from("est_cursos").delete().eq("id", c.id).select("id");
+        if (e) throw e;
+        if (!data?.length) {
+          avisar("No se pudo borrar: solo el Titular puede, y hace falta correr el SQL de la V55.");
+          return false;
+        }
+        local((d) => ({ ...d, cursos: d.cursos.filter((x) => x.id !== c.id), fechas: (d.fechas || []).filter((f) => f.cursoId !== c.id) }));
+        await log(null, `Borró el curso: ${c.nombre}`);
+        avisar("Curso borrado");
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
+    // V55: las fechas de cada curso ("64", "72. sí" cupo).
+    async guardarFecha(f, esNueva, c) {
+      try {
+        if (esNueva) await guardar(supabase.from("est_fechas").insert({ id: f.id, ...fechaAFila(f), creado_por: yo.id }));
+        else await guardar(supabase.from("est_fechas").update(fechaAFila(f)).eq("id", f.id));
+        local((d) => ({ ...d, fechas: esNueva ? [...(d.fechas || []), f] : (d.fechas || []).map((x) => (x.id === f.id ? f : x)) }));
+        // Los estudiantes de esa fecha quedan con su día de inicio.
+        if (!esNueva) {
+          const de = db.estudiantes.filter((e) => e.fechaId === f.id && e.fechaInicio !== f.inicio);
+          for (const e of de) await guardar(supabase.from("est_estudiantes").update(estAFila({ fechaInicio: f.inicio })).eq("id", e.id));
+          if (de.length) local((d) => ({ ...d, estudiantes: d.estudiantes.map((e) => (e.fechaId === f.id ? { ...e, fechaInicio: f.inicio } : e)) }));
+        }
+        await log(null, `${esNueva ? "Agregó una fecha" : "Cambió la fecha"}: ${c.nombre} · ${fechaCursoCorta(f.inicio)}${f.cupo ? ` · cupo ${f.cupo}` : ""}`);
+        avisar(esNueva ? "Fecha agregada" : "Fecha guardada");
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
+    async borrarFecha(f, c) {
+      try {
+        const { data, error: e } = await supabase.from("est_fechas").delete().eq("id", f.id).select("id");
+        if (e) throw e;
+        if (!data?.length) {
+          avisar("No se pudo borrar: solo el Titular puede borrar fechas.");
+          return false;
+        }
+        local((d) => ({ ...d, fechas: (d.fechas || []).filter((x) => x.id !== f.id), estudiantes: d.estudiantes.map((e) => (e.fechaId === f.id ? { ...e, fechaId: null } : e)) }));
+        await log(null, `Borró la fecha: ${c.nombre} · ${fechaCursoCorta(f.inicio)}`);
+        avisar("Fecha borrada");
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
       }
     },
     async guardarInstructor(i, esNuevo) {
@@ -268,14 +334,15 @@ export default function EstudiantesApp({ p, yo, personas }) {
     },
   };
 
+  // V55: Cursos al lado de Inicio ("pon cursos al lado de inicio").
   const links = [
     { r: "inicio", t: "Inicio" },
+    { r: "cursos", t: "Cursos" },
     { r: "estudiantes", t: "Estudiantes" },
     ...(p.interesados ? [{ r: "interesados", t: "Interesados" }] : []),
-    { r: "cursos", t: "Cursos" },
     { r: "mas", t: "Más" },
   ];
-  const activo = ruta.startsWith("estudiante") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "administracion"].includes(ruta) ? "mas" : ruta.split(":")[0];
+  const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "administracion", "basedatos", "notificaciones"].includes(ruta) ? "mas" : ruta.split(":")[0];
   const q = { db, p, yo, ops, ir, avisar, personas };
 
   let cuerpo = null;
@@ -290,13 +357,14 @@ export default function EstudiantesApp({ p, yo, personas }) {
     );
   else if (!db) cuerpo = <div className="hint-text">Cargando…</div>;
   else if (ruta === "inicio") cuerpo = <Inicio {...q} />;
-  else if (ruta === "estudiantes" || ruta.startsWith("estudiantes:")) cuerpo = <Lista {...q} filtroInicial={ruta.split(":")[1] || "curso"} />;
+  else if (ruta === "estudiantes") cuerpo = <Directorio {...q} />;
+  else if (ruta === "cursos" || ruta.startsWith("cursos:")) cuerpo = <Lista key={ruta} {...q} filtroInicial={ruta.split(":")[1] || "curso"} />;
   else if (ruta.startsWith("estudiante:")) {
     const id = ruta.split(":")[1];
     cuerpo = db.estudiantes.some((x) => x.id === id) ? <Ficha key={id} {...q} id={id} /> : <div className="hint-text">Ese estudiante no existe.</div>;
   } else if (ruta === "nuevo" || ruta.startsWith("nuevo:")) cuerpo = p.estudiantes ? <Nuevo {...q} interesadoId={ruta.split(":")[1] || null} /> : <Inicio {...q} />;
   else if (ruta === "interesados") cuerpo = p.interesados ? <Interesados {...q} /> : <Inicio {...q} />;
-  else if (ruta === "cursos") cuerpo = <Cursos {...q} />;
+  else if (ruta === "basedatos") cuerpo = <Cursos {...q} />;
   else if (ruta === "mas") cuerpo = <Mas {...q} />;
   else if (ruta === "bitacora") cuerpo = <Bitacora {...q} />;
   else if (ruta === "notificaciones")

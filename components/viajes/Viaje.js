@@ -34,6 +34,7 @@ import {
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { Chip, Modal, IconoWA, CampoCel, Atras, Buscar } from "./Piezas";
 import EnviarPdf from "./EnviarPdf";
+import { TIPOS_BITACORA, tipoBitacora, hora12 } from "@/lib/viajes/bitacora";
 import { IconLink, IconReport, IconLock, IconUnlock, IconCheck, IconX, IconClip, IconAlert, IconClipboard, IconPrint } from "@/components/icons";
 
 const nombreDe = (db, id) => db.buzos.find((b) => b.id === id)?.nombre || "";
@@ -1588,40 +1589,103 @@ export function Numeros({ db, v, cerrado, cambiarViaje }) {
 }
 
 // ------------------------------------------------------------- bitácora
-export function BitacoraLista({ db, viajeId, mostrarViaje }) {
+// V55: organizada por día, con filtro por persona ("83. si", maqueta-v54c)
+// y, en Historial, por tipo ("81": bitácora de buceos, de inscripciones...).
+export function BitacoraLista({ db, viajeId, mostrarViaje, conTipos, ir }) {
   const [q, setQ] = useState("");
-  const lista = db.bitacora.filter((h) => (viajeId ? h.viajeId === viajeId : true)).filter((h) => !q || `${h.texto} ${h.quien} ${h.antes || ""} ${h.despues || ""}`.toLowerCase().includes(q.toLowerCase()));
+  const [quien, setQuien] = useState("");
+  const [tipo, setTipo] = useState("");
+  const base = db.bitacora.filter((h) => (viajeId ? h.viajeId === viajeId : true));
+  const conTipo = base.map((h) => ({ ...h, tipo: tipoBitacora(h) }));
+  const personas = Object.entries(conTipo.reduce((a, h) => ((a[h.quien] = (a[h.quien] || 0) + 1), a), {}))
+    .sort((a, b) => b[1] - a[1])
+    .map(([n]) => n);
+  const lista = conTipo
+    .filter((h) => !tipo || h.tipo === tipo)
+    .filter((h) => !quien || h.quien === quien)
+    .filter((h) => {
+      if (!q) return true;
+      const v = h.viajeId ? db.viajes.find((x) => x.id === h.viajeId) : null;
+      return `${h.texto} ${h.quien} ${h.antes || ""} ${h.despues || ""} ${v?.nombre || ""}`.toLowerCase().includes(q.toLowerCase());
+    });
+  const hoy = hoyISO();
+  const ayer = sumarDias(hoy, -1);
+  const etDia = (d) => (d === hoy ? "Hoy" : d === ayer ? "Ayer" : fechaCorta(d));
+  const dias = [...new Set(lista.map((h) => h.cuando.slice(0, 10)))];
+  const tipoSel = TIPOS_BITACORA.find((x) => x.k === tipo);
   return (
     <>
-      <Buscar value={q} onChange={setQ} placeholder="Buscar en la bitácora…" />
-      <div className="card vj-lista">
-        {lista.length === 0 && <div className="hint-text" style={{ padding: 14 }}>Sin movimientos.</div>}
-        {lista.map((h) => {
-          const v = h.viajeId ? db.viajes.find((x) => x.id === h.viajeId) : null;
-          return (
-            <div key={h.id} className="vj-bit">
-              <div className="vj-bit-cuando">
-                {fechaCorta(h.cuando.slice(0, 10))}
-                <br />
-                {h.cuando.slice(11)}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14 }}>
-                  <b>{h.quien}</b> · {h.texto}
-                </div>
-                {(h.antes || h.despues) && (
-                  <div className="hint-text">
-                    {h.antes ? <span className="vj-antes">{h.antes}</span> : null}
-                    {h.antes && h.despues ? " → " : ""}
-                    {h.despues ? <span className="vj-despues">{h.despues}</span> : null}
+      {conTipos && (
+        <div className="vj-filtros">
+          <button className={`vj-filtro${!tipo ? " sel" : ""}`} onClick={() => setTipo("")}>
+            Todas <span>{conTipo.length}</span>
+          </button>
+          {TIPOS_BITACORA.map((x) => (
+            <button key={x.k} className={`vj-filtro${tipo === x.k ? " sel" : ""}`} onClick={() => setTipo(x.k)}>
+              {x.t} <span>{conTipo.filter((h) => h.tipo === x.k).length}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {tipoSel && <div className="hint-text" style={{ marginBottom: 8 }}>{tipoSel.sub}</div>}
+      <Buscar value={q} onChange={setQ} placeholder={conTipos ? "Buscar buceo, persona o lo que se hizo…" : "Buscar en la bitácora…"} />
+      {personas.length > 1 && (
+        <div className="vj-filtros vj-bit-personas">
+          <button className={`vj-filtro${!quien ? " sel" : ""}`} onClick={() => setQuien("")}>
+            Todos
+          </button>
+          {personas.map((n) => (
+            <button key={n} className={`vj-filtro${quien === n ? " sel" : ""}`} onClick={() => setQuien(n)}>
+              {n}
+            </button>
+          ))}
+        </div>
+      )}
+      {lista.length === 0 && (
+        <div className="card vj-lista">
+          <div className="hint-text" style={{ padding: 14 }}>Sin movimientos.</div>
+        </div>
+      )}
+      {dias.map((d) => (
+        <div key={d}>
+          <div className="vj-bit-dia">{etDia(d)}</div>
+          <div className="card vj-lista">
+            {lista
+              .filter((h) => h.cuando.slice(0, 10) === d)
+              .map((h) => {
+                const v = h.viajeId ? db.viajes.find((x) => x.id === h.viajeId) : null;
+                return (
+                  <div key={h.id} className="vj-bit">
+                    <div className="vj-bit-cuando">{hora12(h.cuando.slice(11))}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14 }}>
+                        <b>{h.quien}</b> · {h.texto}
+                      </div>
+                      {(h.antes || h.despues) && (
+                        <div className="hint-text">
+                          {h.antes ? <span className="vj-antes">{h.antes}</span> : null}
+                          {h.antes && h.despues ? " → " : ""}
+                          {h.despues ? <span className="vj-despues">{h.despues}</span> : null}
+                        </div>
+                      )}
+                      {mostrarViaje && v && (
+                        <div className="hint-text">
+                          {ir ? (
+                            <a className="vj-link" onClick={() => ir(`viaje:${v.id}`)}>
+                              {v.nombre} · {fechaCorta(v.fecha)}
+                            </a>
+                          ) : (
+                            `${v.nombre} · ${fechaCorta(v.fecha)}`
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-                {mostrarViaje && v && <div className="hint-text">{v.nombre} · {fechaCorta(v.fecha)}</div>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                );
+              })}
+          </div>
+        </div>
+      ))}
     </>
   );
 }

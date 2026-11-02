@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Atras, Buscar, CampoCel } from "@/components/viajes/Piezas";
-import { ESCUELAS, pasosIniciales, soloDigitos, hoyISO } from "@/lib/estudiantes/modelo";
+import { ESCUELAS, pasosIniciales, soloDigitos, hoyISO, fechasDe, textoCupo, fechaCursoCorta, quedan } from "@/lib/estudiantes/modelo";
 import { formatoCel, formatoCedula } from "@/lib/viajes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
 
@@ -22,12 +22,18 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
     escuela: primero?.escuelas?.[0] || "",
     instructor: "",
     fechaInicio: hoyISO(),
+    // V55: la fecha sale de las fechas del curso ("64"); si no hay, lista de espera.
+    cual: "",
     buceosPrevios: "",
     precio: primero?.precio == null ? "" : String(primero.precio),
   });
   const [guardando, setGuardando] = useState(false);
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const curso = cursos.find((c) => c.id === f.cursoId);
+  const fechas = curso ? fechasDe(db, curso.id) : [];
+  // Sin el SQL de la V55 todavía no hay fechas: se escribe a mano como antes.
+  const cual = f.cual || (db.sinFechas ? "mano" : fechas.find((x) => quedan(db, x) !== 0)?.id ?? "espera");
+  const fechaSel = fechas.find((x) => x.id === cual);
 
   const t = q.trim().toLowerCase();
   const td = soloDigitos(q);
@@ -40,7 +46,7 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
 
   function cambiarCurso(id) {
     const c = cursos.find((x) => x.id === id);
-    setF((x) => ({ ...x, cursoId: id, escuela: c?.escuelas?.includes(x.escuela) ? x.escuela : c?.escuelas?.[0] || "", precio: c?.precio == null ? "" : String(c.precio) }));
+    setF((x) => ({ ...x, cursoId: id, cual: "", escuela: c?.escuelas?.includes(x.escuela) ? x.escuela : c?.escuelas?.[0] || "", precio: c?.precio == null ? "" : String(c.precio) }));
   }
 
   async function guardar() {
@@ -71,9 +77,10 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
       buzoId: buzoNuevo ? buzoNuevo.id : buzo.id,
       cursoId: curso.id,
       curso: curso.nombre,
-      escuela: f.escuela,
-      instructor: f.instructor,
-      fechaInicio: f.fechaInicio,
+      escuela: ESCUELAS.length === 1 ? ESCUELAS[0] : f.escuela,
+      instructor: f.instructor || fechaSel?.instructor || "",
+      fechaInicio: cual === "mano" ? f.fechaInicio : fechaSel ? fechaSel.inicio : "",
+      fechaId: fechaSel ? fechaSel.id : null,
       buceosPrevios: f.buceosPrevios === "" ? null : Number(f.buceosPrevios),
       pasos: pasosIniciales(curso),
       examen: curso.llevaExamen ? "pendiente" : "na",
@@ -83,7 +90,7 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
       etapas: {},
       numeroCert: "",
       seguimiento: [],
-      estado: "curso",
+      estado: cual === "espera" ? "espera" : "curso",
       via: "mano",
       interesadoId: interesado?.id || null,
       creadoEn: new Date().toISOString(),
@@ -160,7 +167,7 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
               <button key={b.id} className="ce-est" onClick={() => setBuzo(b)}>
                 <div className="ce-est-t">
                   <b>{b.nombre}</b>
-                  {db.estudiantes.some((e) => e.buzoId === b.id && !["entregada", "cancelado"].includes(e.estado)) && <span className="ce-chip alm">Ya tiene un curso abierto</span>}
+                  {db.estudiantes.some((e) => e.buzoId === b.id && !["entregada", "avisado", "cancelado"].includes(e.estado)) && <span className="ce-chip alm">Ya tiene un curso abierto</span>}
                 </div>
                 <div className="ce-est-m">{[b.doc || b.pasaporte, b.cel ? formatoCel(b.cel) : "", b.nivel].filter(Boolean).join(" · ")}</div>
               </button>
@@ -187,18 +194,34 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
             </select>
           </label>
           <div className="ce-form-fila">
+            {ESCUELAS.length > 1 && (
+              <label>
+                Escuela
+                <select value={f.escuela} onChange={(e) => set("escuela", e.target.value)}>
+                  {(curso?.escuelas?.length ? curso.escuelas : ESCUELAS).map((x) => (
+                    <option key={x}>{x}</option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label>
-              Escuela
-              <select value={f.escuela} onChange={(e) => set("escuela", e.target.value)}>
-                {(curso?.escuelas?.length ? curso.escuelas : ESCUELAS).map((x) => (
-                  <option key={x}>{x}</option>
+              Fecha
+              <select value={cual} onChange={(e) => set("cual", e.target.value)}>
+                {fechas.map((x) => (
+                  <option key={x.id} value={x.id} disabled={quedan(db, x) === 0}>
+                    {fechaCursoCorta(x.inicio)} · {textoCupo(db, x)}
+                  </option>
                 ))}
+                <option value="espera">Lista de espera (sin fecha)</option>
+                <option value="mano">Otra fecha (escribirla)</option>
               </select>
             </label>
-            <label>
-              Fecha de inicio
-              <input type="date" value={f.fechaInicio} onChange={(e) => set("fechaInicio", e.target.value)} />
-            </label>
+            {cual === "mano" && (
+              <label>
+                Fecha de inicio
+                <input type="date" value={f.fechaInicio} onChange={(e) => set("fechaInicio", e.target.value)} />
+              </label>
+            )}
           </div>
           <label>
             Instructor

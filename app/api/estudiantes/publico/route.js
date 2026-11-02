@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buzoAFila, nuevoId } from "@/lib/viajes/datos";
 import { filaACurso, filaAEst } from "@/lib/estudiantes/datos";
-import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula } from "@/lib/viajes/modelo";
+import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula, hoyISO, fechaLarga } from "@/lib/viajes/modelo";
 import { pasosIniciales, pagado, debe, nombreEtapa } from "@/lib/estudiantes/modelo";
 import { docValido, buscarPorDoc, celCoincide, logLink } from "@/lib/estudiantes/servidor";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
@@ -101,8 +101,26 @@ export async function POST(request) {
   }
 
   // Si ya tiene ese mismo curso abierto, no se repite.
-  const { data: abiertos } = await s.from("est_estudiantes").select("*").eq("buzo_id", buzo.id).eq("curso_id", curso.id).not("estado", "in", "(entregada,cancelado)");
+  const { data: abiertos } = await s.from("est_estudiantes").select("*").eq("buzo_id", buzo.id).eq("curso_id", curso.id).not("estado", "in", "(entregada,avisado,cancelado)");
   if (abiertos?.length) return NextResponse.json({ ok: true, ya: true, primer: primerNombre(buzo.nombre), estudianteId: abiertos[0].id, curso: curso.nombre });
+
+  // V55: la fecha que escogió ("64", "71. B"). Si está llena o el curso no
+  // tiene fecha, queda en lista de espera ("65").
+  let fecha = null;
+  let espera = !!body.espera;
+  let pidioLlena = false;
+  if (body.fechaId) {
+    const { data: fr } = await s.from("est_fechas").select("*").eq("id", String(body.fechaId)).maybeSingle();
+    if (!fr || fr.curso_id !== curso.id || fr.activo === false || fr.inicio < hoyISO()) return NextResponse.json({ error: "Esa fecha ya no está disponible. Escoge otra." }, { status: 400 });
+    if (fr.cupo != null) {
+      const { count } = await s.from("est_estudiantes").select("id", { count: "exact", head: true }).eq("fecha_id", fr.id).neq("estado", "cancelado");
+      if ((count || 0) >= fr.cupo) {
+        espera = true;
+        pidioLlena = true;
+      }
+    }
+    if (!espera) fecha = fr;
+  }
 
   const pasos = pasosIniciales(curso);
   if (buzo.foto && pasos.foto === "pendiente") pasos.foto = "listo";
@@ -113,18 +131,20 @@ export async function POST(request) {
     curso_id: curso.id,
     curso: curso.nombre,
     escuela: curso.escuelas?.[0] || null,
-    fecha_inicio: /^\d{4}-\d{2}-\d{2}$/.test(String(body.fechaInicio || "")) ? body.fechaInicio : null,
+    fecha_inicio: fecha ? fecha.inicio : !espera && /^\d{4}-\d{2}-\d{2}$/.test(String(body.fechaInicio || "")) ? body.fechaInicio : null,
+    ...(fecha ? { fecha_id: fecha.id } : {}),
     buceos_previos: body.buceos === "" || body.buceos == null ? null : Math.max(0, Math.min(9999, parseInt(body.buceos, 10) || 0)),
     pasos,
     examen: curso.llevaExamen ? "pendiente" : "na",
     precio: curso.precio,
-    estado: "curso",
+    estado: espera ? "espera" : "curso",
     via: "link",
   };
   const { error: eEst } = await s.from("est_estudiantes").insert(fila);
   if (eEst) return NextResponse.json({ error: "No se pudo registrar el curso. Intenta de nuevo." }, { status: 500 });
-  await logLink(s, fila.id, `Se registró por el link: ${buzo.nombre} (${curso.nombre})`);
+  const cuando = fecha ? ` · ${fechaLarga(fecha.inicio)}` : espera ? (pidioLlena ? " · lista de espera (la fecha estaba llena)" : " · lista de espera") : "";
+  await logLink(s, fila.id, `Se registró por el link: ${buzo.nombre} (${curso.nombre}${cuando})`);
   // V54: aviso en la campanita ("62. si").
-  await avisarEquipoEst(s, { permiso: "estudiantes", titulo: "Nuevo estudiante por el link", texto: `${buzo.nombre} · ${curso.nombre}`, url: `/control-estudiantes/estudiante/${fila.id}` });
-  return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio });
+  await avisarEquipoEst(s, { permiso: "estudiantes", titulo: espera ? "Nuevo en lista de espera (link)" : "Nuevo estudiante por el link", texto: `${buzo.nombre} · ${curso.nombre}${fecha ? ` · ${fechaLarga(fecha.inicio)}` : ""}`, url: `/control-estudiantes/estudiante/${fila.id}` });
+  return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio, fecha: fecha ? fecha.inicio : null, espera, llena: pidioLlena, semana: fecha ? curso.semana || null : null });
 }

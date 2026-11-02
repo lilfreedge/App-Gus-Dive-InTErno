@@ -29,6 +29,8 @@ export default function MeInteresa({ cursos }) {
     <div className="pb ce-pub">
       <div className="pb-head">
         <img src="/logo-gus-icon.png" alt="Gus Dive Center" style={{ height: 24 }} />
+        {/* V54: logo de SNSI ("77. si"). */}
+        <img src="/logo-snsi.png" alt="SNSI" className="ce-logo-snsi" />
         <span>Gus Dive Center</span>
       </div>
       <div className="pb-body">

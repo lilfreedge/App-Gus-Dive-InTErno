@@ -33,9 +33,11 @@ export function Historial({ db, p, ir }) {
         <button className={`vj-tab${tab === "viajes" ? " sel" : ""}`} onClick={() => setTab("viajes")}>
           Buceos pasados ({pasados.length})
         </button>
+        {/* V55: "Bitácoras", por tipo ("81": bitácora de buceos, de
+            inscripciones y así). Antes "Movimientos (bitácora)", todo junto. */}
         {p.bitacora && (
           <button className={`vj-tab${tab === "mov" ? " sel" : ""}`} onClick={() => setTab("mov")}>
-            Movimientos (bitácora)
+            Bitácoras
           </button>
         )}
       </div>
@@ -73,9 +75,9 @@ export function Historial({ db, p, ir }) {
       {tab === "mov" && p.bitacora && (
         <>
           <div className="hint-text" style={{ marginBottom: 8 }}>
-            Cada movimiento de todos los buceos: quién, cuándo y qué cambió (antes → después). Solo tú y los administradores.
+            Cada movimiento: quién, cuándo y qué cambió (antes → después), por tipo y por persona. Solo tú y los administradores.
           </div>
-          <BitacoraLista db={db} mostrarViaje />
+          <BitacoraLista db={db} mostrarViaje conTipos ir={ir} />
         </>
       )}
     </>

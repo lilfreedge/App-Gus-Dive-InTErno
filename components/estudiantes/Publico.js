@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { soloDigitos, formatoCedula, rd, fechaCorta } from "@/lib/viajes/modelo";
+import { soloDigitos, formatoCedula, rd, fechaCorta, fechaLarga } from "@/lib/viajes/modelo";
+import { semanaDe } from "@/lib/estudiantes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck, IconLock, IconCamera } from "@/components/icons";
@@ -168,7 +169,23 @@ function Privacidad() {
 
 const PROGRESO = ["datos", "curso", "docs"];
 
-export default function EstudiantePublico({ cursos, tienda }) {
+// V55 -- La semana del curso (Open Water: "79"), para cuando escoge la fecha.
+function Semana({ inicio, semana }) {
+  const dias = semanaDe(inicio, semana);
+  if (!dias.length) return null;
+  return (
+    <div className="ce-pub-semana">
+      {dias.map((d) => (
+        <div key={d.dia}>
+          <span>{d.dia}</span>
+          <span>{d.texto}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function EstudiantePublico({ cursos, tienda, conFechas = false }) {
   const [paso, setPaso] = useState("doc"); // doc | hola | cel | datos | curso | docs | listo | estado
   const [tipoDoc, setTipoDoc] = useState("cedula");
   const [doc, setDoc] = useState("");
@@ -178,6 +195,9 @@ export default function EstudiantePublico({ cursos, tienda }) {
   const [buceos, setBuceos] = useState("");
   const [cursoId, setCursoId] = useState(cursos[0]?.id || "");
   const [fechaInicio, setFechaInicio] = useState("");
+  // V55: el curso escogido en la lista ("71. B": primero el curso, después la fecha).
+  const [cursoSel, setCursoSel] = useState("");
+  const [fechaVista, setFechaVista] = useState("");
   const [res, setRes] = useState(null); // lo que devuelve "registrar"
   const [estado, setEstado] = useState(null);
   const [error, setError] = useState("");
@@ -212,12 +232,13 @@ export default function EstudiantePublico({ cursos, tienda }) {
       setEstado(await api({ accion: "estado", tipoDoc, doc, cel }));
       ir("estado");
     });
-  const registrar = () =>
+  const registrar = (extra = {}) =>
     correr(async () => {
-      const r = await api({ accion: "registrar", tipoDoc, doc, cel, datos: d, buceos, cursoId, fechaInicio });
+      const r = await api({ accion: "registrar", tipoDoc, doc, cel, datos: d, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, ...extra });
       setRes(r);
       ir("docs");
     });
+  const cursoElegido = cursos.find((c) => c.id === cursoSel);
 
   const falta = buzo?.falta || { nac: true, direccion: true, emergencia: true, correo: true, foto: true, cedula: true };
   const pasoN = PROGRESO.indexOf(paso);
@@ -226,6 +247,8 @@ export default function EstudiantePublico({ cursos, tienda }) {
     <div className="pb ce-pub">
       <div className="pb-head">
         <img src="/logo-gus-icon.png" alt="Gus Dive Center" style={{ height: 24 }} />
+        {/* V54: logo de SNSI ("77. si"). */}
+        <img src="/logo-snsi.png" alt="SNSI" className="ce-logo-snsi" />
         <span>Registro de estudiante</span>
       </div>
       <div className="pb-body">
@@ -344,7 +367,7 @@ export default function EstudiantePublico({ cursos, tienda }) {
           </div>
         )}
 
-        {paso === "curso" && (
+        {paso === "curso" && !conFechas && (
           <div className="pb-card">
             <div className="pb-t">Tu curso</div>
             <label className="ce-pub-l">¿Qué curso vas a tomar?</label>
@@ -359,11 +382,95 @@ export default function EstudiantePublico({ cursos, tienda }) {
             <label className="ce-pub-l">¿Cuándo empiezas?</label>
             <input className="pb-input" type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
             {error && <div className="pb-error">{error}</div>}
-            <button className="pb-btn" disabled={cargando || !cursoId} onClick={registrar}>
+            <button className="pb-btn" disabled={cargando || !cursoId} onClick={() => registrar()}>
               {cargando ? "Registrando…" : "Seguir"}
             </button>
             <button className="pb-btn sec" onClick={() => ir("datos")}>
               Atrás
+            </button>
+          </div>
+        )}
+
+        {/* V55: primero el curso y después la fecha ("71. B"), con precio ("74"),
+            cupos ("72") y la semana de Open Water ("79"). Sin fecha o llena:
+            lista de espera ("65"). */}
+        {paso === "curso" && conFechas && !cursoElegido && (
+          <div className="pb-card">
+            <div className="pb-t">Tu curso</div>
+            <div className="pb-h">¿Qué curso vas a tomar?</div>
+            {cursos.map((c) => (
+              <button
+                key={c.id}
+                className={`pb-op${c.fechas.length ? "" : " gris"}`}
+                onClick={() => {
+                  setCursoSel(c.id);
+                  setCursoId(c.id);
+                  setFechaVista("");
+                  if (!c.fechas.length) ir("espera");
+                }}
+              >
+                {c.nombre}
+                <div className="pb-op-sub">{c.fechas.length ? `${c.fechas.length} ${c.fechas.length === 1 ? "fecha próxima" : "fechas próximas"}` : "Todavía no hay fecha"}</div>
+                {c.precio != null && <div className="ce-pub-precio">{rd(c.precio)}</div>}
+                {!c.fechas.length && <span className="ce-pub-chip espera">Lista de espera</span>}
+              </button>
+            ))}
+            <button className="pb-btn sec" onClick={() => ir("datos")}>
+              Atrás
+            </button>
+          </div>
+        )}
+
+        {paso === "curso" && conFechas && cursoElegido && (
+          <div className="pb-card">
+            <div className="pb-t">{cursoElegido.nombre}</div>
+            <div className="pb-h">
+              ¿Cuándo quieres empezar?{cursoElegido.precio != null ? ` Precio: ${rd(cursoElegido.precio)}.` : ""}
+            </div>
+            {cursoElegido.fechas.map((f) => {
+              const llena = f.quedan === 0;
+              const abierta = fechaVista === f.id;
+              return (
+                <div key={f.id}>
+                  <button className={`pb-op${abierta ? " sel" : ""}`} onClick={() => setFechaVista(abierta ? "" : f.id)}>
+                    Empieza el {fechaLarga(f.inicio)}
+                    {f.quedan != null && <span className={`ce-pub-chip ${llena ? "lleno" : "ok"}`}>{llena ? "Lleno · lista de espera" : `Quedan ${f.quedan} ${f.quedan === 1 ? "cupo" : "cupos"}`}</span>}
+                  </button>
+                  {abierta && (
+                    <div style={{ margin: "-2px 0 10px" }}>
+                      <Semana inicio={f.inicio} semana={cursoElegido.semana} />
+                      {error && <div className="pb-error">{error}</div>}
+                      <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: cursoElegido.id, fechaId: f.id, espera: llena })}>
+                        {cargando ? "Registrando…" : llena ? "Ponerme en la lista de espera" : "Escoger esta fecha"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <button className="pb-btn sec" onClick={() => (setCursoSel(""), setFechaVista(""))}>
+              Escoger otro curso
+            </button>
+          </div>
+        )}
+
+        {paso === "espera" && cursoElegido && (
+          <div className="pb-card">
+            <div className="pb-t">Lista de espera</div>
+            <div className="ce-pub-aviso">
+              <b>Por ahora no hay fechas para {cursoElegido.nombre}.</b>
+              <br />
+              Te ponemos en la lista de espera. Te escribimos por WhatsApp si se abre un cupo o cuando abramos el próximo curso.
+            </div>
+            <div className="pb-h" style={{ marginTop: 6 }}>
+              Igual puedes dejar tus documentos y tu firma de una vez.
+            </div>
+            {error && <div className="pb-error">{error}</div>}
+            <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: cursoElegido.id, espera: true })}>
+              {cargando ? "Registrando…" : "Seguir"}
+            </button>
+            <button className="pb-btn sec" onClick={() => (setCursoSel(""), ir("curso"))}>
+              Escoger otro curso
             </button>
           </div>
         )}
@@ -397,8 +504,19 @@ export default function EstudiantePublico({ cursos, tienda }) {
                 le esta pidiendo eso si el estudiante ni sabe aún el curso... No
                 hace sentido, el buzo ni siquiera ha empezado el curso"). */}
             <div className="pb-h">
-              {res.ya ? `Ya te teníamos en ${res.curso}.` : `Ya tenemos tus datos para ${res.curso}.`} Te escribiremos por WhatsApp para coordinar.
+              {res.ya
+                ? `Ya te teníamos en ${res.curso}. Te escribiremos por WhatsApp para coordinar.`
+                : res.espera
+                  ? `Estás en la lista de espera de ${res.curso}${res.llena ? " (esa fecha se llenó)" : ""}. Te escribiremos por WhatsApp si se abre un cupo o cuando abramos el próximo curso.`
+                  : res.fecha
+                    ? `Ya tenemos tus datos para ${res.curso}, que empieza el ${fechaLarga(res.fecha)}. Te escribiremos por WhatsApp para coordinar.`
+                    : `Ya tenemos tus datos para ${res.curso}. Te escribiremos por WhatsApp para coordinar.`}
             </div>
+            {res.fecha && res.semana && (
+              <div style={{ textAlign: "left" }}>
+                <Semana inicio={res.fecha} semana={res.semana} />
+              </div>
+            )}
             <a className="pb-btn ce-pub-wa" href={wa} target="_blank" rel="noopener noreferrer">
               Escribir por WhatsApp
             </a>
@@ -415,17 +533,17 @@ export default function EstudiantePublico({ cursos, tienda }) {
                 <div className="pb-h" style={{ margin: "2px 0 6px" }}>
                   {[e.escuela, e.fechaInicio ? `empezó el ${fechaCorta(e.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
                 </div>
-                {[
+                {e.estado === "espera" && <div className="ce-pub-aviso" style={{ marginBottom: 6 }}>Estás en la lista de espera. Te escribimos por WhatsApp cuando haya fecha.</div>}
+                {e.estado !== "espera" && [
                   { k: "curso", t: "En curso", sub: "Terminando las clases, el pago y el examen." },
                   { k: "almacen", t: "Estamos procesando tu certificación", sub: `La mandamos a ${e.escuela || "la escuela"}.` },
-                  { k: "certificacion", t: "Tu certificación está lista", sub: "Pasa a buscarla a la tienda." },
-                  { k: "avisado", t: "Te avisamos", sub: "Pasa a buscarla a la tienda." },
-                  { k: "entregada", t: "Entregada", sub: "¡Felicidades!" },
+                  // V55: llega por correo de la escuela, no hay que buscarla ("87").
+                  { k: "certificacion", t: "Tu certificación está lista", sub: "Te vamos a avisar por WhatsApp." },
+                  { k: "entregada", t: "¡Listo, ya estás certificado!", sub: `${e.escuela || "La escuela"} te mandó un correo con tus datos para entrar a su app. ¡Felicidades!` },
                 ]
-                  .filter((x) => x.k !== "avisado")
                   .map((x, i, arr) => {
-                    const orden = ["curso", "almacen", "certificacion", "avisado", "entregada"];
-                    const actual = orden.indexOf(e.estado === "avisado" ? "certificacion" : e.estado);
+                    const orden = ["curso", "almacen", "certificacion", "entregada"];
+                    const actual = orden.indexOf(e.estado === "avisado" ? "entregada" : e.estado);
                     const yo = orden.indexOf(x.k);
                     return (
                       <div key={x.k} className="ce-pub-et">

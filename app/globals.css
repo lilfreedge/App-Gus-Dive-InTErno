@@ -240,10 +240,10 @@ html[data-theme="dark"] .btn.secondary.btn-hold {
   background: #cd392a;
 }
 .espacio-icon.espacio-icon-estudiantes {
-  /* Control Estudiantes: naranja sutil ("46. No, será naranja sutil").
-     1-nov: probamos el rojo de Alquiler y se devolvió ("no, devuélvelo a sus
-     colores como estaban"). */
-  background: #874520;
+  /* Control Estudiantes: V54, amarillo de SNSI (maqueta-v54b: "75. A",
+     "77. si"); antes cobre #874520. El dibujo va oscuro (blanco no se lee). */
+  background: #f6ce46;
+  color: #2b2200;
 }
 
 /* V33 -- "¿A dónde quieres entrar?" sin barra de color arriba (opción C de
@@ -2546,7 +2546,10 @@ a.vj-nombre:hover { text-decoration: underline; }
 .vj-num-top .card { margin: 0; }
 .vj-grande { font-size: 26px; font-weight: 800; margin: 2px 0; }
 .vj-bit { display: flex; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--superficie-suave); }
-.vj-bit-cuando { font-size: 12px; color: var(--texto-suave); width: 52px; flex-shrink: 0; text-align: right; line-height: 1.3; }
+.vj-bit-cuando { font-size: 12px; color: var(--texto-suave); width: 70px; flex-shrink: 0; text-align: right; line-height: 1.3; padding-top: 2px; white-space: nowrap; }
+/* V55: la bitácora por día (maqueta-v54c, "83. si"). */
+.vj-bit-dia { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; color: var(--texto-suave); margin: 12px 0 6px; text-transform: uppercase; }
+.vj-bit-personas { margin-top: 8px; }
 .vj-antes { text-decoration: line-through; color: #a14b4b; }
 .vj-despues { color: #1f7a45; font-weight: 700; }
 .vj-reporte { background: #fff; border: 1px solid var(--borde); border-radius: 12px; overflow: hidden; color: #1a2733; }
@@ -3004,12 +3007,25 @@ a.mant-pend-chip:hover { border-color: var(--rojo); }
 /* ===== Control Estudiantes (migration_78.sql) =====
    Naranja sutil, cobre ("46. No, será naranja sutil"; 1-nov: "devuélvelo a
    sus colores como estaban"). */
-.ce-app { --ce: #874520; --ce-claro: #f6ebe3; --ce-texto: #6b3517; }
-html[data-theme="dark"] .ce-app { --ce-claro: #3a2618; --ce-texto: #f0c7a4; }
-.ce-topbar { background: var(--ce, #874520) !important; }
+/* V54: amarillo de SNSI, la escuela que representan (maqueta-v54b: "75. A").
+   La barra en amarillo con letras oscuras; botones, barras y enlaces de
+   adentro en dorado oscuro (con letras blancas se leen bien). */
+.ce-app { --ce: #8a6a00; --ce-barra: #f6ce46; --ce-barra-txt: #2b2200; --ce-claro: #fdf3cf; --ce-texto: #5c4700; }
+html[data-theme="dark"] .ce-app { --ce-claro: #3a3010; --ce-texto: #f3d77a; }
+.ce-topbar { background: var(--ce-barra, #f6ce46) !important; color: var(--ce-barra-txt, #2b2200); }
+.ce-topbar .topbar-sub, .ce-topbar .topbar-appname { color: var(--ce-barra-txt, #2b2200) !important; }
+.ce-topbar .topbar-appname { opacity: 0.8; }
+.ce-topbar .topnav-link { color: #3d3100; background: rgba(0, 0, 0, 0.08); opacity: 1; }
+.ce-topbar .topnav-link-active { background: #2b2200; color: #f6ce46; }
+.ce-topbar .gear-btn { color: #2b2200; border-color: rgba(43, 34, 0, 0.3); background: rgba(255, 255, 255, 0.35); }
+.ce-topbar .campana-n { box-shadow: 0 0 0 2px #f6ce46; }
+/* El logo de SNSI al lado del de GUS ("76. 1"). */
+.ce-logos { display: flex; align-items: center; gap: 10px; }
+.ce-logos-sep { width: 1px; height: 20px; background: currentColor; opacity: 0.35; }
+.ce-logo-snsi { height: 18px; width: auto; display: block; }
 /* V54: sin el anillo azul del navegador en las pestañas (nota 1-nov, foto de Más). */
 .ce-topbar .topnav-link:focus { outline: none; }
-.ce-topbar .topnav-link:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.85); outline-offset: 2px; }
+.ce-topbar .topnav-link:focus-visible { outline: 2px solid #2b2200; outline-offset: 2px; }
 .ce-app .btn-primary { background: var(--ce); border-color: var(--ce); color: #fff; }
 .ce-app .btn-primary:hover { filter: brightness(1.08); }
 .ce-app .vj-filtro.sel, .ce-app .ce-filtro.sel { background: var(--ce); border-color: var(--ce); color: #fff; }
@@ -3099,7 +3115,11 @@ html[data-theme="dark"] .ce-app { --ce-claro: #3a2618; --ce-texto: #f0c7a4; }
 .ce-adm-fila { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; font-family: inherit; color: inherit; text-align: left; }
 /* Control Estudiantes: el link del estudiante y "Me interesa" (mismo estilo
    que el link de Buceos, en el naranja del app). */
-.ce-pub { --ce: #874520; --ce-claro: #f6ebe3; --ce-texto: #6b3517; }
+.ce-pub { --ce: #8a6a00; --ce-claro: #fdf3cf; --ce-texto: #5c4700; }
+/* V54: el link del estudiante también con el amarillo de SNSI ("77. si"),
+   con una franja amarilla arriba y el logo de SNSI al lado del de GUS. */
+.ce-pub .pb-head { border-top: 4px solid #f6ce46; }
+.ce-pub .ce-logo-snsi { height: 15px; }
 .ce-pub .pb-head { color: var(--ce-texto); }
 .ce-pub .pb-btn { background: var(--ce); color: #fff; }
 .ce-pub .pb-btn.sec { background: #fff; color: var(--ce-texto); border: 1.5px solid #cfd8de; }
@@ -3124,3 +3144,41 @@ html[data-theme="dark"] .ce-app { --ce-claro: #3a2618; --ce-texto: #f0c7a4; }
 .ce-pub-et i.ya { background: var(--ce); }
 .ce-pub-pago { background: #f4f8fb; border-radius: 10px; padding: 9px 11px; font-size: 14px; margin-top: 8px; }
 .ce-pub-trampa { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+/* ---------- V55: Control Estudiantes reorganizado (Cursos, Estudiantes, Base de datos, fechas) ---------- */
+.ce-etq-fila { font-size: 11.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-suave); margin: 12px 0 6px; }
+.ce-app .ce-cursos-chips .vj-filtro { background: var(--ce-claro); border-color: #f3e2a6; color: var(--ce-texto); }
+.ce-app .ce-cursos-chips .vj-filtro.sel { background: #2b2200; border-color: #2b2200; color: #f6ce46; }
+.ce-tarjeta-curso { margin-top: 4px; }
+.ce-fecha { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--borde); font-size: 14px; }
+.ce-fecha:first-of-type { border-top: 0; }
+.ce-dir { padding: 2px 14px; }
+.ce-dir-fila { padding: 10px 0; border-bottom: 1px solid var(--borde); }
+.ce-dir-fila:last-child { border-bottom: 0; }
+.ce-dir-nombre { background: none; border: 0; padding: 0; font: inherit; font-weight: 800; font-size: 15px; color: var(--texto); cursor: pointer; text-align: left; }
+.ce-dir-nombre:hover { color: var(--ce); }
+.ce-dir-cursos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.ce-dir-curso { display: inline-flex; gap: 3px; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; }
+.ce-semana-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
+.ce-semana-form label { font-size: 12px; font-weight: 700; color: var(--texto-suave); margin: 0; }
+.ce-semana-form input { margin-top: 2px; }
+.ce-app .ce-mas-card .hub-link-icon { background: #f6ce46; color: #2b2200; }
+.ce-app .ce-mas-card:hover { border-color: #e2b82c; }
+.ce-app .vj-adm-item.fuerte { background: var(--ce-claro); }
+.ce-app .vj-tab.sel { color: var(--ce-texto); border-color: var(--ce); }
+.ce-espera { background: var(--ce-claro); border-color: #f3e2a6; color: var(--ce-texto); }
+/* El link del estudiante: cursos, fechas, semana y lista de espera ("71. B"). */
+.ce-pub .pb-op.gris { background: #fafbfc; }
+.ce-pub .pb-op.sel { border-color: #8a6a00; background: #fffaf0; box-shadow: inset 0 0 0 1px #8a6a00; }
+.ce-pub-precio { color: var(--ce-texto); font-size: 13.5px; font-weight: 800; margin-top: 3px; }
+.ce-pub-chip { display: inline-block; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 2px 8px; margin-top: 5px; margin-left: 0; }
+.pb-op .ce-pub-chip { display: table; }
+.ce-pub-chip.ok { background: #e6f5ec; color: #1d6b3d; }
+.ce-pub-chip.lleno { background: #fdecea; color: #c0392b; }
+.ce-pub-chip.espera { background: var(--ce-claro); color: var(--ce-texto); }
+.ce-pub-semana { background: var(--ce-claro); border-radius: 12px; padding: 8px 12px; margin: 0 0 8px; font-size: 14px; color: var(--ce-texto); }
+.ce-pub-semana div { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px dashed rgba(0, 0, 0, 0.08); }
+.ce-pub-semana div:last-child { border-bottom: 0; }
+.ce-pub-semana span:first-child { font-weight: 800; white-space: nowrap; }
+.ce-pub-semana span:last-child { text-align: right; }
+.ce-pub-aviso { background: var(--ce-claro); border-radius: 12px; padding: 12px; color: var(--ce-texto); font-size: 14.5px; line-height: 1.45; }

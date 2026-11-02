@@ -51,7 +51,7 @@ async function preparar(s, datos) {
   // El curso: el que diga, si es suyo; si no, el más reciente que tenga abierto.
   const { data: cursos } = await s.from("est_estudiantes").select("id, curso, comprobantes, pasos, estado").eq("buzo_id", b.id).order("creado_en", { ascending: false });
   const abiertos = (cursos || []).filter((x) => !["cancelado"].includes(x.estado));
-  const est = abiertos.find((x) => x.id === String(datos.estudianteId || "")) || abiertos.find((x) => x.estado !== "entregada") || abiertos[0];
+  const est = abiertos.find((x) => x.id === String(datos.estudianteId || "")) || abiertos.find((x) => !["entregada", "avisado"].includes(x.estado)) || abiertos[0];
   if (["comprobante", "firma"].includes(que) && !est) return { error: "No tienes un curso registrado." };
   if (que === "comprobante" && (est.comprobantes || []).length >= 10) return { error: "Ya subiste varios comprobantes. Escríbenos por WhatsApp." };
   const carpeta = ["foto", "cedula"].includes(que) ? `buzo-${b.id}` : est.id;

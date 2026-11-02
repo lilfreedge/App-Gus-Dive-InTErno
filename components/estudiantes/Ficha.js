@@ -29,6 +29,10 @@ import {
   fechaDeIso,
   edad,
   soloDigitos,
+  fechasDe,
+  textoCupo,
+  fechaCursoCorta,
+  quedan,
 } from "@/lib/estudiantes/modelo";
 import { formatoCel, formatoCedula } from "@/lib/viajes/modelo";
 import { cursoDe, buzoDe } from "./Inicio";
@@ -70,7 +74,10 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
   const etapas = est.etapas || {};
   const sello = ops.sello();
   const falta = faltaDe(est, c);
-  const idx = est.estado === "cancelado" ? -1 : ETAPAS.findIndex((e) => e.k === est.estado);
+  // V55: la lista de espera cuenta como el paso 1 (todavía no empieza).
+  const idx = est.estado === "cancelado" ? -1 : ETAPAS.findIndex((e) => e.k === (est.estado === "avisado" ? "entregada" : est.estado === "espera" ? "curso" : est.estado));
+  const fecha = est.fechaId ? (db.fechas || []).find((f) => f.id === est.fechaId) : null;
+  const fechasLibres = c ? fechasDe(db, c.id, { soloFuturas: true }).filter((f) => quedan(db, f) !== 0) : [];
   const puedeAlgo = p.estudiantes || p.almacen || p.entregar;
 
   function marcarPaso(k, v) {
@@ -110,7 +117,8 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
   }
   function avisarWA() {
     window.open(linkWhatsApp(b.cel, mensajeCertificacion(est, b)), "_blank", "noopener");
-    if (est.estado === "certificacion") cambiar({ estado: "avisado", etapas: { ...etapas, avisado: sello } }, "Le avisó por WhatsApp que su certificación está lista");
+    // V55: avisarle lo deja terminado; no hay tarjeta que buscar ("87").
+    if (est.estado === "certificacion") cambiar({ estado: "entregada", etapas: { ...etapas, avisado: sello } }, "Le avisó por WhatsApp que su certificación está lista", "Certificación lista", "Avisado");
   }
 
   return (
@@ -120,7 +128,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
         {b.nombre}
       </h1>
       <div className="hint-text" style={{ fontSize: 14 }}>
-        {[est.curso, est.escuela, est.instructor, est.fechaInicio ? `${est.fechaInicio > hoyISO() ? "empieza" : "empezó"} el ${fechaCorta(est.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
+        {[est.curso, est.escuela, est.instructor, est.estado === "espera" ? "lista de espera" : est.fechaInicio ? `${est.fechaInicio > hoyISO() ? "empieza" : "empezó"} el ${fechaCorta(est.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
         {est.via === "link" ? " · se registró por el link" : ""}
       </div>
 
@@ -134,6 +142,26 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
           )}
         </div>
       ) : (
+        <>
+        {/* V55: en lista de espera (curso sin fecha o fecha llena, "65"). */}
+        {est.estado === "espera" && (
+          <div className="aviso-box ce-espera" style={{ marginTop: 10 }}>
+            <b>En lista de espera.</b> {fechasLibres.length ? `${est.curso} tiene fecha con cupo.` : `${est.curso} no tiene fechas con cupo. Agrega una en Cursos.`}
+            {p.estudiantes && fechasLibres.length > 0 && (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+                {fechasLibres.map((f) => (
+                  <button
+                    key={f.id}
+                    className="btn secondary vj-mini"
+                    onClick={() => cambiar({ estado: "curso", fechaId: f.id, fechaInicio: f.inicio, ...(est.instructor ? {} : f.instructor ? { instructor: f.instructor } : {}) }, "Lo pasó a una fecha", "Lista de espera", fechaCursoCorta(f.inicio))}
+                  >
+                    Pasar al {fechaCursoCorta(f.inicio)} · {textoCupo(db, f)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <div className="ce-pasos">
           {ETAPAS.map((e, i) => (
             <div key={e.k} className={`ce-paso${i < idx ? " ok" : i === idx ? " ya" : ""}`}>
@@ -142,6 +170,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
             </div>
           ))}
         </div>
+        </>
       )}
 
       {/* ---------------------------------------------------- 1. El curso */}
@@ -197,16 +226,16 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
               className="btn btn-primary vj-btn"
               style={{ marginTop: 10 }}
               disabled={!listoParaAlmacen(est, c)}
-              onClick={() => cambiar({ estado: "almacen", etapas: { ...etapas, mandado: sello } }, "Lo mandó al almacén", "En curso", "Almacén")}
+              onClick={() => cambiar({ estado: "almacen", etapas: { ...etapas, mandado: sello } }, "Lo mandó a procesar", "En curso", "Procesando")}
             >
-              Mandar al almacén
+              Mandar a procesar
             </button>
             <div className="hint-text" style={{ marginTop: 6 }}>
               {falta.length ? `Falta: ${falta.join(", ")}.` : "Está todo listo."}
             </div>
           </>
         )}
-        {etapas.mandado && <Hecho titulo="Mandado al almacén" sello={etapas.mandado} />}
+        {etapas.mandado && <Hecho titulo="Mandado a procesar" sello={etapas.mandado} />}
       </div>
 
       {/* ---------------------------------------------------- Pago */}
@@ -322,20 +351,20 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
           ))}
       </div>
 
-      {/* ---------------------------------------------------- 2. Almacén */}
+      {/* ---------------------------------------------------- 2. Procesando (antes "Almacén", "86. si") */}
       <div className={`ce-etapa${idx < 1 ? " gris" : ""}`}>
         <h4>
-          2. Almacén {idx > 1 && <IconCheck size={16} />}
+          2. Procesando {idx > 1 && <IconCheck size={16} />}
         </h4>
         {idx < 1 ? (
           <div className="hint-text">Recibido · Subido al Drive · Procesado (No. de certificación)</div>
         ) : (
           <>
             {etapas.recibido ? (
-              <Hecho titulo="Recibido en almacén" sello={etapas.recibido} />
+              <Hecho titulo="Recibido para procesar" sello={etapas.recibido} />
             ) : (
               p.almacen && (
-                <button className="btn btn-primary vj-btn" onClick={() => cambiar({ etapas: { ...etapas, recibido: sello } }, "El almacén lo recibió")}>
+                <button className="btn btn-primary vj-btn" onClick={() => cambiar({ etapas: { ...etapas, recibido: sello } }, "Lo recibieron para procesar")}>
                   Lo recibí
                 </button>
               )
@@ -375,7 +404,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
                 )
               ))}
             {etapas.procesado && est.estado === "almacen" && p.almacen && (
-              <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => cambiar({ estado: "certificacion", etapas: { ...etapas, cert: sello } }, "Llegó la certificación", "Almacén", "Certificación")}>
+              <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => cambiar({ estado: "certificacion", etapas: { ...etapas, cert: sello } }, "Llegó la certificación", "Procesando", "Certificación")}>
                 Llegó la certificación
               </button>
             )}
@@ -386,10 +415,10 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
       {/* ---------------------------------------------------- 3-5 */}
       <div className={`ce-etapa${idx < 2 ? " gris" : ""}`}>
         <h4>3. Certificación {idx > 2 && <IconCheck size={16} />}</h4>
-        {etapas.cert ? <Hecho titulo="Llegó la certificación" sello={etapas.cert} /> : <div className="hint-text">Cuando llegue, el almacén la marca aquí.</div>}
+        {etapas.cert ? <Hecho titulo="Llegó la certificación" sello={etapas.cert} /> : <div className="hint-text">Cuando llegue, se marca aquí.</div>}
       </div>
       <div className={`ce-etapa${idx < 2 ? " gris" : ""}`}>
-        <h4>4–5. Avisarle y entregarla {idx > 3 && <IconCheck size={16} />}</h4>
+        <h4>4. Avisarle {idx >= 3 && <IconCheck size={16} />}</h4>
         {idx >= 2 && p.entregar && b.cel && (
           <>
             <button className="btn vj-btn ce-wa" onClick={avisarWA}>
@@ -400,13 +429,9 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
         )}
         {idx >= 2 && !b.cel && <div className="hint-text">No tiene celular guardado. Ponlo en Sus datos.</div>}
         {etapas.avisado && <Hecho titulo="Le avisaron" sello={etapas.avisado} />}
-        {est.estado === "avisado" && p.entregar && (
-          <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => cambiar({ estado: "entregada", etapas: { ...etapas, entregada: sello } }, "La recogió", "Avisado", "Entregada")}>
-            La recogió
-          </button>
-        )}
+        {/* V55: sin "La recogió" ("87": le llega un correo de la escuela). */}
         {etapas.entregada && <Hecho titulo="La recogió" sello={etapas.entregada} />}
-        {idx < 2 && <div className="hint-text">Avisar por WhatsApp · La recogió</div>}
+        {idx < 2 && <div className="hint-text">Avisar por WhatsApp (le llega un correo de {est.escuela || "la escuela"} con sus datos para entrar a su app).</div>}
       </div>
 
       {/* ---------------------------------------------------- Pago instructor */}
@@ -534,7 +559,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
       <div className="ce-etapa">
         <h4>
           Datos del curso
-          {p.estudiantes && !editCurso && est.estado === "curso" && (
+          {p.estudiantes && !editCurso && ["curso", "espera"].includes(est.estado) && (
             <button className="btn secondary vj-mini" onClick={() => setEditCurso(true)}>
               <IconEdit size={14} /> Editar
             </button>
@@ -557,16 +582,16 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
               <span>{est.instructor || "—"}</span>
             </div>
             <div className="ce-dato">
-              <span>Fecha de inicio</span>
-              <span>{est.fechaInicio ? fechaCorta(est.fechaInicio) : "—"}</span>
+              <span>Fecha</span>
+              <span>{est.estado === "espera" ? "Lista de espera" : fecha ? `${fechaCursoCorta(fecha.inicio)} · ${textoCupo(db, fecha)}` : est.fechaInicio ? fechaCorta(est.fechaInicio) : "—"}</span>
             </div>
           </>
         )}
       </div>
 
       {/* ---------------------------------------------------- Cancelar / borrar */}
-      {p.estudiantes && est.estado === "curso" && (
-        <button className="btn secondary vj-mini" style={{ marginTop: 12 }} onClick={() => cambiar({ estado: "cancelado" }, "Canceló el curso", "En curso", "Cancelado")}>
+      {p.estudiantes && ["curso", "espera"].includes(est.estado) && (
+        <button className="btn secondary vj-mini" style={{ marginTop: 12 }} onClick={() => cambiar({ estado: "cancelado" }, "Canceló el curso", nombreEtapa(est.estado), "Cancelado")}>
           Cancelar este curso
         </button>
       )}
@@ -684,11 +709,19 @@ function EditarDatos({ b, ops, cerrar }) {
 }
 
 function EditarCurso({ db, est, cambiar, cerrar }) {
-  const [f, setF] = useState({ cursoId: est.cursoId || "", escuela: est.escuela, instructor: est.instructor, fechaInicio: est.fechaInicio });
+  // V55: la fecha se escoge de las fechas del curso, o lista de espera, u otra a mano.
+  const [f, setF] = useState({ cursoId: est.cursoId || "", escuela: est.escuela, instructor: est.instructor, fechaInicio: est.fechaInicio, cual: est.estado === "espera" ? "espera" : est.fechaId || (est.fechaInicio ? "mano" : "espera") });
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const curso = db.cursos.find((c) => c.id === f.cursoId);
+  const fechas = curso ? fechasDe(db, curso.id) : [];
   function guardar() {
-    const cambios = { escuela: f.escuela, instructor: f.instructor, fechaInicio: f.fechaInicio };
+    const cambios = { escuela: ESCUELAS.length === 1 ? ESCUELAS[0] : f.escuela, instructor: f.instructor };
+    if (f.cual === "espera") Object.assign(cambios, { fechaId: null, fechaInicio: "", estado: "espera" });
+    else if (f.cual === "mano") Object.assign(cambios, { fechaId: null, fechaInicio: f.fechaInicio, ...(est.estado === "espera" ? { estado: "curso" } : {}) });
+    else {
+      const fe = fechas.find((x) => x.id === f.cual) || (db.fechas || []).find((x) => x.id === f.cual);
+      if (fe) Object.assign(cambios, { fechaId: fe.id, fechaInicio: fe.inicio, ...(est.estado === "espera" ? { estado: "curso" } : {}), ...(!f.instructor && fe.instructor ? { instructor: fe.instructor } : {}) });
+    }
     if (curso && curso.id !== est.cursoId) {
       // Al cambiar de curso, los pasos que ya estaban listos se quedan.
       const nuevos = pasosIniciales(curso);
@@ -714,19 +747,38 @@ function EditarCurso({ db, est, cambiar, cerrar }) {
         </select>
       </label>
       <div className="ce-form-fila">
+        {ESCUELAS.length > 1 && (
+          <label>
+            Escuela
+            <select value={f.escuela} onChange={(e) => set("escuela", e.target.value)}>
+              <option value="">—</option>
+              {ESCUELAS.map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <label>
-          Escuela
-          <select value={f.escuela} onChange={(e) => set("escuela", e.target.value)}>
-            <option value="">—</option>
-            {ESCUELAS.map((x) => (
-              <option key={x}>{x}</option>
+          Fecha
+          <select value={f.cual} onChange={(e) => set("cual", e.target.value)}>
+            {est.fechaId && !fechas.some((x) => x.id === est.fechaId) && (db.fechas || []).some((x) => x.id === est.fechaId) && (
+              <option value={est.fechaId}>{fechaCursoCorta((db.fechas || []).find((x) => x.id === est.fechaId).inicio)}</option>
+            )}
+            {fechas.map((x) => (
+              <option key={x.id} value={x.id}>
+                {fechaCursoCorta(x.inicio)} · {textoCupo(db, x)}
+              </option>
             ))}
+            <option value="espera">Lista de espera (sin fecha)</option>
+            <option value="mano">Otra fecha (escribirla)</option>
           </select>
         </label>
-        <label>
-          Fecha de inicio
-          <input type="date" value={f.fechaInicio} onChange={(e) => set("fechaInicio", e.target.value)} />
-        </label>
+        {f.cual === "mano" && (
+          <label>
+            Fecha de inicio
+            <input type="date" value={f.fechaInicio} onChange={(e) => set("fechaInicio", e.target.value)} />
+          </label>
+        )}
       </div>
       <label>
         Instructor
