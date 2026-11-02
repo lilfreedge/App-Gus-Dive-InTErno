@@ -169,6 +169,9 @@ function Privacidad() {
 
 const PROGRESO = ["datos", "curso", "docs"];
 
+// V59: las nacionalidades más comunes de quienes vienen a la tienda.
+const NACIONALIDADES = ["Estados Unidos", "España", "Venezuela", "Haití", "Colombia", "Puerto Rico", "Canadá", "Italia", "Francia", "Alemania", "Argentina", "Cuba", "México", "Reino Unido", "Otra"];
+
 // V55 -- La semana del curso (Open Water: "79"), para cuando escoge la fecha.
 function Semana({ inicio, semana }) {
   const dias = semanaDe(inicio, semana);
@@ -188,6 +191,9 @@ function Semana({ inicio, semana }) {
 export default function EstudiantePublico({ cursos, tienda, conFechas = false }) {
   const [paso, setPaso] = useState("doc"); // doc | hola | cel | datos | curso | docs | listo | estado
   const [tipoDoc, setTipoDoc] = useState("cedula");
+  const [avisoDni, setAvisoDni] = useState(false);
+  const [nacionalidad, setNacionalidad] = useState("");
+  const [nacOtra, setNacOtra] = useState("");
   const [doc, setDoc] = useState("");
   const [cel, setCel] = useState("");
   const [buzo, setBuzo] = useState(null); // lo que devuelve "doc"
@@ -234,7 +240,10 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
     });
   const registrar = (extra = {}) =>
     correr(async () => {
-      const r = await api({ accion: "registrar", tipoDoc, doc, cel, datos: d, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, ...extra });
+      // V59: el contacto de emergencia se guarda como "Nombre · 809-000-0000".
+      const emergencia = [String(d.emergenciaNombre || "").trim(), String(d.emergenciaCel || "").trim()].filter(Boolean).join(" · ") || d.emergencia;
+      const nac = tipoDoc === "pasaporte" ? (nacionalidad === "Otra" ? nacOtra.trim() : nacionalidad) : "";
+      const r = await api({ accion: "registrar", tipoDoc, doc, cel, datos: { ...d, emergencia, ...(nac ? { nacionalidad: nac } : {}) }, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, ...extra });
       setRes(r);
       ir("docs");
     });
@@ -262,17 +271,54 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
 
         {paso === "doc" && (
           <div className="pb-card">
-            <div className="pb-t">¡Bienvenido a tu curso!</div>
-            <div className="pb-h">Pon tu cédula o pasaporte para empezar.</div>
+            {/* V59 ("163", maqueta-v59 pestaña 6): "¡Bienvenido!", "Cédula" y "Otro
+                documento" (pasaporte o documento de otro país, con la nacionalidad). */}
+            <div className="pb-t">¡Bienvenido!</div>
+            <div className="pb-h">Pon tu documento para empezar.</div>
             <div className="pb-seg">
-              <button className={tipoDoc === "cedula" ? "sel" : ""} onClick={() => setTipoDoc("cedula")}>
+              <button className={tipoDoc === "cedula" ? "sel" : ""} onClick={() => (setTipoDoc("cedula"), setDoc(""), setAvisoDni(false))}>
                 Cédula
               </button>
-              <button className={tipoDoc === "pasaporte" ? "sel" : ""} onClick={() => setTipoDoc("pasaporte")}>
-                Pasaporte
+              <button className={tipoDoc === "pasaporte" ? "sel" : ""} onClick={() => (setTipoDoc("pasaporte"), setDoc(""), setAvisoDni(false))}>
+                Otro documento
               </button>
             </div>
-            <input className="pb-input" inputMode={tipoDoc === "cedula" ? "numeric" : "text"} value={doc} onChange={(e) => setDoc(tipoDoc === "cedula" ? formatoCedula(e.target.value) : e.target.value.toUpperCase())} placeholder={tipoDoc === "cedula" ? "000-0000000-0" : "Número de pasaporte"} onKeyDown={(e) => e.key === "Enter" && doc && !cargando && buscar()} />
+            {tipoDoc === "pasaporte" && <label className="ce-pub-l">Pasaporte o documento de tu país</label>}
+            <input
+              className="pb-input"
+              inputMode={tipoDoc === "cedula" ? "numeric" : "text"}
+              value={doc}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (tipoDoc === "cedula") {
+                  // Si escriben letras o más de 11 números, no es cédula dominicana.
+                  setAvisoDni(/[a-z]/i.test(v) || soloDigitos(v).length > 11);
+                  setDoc(formatoCedula(v));
+                } else setDoc(v.toUpperCase());
+              }}
+              placeholder={tipoDoc === "cedula" ? "000-0000000-0" : "Ej. AB123456 o 12345678Z"}
+              onKeyDown={(e) => e.key === "Enter" && doc && !cargando && buscar()}
+            />
+            {avisoDni && tipoDoc === "cedula" && (
+              <div className="pb-error" style={{ fontWeight: 600 }}>
+                ¿No es cédula dominicana?{" "}
+                <a style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => (setTipoDoc("pasaporte"), setDoc(""), setAvisoDni(false))}>
+                  Toca &quot;Otro documento&quot;
+                </a>
+              </div>
+            )}
+            {tipoDoc === "pasaporte" && (
+              <>
+                <label className="ce-pub-l">Nacionalidad</label>
+                <select className="pb-input" value={nacionalidad} onChange={(e) => setNacionalidad(e.target.value)}>
+                  <option value="">Escoge…</option>
+                  {NACIONALIDADES.map((x) => (
+                    <option key={x}>{x}</option>
+                  ))}
+                </select>
+                {nacionalidad === "Otra" && <input className="pb-input" style={{ marginTop: 6 }} value={nacOtra} onChange={(e) => setNacOtra(e.target.value)} placeholder="¿Cuál?" />}
+              </>
+            )}
             {error && <div className="pb-error">{error}</div>}
             <button className="pb-btn" disabled={cargando || !doc} onClick={buscar}>
               {cargando ? "Buscando…" : "Seguir"}
@@ -286,16 +332,17 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             <div className="pb-t">¡Hola, {buzo.primer}!</div>
             {/* V54: sin "Ya te tenemos registrado de antes" (nota 1-nov). */}
             <div className="pb-h">¿Qué quieres hacer?</div>
+            {/* V59 (nota 2-nov): sin "Solo te pedimos lo que nos falta" ni "No soy yo";
+                una flecha para volver. */}
             <button className="pb-op" onClick={() => ir("cel")}>
               Registrarme en un curso
-              <div className="pb-op-sub">Solo te pedimos lo que nos falta.</div>
             </button>
             <button className="pb-op" onClick={() => ir("cel-estado")}>
               Ver cómo va mi curso
               <div className="pb-op-sub">Tu certificación, tu pago y tus documentos.</div>
             </button>
             <button className="pb-link" onClick={() => ir("doc")}>
-              No soy yo
+              ← Volver
             </button>
           </div>
         )}
@@ -352,8 +399,12 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             )}
             {falta.emergencia && (
               <>
+                {/* V59 (nota 2-nov): "en contacto de emergencia pide nombre y número". */}
                 <label className="ce-pub-l">Contacto de emergencia</label>
-                <input className="pb-input" value={d.emergencia} onChange={(e) => setD({ ...d, emergencia: e.target.value })} placeholder="Nombre, celular y qué es tuyo (ej. papá)" />
+                <div className="ce-pub-dos">
+                  <input className="pb-input" value={d.emergenciaNombre || ""} onChange={(e) => setD({ ...d, emergenciaNombre: e.target.value })} placeholder="Nombre (ej. Ana Pérez, mamá)" />
+                  <CampoCel className="pb-input" value={d.emergenciaCel || ""} onChange={(v) => setD({ ...d, emergenciaCel: v })} placeholder="Su celular" />
+                </div>
               </>
             )}
             <label className="ce-pub-l">¿Cuántos buceos tienes?</label>
@@ -461,21 +512,29 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
 
         {paso === "espera" && cursoElegido && (
           <div className="pb-card">
-            <div className="pb-t">Lista de espera</div>
-            <div className="ce-pub-aviso">
-              <b>Por ahora no hay fechas para {cursoElegido.nombre}.</b>
-              <br />
-              Te ponemos en la lista de espera. Te escribimos por WhatsApp si se abre un cupo o cuando abramos el próximo curso.
+            {/* V59 (maqueta-v57 pestaña 2, "114"; nota 2-nov: "que el estudiante
+                decida qué quiere hacer"): un título claro, una frase, y él decide. */}
+            <div className="ce-pub-espera">
+              <div className="ce-pub-espera-ic">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <rect x="3" y="4.5" width="18" height="16" rx="2" />
+                  <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+                </svg>
+              </div>
+              <div className="pb-t">Todavía no hay fecha</div>
+              <div className="pb-h">
+                para <b>{cursoElegido.nombre}</b>
+              </div>
             </div>
-            <div className="pb-h" style={{ marginTop: 6 }}>
-              Igual puedes dejar tus documentos y tu firma de una vez.
+            <div className="ce-pub-aviso" style={{ textAlign: "center" }}>
+              Si quieres, te anotamos en la lista de espera y te avisamos por WhatsApp cuando abramos uno.
             </div>
             {error && <div className="pb-error">{error}</div>}
             <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: cursoElegido.id, espera: true })}>
-              {cargando ? "Registrando…" : "Seguir"}
+              {cargando ? "Anotando…" : "Anotarme en la lista de espera"}
             </button>
             <button className="pb-btn sec" onClick={() => (setCursoSel(""), ir("curso"))}>
-              Escoger otro curso
+              Ver otro curso
             </button>
           </div>
         )}

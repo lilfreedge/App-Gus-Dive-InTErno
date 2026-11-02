@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { rd, us, soloDigitos, precioDop, PREGUNTAS, hoyISO, sumarDias, nuevoIdLocal, puntos, fechaLarga, palabraViaje } from "@/lib/viajes/modelo";
-import { IconCalendar, IconReceipt, IconCheck, IconPlus, IconRegulator, IconClipboard, IconLock, IconBell, IconChat } from "@/components/icons";
+import { IconCalendar, IconReceipt, IconCheck, IconPlus, IconRegulator, IconClipboard, IconLock, IconBell, IconChat, IconCamera, IconLink } from "@/components/icons";
 import { armarSlug } from "@/lib/viajes/datos";
 import { Atras } from "./Piezas";
+import { createClient } from "@/lib/supabase/client";
 
 const num = (t) => Number(soloDigitos(t)) || 0;
 
@@ -33,6 +34,68 @@ function Seccion({ id, abierta, setAbierta, Icono, titulo, resumen, children }) 
 }
 
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+
+// V59 (165) -- Para quien llega directo: la hora y el lugar de encuentro, el
+// link de ubicación (Google Maps o Waze) y la foto de la entrada. Sale en el
+// link de inscripción, debajo de la salida.
+function Encuentro({ f, setF }) {
+  const e = f.encuentro || {};
+  const [subiendo, setSubiendo] = useState(false);
+  const [error, setError] = useState("");
+  const setE = (k, val) => setF((x) => ({ ...x, encuentro: { hora: "", lugar: "", mapa: "", foto: "", ...(x.encuentro || {}), [k]: val } }));
+  async function subir(file) {
+    if (!file) return;
+    if (!/^image\//.test(file.type || "")) return setError("Tiene que ser una foto.");
+    setError("");
+    setSubiendo(true);
+    try {
+      const supabase = createClient();
+      const ext = ((file.name || "").split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const path = `entradas/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: er } = await supabase.storage.from("viajes-fotos").upload(path, file, { upsert: false, contentType: file.type || undefined });
+      if (er) throw er;
+      const { data } = supabase.storage.from("viajes-fotos").getPublicUrl(path);
+      setE("foto", data.publicUrl);
+    } catch (er) {
+      setError(/bucket|not found/i.test(er?.message || "") ? "Falta correr el SQL de la V59 en Supabase (todo_v59)." : "No se pudo subir la foto. Intenta de nuevo.");
+    }
+    setSubiendo(false);
+  }
+  return (
+    <>
+      <div className="hint-text" style={{ marginBottom: 6 }}>
+        Sale en el link debajo de la salida, para el que no sale desde la tienda. Si lo dejas vacío, no sale.
+      </div>
+      <div className="vj-form2">
+        <div>
+          <label>Hora de encuentro</label>
+          <input value={e.hora || ""} onChange={(ev) => setE("hora", ev.target.value)} placeholder="Ej. 7:40 AM" />
+        </div>
+        <div>
+          <label>Dónde</label>
+          <input value={e.lugar || ""} onChange={(ev) => setE("lugar", ev.target.value)} placeholder="Ej. en la entrada de La Caleta" />
+        </div>
+      </div>
+      <label>Link de la ubicación</label>
+      <input value={e.mapa || ""} onChange={(ev) => setE("mapa", ev.target.value.trim())} placeholder="Pega el link de Google Maps o Waze" inputMode="url" />
+      <label>Foto de la entrada</label>
+      {e.foto ? (
+        <div className="vj-enc-foto">
+          <img src={e.foto} alt="Entrada" />
+          <button type="button" className="btn secondary vj-mini" onClick={() => setE("foto", "")}>
+            Quitar foto
+          </button>
+        </div>
+      ) : (
+        <label className="vj-adjuntar">
+          <IconCamera size={15} /> {subiendo ? "Subiendo…" : "Subir foto"}
+          <input type="file" accept="image/*" style={{ display: "none" }} disabled={subiendo} onChange={(ev) => subir(ev.target.files?.[0])} />
+        </label>
+      )}
+      {error && <div className="error-box" style={{ marginTop: 8 }}>{error}</div>}
+    </>
+  );
+}
 
 function FormViaje({ f, setF, p, esViaje }) {
   const [abierta, setAbierta] = useState(esViaje ? "datos" : null);
@@ -88,6 +151,20 @@ function FormViaje({ f, setF, p, esViaje }) {
             </div>
           </div>
         </div>
+      </Seccion>
+
+      <Seccion
+        id="encuentro"
+        {...sec}
+        Icono={IconLink}
+        titulo="¿Llegas directo? (punto de encuentro)"
+        resumen={(() => {
+          const e = f.encuentro || {};
+          const r = [e.hora, e.lugar, e.mapa ? "con ubicación" : "", e.foto ? "con foto" : ""].filter(Boolean).join(" · ");
+          return r || "No sale en el link";
+        })()}
+      >
+        <Encuentro f={f} setF={setF} />
       </Seccion>
 
       <Seccion

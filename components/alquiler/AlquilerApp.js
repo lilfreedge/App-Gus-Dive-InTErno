@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { IconGear, IconLogout, IconShuffle, IconHistory } from "@/components/icons";
 import { cargarTodo, alquilerAFila, itemAFila, buzoAFila, filaABuzo, nuevoId } from "@/lib/alquiler/datos";
 import { moraDe, rd, hoyISO } from "@/lib/alquiler/modelo";
-import { Inicio, Lista, Detalle, Nuevo, Retornos, Equipos, Mas, Bitacora } from "./Pantallas";
+import { Inicio, Lista, Detalle, Nuevo, Retornos, Equipos, Mas, Bitacora, Precios, Estadisticas, Reporte } from "./Pantallas";
 
 // App Alquiler (migration_82.sql). Mismo esquema que Control Estudiantes:
 // un solo componente para todas las pantallas (/alquiler/...), los datos se
@@ -228,6 +228,34 @@ export default function AlquilerApp({ p, yo }) {
         return null;
       }
     },
+    // V58: precios por tipo (migration_83).
+    async guardarPrecioTipo(tipo, precio) {
+      const antes = db.preciosTipo[tipo];
+      local((d) => ({ ...d, preciosTipo: { ...d.preciosTipo, [tipo]: precio } }));
+      try {
+        await guardar(supabase.from("alq_precios_tipo").upsert({ tipo, precio, actualizado_en: new Date().toISOString() }));
+        await log(null, `Precio por tipo: ${tipo}`, antes == null ? "sin precio" : rd(antes), precio == null ? "sin precio" : rd(precio));
+        avisar("Precio guardado");
+      } catch (e) {
+        fallo(e);
+      }
+    },
+    // "Usar este precio en todos": se les quita el precio propio.
+    async usarPrecioTipo(tipo, equipos) {
+      try {
+        for (const fuente of ["tanques", "reguladores", "otros"]) {
+          const ids = equipos.filter((e) => e.fuente === fuente).map((e) => e.id);
+          if (!ids.length) continue;
+          const tabla = fuente === "tanques" ? "tanques_alquiler" : fuente === "reguladores" ? "reguladores_alquiler" : "alq_equipos";
+          await guardar(supabase.from(tabla).update(fuente === "otros" ? { precio: null } : { precio_alquiler: null }).in("id", ids));
+        }
+        local((d) => ({ ...d, equipos: d.equipos.map((e) => (equipos.some((x) => x.id === e.id && x.fuente === e.fuente) ? { ...e, precio: null } : e)) }));
+        await log(null, `Usar el precio del tipo ${tipo} en todos`, equipos.map((e) => `${e.codigo} ${rd(e.precio)}`).join(", "), `Precio del tipo: ${rd(db.preciosTipo[tipo])}`);
+        avisar("Listo");
+      } catch (e) {
+        fallo(e);
+      }
+    },
     async guardarEquipo(eq, esNuevo, antes) {
       const tabla = eq.fuente === "tanques" ? "tanques_alquiler" : eq.fuente === "reguladores" ? "reguladores_alquiler" : "alq_equipos";
       const fila =
@@ -303,8 +331,11 @@ export default function AlquilerApp({ p, yo }) {
   else if (k === "equipos") cuerpo = <Equipos {...q} />;
   else if (k === "mas") cuerpo = <Mas {...q} />;
   else if (k === "bitacora") cuerpo = <Bitacora {...q} />;
+  else if (k === "precios") cuerpo = <Precios {...q} />;
+  else if (k === "estadisticas") cuerpo = <Estadisticas {...q} />;
+  else if (k === "reporte") cuerpo = <Reporte {...q} />;
   else cuerpo = <Inicio {...q} />;
-  const activo = ["ver", "nuevo"].includes(k) ? "alquiler" : k === "bitacora" ? "mas" : k;
+  const activo = ["ver", "nuevo"].includes(k) ? "alquiler" : ["bitacora", "precios", "estadisticas", "reporte"].includes(k) ? "mas" : k;
 
   return (
     <div className="alq-app">

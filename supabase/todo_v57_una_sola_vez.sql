@@ -48,7 +48,7 @@ with cat as (
   update public.viajes_catalogo
      set datos = case when coalesce(datos->>'noIncluye', '') = ''
                       then jsonb_set(replace(datos::text, 'guía y Parque Nacional', 'guía y entrada al Parque Nacional')::jsonb,
-                                     '{noIncluye}', to_jsonb(E'Transporte al Parque Nacional\nPropina para los ayudantes del parque (cuidan los carros y ayudan con los tanques)'::text))
+                                     '{noIncluye}', to_jsonb(E'Transporte al Parque Nacional\nPropina para los ayudantes del parque'::text))
                       else replace(datos::text, 'guía y Parque Nacional', 'guía y entrada al Parque Nacional')::jsonb end
    where nombre = 'La Caleta'
      and (datos::text like '%guía y Parque Nacional%' or coalesce(datos->>'noIncluye', '') = '')
@@ -58,7 +58,7 @@ via as (
   update public.viajes
      set datos = case when coalesce(datos->>'noIncluye', '') = ''
                       then jsonb_set(replace(datos::text, 'guía y Parque Nacional', 'guía y entrada al Parque Nacional')::jsonb,
-                                     '{noIncluye}', to_jsonb(E'Transporte al Parque Nacional\nPropina para los ayudantes del parque (cuidan los carros y ayudan con los tanques)'::text))
+                                     '{noIncluye}', to_jsonb(E'Transporte al Parque Nacional\nPropina para los ayudantes del parque'::text))
                       else replace(datos::text, 'guía y Parque Nacional', 'guía y entrada al Parque Nacional')::jsonb end
    where nombre = 'La Caleta' and estado in ('abierto', 'cerrado_insc')
      and (datos::text like '%guía y Parque Nacional%' or coalesce(datos->>'noIncluye', '') = '')

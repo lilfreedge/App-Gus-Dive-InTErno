@@ -209,7 +209,7 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
               <select value={cual} onChange={(e) => set("cual", e.target.value)}>
                 {fechas.map((x) => (
                   <option key={x.id} value={x.id} disabled={quedan(db, x) === 0}>
-                    {fechaCursoCorta(x.inicio)} · {textoCupo(db, x)}
+                    {fechaCursoCorta(x.inicio)} {x.inicio.slice(0, 4)} · {textoCupo(db, x)}
                   </option>
                 ))}
                 <option value="espera">Lista de espera (sin fecha)</option>

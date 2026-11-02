@@ -354,6 +354,14 @@ export function Buceos(props) {
 // =====================================================================
 // CALENDARIO
 // =====================================================================
+// V59: los cursos que caen en un día (cada curso va de lunes a domingo).
+export function cursosDelDia(cursosCal, iso) {
+  const t = new Date(iso + "T12:00:00Z").getTime();
+  return (cursosCal || [])
+    .map((c) => ({ ...c, dia: Math.round((t - new Date(c.inicio + "T12:00:00Z").getTime()) / 86400000) + 1 }))
+    .filter((c) => c.dia >= 1 && c.dia <= 7);
+}
+
 export function Calendario(props) {
   const { db, ops, p, ir, avisar, personas = [], calUrl } = props;
   const [mes, setMes] = useState(() => {
@@ -401,6 +409,7 @@ export function Calendario(props) {
             const iso = isoDe(d);
             const viajes = db.viajes.filter((v) => v.fecha === iso);
             const rs = recs.filter((r) => r.fecha === iso);
+            const cursos = cursosDelDia(db.cursosCal, iso);
             const fuera = d.getMonth() !== mes.m;
             return (
               <div
@@ -422,6 +431,11 @@ export function Calendario(props) {
                     {v.nombre.split(/[,(]/)[0]}
                   </button>
                 ))}
+                {cursos.map((c) => (
+                  <div key={c.id} className={`vj-cal-curso${c.dia === 1 ? " empieza" : ""}`} title={`${c.nombre} · día ${c.dia} de 7`}>
+                    {c.dia === 1 ? c.nombre : `${c.nombre.split(" ").map((w) => w[0]).join("").slice(0, 4)} · día ${c.dia}`}
+                  </div>
+                ))}
                 {rs.map((r) => (
                   <div key={r.key} className={`vj-cal-rec${r.hecho ? " hecho" : ""}`} title={r.texto}>
                     <IconBell size={10} /> {r.texto}
@@ -432,7 +446,7 @@ export function Calendario(props) {
           })}
         </div>
         <div className="hint-text" style={{ marginTop: 8 }}>
-          <span className="vj-cal-viaje muestra">Buceo</span> <span className="vj-cal-rec muestra">
+          <span className="vj-cal-viaje muestra">Buceo</span> <span className="vj-cal-curso muestra">Curso</span> <span className="vj-cal-rec muestra">
             <IconBell size={10} /> Recordatorio
           </span>{" "}
           {p.editarViaje ? "· Toca un día para ponerle un recordatorio." : ""}

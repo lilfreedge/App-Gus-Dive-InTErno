@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { PREGUNTAS, fechaLarga, rd, soloDigitos, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos, palabraViaje, tallasPara } from "@/lib/viajes/modelo";
+import { PREGUNTAS, fechaLarga, rd, soloDigitos, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos, palabraViaje, tallasPara, partesSalida, linkGoogleCalendar } from "@/lib/viajes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "./Piezas";
-import { IconCheck, IconClip, IconCalendar, IconClock, IconLock, IconChat, IconAlert } from "@/components/icons";
+import { IconCheck, IconClip, IconCalendar, IconLock, IconChat, IconAlert, IconCamera } from "@/components/icons";
 
 // V42 -- Lo que ve el buzo en el link de inscripción (maqueta-viajes-v2).
 // Se identifica con su cédula o pasaporte; el celular queda para escribirle.
@@ -123,6 +123,72 @@ function SubirComprobante({ slug, tipoDoc, doc, cuentas, copiar, copiado, monto 
 
 // V45 -- Pedido: "decir que esa información de identidad no es compartida con
 // nadie. Es información utilizada para llevar el registro de los buzos".
+// V59 (165) -- La fecha y la hora de salida grandes, en un cuadro, con
+// "Agregar a mi calendario". En el iPhone abre el archivo del calendario
+// (lo agrega al calendario del iPhone); en los demás, Google Calendar.
+function CuadroSalida({ v, enFin }) {
+  const sal = partesSalida(v.salida);
+  const f = fechaLarga(v.fecha);
+  const agregar = () => {
+    const link = typeof window !== "undefined" ? `${window.location.origin}/inscripcion/${v.slug}` : "";
+    const ios = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Macintosh/i.test(navigator.userAgent) && (navigator.maxTouchPoints > 0 || /iPhone|iPad|iPod/i.test(navigator.userAgent));
+    if (ios) window.location.href = `/api/viajes/ics/${encodeURIComponent(v.slug)}`;
+    else window.open(linkGoogleCalendar(v, link), "_blank", "noopener");
+  };
+  return (
+    <div className={`pb-salida${enFin ? " en-fin" : ""}`}>
+      <div className="pb-salida-f">{f.charAt(0).toUpperCase() + f.slice(1)}</div>
+      {sal.hora ? (
+        <>
+          <div className="pb-salida-k">Salimos a las</div>
+          <div className="pb-salida-h">{sal.hora}</div>
+          {sal.lugar && <div className="pb-salida-l">{sal.lugar}</div>}
+        </>
+      ) : (
+        v.salida && <div className="pb-salida-l">{v.salida}</div>
+      )}
+      <button type="button" className="pb-salida-cal" onClick={agregar}>
+        <IconCalendar size={16} /> Agregar a mi calendario
+      </button>
+    </div>
+  );
+}
+
+// V59 (165) -- "¿Llegas directo?": la hora y el lugar de encuentro, el botón
+// de ubicación y la foto de la entrada (se ponen en cada buceo del Catálogo).
+function LlegasDirecto({ e }) {
+  const [foto, setFoto] = useState(false);
+  if (!e || !(e.hora || e.lugar || e.mapa || e.foto)) return null;
+  return (
+    <div className="pb-directo">
+      <div className="pb-directo-t">¿Llegas directo?</div>
+      {(e.hora || e.lugar) && (
+        <div className="pb-directo-x">
+          Nos encontramos{e.hora ? (
+            <>
+              {" "}a las <b>{e.hora}</b>
+            </>
+          ) : null}
+          {e.lugar ? ` ${e.lugar}` : ""}.
+        </div>
+      )}
+      <div className="pb-directo-btns">
+        {e.mapa && (
+          <a className="pb-directo-btn" href={e.mapa} target="_blank" rel="noreferrer">
+            Ver ubicación
+          </a>
+        )}
+        {e.foto && (
+          <button type="button" className={`pb-directo-btn${foto ? " sel" : ""}`} onClick={() => setFoto((x) => !x)}>
+            <IconCamera size={15} /> Foto de la entrada
+          </button>
+        )}
+      </div>
+      {foto && e.foto && <img className="pb-directo-foto" src={e.foto} alt="Entrada" />}
+    </div>
+  );
+}
+
 function Privacidad() {
   return (
     <div className="pb-priv">
@@ -306,7 +372,6 @@ export default function PublicoViaje({ v, tienda }) {
     tienda?.whatsapp && buzo?.yaInscrito
       ? `https://wa.me/${numeroWhatsApp(tienda.whatsapp)}?text=${encodeURIComponent(`Hola, soy ${buzo.corto} y estoy en la lista de ${v.nombre} del ${fechaLarga(v.fecha)}.`)}`
       : "";
-  const fechaHero = fechaLarga(v.fecha);
 
   return (
     <div className="pb">
@@ -317,17 +382,8 @@ export default function PublicoViaje({ v, tienda }) {
       <div className="pb-hero">
         <div className="pb-kicker">INSCRIPCIÓN</div>
         <div className="pb-titulo">{v.nombre}</div>
-        {/* V45: fecha y salida en puntos (pedido: "pon la fecha y hora de salida tipo bullet"). */}
-        <ul className="pb-datos">
-          <li>
-            <IconCalendar size={16} /> {fechaHero.charAt(0).toUpperCase() + fechaHero.slice(1)}
-          </li>
-          {v.salida && (
-            <li>
-              <IconClock size={16} /> {v.salida}
-            </li>
-          )}
-        </ul>
+        {/* V59 (165): la fecha y la hora de salida grandes, en un cuadro. */}
+        <CuadroSalida v={v} />
         {v.abierto &&
           (quedan > 0 ? (
             <div className="pb-cupo">{`Quedan ${quedan} cupo${quedan === 1 ? "" : "s"}`}</div>
@@ -341,18 +397,19 @@ export default function PublicoViaje({ v, tienda }) {
       <div className="pb-body">
         {!v.abierto ? (
           <div className="pb-card" style={{ textAlign: "center" }}>
-            <div className="pb-t">La inscripción para este {palabra} está cerrada</div>
-            <div className="pb-h">Escríbenos por WhatsApp y te avisaremos si se abre un cupo.</div>
+            <div className="pb-t">Este {palabra} ya no recibe inscripciones</div>
+            <div className="pb-h">Escríbenos por WhatsApp y te avisamos del próximo.</div>
           </div>
         ) : (
           <>
             {paso !== "fin" && (
               <>
+                <LlegasDirecto e={v.encuentro} />
                 {quedan <= 0 && (
                   <div className="pb-lleno">
                     <IconAlert size={20} />
                     <div>
-                      <b>Este {palabra} ya está lleno.</b> Puedes anotarte en la lista de espera y te avisaremos si se abre un cupo.
+                      <b>Este {palabra} está lleno.</b> Si te inscribes, quedas en la lista de espera y te avisamos si se abre un cupo.
                     </div>
                   </div>
                 )}
@@ -574,7 +631,7 @@ export default function PublicoViaje({ v, tienda }) {
                 <input className="pb-input" type="email" value={nuevo.correo} onChange={(e) => setNuevo({ ...nuevo, correo: e.target.value })} placeholder="Correo electrónico" />
                 <select className="pb-input" value={nuevo.agencia} onChange={(e) => setNuevo({ ...nuevo, agencia: e.target.value })}>
                   <option value="">Agencia de certificación…</option>
-                  {["PADI", "SSI", "SNSI", "Raid", "NAUI", "Otra", "No soy buzo (snorkel / acompañante)"].map((a) => (
+                  {["SNSI", "PADI", "SSI", "Raid", "NAUI", "Otra", "No soy buzo (snorkel / acompañante)"].map((a) => (
                     <option key={a}>{a}</option>
                   ))}
                 </select>
@@ -667,7 +724,8 @@ export default function PublicoViaje({ v, tienda }) {
                   </>
                 )}
 
-                {(v.extras || []).map((e) => (
+                {/* V59: sin los extras vacíos (sin nombre), "quitar opción de quiero agregar". */}
+                {(v.extras || []).filter((e) => String(e.nombre || "").trim()).map((e) => (
                   <label key={e.id} className="pb-acepto">
                     <input type="checkbox" checked={extras.includes(e.id)} onChange={(ev) => setExtras((x) => (ev.target.checked ? [...x, e.id] : x.filter((y) => y !== e.id)))} />
                     Quiero agregar el {e.nombre.toLowerCase()} (+{rd(e.dop)} aparte)
@@ -777,11 +835,7 @@ export default function PublicoViaje({ v, tienda }) {
                     )}
                     {linkWA && (
                       <>
-                        <div className="pb-wa">
-                          Al tocar el botón se abrirá WhatsApp con este mensaje para la tienda.
-                          <br />
-                          <i>“{mensajeWA}”</i>
-                        </div>
+                        {/* V59: sin mostrar el mensaje antes ("que si le dan a confirmar por WhatsApp se abra el mensaje y ya"). */}
                         <a className="pb-btn verde" href={linkWA} target="_blank" rel="noreferrer" style={{ display: "block", textDecoration: "none" }}>
                           Confirmar por WhatsApp
                         </a>
@@ -789,6 +843,13 @@ export default function PublicoViaje({ v, tienda }) {
                     )}
                     {!resultado.enEspera && <SubirComprobante slug={v.slug} tipoDoc={resultado.docDe.tipo} doc={resultado.docDe.doc} />}
                   </>
+                )}
+                {/* V59 (165): otra vez la salida, el calendario y "¿Llegas directo?". */}
+                {!resultado.enEspera && (
+                  <div className="pb-fin-salida">
+                    <CuadroSalida v={v} enFin />
+                    <LlegasDirecto e={v.encuentro} />
+                  </div>
                 )}
                 <button className="pb-btn sec pb-chico" onClick={otraPersona}>
                   Inscribir a otra persona

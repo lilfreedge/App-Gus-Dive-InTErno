@@ -172,36 +172,17 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
   return (
     <>
       <Atras onClick={() => ir("estudiantes")}>Estudiantes</Atras>
-      {enEspera ? (
-        <div className="ce-perfil">
-          <Avatar ruta={b.foto} nombre={b.nombre} ops={ops} />
-          <div style={{ minWidth: 0 }}>
-            <h1 className="page-title" style={{ margin: "0 0 2px" }}>
-              {b.nombre}
-            </h1>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-              {b.docFoto && (
-                <button className="btn secondary vj-mini" onClick={() => ops.verArchivo(b.docFoto)}>
-                  Ver cédula
-                </button>
-              )}
-              {b.cel && (
-                <a className="btn secondary vj-mini" href={linkWhatsApp(b.cel, "")} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-                  WhatsApp
-                </a>
-              )}
-            </div>
-          </div>
+      {/* V59 ("145"/"159"): en lista de espera ya no parece un perfil de alguien que
+          tomó el curso; arriba dice claro lo que quiere tomar y qué se puede hacer. */}
+      <h1 className="page-title" style={{ margin: "4px 0 2px" }}>
+        {b.nombre}
+      </h1>
+      {!enEspera && (
+        <div className="hint-text" style={{ fontSize: 14 }}>
+          {[est.curso, est.escuela, est.instructor, est.fechaInicio ? `${est.fechaInicio > hoyISO() ? "empieza" : "empezó"} el ${fechaCorta(est.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
+          {est.via === "link" ? " · se registró por el link" : ""}
         </div>
-      ) : (
-        <h1 className="page-title" style={{ margin: "4px 0 2px" }}>
-          {b.nombre}
-        </h1>
       )}
-      <div className="hint-text" style={{ fontSize: 14 }}>
-        {[est.curso, est.escuela, est.instructor, est.estado === "espera" ? "lista de espera" : est.fechaInicio ? `${est.fechaInicio > hoyISO() ? "empieza" : "empezó"} el ${fechaCorta(est.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
-        {est.via === "link" ? " · se registró por el link" : ""}
-      </div>
 
       {est.estado === "cancelado" ? (
         <div className="aviso-box" style={{ marginTop: 10 }}>
@@ -216,21 +197,40 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
         <>
         {/* V55: en lista de espera (curso sin fecha o fecha llena, "65"). */}
         {est.estado === "espera" && (
-          <div className="aviso-box ce-espera" style={{ marginTop: 10 }}>
-            <b>En lista de espera.</b> {fechasLibres.length ? `${est.curso} tiene fecha con cupo.` : `${est.curso} no tiene fechas con cupo. Agrega una en Cursos.`}
-            {p.estudiantes && fechasLibres.length > 0 && (
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                {fechasLibres.map((f) => (
+          <div className="ce-quiere">
+            <div className="ce-quiere-k">Quiere tomar</div>
+            <b className="ce-quiere-c">{est.curso}</b>
+            <div className="hint-text" style={{ margin: 0 }}>
+              Todavía no tiene fecha · {est.via === "link" ? "se anotó por el link" : "lo anotaron"}
+              {est.creadoEn ? ` el ${fechaCorta(String(est.creadoEn).slice(0, 10))}` : ""}
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+              {p.estudiantes &&
+                fechasLibres.map((f) => (
                   <button
                     key={f.id}
                     className="btn secondary vj-mini"
                     onClick={() => cambiar({ estado: "curso", fechaId: f.id, fechaInicio: f.inicio, ...(est.instructor ? {} : f.instructor ? { instructor: f.instructor } : {}) }, "Lo pasó a una fecha", "Lista de espera", fechaCursoCorta(f.inicio))}
                   >
-                    Pasar al {fechaCursoCorta(f.inicio)} · {textoCupo(db, f)}
+                    Pasarlo al curso del {fechaCursoCorta(f.inicio)} · {textoCupo(db, f)}
                   </button>
                 ))}
-              </div>
-            )}
+              {p.cursos && !fechasLibres.length && (
+                <button className="btn secondary vj-mini" onClick={() => ir("cursos")}>
+                  Crear un curso
+                </button>
+              )}
+              {b.cel && (
+                <a className="btn secondary vj-mini" href={linkWhatsApp(b.cel, "")} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                  WhatsApp
+                </a>
+              )}
+              {b.docFoto && (
+                <button className="btn secondary vj-mini" onClick={() => ops.verArchivo(b.docFoto)}>
+                  Ver cédula
+                </button>
+              )}
+            </div>
           </div>
         )}
         {!enEspera && <div className="ce-pasos">
@@ -312,7 +312,8 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
       </div>
 
       </>)}
-      {/* ---------------------------------------------------- Pago */}
+      {/* ---------------------------------------------------- Pago (V59: no en lista de espera) */}
+      {!enEspera && (<>
       <div className="ce-etapa">
         <h4>
           Pago del curso
@@ -432,6 +433,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
       </div>
 
       {!enEspera && (<>
+      </>)}
       {/* ---------------------------------------------------- 2. Procesando (antes "Almacén", "86. si") */}
       <div className={`ce-etapa${idx < 1 ? " gris" : ""}`}>
         <h4>
@@ -854,7 +856,7 @@ function EditarCurso({ db, est, cambiar, cerrar }) {
             )}
             {fechas.map((x) => (
               <option key={x.id} value={x.id}>
-                {fechaCursoCorta(x.inicio)} · {textoCupo(db, x)}
+                {fechaCursoCorta(x.inicio)} {x.inicio.slice(0, 4)} · {textoCupo(db, x)}
               </option>
             ))}
             <option value="espera">Lista de espera (sin fecha)</option>

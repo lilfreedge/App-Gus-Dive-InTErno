@@ -90,24 +90,31 @@ export function useAvisos(supabase, yo, recargar) {
 
 export function ListaAvisos({ avisos, leer, ir, alIr, vacio = "No tienes avisos todavía." }) {
   if (!avisos.length) return <div className="vj-av-vacio">{vacio}</div>;
+  // V59: "Leído" en cada aviso (nota 2-nov, "en las notificaciones de todas las app").
   return avisos.map((a) => (
-    <button
-      key={a.id}
-      type="button"
-      className={`vj-av-item${a.leida ? "" : " nuevo"}`}
-      onClick={() => {
-        leer(a);
-        alIr?.();
-        ir(rutaDe(a.url));
-      }}
-    >
-      <span className="vj-av-punto" />
-      <span style={{ minWidth: 0 }}>
-        <b>{a.titulo}</b>
-        {a.texto && <span className="vj-av-texto">{a.texto}</span>}
-        <span className="vj-av-hace">{hace(a.creado_en)}</span>
-      </span>
-    </button>
+    <div key={a.id} className="campana-fila">
+      <button
+        type="button"
+        className={`vj-av-item${a.leida ? "" : " nuevo"}`}
+        onClick={() => {
+          leer(a);
+          alIr?.();
+          ir(rutaDe(a.url));
+        }}
+      >
+        <span className="vj-av-punto" />
+        <span style={{ minWidth: 0 }}>
+          <b>{a.titulo}</b>
+          {a.texto && <span className="vj-av-texto">{a.texto}</span>}
+          <span className="vj-av-hace">{hace(a.creado_en)}</span>
+        </span>
+      </button>
+      {!a.leida && (
+        <button type="button" className="campana-leido" onClick={() => leer(a)}>
+          Leído
+        </button>
+      )}
+    </div>
   ));
 }
 

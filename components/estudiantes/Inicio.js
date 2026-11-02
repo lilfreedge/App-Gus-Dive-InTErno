@@ -71,14 +71,46 @@ export function FilaEstudiante({ db, est, ir }) {
   );
 }
 
+// V59 ("158"): la tarjeta de un curso abierto, con la fecha grande y cuántos
+// estudiantes tiene. Sale en Inicio (Próximos cursos) y en Cursos.
+const MES3 = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+export function TarjetaCurso({ db, f, onClick, abierta }) {
+  const c = db.cursos.find((x) => x.id === f.cursoId);
+  const k = db.estudiantes.filter((e) => e.fechaId === f.id && e.estado !== "cancelado").length;
+  const [, m, d] = f.inicio.split("-").map(Number);
+  return (
+    <button type="button" className={`ce-tcurso${abierta ? " sel" : ""}`} onClick={onClick} aria-expanded={abierta}>
+      <span className="ce-fcaja">
+        <small>lun</small>
+        <b>{d}</b>
+        <small>{MES3[m - 1]}</small>
+      </span>
+      <span style={{ minWidth: 0, flex: 1 }}>
+        <b className="ce-tcurso-n">{c?.nombre || "Curso"}</b>
+        <span className="hint-text" style={{ display: "block", margin: 0 }}>
+          {f.inicio < hoyISO() ? "Empezó" : "Empieza"} el {fechaCursoCorta(f.inicio)} {f.inicio.slice(0, 4)}
+          {f.instructor ? ` · ${f.instructor}` : ""}
+          {f.cupo ? ` · cupo ${f.cupo}` : ""}
+          {f.nota ? ` · ${f.nota}` : ""}
+        </span>
+      </span>
+      <span className="ce-tcurso-k">
+        <b>{k}</b>
+        <small>estudiante{k === 1 ? "" : "s"}</small>
+      </span>
+    </button>
+  );
+}
+
 export function Inicio({ db, p, ir, avisar }) {
   const n = (k) => db.estudiantes.filter((e) => FILTROS.find((f) => f.k === k).f(e, db)).length;
   const porCobrar = db.estudiantes.filter((e) => e.estado !== "cancelado").reduce((a, e) => a + (debe(e) || 0), 0);
   const hoy = hoyISO();
-  const pronto = db.estudiantes
-    .filter((e) => e.estado === "curso" && e.fechaInicio && e.fechaInicio >= hoy)
-    .sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio))
-    .slice(0, 5);
+  const haceUnaSemana = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const proximos = (db.fechas || [])
+    .filter((f) => f.activo && f.inicio >= haceUnaSemana)
+    .sort((a, b) => a.inicio.localeCompare(b.inicio))
+    .slice(0, 4);
   const atencion = db.estudiantes.filter((e) => e.estado === "certificacion" && diasDesde(e.etapas?.cert?.en) >= 3);
   const intNuevos = db.interesados.filter((x) => x.estado === "nuevo").length;
   const intHoy = db.interesados.filter((x) => x.recordar && x.recordar <= hoy && !["inscrito", "no"].includes(x.estado));
@@ -95,16 +127,19 @@ export function Inicio({ db, p, ir, avisar }) {
       <h1 className="page-title" style={{ marginBottom: 4 }}>
         Control Estudiantes
       </h1>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0 4px" }}>
-        {p.estudiantes && (
-          <button className="btn btn-primary vj-btn" onClick={() => ir("nuevo")}>
-            <IconPlus size={16} /> Nuevo estudiante
-          </button>
-        )}
-        <button className="btn secondary vj-btn" onClick={() => copiarLink("/estudiante", avisar, "Link de registro copiado")}>
-          <IconLink size={16} /> Copiar link de registro
-        </button>
-      </div>
+      {/* V59 (nota 2-nov): sin "Nuevo estudiante" aquí; el link de registro pasó a Cursos.
+          "158": arriba los próximos cursos; los cuadros van debajo, en "Seguimiento". */}
+      {proximos.length > 0 && (
+        <>
+          <div className="section-title" style={{ marginTop: 8 }}>
+            Próximos cursos
+          </div>
+          {proximos.map((f) => (
+            <TarjetaCurso key={f.id} db={db} f={f} onClick={() => ir("cursos")} />
+          ))}
+        </>
+      )}
+      <div className="section-title">Seguimiento</div>
       <div className="ce-cuadros">
         {cuadros.map((c) => {
           const v = n(c.k);
@@ -128,14 +163,6 @@ export function Inicio({ db, p, ir, avisar }) {
           </button>
         )}
       </div>
-      {pronto.length > 0 && (
-        <>
-          <div className="section-title">Empiezan pronto</div>
-          {pronto.map((e) => (
-            <FilaEstudiante key={e.id} db={db} est={e} ir={ir} />
-          ))}
-        </>
-      )}
       {atencion.length > 0 && (
         <>
           <div className="section-title">Necesitan atención</div>
@@ -154,7 +181,7 @@ export function Inicio({ db, p, ir, avisar }) {
         <div className="card" style={{ marginTop: 14 }}>
           <b>Todavía no hay estudiantes.</b>
           <div className="hint-text" style={{ marginTop: 4 }}>
-            Mándale el link de registro al estudiante, o regístralo tú con &quot;Nuevo estudiante&quot;.
+            Mándale el link de registro (está en Cursos), o regístralo tú desde Estudiantes.
           </div>
         </div>
       )}
@@ -204,11 +231,10 @@ export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
               <IconPlus size={16} /> Crear curso
             </button>
           )}
-          {p.estudiantes && (
-            <button className="btn secondary vj-btn" onClick={() => ir("nuevo")}>
-              <IconPlus size={16} /> Nuevo estudiante
-            </button>
-          )}
+          {/* V59: "quita el botón de nuevo estudiante de aquí y pon el link de registro en cursos". */}
+          <button className="btn secondary vj-btn" onClick={() => copiarLink("/estudiante", avisar, "Link de registro copiado")}>
+            <IconLink size={16} /> Copiar link de registro
+          </button>
         </div>
       </div>
       {db.sinFechas && <div className="hint-text">Falta correr el SQL de la V55 en Supabase para poder crear cursos con fecha.</div>}
@@ -219,18 +245,8 @@ export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
         const gente = deFecha(f).sort(porNombre);
         const esta = abierto === f.id;
         return (
-          <div key={f.id} className={`ce-abierto${esta ? " sel" : ""}`}>
-            <button type="button" className="ce-abierto-top" onClick={() => setAbierto(esta ? null : f.id)} aria-expanded={esta}>
-              <span style={{ minWidth: 0 }}>
-                <b>{c?.nombre || "Curso"}</b>
-                <span className="hint-text" style={{ display: "block", margin: 0 }}>
-                  {f.inicio < hoy ? "Empezó" : "Empieza"} el {fechaCursoCorta(f.inicio)}
-                  {f.instructor ? ` · ${f.instructor}` : ""}
-                  {f.nota ? ` · ${f.nota}` : ""}
-                </span>
-              </span>
-              <span className="ce-abierto-n">{n(gente.length)}</span>
-            </button>
+          <div key={f.id} className={`ce-abierto fuerte${esta ? " sel" : ""}`}>
+            <TarjetaCurso db={db} f={f} abierta={esta} onClick={() => setAbierto(esta ? null : f.id)} />
             {esta && (
               <div className="ce-abierto-cuerpo">
                 {gente.map((e) => (
@@ -355,7 +371,7 @@ function FormCurso({ db, form, setForm, yo, ops, avisar }) {
             <option value="">Escoge…</option>
             {[...new Set([...(form.id ? [form.inicio] : []), ...lunes])].map((l) => (
               <option key={l} value={l}>
-                {fechaCursoCorta(l)}
+                {fechaCursoCorta(l)} {l.slice(0, 4)}
               </option>
             ))}
           </select>
@@ -364,7 +380,15 @@ function FormCurso({ db, form, setForm, yo, ops, avisar }) {
       <div className="ce-form-fila">
         <label>
           Cupo
-          <input inputMode="numeric" value={form.cupo} onChange={(e) => setForm({ ...form, cupo: e.target.value.replace(/\D/g, "") })} placeholder="Sin límite" />
+          {/* V59 ("144"): un desplegable del 1 al 7. */}
+          <select value={form.cupo} onChange={(e) => setForm({ ...form, cupo: e.target.value })}>
+            <option value="">Sin límite</option>
+            {[...new Set([1, 2, 3, 4, 5, 6, 7, ...(form.cupo && Number(form.cupo) > 7 ? [Number(form.cupo)] : [])])].map((n) => (
+              <option key={n} value={String(n)}>
+                {n}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Instructor

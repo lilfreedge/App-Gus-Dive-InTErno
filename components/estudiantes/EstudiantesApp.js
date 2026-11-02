@@ -18,6 +18,7 @@ import { Nuevo } from "./Nuevo";
 import { Cursos } from "./Cursos";
 import { Interesados } from "./Interesados";
 import { AdminEst } from "./AdminEst";
+import { Calendario } from "./Calendario";
 
 // Control Estudiantes (migration_78.sql). Mismo esquema que Buceos: un solo
 // componente para todas las pantallas (/control-estudiantes/...), los datos
@@ -240,7 +241,17 @@ export default function EstudiantesApp({ p, yo, personas }) {
       local((d) => ({ ...d, cursos: esNuevo ? [...d.cursos, c] : d.cursos.map((x) => (x.id === c.id ? c : x)) }));
       try {
         if (esNuevo) await guardar(supabase.from("est_cursos").insert({ id: c.id, ...cursoAFila(c) }));
-        else await guardar(supabase.from("est_cursos").update(cursoAFila(c)).eq("id", c.id));
+        else {
+          // V59: se revisa que de verdad se guardó (nota 2-nov: le cambió el
+          // nombre a un curso y en el link seguía el nombre viejo).
+          const { data, error: e } = await supabase.from("est_cursos").update(cursoAFila(c)).eq("id", c.id).select("id");
+          if (e) throw e;
+          if (!data?.length) {
+            avisar("No se guardó el cambio del curso (sin permiso). Recarga la página y vuelve a intentar.");
+            recargar();
+            return;
+          }
+        }
         await log(null, `${esNuevo ? "Agregó el curso" : "Cambió el curso"}: ${c.nombre}`);
       } catch (e) {
         fallo(e);
@@ -369,6 +380,8 @@ export default function EstudiantesApp({ p, yo, personas }) {
     { r: "inicio", t: "Inicio" },
     { r: "cursos", t: "Cursos" },
     { r: "estudiantes", t: "Estudiantes" },
+    // V59 ("161"): Calendario entre Estudiantes e Interesados.
+    { r: "calendario", t: "Calendario" },
     ...(p.interesados ? [{ r: "interesados", t: "Interesados" }] : []),
     { r: "mas", t: "Más" },
   ];
@@ -393,6 +406,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
     const id = ruta.split(":")[1];
     cuerpo = db.estudiantes.some((x) => x.id === id) ? <Ficha key={id} {...q} id={id} /> : <div className="hint-text">Ese estudiante no existe.</div>;
   } else if (ruta === "nuevo" || ruta.startsWith("nuevo:")) cuerpo = p.estudiantes ? <Nuevo {...q} interesadoId={ruta.split(":")[1] || null} /> : <Inicio {...q} />;
+  else if (ruta === "calendario") cuerpo = <Calendario {...q} />;
   else if (ruta === "interesados") cuerpo = p.interesados ? <Interesados {...q} /> : <Inicio {...q} />;
   else if (ruta === "basedatos") cuerpo = <Cursos {...q} />;
   else if (ruta === "mas") cuerpo = <Mas {...q} />;

@@ -69,7 +69,10 @@ export async function POST(request) {
   if (body.accion !== "inscribir") return NextResponse.json({ error: "Acción desconocida." }, { status: 400 });
 
   // ------------------------------------------------------------ inscribir
-  if (estadoViaje(v) !== "abierto") return NextResponse.json({ error: `La inscripción para este ${palabraViaje(v)} está cerrada.` }, { status: 400 });
+  // V59 (nota 2-nov): con la inscripción cerrada no se rechaza: queda en lista
+  // de espera, como cuando está lleno ("que no diga que está cerrada").
+  const cerradoInsc = estadoViaje(v) === "cerrado_insc";
+  if (estadoViaje(v) !== "abierto" && !cerradoInsc) return NextResponse.json({ error: `Este ${palabraViaje(v)} ya no recibe inscripciones.` }, { status: 400 });
   if (!docValido(tipo, body.doc)) return NextResponse.json({ error: "Revisa tu cédula o pasaporte." }, { status: 400 });
   const o = v.opciones.find((x) => x.id === body.opcion && !x.noPaga);
   if (!o) return NextResponse.json({ error: "Elige una opción." }, { status: 400 });
@@ -128,7 +131,7 @@ export async function POST(request) {
     .eq("viaje_id", v.id)
     .eq("estado", "inscrito")
     .neq("rol", "staff");
-  const enEspera = (count || 0) >= (v.cupoMax || 0);
+  const enEspera = cerradoInsc || (count || 0) >= (v.cupoMax || 0);
 
   let inscritoPor = null;
   if (body.inscritoPorDoc) {

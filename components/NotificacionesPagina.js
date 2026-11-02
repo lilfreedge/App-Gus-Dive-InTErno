@@ -35,6 +35,11 @@ export default function NotificacionesPagina({ app, puedeAdministrar = false, ru
     setLista((l) => l.map((n) => (ids.includes(n.id) ? { ...n, leida_en: ahora } : n)));
   }
 
+  async function marcarUna(id) {
+    const ahora = new Date().toISOString();
+    setLista((l) => l.map((n) => (n.id === id ? { ...n, leida_en: ahora } : n)));
+    await supabase.from("notificaciones").update({ leida_en: ahora }).eq("id", id);
+  }
   const sinLeer = (lista || []).filter((n) => !n.leida_en).length;
 
   return (
@@ -65,14 +70,22 @@ export default function NotificacionesPagina({ app, puedeAdministrar = false, ru
         {lista === null && <div className="empty">Cargando…</div>}
         {lista && !lista.length && <div className="empty">No tienes notificaciones todavía.</div>}
         {(lista || []).map((n) => (
-          <a key={n.id} href={n.url || "#"} className={`campana-item${n.leida_en ? "" : " nuevo"}`} style={{ borderRadius: 8 }}>
-            <span className="campana-dot" style={n.leida_en ? { visibility: "hidden" } : null} />
-            <span style={{ minWidth: 0 }}>
-              <b>{n.titulo}</b>
-              {n.texto && <span className="campana-txt">{n.texto}</span>}
-              <small>{formatFecha(n.creado_en)}</small>
-            </span>
-          </a>
+          <div key={n.id} className="campana-fila">
+            <a href={n.url || "#"} className={`campana-item${n.leida_en ? "" : " nuevo"}`} style={{ borderRadius: 8 }}>
+              <span className="campana-dot" style={n.leida_en ? { visibility: "hidden" } : null} />
+              <span style={{ minWidth: 0 }}>
+                <b>{n.titulo}</b>
+                {n.texto && <span className="campana-txt">{n.texto}</span>}
+                <small>{formatFecha(n.creado_en)}</small>
+              </span>
+            </a>
+            {/* V59: "Leído" en cada una. */}
+            {!n.leida_en && (
+              <button type="button" className="campana-leido" onClick={() => marcarUna(n.id)}>
+                Leído
+              </button>
+            )}
+          </div>
         ))}
       </div>
       {/* V54: Control Estudiantes por ahora solo avisa en la campanita. */}

@@ -500,3 +500,15 @@ export function IconX(props) {
     </Base>
   );
 }
+
+// V58 -- Estadísticas (barras).
+export function IconChart(props) {
+  return (
+    <Base {...props}>
+      <path d="M4 20h16" />
+      <rect x="6" y="11" width="3" height="7" rx="0.6" />
+      <rect x="11" y="6" width="3" height="12" rx="0.6" />
+      <rect x="16" y="9" width="3" height="9" rx="0.6" />
+    </Base>
+  );
+}

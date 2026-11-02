@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Buscar, CampoCel } from "@/components/viajes/Piezas";
-import { IconPlus, IconHistory, IconEdit } from "@/components/icons";
+import { IconPlus, IconHistory, IconEdit, IconReport, IconChart, IconCatalog } from "@/components/icons";
 import { soloDigitos, formatoCedula, formatoCel } from "@/lib/viajes/modelo";
 import {
   TIPOS,
@@ -22,6 +22,8 @@ import {
   NOMBRE_ESTADO,
   sinFactura,
   DIAS_NORMAL,
+  precioDe,
+  nombreMes,
 } from "@/lib/alquiler/modelo";
 
 // Pantallas del app Alquiler (maqueta-v57, pestañas 7, 8 y 9, con los
@@ -271,21 +273,38 @@ export function Nuevo({ db, ops, ir, avisar }) {
       ? db.buzos.filter((b) => (b.nombre || "").toLowerCase().includes(t) || (td.length >= 4 && (soloDigitos(b.cel).includes(td) || soloDigitos(b.doc).includes(td)))).slice(0, 6)
       : [];
 
-  function agregar() {
+  // V58 (nota 2-nov: "en el buscador de equipos que ayude a buscar, y que no
+  // deje poner cosas que no figuren en la base de datos"): mientras escribe
+  // salen los que coinciden; solo se puede agregar uno de la base.
+  const tc = cod.trim().toUpperCase().replace(/[\s-]/g, "");
+  const coinciden =
+    tc.length >= 1
+      ? db.equipos
+          .filter((e) => e.codigo.toUpperCase().replace(/-/g, "").startsWith(tc) || (tc.length >= 3 && (e.descripcion || "").toUpperCase().includes(cod.trim().toUpperCase())))
+          .sort((a, b) => a.codigo.localeCompare(b.codigo, "es", { numeric: true }))
+          .slice(0, 8)
+      : [];
+  function agregar(c0) {
     setErr("");
-    const c = normalizarCodigo(cod);
+    let c = normalizarCodigo(c0 ?? cod);
+    // Enter sin el código completo: si solo hay uno libre que coincide, ese.
+    if (!c0 && !porCodigo[c.toUpperCase()]) {
+      const libres = coinciden.filter((e) => !fuera[e.codigo.toUpperCase()] && !lineas.includes(e.codigo));
+      if (libres.length === 1) c = libres[0].codigo;
+      else if (libres.length > 1) return setErr("Escoge uno de la lista.");
+    }
     if (!c) return;
     const e = porCodigo[c.toUpperCase()];
     if (!e) return setErr(`${c} no está en la base de equipos.`);
     if (fuera[c.toUpperCase()]) return setErr(`${c} está alquilado ahora mismo (alquiler No. ${fuera[c.toUpperCase()].numero}).`);
     if (lineas.includes(e.codigo)) return setErr(`${c} ya está en la lista.`);
-    if (e.precio == null) setErr(`${c} no tiene precio en la base de equipos: se agregó en RD$ 0.`);
+    if (precioDe(e, db.preciosTipo) == null) setErr(`${c} no tiene precio (ni su tipo): se agregó en RD$ 0.`);
     setLineas([...lineas, e.codigo]);
     setCod("");
   }
   const items = lineas.map((c) => {
     const e = porCodigo[c.toUpperCase()];
-    const precio = Number(e?.precio || 0);
+    const precio = Number(precioDe(e, db.preciosTipo) || 0);
     return { codigo: e.codigo, tipo: e.tipo || prefijoDe(e.codigo), descripcion: e.descripcion, precio, total: precio * mult };
   });
   const total = items.reduce((s, x) => s + x.total, 0);
@@ -375,13 +394,31 @@ export function Nuevo({ db, ops, ir, avisar }) {
           </div>
         )}
 
-        <label className="alq-l">Equipos (escribe el código y dale Enter)</label>
+        <label className="alq-l">Equipos (escribe el código o lo que es, y escógelo)</label>
         <div style={{ display: "flex", gap: 8 }}>
-          <input className="ce-input" value={cod} placeholder="Ej. RE-4" onChange={(e) => setCod(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), agregar())} />
-          <button className="btn secondary vj-mini" onClick={agregar}>
+          <input className="ce-input" value={cod} placeholder="Ej. RE-4 o careta" onChange={(e) => (setCod(e.target.value.toUpperCase()), setErr(""))} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), agregar())} />
+          <button className="btn secondary vj-mini" onClick={() => agregar()}>
             Agregar
           </button>
         </div>
+        {coinciden.length > 0 && (
+          <div className="alq-sug">
+            {coinciden.map((e) => {
+              const a = fuera[e.codigo.toUpperCase()];
+              const ya = lineas.includes(e.codigo);
+              const pr = precioDe(e, db.preciosTipo);
+              return (
+                <button key={`${e.fuente}-${e.id}`} type="button" disabled={!!a || ya} onClick={() => agregar(e.codigo)}>
+                  <code className="alq-cod">{e.codigo}</code> {e.descripcion || tipoDe(e.codigo)?.uno || ""}
+                  <span className="hint-text" style={{ float: "right", margin: 0 }}>
+                    {a ? `Alquilado (No. ${a.numero})` : ya ? "Ya está" : pr == null ? "Sin precio" : rd(pr)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {cod.trim() && !coinciden.length && <div className="pb-error">No hay ningún equipo con eso en la base.</div>}
         {err && <div className="pb-error">{err}</div>}
         <div className="alq-lineas">
           {items.map((x) => (
@@ -598,7 +635,14 @@ export function Equipos({ db, p, ops }) {
                   {a ? `Alquilado · ${nombreDe(db, a)} · devuelve el ${fechaCorta(a.devolver)}` : "Disponible"}
                 </span>
               </span>
-              <span>{e.precio == null ? <span className="hint-text">Sin precio</span> : rd(e.precio)}</span>
+              <span style={{ textAlign: "right" }}>
+                {precioDe(e, db.preciosTipo) == null ? <span className="hint-text">Sin precio</span> : rd(precioDe(e, db.preciosTipo))}
+                {e.precio == null && precioDe(e, db.preciosTipo) != null && (
+                  <span className="hint-text" style={{ display: "block", margin: 0, fontSize: 11 }}>
+                    del tipo
+                  </span>
+                )}
+              </span>
               {p.equipos && (
                 <button type="button" className="alq-x editar" title="Editar" onClick={() => setEdit({ ...e, precio: e.precio == null ? "" : String(e.precio), antes: e })}>
                   <IconEdit size={14} />
@@ -615,19 +659,277 @@ export function Equipos({ db, p, ops }) {
 
 // ----------------------------------------------------------------- Más y Bitácora
 export function Mas({ ir }) {
+  // V58 (nota 2-nov): precios por tipo, estadísticas y reporte.
+  const opciones = [
+    { r: "precios", t: "Precios por tipo", sub: "El precio de alquiler de cada tipo de equipo: careta, regulador, BCD…", I: IconCatalog },
+    { r: "estadisticas", t: "Estadísticas", sub: "Cuánto se alquila, qué se alquila más y cuánto entra.", I: IconChart },
+    { r: "reporte", t: "Reporte", sub: "Los alquileres de unas fechas, con totales, para imprimir.", I: IconReport },
+    { r: "bitacora", t: "Bitácora", sub: "Todo lo que se hace en Alquiler: quién y cuándo.", I: IconHistory },
+  ];
   return (
     <>
       <h1 className="page-title">Más</h1>
-      <button type="button" className="card hub-link-card vj-mas-card alq-mas-card" onClick={() => ir("bitacora")}>
-        <div className="hub-link-card-inner">
-          <div className="hub-link-icon">
-            <IconHistory size={20} />
+      {opciones.map((o) => (
+        <button key={o.r} type="button" className="card hub-link-card vj-mas-card alq-mas-card" onClick={() => ir(o.r)}>
+          <div className="hub-link-card-inner">
+            <div className="hub-link-icon">
+              <o.I size={20} />
+            </div>
+            <div>
+              <div className="hub-link-title">{o.t}</div>
+              <div className="hub-link-desc">{o.sub}</div>
+            </div>
           </div>
-          <div>
-            <div className="hub-link-title">Bitácora</div>
-            <div className="hub-link-desc">Todo lo que se hace en Alquiler: quién y cuándo.</div>
-          </div>
+        </button>
+      ))}
+    </>
+  );
+}
+
+// ----------------------------------------------------------------- Precios por tipo
+// "Créame aquí un control para poder controlar los precios de los equipos en
+// base a su tipo". Cada tipo tiene su precio; un código sin precio propio usa
+// el de su tipo. "Usar en todos" les quita el precio propio a los de ese tipo.
+export function Precios({ db, p, ops, ir }) {
+  const [val, setVal] = useState(() => Object.fromEntries(TIPOS.map((t) => [t.p, db.preciosTipo[t.p] == null ? "" : String(db.preciosTipo[t.p])])));
+  const [seguro, setSeguro] = useState(null);
+  return (
+    <>
+      <a className="back-link" onClick={() => ir("mas")} style={{ cursor: "pointer" }}>
+        ← Más
+      </a>
+      <h1 className="page-title">Precios por tipo</h1>
+      <div className="hint-text" style={{ marginBottom: 8 }}>
+        El precio de alquiler por 3 días de cada tipo. Los equipos sin precio propio usan este. Si un equipo tiene su propio precio (en Equipos), se queda con el suyo.
+      </div>
+      {db.sinPreciosTipo && <div className="aviso-box">Falta correr en Supabase el SQL de la V58 para guardar los precios por tipo.</div>}
+      <div className="card" style={{ padding: 0 }}>
+        {TIPOS.map((t) => {
+          const delTipo = db.equipos.filter((e) => (e.tipo || prefijoDe(e.codigo)) === t.p);
+          const propios = delTipo.filter((e) => e.precio != null);
+          const cambia = val[t.p] !== (db.preciosTipo[t.p] == null ? "" : String(db.preciosTipo[t.p]));
+          return (
+            <div key={t.p} className="alq-precio-fila">
+              <span style={{ minWidth: 0 }}>
+                <b>{t.t}</b> <span className="hint-text">· {t.p}</span>
+                <span className="hint-text" style={{ display: "block", margin: 0 }}>
+                  {delTipo.length} equipo{delTipo.length === 1 ? "" : "s"}
+                  {propios.length ? ` · ${propios.length} con precio propio` : ""}
+                </span>
+                {p.equipos && propios.length > 0 && db.preciosTipo[t.p] != null && (
+                  seguro === t.p ? (
+                    <span className="ce-quitar-conf">
+                      ¿Quitarles el precio propio a los {propios.length}?
+                      <button type="button" className="ce-quitar si" onClick={async () => (setSeguro(null), await ops.usarPrecioTipo(t.p, propios))}>
+                        Sí
+                      </button>
+                      <button type="button" className="ce-quitar" onClick={() => setSeguro(null)}>
+                        No
+                      </button>
+                    </span>
+                  ) : (
+                    <button type="button" className="vj-link alq-link-chico" onClick={() => setSeguro(t.p)}>
+                      Usar este precio en todos
+                    </button>
+                  )
+                )}
+              </span>
+              <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input className="ce-input-corto" inputMode="numeric" placeholder="RD$" disabled={!p.equipos || db.sinPreciosTipo} value={val[t.p]} onChange={(e) => setVal({ ...val, [t.p]: e.target.value.replace(/[^\d.]/g, "") })} />
+                {cambia && (
+                  <button className="btn secondary vj-mini" onClick={() => ops.guardarPrecioTipo(t.p, val[t.p] === "" ? null : Number(val[t.p]))}>
+                    Guardar
+                  </button>
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {!p.equipos && <div className="hint-text">Solo el Titular, los administradores o quien tenga el permiso de equipos pueden cambiar precios.</div>}
+    </>
+  );
+}
+
+// ----------------------------------------------------------------- Estadísticas
+const mesDe = (iso) => String(iso || "").slice(0, 7);
+function Barras({ filas, fmt = (n) => n }) {
+  const max = Math.max(1, ...filas.map((f) => f.v));
+  return (
+    <div className="alq-barras">
+      {filas.map((f) => (
+        <div key={f.k} className="alq-barra">
+          <span className="alq-barra-k">{f.k}</span>
+          <span className="alq-barra-t">
+            <i style={{ width: `${Math.max(2, (f.v / max) * 100)}%` }} />
+          </span>
+          <span className="alq-barra-v">{fmt(f.v)}</span>
         </div>
+      ))}
+    </div>
+  );
+}
+export function Estadisticas({ db, ir }) {
+  const hoy = hoyISO();
+  const esteMes = mesDe(hoy);
+  const meses = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(Date.UTC(Number(hoy.slice(0, 4)), Number(hoy.slice(5, 7)) - 1 - i, 1));
+    meses.push(d.toISOString().slice(0, 7));
+  }
+  const delMes = (m) => db.alquileres.filter((a) => mesDe(a.fecha) === m);
+  const moraCobrada = (lista) => lista.reduce((s, a) => s + a.items.reduce((t, x) => t + (x.devueltoEn ? Number(x.mora || 0) : 0), 0), 0);
+  const mes = delMes(esteMes);
+  const porTipo = {};
+  const porCodigo = {};
+  const porCliente = {};
+  for (const a of db.alquileres) {
+    porCliente[a.buzoId] = (porCliente[a.buzoId] || 0) + 1;
+    for (const x of a.items) {
+      const t = tipoDe(x.codigo)?.t || x.tipo || "Otro";
+      porTipo[t] = (porTipo[t] || 0) + 1;
+      porCodigo[x.codigo] = (porCodigo[x.codigo] || 0) + 1;
+    }
+  }
+  const top = (obj, n) =>
+    Object.entries(obj)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, n);
+  return (
+    <>
+      <a className="back-link" onClick={() => ir("mas")} style={{ cursor: "pointer" }}>
+        ← Más
+      </a>
+      <h1 className="page-title">Estadísticas</h1>
+      <div className="section-title" style={{ marginTop: 6 }}>
+        Este mes ({nombreMes(esteMes)})
+      </div>
+      <div className="alq-cuadros cuatro">
+        <div className="alq-cuadro">
+          <b>{mes.length}</b>
+          <span>Alquileres</span>
+        </div>
+        <div className="alq-cuadro">
+          <b>{mes.reduce((s, a) => s + a.items.length, 0)}</b>
+          <span>Equipos</span>
+        </div>
+        <div className="alq-cuadro">
+          <b style={{ fontSize: 18 }}>{rd(mes.reduce((s, a) => s + totalDe(a), 0))}</b>
+          <span>Alquileres cobrados</span>
+        </div>
+        <div className="alq-cuadro">
+          <b style={{ fontSize: 18 }}>{rd(moraCobrada(mes))}</b>
+          <span>Mora cobrada</span>
+        </div>
+      </div>
+      <div className="section-title">Lo que entra por mes (alquiler + mora)</div>
+      <div className="card">
+        <Barras filas={meses.map((m) => ({ k: nombreMes(m).replace(/ \d+$/, "").slice(0, 3), v: delMes(m).reduce((s, a) => s + totalDe(a), 0) + moraCobrada(delMes(m)) }))} fmt={rd} />
+      </div>
+      <div className="section-title">Alquileres por mes</div>
+      <div className="card">
+        <Barras filas={meses.map((m) => ({ k: nombreMes(m).replace(/ \d+$/, "").slice(0, 3), v: delMes(m).length }))} />
+      </div>
+      <div className="section-title">Lo que más se alquila (por tipo)</div>
+      <div className="card">{Object.keys(porTipo).length ? <Barras filas={top(porTipo, 9).map(([k, v]) => ({ k, v }))} /> : <div className="hint-text">Todavía no hay alquileres.</div>}</div>
+      <div className="section-title">Los equipos más alquilados</div>
+      <div className="card">{Object.keys(porCodigo).length ? <Barras filas={top(porCodigo, 10).map(([k, v]) => ({ k, v }))} /> : <div className="hint-text">Todavía no hay alquileres.</div>}</div>
+      <div className="section-title">Clientes que más alquilan</div>
+      <div className="card">
+        {Object.keys(porCliente).length ? (
+          <Barras filas={top(porCliente, 5).map(([k, v]) => ({ k: (db.buzos.find((b) => b.id === k)?.nombre || "—").split(" ").slice(0, 2).join(" "), v }))} />
+        ) : (
+          <div className="hint-text">Todavía no hay alquileres.</div>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ----------------------------------------------------------------- Reporte
+export function Reporte({ db, ir }) {
+  const hoy = hoyISO();
+  const [desde, setDesde] = useState(hoy.slice(0, 8) + "01");
+  const [hasta, setHasta] = useState(hoy);
+  const lista = db.alquileres.filter((a) => a.fecha >= desde && a.fecha <= hasta).sort((a, b) => a.fecha.localeCompare(b.fecha) || a.numero - b.numero);
+  const total = lista.reduce((s, a) => s + totalDe(a), 0);
+  const mora = lista.reduce((s, a) => s + a.items.reduce((t, x) => t + (x.devueltoEn ? Number(x.mora || 0) : 0), 0), 0);
+  const sinFact = lista.filter(sinFactura).length;
+  return (
+    <>
+      <a className="back-link no-print" onClick={() => ir("mas")} style={{ cursor: "pointer" }}>
+        ← Más
+      </a>
+      <h1 className="page-title">Reporte de alquileres</h1>
+      <div className="alq-fila2 no-print" style={{ maxWidth: 420 }}>
+        <label className="alq-l" style={{ margin: 0 }}>
+          Desde
+          <input type="date" className="ce-input" value={desde} onChange={(e) => setDesde(e.target.value)} />
+        </label>
+        <label className="alq-l" style={{ margin: 0 }}>
+          Hasta
+          <input type="date" className="ce-input" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+        </label>
+      </div>
+      <div className="alq-reporte card">
+        <div className="alq-reporte-t">
+          <b>Alquiler · Gus Dive Center</b>
+          <span>
+            Del {fechaLarga(desde)} al {fechaLarga(hasta)}
+          </span>
+        </div>
+        <div className="alq-reporte-res">
+          <span>
+            <b>{lista.length}</b> alquileres
+          </span>
+          <span>
+            Alquiler: <b>{rd(total)}</b>
+          </span>
+          <span>
+            Mora cobrada: <b>{rd(mora)}</b>
+          </span>
+          {sinFact > 0 && <span className="alq-falta">{sinFact} sin número de factura</span>}
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table className="reporte-preview-tabla alq-tabla">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>No.</th>
+                <th>Cliente</th>
+                <th>Equipos</th>
+                <th>Días</th>
+                <th>Total</th>
+                <th>Mora</th>
+                <th>Factura</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lista.map((a) => (
+                <tr key={a.id}>
+                  <td style={{ whiteSpace: "nowrap" }}>{fechaCorta(a.fecha)}</td>
+                  <td>{a.numero}</td>
+                  <td>{nombreDe(db, a)}</td>
+                  <td>{a.items.map((x) => x.codigo).join(", ")}</td>
+                  <td>{a.dias}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{rd(totalDe(a))}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{rd(a.items.reduce((t, x) => t + (x.devueltoEn ? Number(x.mora || 0) : 0), 0))}</td>
+                  <td>{a.factura || "—"}</td>
+                </tr>
+              ))}
+              {!lista.length && (
+                <tr>
+                  <td colSpan={8} className="hint-text">
+                    No hay alquileres en esas fechas.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <button className="btn btn-primary vj-btn no-print" onClick={() => window.print()}>
+        Imprimir o guardar en PDF
       </button>
     </>
   );

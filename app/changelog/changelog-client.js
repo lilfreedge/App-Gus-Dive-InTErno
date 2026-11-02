@@ -12,6 +12,20 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V59",
+    fecha: "2 de noviembre, 2026",
+    titulo: "Calendario en Control Estudiantes, ficha del buzo más clara, salida grande con calendario y punto de encuentro en el link de Buceos",
+    descripcion:
+      "Control Estudiantes: nuevo botón \"Calendario\" (entre Estudiantes e Interesados), por mes como en los otros apps, con los cursos (amarillo) y los buceos (azul); en el calendario de Buceos también salen los cursos. Inicio muestra \"Próximos cursos\" con la fecha grande y debajo \"Seguimiento\". La ficha de alguien en lista de espera dice \"Quiere tomar…\" con los botones para pasarlo a un curso o crear uno, sin pago ni pasos. El link del estudiante dice \"¡Bienvenido!\", tiene las pestañas \"Cédula\" y \"Otro documento\" (pide la nacionalidad) y avisa si escriben algo que no es cédula. Buceos: la ficha del buzo en el buceo tiene arriba si debe o está pagado y los botones WhatsApp, Registrar pago y grupo; debajo Pago, En este buceo, Contacto y Nota, y abajo Pasar a lista de espera y Quitar. En el link de inscripción la fecha y la hora de salida salen grandes en un cuadro con \"Agregar a mi calendario\", y \"¿Llegas directo?\" con la hora de encuentro, la ubicación y la foto de la entrada (se ponen en cada buceo del Catálogo). Compresores: si no se puede guardar un mantenimiento, el mensaje dice por qué.",
+  },
+  {
+    version: "V58",
+    fecha: "2 de noviembre, 2026",
+    titulo: "Alquiler: precios por tipo, estadísticas, reporte y un buscador de equipos que ayuda",
+    descripcion:
+      "Alquiler: el logo sale en blanco sobre la barra roja. En Más hay tres botones nuevos: \"Precios por tipo\" (el precio de alquiler de cada tipo de equipo: careta, regulador, BCD…; los equipos sin precio propio usan el de su tipo, y con \"Usar este precio en todos\" se les quita el precio propio), \"Estadísticas\" (lo de este mes, lo que entra por mes, lo que más se alquila, los equipos más alquilados y los clientes que más alquilan) y \"Reporte\" (los alquileres entre dos fechas con sus totales, para imprimir o guardar en PDF). En Nuevo alquiler, al escribir el código o lo que es (por ejemplo \"careta\") salen los equipos que coinciden, con su precio y si están alquilados, y no deja poner nada que no esté en la base. Control Estudiantes: al crear un curso, las fechas dicen el año y el cupo se escoge del 1 al 7; \"Nuevo estudiante\" ya no sale en Inicio ni en Cursos (se queda en Estudiantes) y \"Copiar link de registro\" pasó a Cursos; si un cambio de curso no se guarda, ahora lo dice. Link del estudiante: el contacto de emergencia pide nombre y celular; al volver a entrar ya no dice \"Solo te pedimos lo que nos falta\" ni \"No soy yo\" (hay \"← Volver\"); si el curso no tiene fecha, el estudiante decide si se anota en la lista de espera. Notificaciones: cada una tiene su botón \"Leído\" (en la campanita de todos los apps, en la página de notificaciones y en los avisos de Buceos), y en la campanita salen solo las que no se han leído. Link de Buceos: si la inscripción está cerrada, dice que el buceo está lleno y anota a la persona en la lista de espera; ya no sale el extra vacío (\"Quiero agregar el… +RD$0\"); \"Confirmar por WhatsApp\" abre WhatsApp sin mostrar antes el mensaje; SNSI sale primero en la agencia de certificación; La Caleta ya no dice \"cuidan los carros\". App Equipos de clientes: el paso se llama \"Pendiente por verificar para despachar\" y el nombre de la fecha se ve más. Necesita todo_v58_una_sola_vez.sql (migration_83 y migration_84).",
+  },
+  {
     version: "V57",
     fecha: "2 de noviembre, 2026",
     titulo: "Más poder para borrar en Control Estudiantes, Enter en el link y las apps en construcción con su color",

@@ -78,7 +78,15 @@ export async function POST(request) {
     if (!buzo.direccion && n.direccion) llenar.direccion = String(n.direccion).trim().slice(0, 200);
     if (!buzo.emergencia && n.emergencia) llenar.emergencia = String(n.emergencia).trim().slice(0, 200);
     if (!buzo.correo && n.correo) llenar.correo = String(n.correo).trim().slice(0, 120);
-    if (Object.keys(llenar).length) await s.from("viajes_buzos").update(buzoAFila(llenar)).eq("id", buzo.id);
+    if (!buzo.nacionalidad && n.nacionalidad && tipo === "pasaporte") llenar.nacionalidad = String(n.nacionalidad).trim().slice(0, 60);
+    if (Object.keys(llenar).length) {
+      const { error: eLl } = await s.from("viajes_buzos").update(buzoAFila(llenar)).eq("id", buzo.id);
+      // Sin migration_85 todavía: se guarda lo demás.
+      if (eLl && "nacionalidad" in llenar) {
+        delete llenar.nacionalidad;
+        if (Object.keys(llenar).length) await s.from("viajes_buzos").update(buzoAFila(llenar)).eq("id", buzo.id);
+      }
+    }
   } else {
     if (!String(n.nombre || "").trim()) return NextResponse.json({ error: "Falta tu nombre completo." }, { status: 400 });
     if (!n.nac) return NextResponse.json({ error: "Falta tu fecha de nacimiento." }, { status: 400 });
@@ -95,8 +103,14 @@ export async function POST(request) {
       tallas: {},
       abono: 0,
       staff: false,
+      ...(tipo === "pasaporte" && n.nacionalidad ? { nacionalidad: String(n.nacionalidad).trim().slice(0, 60) } : {}),
     };
-    const { error } = await s.from("viajes_buzos").insert(buzoAFila(buzo));
+    let { error } = await s.from("viajes_buzos").insert(buzoAFila(buzo));
+    if (error && buzo.nacionalidad) {
+      // Sin migration_85 todavía: se guarda sin la nacionalidad.
+      const { nacionalidad, ...sin } = buzo;
+      ({ error } = await s.from("viajes_buzos").insert(buzoAFila(sin)));
+    }
     if (error) return NextResponse.json({ error: "No se pudieron guardar tus datos. Intenta de nuevo." }, { status: 500 });
   }
 

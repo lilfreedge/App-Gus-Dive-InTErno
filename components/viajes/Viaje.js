@@ -461,153 +461,64 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
   };
   const mostrarEquipo = v.equipo.modo === "si" && (!v.equipo.soloConOpcion || o.conEquipo || x.equipo.piezas.length > 0);
   const inscritoPor = x.inscritoPor ? nombreCorto(nombreDe(db, x.inscritoPor)) : "";
+  const esBuzo = x.rol === "buzo";
+  const verPago = esBuzo && (p.pagos || p.conciliar);
+  const puedePagar = esBuzo && p.pagos && !ro && !x.usaAbono && !x.pagadoPor;
+  const chipPago = !esBuzo
+    ? null
+    : x.usaAbono
+      ? ["azul", "Usa su abono"]
+      : x.pagadoPor
+        ? ["azul", `Lo pagó ${nombreCorto(nombreDe(db, x.pagadoPor))}`]
+        : e.falta
+          ? ["rojo", `Debe ${rd(e.falta)}`]
+          : ["verde", "Pagado"];
+  const tipo = x.rol === "staff" ? "Staff" : x.rol === "curso" ? "Estudiante de curso" : x.rol === "invitado" ? "Invitado" : o.nombre;
+  const abrirWA = () => window.open(`https://wa.me/${numeroWhatsApp(b.cel)}`, "_blank", "noopener");
   return (
-    <Modal titulo={b.nombre} sub={`${x.rol === "staff" ? "Staff" : x.rol === "curso" ? "Estudiante de curso" : x.rol === "invitado" ? "Invitado" : o.nombre}${x.estado === "espera" ? " · lista de espera" : ""}`} cerrar={cerrar}>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+    <Modal titulo={b.nombre} sub={`${tipo}${x.estado === "espera" ? " · lista de espera" : ""}`} cerrar={cerrar}>
+      {/* V59 (166): arriba cómo está y los botones de lo que más se hace. */}
+      <div className="vj-ficha-chips">
+        {chipPago && <Chip c={chipPago[0]}>{chipPago[1]}</Chip>}
         {inscritoPor && <Chip c="azul">La inscribió {inscritoPor}</Chip>}
         <Chip c="gris">{x.via === "mano" ? "Agregado a mano" : "Se inscribió por el link"}</Chip>
       </div>
 
-      <div className="vj-sec">Contacto</div>
-      <div className="vj-dato">
-        <span>Celular</span>
-        <b>
-          {formatoCel(b.cel) || "—"}{" "}
-          {b.cel && (
-            <a className="vj-link" style={{ marginLeft: 6 }}>
-              Abrir WhatsApp
-            </a>
-          )}
-        </b>
-      </div>
-      <div className="vj-dato">
-        <span>{b.doc ? "Cédula" : b.pasaporte ? "Pasaporte" : "Documento"}</span>
-        <b>{b.doc || b.pasaporte || <span style={{ color: "var(--texto-suave)", fontWeight: 500 }}>Todavía no lo ha puesto</span>}</b>
-      </div>
-      <div className="vj-dato">
-        <span>Certificación</span>
-        <b>{b.agencia ? `${b.agencia} ${b.nivel || ""} · ${b.cert || "sin número"}` : "—"}</b>
-      </div>
-      {p.buzos && (
-        <a className="vj-link" style={{ fontSize: 13 }} onClick={() => ir(`buzo:${b.id}`)}>
-          Ver ficha completa del buzo ›
-        </a>
-      )}
-
-      {x.rol === "buzo" && (
-        <>
-          <div className="vj-sec">En este {P}</div>
-          {v.opciones.length > 1 && (
-            <div className="vj-dato">
-              <span>Opción</span>
-              <select
-                className="vj-sel"
-                disabled={!p.inscribir || ro}
-                value={x.opcionId}
-                onChange={(ev2) => cambiar(x, { opcionId: ev2.target.value }, "Cambió la opción", o.nombre, v.opciones.find((y) => y.id === ev2.target.value).nombre)}
-              >
-                {v.opciones.map((y) => (
-                  <option key={y.id} value={y.id}>
-                    {y.nombre} · {precioTexto(v, y)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          {v.extras.map((ex) => (
-            <label key={ex.id} className="vj-check">
-              <input
-                type="checkbox"
-                disabled={!p.inscribir || ro}
-                checked={(x.extras || []).includes(ex.id)}
-                onChange={(ev2) =>
-                  cambiar(x, { extras: ev2.target.checked ? [...(x.extras || []), ex.id] : x.extras.filter((y) => y !== ex.id) }, `${ex.nombre}`, ev2.target.checked ? "No" : "Sí", ev2.target.checked ? "Sí" : "No")
-                }
-              />
-              {ex.nombre} (+{rd(ex.dop)})
-            </label>
-          ))}
-          {v.equipo.modo === "no" && <div className="hint-text">Este {P} no tiene alquiler de equipo.</div>}
-          {mostrarEquipo && (
-            <>
-              <div className="hint-text" style={{ marginTop: 6 }}>
-                Equipo que alquila{x.equipo.donde ? ` (${v.equipo.donde?.find((d) => d.id === x.equipo.donde)?.t.replace("Lo alquilo ", "")})` : v.equipo.proveedor ? ` (lo pone ${v.equipo.proveedor})` : ""}:
-              </div>
-              <div className="pb-chips" style={{ marginTop: 4 }}>
-                {v.equipo.piezas.map((pz) => {
-                  const sel = x.equipo.piezas.includes(pz);
-                  const talla = tallaDe(pz);
-                  return (
-                    <button
-                      key={pz}
-                      className={`pb-chip mini${sel ? " sel" : ""}`}
-                      disabled={!p.inscribir || ro}
-                      onClick={() =>
-                        cambiar(x, { equipo: { ...x.equipo, piezas: sel ? x.equipo.piezas.filter((y) => y !== pz) : [...x.equipo.piezas, pz] } }, `Equipo (${pz})`, sel ? "Alquila" : "Propio", sel ? "Propio" : "Alquila")
-                      }
-                    >
-                      {pz}
-                      {sel && talla ? ` · ${talla}` : ""}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
-          {v.habitaciones && (
-            <div className="vj-dato" style={{ marginTop: 6 }}>
-              <span>Habitación</span>
-              <select className="vj-sel" disabled={!p.inscribir || ro} value={x.habitacion} onChange={(ev2) => cambiar(x, { habitacion: ev2.target.value }, "Habitación", x.habitacion || "—", ev2.target.value || "—")}>
-                <option value="">Sin asignar</option>
-                {v.habitaciones.map((h) => (
-                  <option key={h}>{h}</option>
-                ))}
-              </select>
-            </div>
-          )}
-          {Object.keys(x.respuestas || {}).length > 0 &&
-            Object.entries(x.respuestas).map(([k, val]) => (
-              <div key={k} className="vj-dato">
-                <span>{PREGUNTAS.find((y) => y.k === k)?.t || k}</span>
-                <b>{val}</b>
-              </div>
-            ))}
-        </>
-      )}
-
-      {!pasado && (
-        <>
-          <div className="vj-sec">Grupo de WhatsApp</div>
-          <label className={`vj-toggle${x.grupo ? " on" : ""}`}>
+      <div className="vj-ficha-acc">
+        {b.cel && (
+          <button className="btn secondary vj-btn vj-ficha-wa" onClick={abrirWA}>
+            <IconoWA /> WhatsApp
+          </button>
+        )}
+        {puedePagar && e.falta > 0 && !pagando && (
+          <button className="btn btn-primary vj-btn" onClick={() => setPagando(true)}>
+            + Registrar pago
+          </button>
+        )}
+        {!pasado && (
+          <label className={`vj-toggle vj-ficha-grupo${x.grupo ? " on" : ""}`}>
             <input type="checkbox" checked={x.grupo} disabled={!p.grupo || ro} onChange={(ev2) => cambiar(x, { grupo: ev2.target.checked }, "Grupo de WhatsApp", x.grupo ? "Sí" : "No", ev2.target.checked ? "Sí" : "No")} />
             {x.grupo ? "Ya está en el grupo" : "Todavía no está en el grupo"}
           </label>
-        </>
-      )}
+        )}
+        {pasado &&
+          [
+            [true, "Asistió"],
+            [false, "No vino"],
+          ].map(([val, t]) => (
+            <button
+              key={t}
+              disabled={!p.grupo || ro}
+              className={`pb-chip vj-ficha-asis${x.asistio === val ? " sel" : ""}`}
+              onClick={() => cambiar(x, { asistio: x.asistio === val ? null : val }, "Asistencia", x.asistio == null ? "—" : x.asistio ? "Asistió" : "No vino", x.asistio === val ? "—" : t)}
+            >
+              {t}
+            </button>
+          ))}
+      </div>
 
-      {pasado && (
-        <>
-          <div className="vj-sec">Asistencia</div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {[
-              [true, "Asistió"],
-              [false, "No vino"],
-            ].map(([val, t]) => (
-              <button
-                key={t}
-                disabled={!p.grupo || ro}
-                className={`pb-chip mini${x.asistio === val ? " sel" : ""}`}
-                onClick={() => cambiar(x, { asistio: x.asistio === val ? null : val }, "Asistencia", x.asistio == null ? "—" : x.asistio ? "Asistió" : "No vino", x.asistio === val ? "—" : t)}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {x.rol === "buzo" && (p.pagos || p.conciliar) && (
-        <>
+      {verPago && (
+        <div className="vj-blk">
           <div className="vj-sec">Pago</div>
           {x.usaAbono || x.pagadoPor ? (
             <div className="hint-text">
@@ -637,6 +548,7 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
               {v.reserva && <div className="hint-text">{v.reserva.nota}</div>}
             </>
           )}
+          {pagando && <RegistrarPago v={v} x={x} falta={e.falta} cerrar={() => setPagando(false)} cambiar={cambiar} quien={rol.corto} />}
           {(x.pagos || []).map((pg) => (
             <div key={pg.id} className="vj-pago">
               <div style={{ minWidth: 0 }}>
@@ -697,43 +609,148 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
             </div>
           )}
           {p.pagos && !ro && (
-            <label className="vj-adjuntar">
-              <IconClip size={15} /> Adjuntar comprobante
-              <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={(ev2) => ev2.target.files?.[0] && adjuntar(ev2.target.files[0])} />
-            </label>
-          )}
-          {p.pagos && !ro && !x.usaAbono && !x.pagadoPor && (
-            <>
-              {pagando ? (
-                <RegistrarPago v={v} x={x} falta={e.falta} cerrar={() => setPagando(false)} cambiar={cambiar} quien={rol.corto} />
-              ) : (
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-                  <button className="btn btn-primary vj-btn" onClick={() => setPagando(true)}>
-                    + Registrar pago
-                  </button>
-                  {(b.abono || 0) > 0 && (
-                    <button className="btn secondary vj-btn" onClick={() => ops.usarAbono(x, b, Math.min(b.abono, e.falta || b.abono))}>
-                      Usar su abono ({rd(b.abono)})
-                    </button>
-                  )}
-                </div>
+            <div className="vj-ficha-pagobtns">
+              <label className="vj-adjuntar">
+                <IconClip size={15} /> Adjuntar comprobante
+                <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={(ev2) => ev2.target.files?.[0] && adjuntar(ev2.target.files[0])} />
+              </label>
+              {puedePagar && !e.falta && !pagando && (
+                <a className="vj-link" onClick={() => setPagando(true)}>
+                  + Registrar otro pago
+                </a>
               )}
-            </>
+              {puedePagar && !pagando && (b.abono || 0) > 0 && (
+                <button className="btn secondary vj-mini" onClick={() => ops.usarAbono(x, b, Math.min(b.abono, e.falta || b.abono))}>
+                  Usar su abono ({rd(b.abono)})
+                </button>
+              )}
+            </div>
           )}
-        </>
+        </div>
       )}
 
-      <div className="vj-sec">Nota</div>
-      <input
-        className="vj-nota"
-        disabled={!p.grupo || ro}
-        defaultValue={x.nota}
-        placeholder="Nota (opcional)"
-        onBlur={(ev2) => ev2.target.value !== x.nota && cambiar(x, { nota: ev2.target.value }, "Nota", x.nota || "—", ev2.target.value || "—")}
-      />
+      {esBuzo && (
+        <div className="vj-blk">
+          <div className="vj-sec">En este {P}</div>
+          {v.opciones.length > 1 ? (
+            <div className="vj-dato">
+              <span>Opción</span>
+              <select
+                className="vj-sel"
+                disabled={!p.inscribir || ro}
+                value={x.opcionId}
+                onChange={(ev2) => cambiar(x, { opcionId: ev2.target.value }, "Cambió la opción", o.nombre, v.opciones.find((y) => y.id === ev2.target.value).nombre)}
+              >
+                {v.opciones.map((y) => (
+                  <option key={y.id} value={y.id}>
+                    {y.nombre} · {precioTexto(v, y)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="vj-dato">
+              <span>Opción</span>
+              <b>
+                {o.nombre} · {precioTexto(v, o)}
+              </b>
+            </div>
+          )}
+          {v.extras.filter((ex) => String(ex.nombre || "").trim()).map((ex) => (
+            <label key={ex.id} className="vj-check">
+              <input
+                type="checkbox"
+                disabled={!p.inscribir || ro}
+                checked={(x.extras || []).includes(ex.id)}
+                onChange={(ev2) =>
+                  cambiar(x, { extras: ev2.target.checked ? [...(x.extras || []), ex.id] : x.extras.filter((y) => y !== ex.id) }, `${ex.nombre}`, ev2.target.checked ? "No" : "Sí", ev2.target.checked ? "Sí" : "No")
+                }
+              />
+              {ex.nombre} (+{rd(ex.dop)})
+            </label>
+          ))}
+          {v.equipo.modo === "no" && <div className="hint-text">Este {P} no tiene alquiler de equipo.</div>}
+          {mostrarEquipo && (
+            <>
+              <div className="hint-text" style={{ marginTop: 6 }}>
+                Equipo que alquila{x.equipo.donde ? ` (${v.equipo.donde?.find((d) => d.id === x.equipo.donde)?.t.replace("Lo alquilo ", "")})` : v.equipo.proveedor ? ` (lo pone ${v.equipo.proveedor})` : ""}:
+              </div>
+              <div className="pb-chips" style={{ marginTop: 4 }}>
+                {v.equipo.piezas.map((pz) => {
+                  const sel = x.equipo.piezas.includes(pz);
+                  const talla = tallaDe(pz);
+                  return (
+                    <button
+                      key={pz}
+                      className={`pb-chip mini${sel ? " sel" : ""}`}
+                      disabled={!p.inscribir || ro}
+                      onClick={() =>
+                        cambiar(x, { equipo: { ...x.equipo, piezas: sel ? x.equipo.piezas.filter((y) => y !== pz) : [...x.equipo.piezas, pz] } }, `Equipo (${pz})`, sel ? "Alquila" : "Propio", sel ? "Propio" : "Alquila")
+                      }
+                    >
+                      {pz}
+                      {sel && talla ? ` · ${talla}` : ""}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+          {v.habitaciones && (
+            <div className="vj-dato" style={{ marginTop: 6 }}>
+              <span>Habitación</span>
+              <select className="vj-sel" disabled={!p.inscribir || ro} value={x.habitacion} onChange={(ev2) => cambiar(x, { habitacion: ev2.target.value }, "Habitación", x.habitacion || "—", ev2.target.value || "—")}>
+                <option value="">Sin asignar</option>
+                {v.habitaciones.map((h) => (
+                  <option key={h}>{h}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {Object.keys(x.respuestas || {}).length > 0 &&
+            Object.entries(x.respuestas).map(([k, val]) => (
+              <div key={k} className="vj-dato">
+                <span>{PREGUNTAS.find((y) => y.k === k)?.t || k}</span>
+                <b>{val}</b>
+              </div>
+            ))}
+        </div>
+      )}
+
+      <div className="vj-blk">
+        <div className="vj-sec">Contacto</div>
+        <div className="vj-dato">
+          <span>Celular</span>
+          <b>{formatoCel(b.cel) || "—"}</b>
+        </div>
+        <div className="vj-dato">
+          <span>{b.doc ? "Cédula" : b.pasaporte ? "Pasaporte" : "Documento"}</span>
+          <b>{b.doc || b.pasaporte || <span style={{ color: "var(--texto-suave)", fontWeight: 500 }}>Todavía no lo ha puesto</span>}</b>
+        </div>
+        <div className="vj-dato">
+          <span>Certificación</span>
+          <b>{b.agencia ? `${b.agencia} ${b.nivel || ""} · ${b.cert || "sin número"}` : "—"}</b>
+        </div>
+        {p.buzos && (
+          <a className="vj-link" style={{ fontSize: 13, display: "inline-block", marginTop: 6 }} onClick={() => ir(`buzo:${b.id}`)}>
+            Ver ficha completa del buzo ›
+          </a>
+        )}
+      </div>
+
+      <div className="vj-blk">
+        <div className="vj-sec">Nota</div>
+        <input
+          className="vj-nota"
+          disabled={!p.grupo || ro}
+          defaultValue={x.nota}
+          placeholder="Nota (opcional)"
+          onBlur={(ev2) => ev2.target.value !== x.nota && cambiar(x, { nota: ev2.target.value }, "Nota", x.nota || "—", ev2.target.value || "—")}
+        />
+      </div>
 
       {p.inscribir && !ro && (
-        <div style={{ marginTop: 16, borderTop: "1px solid var(--borde)", paddingTop: 10 }}>
+        <div className="vj-ficha-fin">
           {quitando ? (
             <div>
               <div style={{ fontSize: 14, marginBottom: 8 }}>
@@ -997,7 +1014,7 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir, yo, avisar })
             <b style={{ whiteSpace: "nowrap" }}>{precioTexto(v, o)}</b>
           </div>
         ))}
-        {v.extras.map((e) => (
+        {v.extras.filter((e) => String(e.nombre || "").trim()).map((e) => (
           <div key={e.id} className="vj-opcion">
             <div>
               <b>{e.nombre}</b>

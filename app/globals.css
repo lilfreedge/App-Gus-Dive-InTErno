@@ -3285,7 +3285,7 @@ html[data-theme="dark"] .ce-form-curso { background: #1c2a38; border-color: #3a4
 
 /* V57 -- App Equipos de clientes > Inicio: el nombre de la fecha una sola vez,
    al lado del título de cada sección, alineado con las fechas. */
-.section-fecha { font-size: 11.5px; font-weight: 600; color: var(--texto-suave); padding-right: 21px; text-align: right; }
+.section-fecha { font-size: 13px; font-weight: 700; color: var(--texto); opacity: 0.75; padding-right: 21px; text-align: right; }
 
 /* ======================================================= V57 -- App Alquiler (rojo GUS) */
 .alq-app { --alq: #cd392a; --alq-claro: #fbeae8; }
@@ -3356,3 +3356,104 @@ html[data-theme="dark"] .alq-aviso { background: #3a2e14; border-color: #5a4720;
 .alq-bit { padding: 10px 14px; border-top: 1px solid var(--borde); font-size: 13.5px; }
 .alq-bit:first-child { border-top: 0; }
 .alq-mas-card .hub-link-icon { background: #cd392a; color: #fff; }
+
+/* V57 -- Alquiler: el logo en blanco sobre la barra roja (nota 2-nov: "aquí
+   pudieras poner el logo invertido"). */
+.alq-topbar .topbar-logo { filter: brightness(0) invert(1); }
+
+/* V58 -- Alquiler: buscador de equipos, precios por tipo, estadísticas y reporte. */
+.alq-sug button:disabled { opacity: 0.5; cursor: not-allowed; }
+.alq-cod { font-weight: 800; color: var(--alq); font-family: inherit; margin-right: 4px; }
+.alq-precio-fila { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 14px; border-top: 1px solid var(--borde); }
+.alq-precio-fila:first-child { border-top: 0; }
+.alq-link-chico { font-size: 12px; background: none; border: 0; padding: 0; cursor: pointer; margin-top: 2px; }
+.alq-cuadros.cuatro { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 560px) { .alq-cuadros.cuatro { grid-template-columns: repeat(2, 1fr); } }
+.alq-barras { display: grid; gap: 6px; }
+.alq-barra { display: grid; grid-template-columns: 110px 1fr auto; gap: 8px; align-items: center; font-size: 13px; }
+.alq-barra-k { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--texto-suave); font-weight: 600; }
+.alq-barra-t { background: var(--superficie-suave); border-radius: 6px; height: 14px; overflow: hidden; }
+.alq-barra-t i { display: block; height: 100%; background: var(--alq); border-radius: 6px; }
+.alq-barra-v { font-weight: 700; white-space: nowrap; }
+.alq-reporte { margin-top: 12px; }
+.alq-reporte-t { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; border-bottom: 3px solid var(--alq); padding-bottom: 8px; margin-bottom: 10px; }
+.alq-reporte-res { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 13.5px; margin-bottom: 10px; }
+.alq-tabla td, .alq-tabla th { font-size: 12.5px; }
+@media print {
+  .alq-topbar, .no-print, .vj-toast { display: none !important; }
+  .alq-reporte { border: 0; box-shadow: none; }
+}
+
+/* V59 -- contacto de emergencia: nombre y número. */
+.ce-pub-dos { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; }
+@media (max-width: 420px) { .ce-pub-dos { grid-template-columns: 1fr; } }
+
+.ce-pub-espera { text-align: center; padding: 4px 0 8px; }
+.ce-pub-espera-ic { width: 52px; height: 52px; border-radius: 50%; background: var(--ce-claro, #fdf3cf); color: var(--ce, #8a6a00); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+
+/* V59 -- "Leído" en cada notificación. */
+.campana-fila { display: flex; align-items: center; gap: 6px; }
+.campana-fila > .campana-item, .campana-fila > .vj-av-item { flex: 1 1 auto; min-width: 0; }
+.campana-leido { flex: 0 0 auto; border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto-suave); font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 10px; cursor: pointer; margin-right: 6px; font-family: inherit; }
+.campana-leido:hover { color: var(--texto); border-color: var(--texto-suave); }
+
+/* V59 -- tarjeta de curso con la fecha grande ("158"). */
+.ce-tcurso { width: 100%; display: flex; align-items: center; gap: 12px; background: var(--tarjeta); border: 1px solid #ecdca3; border-left: 5px solid var(--ce, #8a6a00); border-radius: 12px; padding: 12px; margin-top: 8px; cursor: pointer; text-align: left; font: inherit; color: var(--texto); }
+.ce-abierto.fuerte { border: 0; background: none; }
+.ce-abierto.fuerte .ce-tcurso { margin-top: 10px; }
+.ce-abierto.fuerte.sel .ce-tcurso { border-radius: 12px 12px 0 0; }
+.ce-abierto.fuerte .ce-abierto-cuerpo { background: var(--tarjeta); border: 1px solid #ecdca3; border-top: 0; border-radius: 0 0 12px 12px; padding-top: 8px; }
+.ce-fcaja { width: 54px; flex-shrink: 0; text-align: center; background: var(--ce-claro, #fdf3cf); border-radius: 10px; padding: 5px 0; }
+.ce-fcaja b { display: block; font-size: 21px; line-height: 1.1; color: var(--ce-barra-txt, #2b2200); }
+.ce-fcaja small { font-size: 10.5px; font-weight: 800; color: var(--ce, #8a6a00); text-transform: uppercase; }
+.ce-tcurso-n { font-size: 15.5px; display: block; }
+.ce-tcurso-k { text-align: right; flex-shrink: 0; }
+.ce-tcurso-k b { display: block; font-size: 19px; color: var(--ce-barra-txt, #2b2200); }
+.ce-tcurso-k small { font-size: 11.5px; color: var(--texto-suave); }
+html[data-theme="dark"] .ce-tcurso, html[data-theme="dark"] .ce-abierto.fuerte .ce-abierto-cuerpo { border-color: #3a4a58; }
+html[data-theme="dark"] .ce-fcaja b, html[data-theme="dark"] .ce-tcurso-k b { color: #f3d77a; }
+
+/* V59 -- ficha en lista de espera ("159"). */
+.ce-quiere { border: 2px dashed #e2c86a; border-radius: 12px; padding: 12px 14px; margin-top: 10px; background: #fffbea; }
+.ce-quiere-k { font-size: 11.5px; font-weight: 800; color: var(--ce, #8a6a00); text-transform: uppercase; letter-spacing: 0.4px; }
+.ce-quiere-c { font-size: 17px; display: block; margin: 2px 0; }
+html[data-theme="dark"] .ce-quiere { background: #2a2410; border-color: #6b5a20; }
+
+/* V59 -- cursos en el calendario ("161"). */
+.vj-cal-curso { display: block; width: 100%; background: #fdf3cf; color: #5c4700; border-radius: 5px; font-size: 10px; font-weight: 700; padding: 1px 4px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vj-cal-curso.empieza { background: #f6ce46; color: #2b2200; font-weight: 800; }
+.vj-cal-curso.muestra { display: inline-block; width: auto; margin: 0 4px 0 0; }
+html[data-theme="dark"] .vj-cal-curso { background: #3a3010; color: #f3d77a; }
+html[data-theme="dark"] .vj-cal-curso.empieza { background: #8a6a00; color: #fff; }
+
+/* V59 (166): ficha del buzo en el buceo — arriba cómo está y los botones de lo que más se hace. */
+.vj-ficha-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.vj-ficha-acc { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0 2px; padding-bottom: 12px; border-bottom: 1px solid var(--borde); }
+.vj-ficha-acc .vj-btn { min-height: 40px; display: inline-flex !important; align-items: center; gap: 6px; }
+.vj-ficha-acc .vj-toggle { min-height: 40px; padding: 8px 14px; font-size: 14px !important; }
+.vj-ficha-acc .vj-ficha-asis { min-height: 40px; padding: 8px 16px; font-size: 14px; }
+.vj-ficha-wa svg { color: #1f9d55; }
+.vj-blk { border-bottom: 1px solid var(--borde); padding-bottom: 12px; }
+.vj-blk > .vj-sec:first-child { margin-top: 14px; }
+.vj-ficha-pagobtns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.vj-ficha-pagobtns .vj-adjuntar { margin: 0 !important; }
+.vj-ficha-fin { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; padding-top: 12px; border-top: 1px dashed var(--borde); }
+
+/* V59 (165): link de Buceos — la salida grande en un cuadro, el calendario y "¿Llegas directo?". */
+.pb-salida { background: rgba(255, 255, 255, 0.6); border-radius: 14px; padding: 12px 14px; margin-top: 10px; color: #06324f; }
+.pb-salida-f { font-size: 16px; font-weight: 800; }
+.pb-salida-k { font-size: 12.5px; font-weight: 700; margin-top: 6px; opacity: 0.8; }
+.pb-salida-h { font-size: 30px; font-weight: 900; line-height: 1.05; letter-spacing: -0.01em; }
+.pb-salida-l { font-size: 14px; font-weight: 600; margin-top: 2px; }
+.pb-salida-cal { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; border: 1.5px solid #06324f; background: #fff; color: #06324f; border-radius: 999px; padding: 7px 13px; font-size: 13.5px; font-weight: 800; cursor: pointer; font-family: inherit; }
+.pb-salida.en-fin { background: #e9f7fd; border: 1px solid #bfe6f7; text-align: left; margin-top: 16px; }
+.pb-directo { background: #fff; border: 1px solid #d7e3ea; border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; text-align: left; }
+.pb-fin-salida .pb-directo { margin: 10px 0 12px; }
+.pb-directo-t { font-size: 15px; font-weight: 800; color: #06324f; }
+.pb-directo-x { font-size: 14.5px; margin-top: 4px; color: #1a2733; }
+.pb-directo-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.pb-directo-btn { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #4ebae8; background: #fff; color: #06324f; border-radius: 999px; padding: 7px 13px; font-size: 13.5px; font-weight: 800; cursor: pointer; font-family: inherit; text-decoration: none; }
+.pb-directo-btn.sel { background: #e3f4fc; }
+.pb-directo-foto { display: block; width: 100%; max-height: 360px; object-fit: cover; border-radius: 10px; margin-top: 10px; }
+.vj-enc-foto { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.vj-enc-foto img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--borde); }

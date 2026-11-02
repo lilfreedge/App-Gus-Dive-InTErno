@@ -220,7 +220,7 @@ export default async function AppClientesPage() {
             estén pendientes de verificar para despachar, ponlo en un paso
             aparte que se llame pendiente verificar, así no nos confundimos". */}
         <div className="section-title">
-          Pendiente verificar ({porVerificar.length})
+          Pendiente por verificar para despachar ({porVerificar.length})
           <span className="section-fecha">Fecha listo para entrega</span>
         </div>
         <ListaOrdenes

@@ -96,21 +96,24 @@ export default function CampanaNotificaciones({ app, appsAvisos = null, tecnico 
           </div>
           <div className="campana-lista">
             {lista === null && <div className="campana-vacio">Cargando…</div>}
-            {lista && !lista.length && <div className="campana-vacio">No tienes notificaciones.</div>}
-            {(lista || []).map((n) => (
-              <a
-                key={n.id}
-                href={n.url || "#"}
-                className={`campana-item${n.leida_en ? "" : " nuevo"}`}
-                onClick={() => !n.leida_en && marcarLeidas([n.id])}
-              >
-                <span className="campana-dot" style={n.leida_en ? { visibility: "hidden" } : null} />
-                <span style={{ minWidth: 0 }}>
-                  <b>{n.titulo}</b>
-                  {n.texto && <span className="campana-txt">{n.texto}</span>}
-                  <small>{hace(n.creado_en)}</small>
-                </span>
-              </a>
+            {/* V59 (nota 2-nov): "pon un botón de leído a cada uno para que se
+                quite de ahí cuando uno lo lea". Aquí salen solo las que no se
+                han leído; las leídas siguen en "Ver todas". */}
+            {lista && !sinLeer.length && <div className="campana-vacio">No tienes notificaciones nuevas.</div>}
+            {sinLeer.map((n) => (
+              <div key={n.id} className="campana-fila">
+                <a href={n.url || "#"} className="campana-item nuevo" onClick={() => marcarLeidas([n.id])}>
+                  <span className="campana-dot" />
+                  <span style={{ minWidth: 0 }}>
+                    <b>{n.titulo}</b>
+                    {n.texto && <span className="campana-txt">{n.texto}</span>}
+                    <small>{hace(n.creado_en)}</small>
+                  </span>
+                </a>
+                <button type="button" className="campana-leido" onClick={() => marcarLeidas([n.id])} aria-label="Marcar como leído">
+                  Leído
+                </button>
+              </div>
             ))}
           </div>
           {(avisos.length > 0 || puedeAdministrar) && (

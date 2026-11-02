@@ -200,10 +200,13 @@ export default function NuevoMantenimientoCompresorForm({
     setLoading(false);
 
     if (error) {
+      // V59: decir por qué no se guardó (antes solo "Intenta de nuevo").
       setError(
         /horómetro/i.test(error.message || "")
           ? error.message
-          : "No se pudo guardar. Intenta de nuevo."
+          : error.code === "42501" || /row-level security|permission denied/i.test(error.message || "")
+            ? "No tienes permiso para registrar mantenimientos de compresores. Pídele al Titular que te active \"Registrar mantenimiento de compresor\" en Administración › Usuarios."
+            : `No se pudo guardar. Intenta de nuevo. (${error.message || "error desconocido"})`
       );
       return;
     }
