@@ -3,7 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { buzoAFila, nuevoId } from "@/lib/viajes/datos";
 import { filaACurso, filaAEst } from "@/lib/estudiantes/datos";
 import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula, hoyISO, fechaLarga } from "@/lib/viajes/modelo";
-import { pasosIniciales, pagado, debe, nombreEtapa } from "@/lib/estudiantes/modelo";
+import { pasosIniciales, pagado, debe, nombreEtapa, menorDe12 } from "@/lib/estudiantes/modelo";
 import { docValido, buscarPorDoc, celCoincide, logLink } from "@/lib/estudiantes/servidor";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 
@@ -64,6 +64,8 @@ export async function POST(request) {
   const curso = cfila ? filaACurso(cfila) : null;
   if (!curso || !curso.activo) return NextResponse.json({ error: "Escoge el curso." }, { status: 400 });
   const n = body.datos || {};
+  // V60 (nota 2-nov): el buceo es de 12 años en adelante.
+  if (menorDe12(n.nac)) return NextResponse.json({ error: "Para bucear hay que tener 12 años o más." }, { status: 400 });
   const cel = soloDigitos(body.cel);
   if (cel.length !== 10) return NextResponse.json({ error: "Escribe tu celular completo (10 números)." }, { status: 400 });
 

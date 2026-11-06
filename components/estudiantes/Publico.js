@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { soloDigitos, formatoCedula, rd, fechaCorta, fechaLarga } from "@/lib/viajes/modelo";
-import { semanaDe } from "@/lib/estudiantes/modelo";
+import { semanaDe, menorDe12 } from "@/lib/estudiantes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck, IconLock, IconCamera } from "@/components/icons";
@@ -383,6 +383,8 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
               <>
                 <label className="ce-pub-l">Fecha de nacimiento</label>
                 <input className="pb-input" type="date" value={d.nac} onChange={(e) => setD({ ...d, nac: e.target.value })} />
+                {/* V60 (nota 2-nov): el buceo es de 12 años en adelante. */}
+                {menorDe12(d.nac) && <div className="pb-error">Para bucear hay que tener 12 años o más. Escríbenos por WhatsApp si tienes dudas.</div>}
               </>
             )}
             {falta.correo && (
@@ -402,7 +404,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
                 {/* V59 (nota 2-nov): "en contacto de emergencia pide nombre y número". */}
                 <label className="ce-pub-l">Contacto de emergencia</label>
                 <div className="ce-pub-dos">
-                  <input className="pb-input" value={d.emergenciaNombre || ""} onChange={(e) => setD({ ...d, emergenciaNombre: e.target.value })} placeholder="Nombre (ej. Ana Pérez, mamá)" />
+                  <input className="pb-input" value={d.emergenciaNombre || ""} onChange={(e) => setD({ ...d, emergenciaNombre: e.target.value })} placeholder="Nombre" />
                   <CampoCel className="pb-input" value={d.emergenciaCel || ""} onChange={(v) => setD({ ...d, emergenciaCel: v })} placeholder="Su celular" />
                 </div>
               </>
@@ -412,7 +414,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             {error && <div className="pb-error">{error}</div>}
             <button
               className="pb-btn"
-              disabled={(!buzo && (!d.nombre.trim() || soloDigitos(cel).length !== 10)) || (falta.nac && !d.nac)}
+              disabled={(!buzo && (!d.nombre.trim() || soloDigitos(cel).length !== 10)) || (falta.nac && !d.nac) || menorDe12(d.nac)}
               onClick={() => ir("curso")}
             >
               Seguir

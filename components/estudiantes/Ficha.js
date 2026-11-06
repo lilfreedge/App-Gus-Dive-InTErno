@@ -38,6 +38,18 @@ import { formatoCel, formatoCedula } from "@/lib/viajes/modelo";
 import { cursoDe, buzoDe } from "./Inicio";
 import { nuevoId } from "@/lib/estudiantes/datos";
 
+// V60 ("164"): los intereses abiertos de esta persona (por su ficha de buzo o
+// por el mismo documento).
+const interesesDe = (db, b) => {
+  const doc = soloDigitos(b.doc);
+  const pas = String(b.pasaporte || "").replace(/\s/g, "").toUpperCase();
+  return (db.interesados || []).filter(
+    (i) =>
+      ["nuevo", "escribimos", "va"].includes(i.estado) &&
+      ((i.buzoId && i.buzoId === b.id) || (i.documento && ((doc.length === 11 && soloDigitos(i.documento) === doc) || (pas && i.documento.toUpperCase() === pas))))
+  );
+};
+
 // La ficha del estudiante: el mismo camino del sheet, de izquierda a
 // derecha. Cada paso guarda solo quién lo hizo y cuándo ("ya no hay que
 // escribir fechas a mano").
@@ -586,6 +598,21 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
           <EditarDatos b={b} ops={ops} cerrar={() => setEditDatos(false)} />
         ) : (
           <>
+            {/* V60 ("164"): lo que dejó en el link "Me interesa", ligado a la persona. */}
+            {interesesDe(db, b).length > 0 && (
+              <div className="ce-dato ce-le-interesa">
+                <span>Le interesa</span>
+                <span>
+                  {interesesDe(db, b).map((i, k) => (
+                    <a key={i.id} className="vj-link" onClick={() => ir("interesados")}>
+                      {k ? " · " : ""}
+                      {i.curso || "Información"}
+                      {i.creadoEn ? ` (${fechaCorta(String(i.creadoEn).slice(0, 10))})` : ""}
+                    </a>
+                  ))}
+                </span>
+              </div>
+            )}
             <div className="ce-dato">
               <span>Celular</span>
               <span>{b.cel ? formatoCel(b.cel) : "—"}</span>

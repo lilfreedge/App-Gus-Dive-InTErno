@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V60",
+    fecha: "2 de noviembre, 2026",
+    titulo: "Entrar a un curso, aviso de lista de espera en el link de Buceos, calendario al final y link de Interesados con cédula",
+    descripcion:
+      "Control Estudiantes: al tocar un curso (en Inicio o en Cursos) se entra a su página, con la fecha, el instructor, el cupo, sus estudiantes, la gente en lista de espera para ese curso (con \"Pasarlo a este curso\") y \"Editar este curso\". En el link del estudiante no deja seguir a quien tiene menos de 12 años, y el contacto de emergencia solo dice \"Nombre\". El link de Interesados ahora dice \"¿Te interesa un curso?\", pide primero la cédula o el pasaporte, saluda por su nombre a quien ya es buzo o estudiante de Gus, pide el correo y ya no pregunta cuándo; lo que le interesa sale en su ficha. Buceos: el link revisa los cupos cuando el buzo pone su cédula; si el buceo está lleno o cerrado, se lo dice antes de enviar (\"vas a anotar a … en la lista de espera\"). \"Agregar a mi calendario\" ya no sale arriba: sale al final, en el cuadro de la salida, debajo de \"Confirmar por WhatsApp\" y antes de \"¿Ya pagaste? Sube el comprobante\".",
+  },
+  {
     version: "V59",
     fecha: "2 de noviembre, 2026",
     titulo: "Calendario en Control Estudiantes, ficha del buzo más clara, salida grande con calendario y punto de encuentro en el link de Buceos",

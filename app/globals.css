@@ -3457,3 +3457,10 @@ html[data-theme="dark"] .vj-cal-curso.empieza { background: #8a6a00; color: #fff
 .pb-directo-foto { display: block; width: 100%; max-height: 360px; object-fit: cover; border-radius: 10px; margin-top: 10px; }
 .vj-enc-foto { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
 .vj-enc-foto img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--borde); }
+
+/* V60 ("170"): la página de un curso. */
+.ce-curso-cab .ce-tcurso { cursor: default; }
+.ce-curso-datos { margin: 10px 0 4px; }
+.ce-curso-espera { display: flex; align-items: center; gap: 8px; }
+.ce-curso-espera > .ce-est { flex: 1; min-width: 0; }
+.ce-curso-espera > .btn { flex: none; }

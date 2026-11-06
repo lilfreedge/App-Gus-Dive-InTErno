@@ -41,10 +41,24 @@ export async function POST(request) {
   const v = filaAViaje(vrow);
   const tipo = body.tipoDoc === "pasaporte" ? "pasaporte" : "cedula";
 
+  // V60 ("174"): los cupos de ahora mismo (si cerraron la inscripción o se
+  // llenó mientras el buzo tenía el link abierto, el link se entera).
+  const cuposAhora = async () => {
+    if (estadoViaje(v) === "cerrado_insc") return 0;
+    const { count } = await s
+      .from("viajes_inscripciones")
+      .select("id", { count: "exact", head: true })
+      .eq("viaje_id", v.id)
+      .eq("estado", "inscrito")
+      .neq("rol", "staff");
+    return Math.max(0, (v.cupoMax || 0) - (count || 0));
+  };
+
   if (body.accion === "doc") {
     if (!docValido(tipo, body.doc)) return NextResponse.json({ error: tipo === "cedula" ? "La cédula tiene 11 números." : "Escribe tu pasaporte completo." }, { status: 400 });
     const b = await buscarPorDoc(s, tipo, body.doc);
-    if (!b || b.staff) return NextResponse.json({ encontrado: false });
+    const quedan = await cuposAhora();
+    if (!b || b.staff) return NextResponse.json({ encontrado: false, quedan });
     const { data: ya } = await s.from("viajes_inscripciones").select("estado").eq("viaje_id", v.id).eq("buzo_id", b.id).maybeSingle();
     return NextResponse.json({
       encontrado: true,
@@ -54,6 +68,7 @@ export async function POST(request) {
       // V47: qué tallas ya tenemos, para no volver a pedirlas.
       tallasGuardadas: { bcd: !!b.tallas?.bcd, wetsuit: !!b.tallas?.wetsuit, chapaletas: !!b.tallas?.chapaletas },
       yaInscrito: !!ya && ya.estado !== "quitado",
+      quedan,
       // V48: el link del grupo de WhatsApp solo se lo damos al que está inscrito.
     });
   }

@@ -12,7 +12,7 @@ import NotificacionesPagina from "@/components/NotificacionesPagina";
 import { IconGear, IconLogout, IconShuffle, IconHistory, IconUsers } from "@/components/icons";
 import { cargarTodo, estAFila, buzoAFila, cursoAFila, interesadoAFila, fechaAFila, nuevoId } from "@/lib/estudiantes/datos";
 import { fechaCursoCorta } from "@/lib/estudiantes/modelo";
-import { Inicio, Lista, Mas, Bitacora, Directorio } from "./Inicio";
+import { Inicio, Lista, Mas, Bitacora, Directorio, DetalleCurso } from "./Inicio";
 import { Ficha } from "./Ficha";
 import { Nuevo } from "./Nuevo";
 import { Cursos } from "./Cursos";
@@ -35,6 +35,7 @@ export function rutaDeUrl(path) {
   if (p[0] === "estudiantes" && p[1]) return `cursos:${p[1]}`;
   if (p[0] === "cursos" && p[1]) return `cursos:${p[1]}`;
   if (p[0] === "nuevo" && p[1]) return `nuevo:${p[1]}`;
+  if (p[0] === "curso" && p[1]) return `curso:${p[1]}`;
   return p[0];
 }
 export function urlDeRuta(r) {
@@ -385,7 +386,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
     ...(p.interesados ? [{ r: "interesados", t: "Interesados" }] : []),
     { r: "mas", t: "Más" },
   ];
-  const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "administracion", "basedatos", "notificaciones"].includes(ruta) ? "mas" : ruta.split(":")[0];
+  const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "administracion", "basedatos", "notificaciones"].includes(ruta) ? "mas" : ruta.startsWith("curso:") ? "cursos" : ruta.split(":")[0];
   const q = { db, p, yo, ops, ir, avisar, personas };
 
   let cuerpo = null;
@@ -406,6 +407,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
     const id = ruta.split(":")[1];
     cuerpo = db.estudiantes.some((x) => x.id === id) ? <Ficha key={id} {...q} id={id} /> : <div className="hint-text">Ese estudiante no existe.</div>;
   } else if (ruta === "nuevo" || ruta.startsWith("nuevo:")) cuerpo = p.estudiantes ? <Nuevo {...q} interesadoId={ruta.split(":")[1] || null} /> : <Inicio {...q} />;
+  else if (ruta.startsWith("curso:")) cuerpo = <DetalleCurso {...q} fechaId={ruta.split(":")[1]} />;
   else if (ruta === "calendario") cuerpo = <Calendario {...q} />;
   else if (ruta === "interesados") cuerpo = p.interesados ? <Interesados {...q} /> : <Inicio {...q} />;
   else if (ruta === "basedatos") cuerpo = <Cursos {...q} />;

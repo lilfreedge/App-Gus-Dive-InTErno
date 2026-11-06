@@ -1,0 +1,291 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Maqueta V60</title><style>
+  :root { --azul:#0a3d62; --fondo:#f4f7f9; --borde:#dfe6ea; --texto:#1a2733; --suave:#5c6b78; --rojo:#d64545; --sup:#eef3f6; --ce:#8a6a00; --ce-barra:#f6ce46; --ce-txt:#2b2200; --ce-claro:#fdf3cf; --bc:#4ebae8; --verde:#2c9e5b; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--fondo); color:var(--texto); font-size:14px; }
+  .maq { background:#1a2733; color:#fff; padding:12px 16px; font-size:13px; }
+  .tabs { display:flex; gap:6px; flex-wrap:wrap; padding:12px 16px; max-width:980px; margin:0 auto; }
+  .tab { border:1px solid var(--borde); background:#fff; border-radius:999px; padding:7px 12px; font-size:12.5px; font-weight:600; color:var(--suave); cursor:pointer; }
+  .tab.on { background:var(--azul); color:#fff; border-color:var(--azul); }
+  .grupo { font-size:11px; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:.4px; width:100%; margin-top:4px; }
+  .vista { display:none; max-width:980px; margin:0 auto; padding:0 16px 40px; } .vista.on { display:block; }
+  .nota { background:#fff8e1; border:1px solid #f1dd9a; color:#5c4700; border-radius:10px; padding:10px 12px; font-size:12.5px; line-height:1.5; margin-bottom:14px; }
+  .doble { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:760px) { .doble { grid-template-columns:1fr; } }
+  .etq { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; } .etq.a { color:#a33; } .etq.d { color:var(--verde); }
+  .card { background:#fff; border:1px solid var(--borde); border-radius:14px; padding:14px; margin-bottom:10px; }
+  .h1 { font-size:19px; font-weight:800; color:var(--azul); margin:2px 0 10px; }
+  .sec { font-size:12px; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:.4px; margin:16px 0 8px; }
+  .hint { color:var(--suave); font-size:12.5px; }
+  .btn { border:0; border-radius:10px; padding:10px 14px; font-weight:700; font-size:13.5px; cursor:pointer; }
+  .mini { padding:5px 10px; font-size:12px; border-radius:8px; border:1px solid var(--borde); background:#fff; font-weight:600; cursor:pointer; }
+  .chip { display:inline-block; font-size:11px; font-weight:700; padding:2px 9px; border-radius:999px; background:var(--sup); color:var(--suave); }
+  .chip.y { background:var(--ce-claro); color:#5c4700; }
+  input, select { font:inherit; border:1px solid var(--borde); border-radius:9px; padding:9px 10px; width:100%; background:#fff; }
+  label.l { display:block; font-size:12px; font-weight:700; color:var(--suave); margin:10px 0 4px; }
+  /* CE app shell */
+  .ce-top { background:var(--ce-barra); color:var(--ce-txt); padding:9px 14px; border-radius:12px 12px 0 0; font-weight:800; font-size:12.5px; }
+  .ce-nav { background:var(--ce-barra); padding:0 10px 10px; display:flex; gap:6px; flex-wrap:wrap; }
+  .ce-nav span { font-size:12px; font-weight:700; padding:5px 10px; border-radius:999px; background:rgba(255,255,255,.5); color:var(--ce-txt); }
+  .ce-nav span.on { background:var(--ce-txt); color:var(--ce-barra); }
+  .pant { background:var(--fondo); border:1px solid var(--borde); border-top:0; border-radius:0 0 12px 12px; padding:14px; }
+  .curso { display:flex; gap:12px; align-items:center; background:#fff; border:1px solid #ecdca3; border-left:5px solid var(--ce); border-radius:12px; padding:12px; margin-bottom:8px; }
+  .fecha-b { width:54px; text-align:center; background:var(--ce-claro); border-radius:10px; padding:6px 0; flex-shrink:0; }
+  .fecha-b b { display:block; font-size:20px; color:var(--ce-txt); line-height:1.1; } .fecha-b small { font-size:11px; font-weight:800; color:var(--ce); text-transform:uppercase; }
+  .cnt { margin-left:auto; text-align:right; } .cnt b { font-size:18px; color:var(--ce-txt); display:block; } .cnt small { color:var(--suave); font-size:11.5px; }
+  .cuad { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; } @media (max-width:600px) { .cuad { grid-template-columns:repeat(2,1fr); } }
+  .cuad div { background:#fff; border:1px solid var(--borde); border-radius:10px; padding:10px; } .cuad b { font-size:20px; display:block; }
+  /* teléfono */
+  .tel { max-width:380px; margin:0 auto; background:#fff; border:1px solid var(--borde); border-radius:18px; overflow:hidden; }
+  .tel-h { display:flex; gap:8px; align-items:center; padding:11px 14px; border-top:4px solid var(--ce-barra); border-bottom:1px solid var(--borde); font-weight:700; font-size:13px; color:var(--ce-txt); }
+  .tel-h.bc { border-top-color:var(--bc); color:#06324f; }
+  .logo { background:#cd392a; color:#fff; font-weight:900; font-size:11px; padding:2px 6px; border-radius:4px; }
+  .tel-b { padding:14px; }
+  .t { font-size:18px; font-weight:800; color:var(--ce-txt); }
+  .b1 { width:100%; background:var(--ce); color:#fff; margin-top:10px; } .b2 { width:100%; background:#fff; border:1px solid var(--borde); margin-top:8px; }
+  .it { display:flex; gap:10px; align-items:center; border:1px solid var(--borde); border-radius:12px; padding:10px 12px; margin-top:8px; }
+  .it .tx { flex:1; min-width:0; } .it b { display:block; font-size:13.5px; } .it small { color:var(--suave); font-size:12px; }
+  .foto { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#c8d3dc,#9fb0bd); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:20px; flex-shrink:0; }
+  .dato { display:flex; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid var(--borde); font-size:13px; } .dato span:first-child { color:var(--suave); }
+  .pasos { display:flex; gap:4px; margin-top:8px; } .pasos i { flex:1; height:6px; border-radius:3px; background:#e7e2cf; } .pasos i.ya { background:var(--ce); }
+  .seg { display:flex; background:var(--sup); border-radius:10px; padding:3px; } .seg span { flex:1; text-align:center; padding:8px 4px; font-weight:700; font-size:12.5px; border-radius:8px; color:var(--suave); cursor:pointer; } .seg span.on { background:#fff; color:var(--texto); box-shadow:0 1px 2px rgba(0,0,0,.08); }
+  /* calendario */
+  .cal-dia { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--borde); }
+  .cal-f { width:46px; text-align:center; flex-shrink:0; } .cal-f b { display:block; font-size:18px; } .cal-f small { color:var(--suave); font-size:11px; text-transform:uppercase; font-weight:700; }
+  .ev { border-radius:8px; padding:7px 10px; font-size:13px; margin-bottom:4px; } .ev.c { background:var(--ce-claro); border-left:4px solid var(--ce); } .ev.b { background:#e6f5fc; border-left:4px solid var(--bc); }
+  /* buceo */
+  .bc-head { background:#6cb6e2; color:#0a2a44; padding:14px; }
+  .salida { background:#fff; border-radius:12px; padding:10px 12px; margin-top:10px; display:grid; gap:6px; }
+  .salida div { display:flex; gap:10px; align-items:center; font-size:14px; } .salida b { font-size:15px; }
+  .alla { border:1px dashed #9ccbe6; background:#f3fafe; border-radius:12px; padding:10px 12px; margin-top:10px; font-size:13px; }
+  .entrada { height:90px; border-radius:8px; background:linear-gradient(135deg,#a9c9a4,#6d9a77); color:#fff; display:flex; align-items:flex-end; padding:6px 8px; font-size:11px; font-weight:700; margin-top:8px; }
+  .modal { max-width:520px; background:#fff; border-radius:16px; border:1px solid var(--borde); overflow:hidden; margin:0 auto; }
+  .m-h { padding:14px 16px; border-bottom:1px solid var(--borde); display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+  .acc { display:flex; gap:6px; flex-wrap:wrap; padding:10px 16px; border-bottom:1px solid var(--borde); background:#fafcfd; }
+  .blk { padding:12px 16px; border-bottom:1px solid var(--borde); } .blk h5 { margin:0 0 6px; font-size:12px; color:var(--suave); text-transform:uppercase; letter-spacing:.4px; }
+  .pago3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; } .pago3 div { background:var(--sup); border-radius:10px; padding:8px; text-align:center; } .pago3 b { display:block; font-size:15px; }
+</style><style>
+  .bc-hero { background:#4ebae8; color:#06324f; padding:16px; }
+  .ok { width:52px; height:52px; border-radius:50%; background:#22874a; color:#fff; display:flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto 8px; }
+  .wa { width:100%; background:#22874a; color:#fff; margin-top:10px; }
+  .cta { border:1px solid var(--borde); background:var(--sup); border-radius:12px; padding:10px 12px; margin-top:10px; }
+  .cta .n { font-size:18px; font-weight:800; letter-spacing:.3px; }
+  .fila { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--borde); font-size:13px; }
+  .fila:last-child { border-bottom:0; } .fila span:first-child { color:var(--suave); }
+  .cp { border:1px solid #4ebae8; color:#06324f; background:#fff; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+  .opt { border:2px solid var(--borde); border-radius:14px; padding:12px; background:#fff; }
+  .opt.rec { border-color:var(--verde); }
+  .rec-t { font-size:11px; font-weight:800; color:var(--verde); text-transform:uppercase; }
+  .cr { display:flex; align-items:center; gap:10px; border:1px solid #ecdca3; border-radius:12px; padding:10px; margin-top:8px; background:#fff; }
+  .cr .fecha-b { width:46px; padding:4px 0; } .cr .fecha-b b { font-size:16px; }
+  .pas { margin-left:auto; background:var(--ce); color:#fff; border:0; border-radius:8px; padding:7px 12px; font-weight:700; font-size:12.5px; cursor:pointer; white-space:nowrap; }
+  .wa-b { display:inline-flex; align-items:center; gap:6px; background:#22874a; color:#fff; border:0; border-radius:10px; padding:9px 14px; font-weight:700; font-size:13px; }
+  .tri { display:grid; grid-template-columns:1fr 1.4fr 1fr; gap:6px; }
+  .seg2 { display:flex; border:1px solid var(--borde); border-radius:10px; overflow:hidden; } .seg2 span { flex:1; text-align:center; padding:8px; font-size:12.5px; font-weight:700; color:var(--suave); background:#fff; cursor:pointer; } .seg2 span.on { background:#e8f6ee; color:#1f7a45; }
+  .barra { height:8px; border-radius:4px; background:#f3d3d3; overflow:hidden; margin:6px 0 2px; } .barra i { display:block; height:100%; background:var(--verde); }
+  .nuevo { border:1px solid #e3c7f5; background:#f8f0fd; border-radius:10px; padding:9px 11px; display:flex; gap:8px; align-items:center; margin-top:8px; }
+  .tutor { border:1px dashed #d9c27a; background:#fffbea; border-radius:12px; padding:10px 12px; margin-top:10px; }
+</style></head><body>
+<div class="maq"><b>Maqueta V60</b> — lo que me pediste que te propusiera. Toca las pestañas. Nada de esto está programado todavía.</div>
+<div class="tabs" id="tabs">
+  <div class="grupo">Link de Buceos</div>
+  <button class="tab on" data-v="cuenta">1. A nombre de y cédula (174)</button>
+  <div class="grupo">Control Estudiantes</div>
+  <button class="tab" data-v="botones">2. Botones de la ficha en espera (179)</button>
+  <button class="tab" data-v="chips">3. Lista de Estudiantes: curso y en qué va (160)</button>
+  <div class="grupo">Link del estudiante</div>
+  <button class="tab" data-v="espera">4. Anotarse en lista de espera</button>
+  <button class="tab" data-v="fechas">5. Fecha de nacimiento más fácil</button>
+  <button class="tab" data-v="menor">6. Menores de edad sin celular</button>
+  <div class="grupo">Buceos</div>
+  <button class="tab" data-v="ficha">7. Ficha del buzo: WhatsApp, grupo y pago</button>
+</div>
+
+<!-- 1 -->
+<div class="vista on" id="v-cuenta">
+  <div class="nota"><b>174:</b> "A nombre de Gustavo Torreira · Cédula…" quedaba suelto debajo. Propuesta: todo lo de la transferencia en un solo cuadro, como filas, con "Copiar" en el número de cuenta y en la cédula.</div>
+  <div class="doble">
+    <div><div class="etq a">Ahora</div>
+      <div class="tel"><div class="tel-b">
+        <div class="hint"><b>Para separar tu cupo, transfiere el pago (RD$2,600)</b> a esta cuenta.</div>
+        <div class="cta"><div class="hint">Banco Popular · Cuenta de ahorros en pesos (RD$)</div><div style="display:flex;justify-content:space-between;align-items:center"><span class="n">798•••134</span><span class="cp">Copiar</span></div></div>
+        <div class="hint" style="margin-top:8px">A nombre de Gustavo Torreira · Cédula 001-•••••••-•</div>
+        <button class="btn wa">Confirmar por WhatsApp</button>
+      </div></div>
+    </div>
+    <div><div class="etq d">Propuesta</div>
+      <div class="tel"><div class="tel-b">
+        <div class="hint"><b>Para separar tu cupo, transfiere el pago (RD$2,600)</b> a esta cuenta.</div>
+        <div class="cta" style="background:#fff">
+          <div class="fila"><span>Banco</span><b>Banco Popular</b></div>
+          <div class="fila"><span>Cuenta</span><b>Ahorros en pesos (RD$)</b></div>
+          <div class="fila"><span>Número</span><span><b class="n" style="font-size:16px">798•••134</b> <span class="cp">Copiar</span></span></div>
+          <div class="fila"><span>A nombre de</span><b>Gustavo Torreira</b></div>
+          <div class="fila"><span>Cédula</span><span><b>001-•••••••-•</b> <span class="cp">Copiar</span></span></div>
+        </div>
+        <button class="btn wa">Confirmar por WhatsApp</button>
+        <div class="hint" style="margin-top:10px">Debajo de "Confirmar por WhatsApp" ya va el cuadro de la salida con "Agregar a mi calendario", y después "¿Ya pagaste? Sube el comprobante" (eso ya está hecho).</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2 -->
+<div class="vista" id="v-botones">
+  <div class="nota"><b>179:</b> los botones "Pasarlo al curso del lun 9 nov · 0 de 6" se veían todos iguales y apretados. Dos ideas.</div>
+  <div class="doble">
+    <div><div class="etq d">A) Cada curso como una fila (recomiendo esta)</div>
+      <div class="card">
+        <div style="border:2px dashed #e2c86a;border-radius:12px;padding:12px;background:#fffbea">
+          <div style="font-size:12px;font-weight:800;color:var(--ce);text-transform:uppercase">Quiere tomar</div>
+          <b style="font-size:16px">Open Water Diver</b>
+          <div class="hint">Todavía no tiene fecha · se anotó por el link el 2 nov</div>
+          <div class="hint" style="margin-top:10px;font-weight:700">Pasarlo a un curso:</div>
+          <div class="cr"><div class="fecha-b"><small>lun</small><b>9</b><small>nov</small></div><div><b>Open Water Diver</b><div class="hint">0 de 6 · Gustavo Torreira</div></div><button class="pas">Pasarlo aquí</button></div>
+          <div class="cr"><div class="fecha-b"><small>lun</small><b>7</b><small>dic</small></div><div><b>Open Water Diver</b><div class="hint">0 de 6</div></div><button class="pas">Pasarlo aquí</button></div>
+          <div style="margin-top:12px"><span class="wa-b">Escribirle por WhatsApp</span></div>
+        </div>
+      </div>
+    </div>
+    <div><div class="etq d">B) Escoger el curso de una lista</div>
+      <div class="card">
+        <div style="border:2px dashed #e2c86a;border-radius:12px;padding:12px;background:#fffbea">
+          <div style="font-size:12px;font-weight:800;color:var(--ce);text-transform:uppercase">Quiere tomar</div>
+          <b style="font-size:16px">Open Water Diver</b>
+          <div class="hint">Todavía no tiene fecha · se anotó por el link el 2 nov</div>
+          <label class="l">Pasarlo al curso del…</label>
+          <div style="display:flex;gap:8px"><select><option>lun 9 nov · 0 de 6</option><option>lun 7 dic · 0 de 6</option></select><button class="pas" style="margin:0">Pasar</button></div>
+          <div style="margin-top:12px"><span class="wa-b">Escribirle por WhatsApp</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="vista" id="v-chips">
+  <div class="nota"><b>160:</b> esto es en <b>Control Estudiantes › Estudiantes</b> (la lista de todas las personas). Hoy, debajo del nombre salen dos etiquetas separadas: el curso y en qué va. Parecían dos cosas distintas. Dos ideas:</div>
+  <div class="doble">
+    <div><div class="etq a">Ahora</div>
+      <div class="card"><b>Felipe Torreira</b><div style="margin-top:6px"><span class="chip">Open Water Diver</span> <span class="chip y">Lista de espera</span></div></div>
+      <div class="card"><b>María Rosario</b><div style="margin-top:6px"><span class="chip">Open Water Diver</span> <span class="chip" style="background:#fdecec;color:#b33a3a">Certificación lista</span></div></div>
+    </div>
+    <div>
+      <div class="etq d">A) Una sola etiqueta con las dos cosas</div>
+      <div class="card"><b>Felipe Torreira</b><div style="margin-top:6px"><span class="chip y">Open Water Diver · esperando fecha</span></div></div>
+      <div class="card"><b>María Rosario</b><div style="margin-top:6px"><span class="chip" style="background:#fdecec;color:#b33a3a">Open Water Diver · certificación lista</span></div></div>
+      <div class="etq d" style="margin-top:14px">B) Una línea de texto con un puntito de color</div>
+      <div class="card"><b>Felipe Torreira</b><div class="hint" style="margin-top:4px"><span style="color:#d4a400">●</span> Open Water Diver — esperando fecha</div></div>
+      <div class="card"><b>María Rosario</b><div class="hint" style="margin-top:4px"><span style="color:#d64545">●</span> Open Water Diver — certificación lista</div><div class="hint"><span style="color:#2c9e5b">●</span> Advanced OWD — en curso (lun 30 nov)</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 4 -->
+<div class="vista" id="v-espera">
+  <div class="nota"><b>Nota del 2-nov:</b> si se anota en la lista de espera, no tiene sentido pedirle foto, cédula y firma todavía. Propuesta: después de "Tus datos" va directo a <b>"¡Listo! Ya estás anotado"</b>, y debajo, opcional, <b>"¿Quieres adelantar?"</b> para el que quiera subir sus documentos desde ya.</div>
+  <div class="doble">
+    <div><div class="etq a">Ahora</div>
+      <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Registro de estudiante</div><div class="tel-b">
+        <div class="t">Documentos</div><div class="hint">Con esto no tienes que traer copias a la tienda…</div>
+        <div class="it"><div class="tx"><b>Una foto tuya de frente</b></div></div><div class="it"><div class="tx"><b>Tu pasaporte</b></div></div>
+        <div class="it" style="height:70px"><div class="tx"><b>Firma para tu récord</b></div></div>
+        <button class="btn b1">Terminar</button>
+      </div></div>
+    </div>
+    <div><div class="etq d">Propuesta</div>
+      <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Registro de estudiante</div><div class="tel-b" style="text-align:center">
+        <div class="ok">✓</div>
+        <div class="t">¡Listo, Adolfo! Ya estás anotado.</div>
+        <div class="hint" style="margin-top:4px">Estás en la lista de espera de <b>Open Water Diver</b>. Te escribimos por WhatsApp cuando abramos el próximo curso.</div>
+        <button class="btn wa">Escribirnos por WhatsApp</button>
+        <div class="cta" style="text-align:left;margin-top:14px">
+          <b>¿Quieres adelantar?</b>
+          <div class="hint">Si quieres, sube tu foto, tu documento y tu firma desde ya. Así, cuando te llamemos, ya está listo. Es opcional.</div>
+          <button class="btn b2" style="margin-top:8px">Adelantar mis documentos</button>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 5 -->
+<div class="vista" id="v-fechas">
+  <div class="nota"><b>Nota del 2-nov:</b> el calendario para escoger la fecha de nacimiento es tosco (hay que ir mes por mes hasta 1999). Dos ideas. La que escojas la ponemos en todos lados donde se pide una fecha de nacimiento (link del estudiante, link de Buceos, fichas).</div>
+  <div class="doble">
+    <div><div class="etq d">A) Tres listas: día, mes y año (recomiendo esta)</div>
+      <div class="tel"><div class="tel-b">
+        <label class="l">Fecha de nacimiento</label>
+        <div class="tri"><select><option>Día</option><option selected>2</option></select><select><option>Mes</option><option selected>marzo</option></select><select><option>Año</option><option selected>1999</option></select></div>
+        <div class="hint" style="margin-top:6px">Se escoge rápido en el celular, sin ir mes por mes.</div>
+      </div></div>
+    </div>
+    <div><div class="etq d">B) Escribirla</div>
+      <div class="tel"><div class="tel-b">
+        <label class="l">Fecha de nacimiento</label>
+        <input value="02/03/1999" inputmode="numeric">
+        <div class="hint" style="margin-top:6px">Escribe los números y las barras se ponen solas (día/mes/año).</div>
+      </div></div>
+    </div>
+  </div>
+  <div class="card hint" style="margin-top:12px">Las otras fechas (la fecha de un buceo, el lunes de un curso) ya se escogen de una lista o del calendario; si alguna te molesta, dime cuál y la cambiamos igual.</div>
+</div>
+
+<!-- 6 -->
+<div class="vista" id="v-menor">
+  <div class="nota"><b>Nota del 2-nov:</b> cuando inscriben a un niño (por ejemplo de 13 años) que no tiene celular, todo se hace con los padres. Propuesta: si por la fecha de nacimiento es <b>menor de 18</b>, el link pide los <b>datos del papá, la mamá o el tutor</b>. El WhatsApp y los avisos van a ese celular, y el tutor firma también.</div>
+  <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Registro de estudiante</div><div class="tel-b">
+    <div class="t">Tus datos</div>
+    <label class="l">Nombre completo</label><input value="Carlitos Pérez">
+    <label class="l">Fecha de nacimiento</label><div class="tri"><select><option>14</option></select><select><option>mayo</option></select><select><option>2013</option></select></div>
+    <div class="tutor">
+      <b>Tienes 13 años: necesitamos a tu papá, tu mamá o tu tutor</b>
+      <label class="l">Nombre del papá, la mamá o el tutor</label><input placeholder="Nombre">
+      <label class="l">Su celular</label><input placeholder="809-000-0000">
+      <div class="hint" style="margin-top:6px">Le escribimos a este número. Al final firma él o ella también.</div>
+    </div>
+    <label class="l">Tu celular (si tienes)</label><input placeholder="Opcional">
+    <button class="btn b1">Seguir</button>
+  </div></div>
+</div>
+
+<!-- 7 -->
+<div class="vista" id="v-ficha">
+  <div class="nota"><b>Nota del 2-nov:</b> el botón de WhatsApp no se entendía y el pago se veía desordenado. Propuesta: <b>"Escribirle por WhatsApp"</b> en verde, claro. El grupo como una pregunta con dos opciones (<b>No está / Ya está</b>). El pago con una sola línea grande (cuánto debe de cuánto) y una barrita; el comprobante nuevo resaltado para revisarlo; los botones del pago juntos abajo.</div>
+  <div class="doble">
+    <div><div class="etq a">Ahora</div>
+      <div class="modal">
+        <div class="m-h"><div><b style="font-size:17px">Felipe Torreira</b><div class="hint">Buzo</div><div><span class="chip" style="background:#fdecec;color:#b33a3a">Debe RD$2,600</span> <span class="chip">Se inscribió por el link</span></div></div><span class="mini">✕</span></div>
+        <div class="acc"><span class="mini">WhatsApp</span><span class="mini" style="background:var(--bc);border-color:var(--bc)">+ Registrar pago</span><span class="mini">☐ Todavía no está en el grupo</span></div>
+        <div class="blk"><h5>Pago</h5><div class="pago3"><div><span class="hint">Precio</span><b>RD$2,600</b></div><div><span class="hint">Pagado</span><b>RD$0</b></div><div><span class="hint">Falta</span><b style="color:#b33a3a">RD$2,600</b></div></div>
+        <div class="it"><div class="tx"><b>ChatGPT Image Sep 29…png</b><small>2 nov · lo subió el buzo · nuevo</small></div><span class="mini">Ver</span><span class="mini">Ya lo vi</span></div>
+        <div style="margin-top:8px"><span class="mini" style="border-style:dashed">Adjuntar comprobante</span></div></div>
+      </div>
+    </div>
+    <div><div class="etq d">Propuesta</div>
+      <div class="modal">
+        <div class="m-h"><div><b style="font-size:17px">Felipe Torreira</b><div class="hint">Buzo · se inscribió por el link</div></div><span class="mini">✕</span></div>
+        <div class="acc" style="display:block">
+          <span class="wa-b">Escribirle por WhatsApp</span>
+          <div class="hint" style="margin:10px 0 4px;font-weight:700">¿Está en el grupo de WhatsApp del buceo?</div>
+          <div class="seg2"><span class="on">No está</span><span>Ya está</span></div>
+        </div>
+        <div class="blk"><h5>Pago</h5>
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:18px;color:#b33a3a">Debe RD$2,600</b><span class="hint">de RD$2,600</span></div>
+          <div class="barra"><i style="width:0%"></i></div>
+          <div class="hint">Pagado RD$0</div>
+          <div class="nuevo"><div style="flex:1"><b style="font-size:13px">Comprobante nuevo por revisar</b><div class="hint">Lo subió el buzo el 2 nov</div></div><span class="mini">Ver</span><span class="mini">Ya lo vi</span></div>
+          <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="background:var(--bc);color:#06324f">+ Registrar pago</button><button class="btn" style="background:#fff;border:1px dashed #4ebae8">Adjuntar comprobante</button></div>
+        </div>
+        <div class="blk"><h5>En este buceo</h5><div class="hint">Buzo · RD$2,600</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById("tabs").addEventListener("click", (e) => { const b = e.target.closest(".tab"); if (!b) return;
+  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === b));
+  document.querySelectorAll(".vista").forEach((x) => x.classList.toggle("on", x.id === "v-" + b.dataset.v)); window.scrollTo(0, 0); });
+document.querySelectorAll(".seg2").forEach((g) => g.addEventListener("click", (e) => { const s = e.target.closest("span"); if (!s) return; g.querySelectorAll("span").forEach((x) => x.classList.toggle("on", x === s)); }));
+</script>
+</body></html>

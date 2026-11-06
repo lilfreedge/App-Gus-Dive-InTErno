@@ -2,7 +2,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import MeInteresa from "@/components/estudiantes/MeInteresa";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Aprende a bucear · Gus Dive Center" };
+export const metadata = { title: "¿Te interesa un curso? · Gus Dive Center" };
 
 // Control Estudiantes -- el link "Me interesa" (para Instagram o la página
 // web). Cae en Interesados como "Nuevo".

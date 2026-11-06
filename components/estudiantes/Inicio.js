@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Buscar } from "@/components/viajes/Piezas";
 import { IconHistory, IconUsers, IconLink, IconPlus, IconCatalog, IconEdit } from "@/components/icons";
-import { listoParaAlmacen, pagoInstructorPendiente, debe, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, lunesProximos, ocupados } from "@/lib/estudiantes/modelo";
+import { listoParaAlmacen, pagoInstructorPendiente, debe, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, lunesProximos, ocupados, quedan } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
 
 // Pantallas de Control Estudiantes: Inicio, la lista, Más y la Bitácora.
@@ -102,6 +102,114 @@ export function TarjetaCurso({ db, f, onClick, abierta }) {
   );
 }
 
+// V60 -- "170" y la nota del 2-nov ("si le doy click al curso... debería
+// abrirle el curso directo"): la página del curso, con sus datos, sus
+// estudiantes y la gente en lista de espera para ese curso.
+export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
+  const [form, setForm] = useState(null);
+  const f = (db.fechas || []).find((x) => x.id === fechaId);
+  const atras = (
+    <a className="back-link" onClick={() => ir("cursos")} style={{ cursor: "pointer" }}>
+      ← Cursos
+    </a>
+  );
+  if (!f)
+    return (
+      <>
+        {atras}
+        <div className="card hint-text">Este curso ya no está.</div>
+      </>
+    );
+  const c = db.cursos.find((x) => x.id === f.cursoId);
+  const porNombre = (a, b) => buzoDe(db, a).nombre.localeCompare(buzoDe(db, b).nombre);
+  const gente = db.estudiantes.filter((e) => e.fechaId === f.id && e.estado !== "cancelado").sort(porNombre);
+  const espera = db.estudiantes.filter((e) => e.estado === "espera" && cursoDe(db, e)?.id === f.cursoId).sort(porNombre);
+  const hayCupo = quedan(db, f) !== 0;
+  const pasar = (e) =>
+    ops.cambiarEst(
+      e,
+      { estado: "curso", fechaId: f.id, fechaInicio: f.inicio, ...(e.instructor ? {} : f.instructor ? { instructor: f.instructor } : {}) },
+      `Lo pasó a una fecha: ${buzoDe(db, e).nombre}`,
+      "Lista de espera",
+      fechaCursoCorta(f.inicio)
+    );
+  return (
+    <>
+      {atras}
+      <h1 className="page-title" style={{ marginBottom: 6 }}>
+        {c?.nombre || "Curso"}
+      </h1>
+      <div className="ce-abierto fuerte sel ce-curso-cab">
+        <TarjetaCurso db={db} f={f} />
+      </div>
+      <div className="card ce-curso-datos">
+        <div className="vj-dato">
+          <span>Empieza</span>
+          <b>
+            {fechaCursoCorta(f.inicio)} {f.inicio.slice(0, 4)}
+          </b>
+        </div>
+        <div className="vj-dato">
+          <span>Instructor</span>
+          <b>{f.instructor || "Por definir"}</b>
+        </div>
+        <div className="vj-dato">
+          <span>Cupo</span>
+          <b>{textoCupo(db, f)}</b>
+        </div>
+        {f.nota && (
+          <div className="vj-dato">
+            <span>Nota</span>
+            <b>{f.nota}</b>
+          </div>
+        )}
+        {p.cursos &&
+          (form ? (
+            <FormCurso db={db} form={form} setForm={setForm} yo={yo} ops={ops} avisar={avisar} />
+          ) : (
+            <button className="btn secondary vj-mini" style={{ marginTop: 10 }} onClick={() => setForm({ id: f.id, cursoId: f.cursoId, inicio: f.inicio, cupo: f.cupo == null ? "" : String(f.cupo), instructor: f.instructor, nota: f.nota })}>
+              <IconEdit size={14} /> Editar este curso
+            </button>
+          ))}
+      </div>
+
+      <div className="section-title">
+        Estudiantes ({gente.length})
+      </div>
+      {gente.map((e) => (
+        <FilaEstudiante key={e.id} db={db} est={e} ir={ir} />
+      ))}
+      {!gente.length && (
+        <div className="card hint-text" style={{ margin: 0 }}>
+          Todavía no tiene estudiantes. Mándales el link de registro o pasa a alguien de la lista de espera.
+        </div>
+      )}
+      <button className="btn secondary vj-btn" style={{ marginTop: 10 }} onClick={() => copiarLink("/estudiante", avisar, "Link de registro copiado")}>
+        <IconLink size={16} /> Copiar link de registro
+      </button>
+
+      {espera.length > 0 && (
+        <>
+          <div className="section-title">
+            En lista de espera para {c?.nombre || "este curso"} ({espera.length})
+          </div>
+          {espera.map((e) => (
+            <div key={e.id} className="ce-curso-espera">
+              <FilaEstudiante db={db} est={e} ir={ir} />
+              {p.estudiantes && hayCupo && (
+                <button className="btn secondary vj-mini" onClick={() => pasar(e)}>
+                  Pasarlo a este curso
+                </button>
+              )}
+            </div>
+          ))}
+          {!hayCupo && <div className="hint-text">Este curso está lleno.</div>}
+        </>
+      )}
+    </>
+  );
+}
+
 export function Inicio({ db, p, ir, avisar }) {
   const n = (k) => db.estudiantes.filter((e) => FILTROS.find((f) => f.k === k).f(e, db)).length;
   const porCobrar = db.estudiantes.filter((e) => e.estado !== "cancelado").reduce((a, e) => a + (debe(e) || 0), 0);
@@ -135,7 +243,7 @@ export function Inicio({ db, p, ir, avisar }) {
             Próximos cursos
           </div>
           {proximos.map((f) => (
-            <TarjetaCurso key={f.id} db={db} f={f} onClick={() => ir("cursos")} />
+            <TarjetaCurso key={f.id} db={db} f={f} onClick={() => ir(`curso:${f.id}`)} />
           ))}
         </>
       )}
@@ -246,7 +354,8 @@ export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
         const esta = abierto === f.id;
         return (
           <div key={f.id} className={`ce-abierto fuerte${esta ? " sel" : ""}`}>
-            <TarjetaCurso db={db} f={f} abierta={esta} onClick={() => setAbierto(esta ? null : f.id)} />
+            {/* V60 ("170", nota 2-nov): al tocar el curso se entra a él. */}
+            <TarjetaCurso db={db} f={f} onClick={() => ir(`curso:${f.id}`)} />
             {esta && (
               <div className="ce-abierto-cuerpo">
                 {gente.map((e) => (

@@ -74,9 +74,11 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
           <div className="ce-est-t">
             <b>{x.nombre}</b>
             {x.curso && <span className="ce-chip curso">{x.curso}</span>}
+            {/* V60 ("164"): si ya es buzo o estudiante de Gus. */}
+            {x.buzoId && <span className="ce-chip">Ya es buzo de Gus</span>}
           </div>
           <div className="ce-est-m">
-            {[x.fuente, x.via === "link" ? "por el link" : "", fechaDeIso(x.creadoEn), x.cuando ? `quiere empezar ${x.cuando}` : ""].filter(Boolean).join(" · ")}
+            {[x.fuente, x.via === "link" ? "por el link" : "", fechaDeIso(x.creadoEn), x.cuando ? `quiere empezar ${x.cuando}` : "", x.correo].filter(Boolean).join(" · ")}
           </div>
           {x.recordar && !["inscrito", "no"].includes(x.estado) && (
             <div className={`ce-est-m${x.recordar <= hoy ? " ce-recordar" : ""}`}>{x.recordar <= hoy ? "Escribirle de nuevo hoy" : `Escribirle de nuevo el ${fechaCorta(x.recordar)}`}</div>

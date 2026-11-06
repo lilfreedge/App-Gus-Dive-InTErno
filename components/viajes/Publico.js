@@ -126,7 +126,7 @@ function SubirComprobante({ slug, tipoDoc, doc, cuentas, copiar, copiado, monto 
 // V59 (165) -- La fecha y la hora de salida grandes, en un cuadro, con
 // "Agregar a mi calendario". En el iPhone abre el archivo del calendario
 // (lo agrega al calendario del iPhone); en los demás, Google Calendar.
-function CuadroSalida({ v, enFin }) {
+function CuadroSalida({ v, enFin, conCalendario }) {
   const sal = partesSalida(v.salida);
   const f = fechaLarga(v.fecha);
   const agregar = () => {
@@ -147,9 +147,12 @@ function CuadroSalida({ v, enFin }) {
       ) : (
         v.salida && <div className="pb-salida-l">{v.salida}</div>
       )}
-      <button type="button" className="pb-salida-cal" onClick={agregar}>
-        <IconCalendar size={16} /> Agregar a mi calendario
-      </button>
+      {/* V60 ("174"): "Agregar a mi calendario" solo al final, no arriba. */}
+      {conCalendario && (
+        <button type="button" className="pb-salida-cal" onClick={agregar}>
+          <IconCalendar size={16} /> Agregar a mi calendario
+        </button>
+      )}
     </div>
   );
 }
@@ -282,6 +285,8 @@ export default function PublicoViaje({ v, tienda }) {
   const buscarDoc = () =>
     correr(async () => {
       const j = await api({ accion: "doc", slug: v.slug, tipoDoc, doc });
+      // V60 ("174"): los cupos de ahora (si lo cerraron o se llenó con el link abierto).
+      if (typeof j.quedan === "number") setQuedan(j.quedan);
       if (j.encontrado) {
         setBuzo(j);
         ir("eres");
@@ -341,6 +346,7 @@ export default function PublicoViaje({ v, tienda }) {
       });
       setResultado({ ...j, docDe: { tipo: tipoDoc, doc, corto: nombreActual } });
       if (!j.ya && !j.enEspera) setQuedan((q) => Math.max(0, q - 1));
+      if (j.enEspera) setQuedan(0);
       setPila([]);
       setPaso("fin");
     });
@@ -761,10 +767,20 @@ export default function PublicoViaje({ v, tienda }) {
                     {v.requisito}
                   </label>
                 )}
-                <div className="pb-resumen">
-                  Vas a inscribir a <b>{nombreActual}</b>
-                  {total ? ` · total ${rd(total)}` : ""}
-                </div>
+                {quedan > 0 ? (
+                  <div className="pb-resumen">
+                    Vas a inscribir a <b>{nombreActual}</b>
+                    {total ? ` · total ${rd(total)}` : ""}
+                  </div>
+                ) : (
+                  // V60 ("174"): que sepa antes de enviar que queda en lista de espera.
+                  <div className="pb-lleno pb-lleno-fin">
+                    <IconAlert size={20} />
+                    <div>
+                      <b>Este {palabra} está lleno.</b> Vas a anotar a {nombreActual} en la <b>lista de espera</b>. No tienes que pagar nada ahora: te escribimos si se abre un cupo.
+                    </div>
+                  </div>
+                )}
                 {error && <div className="pb-error">{error}</div>}
                 <button className="pb-btn" disabled={cargando} onClick={inscribir}>
                   {cargando
@@ -785,9 +801,15 @@ export default function PublicoViaje({ v, tienda }) {
                   <IconCheck size={34} strokeWidth={2.6} />
                 </div>
                 {resultado.ya ? (
-                  <div className="pb-t">
-                    {resultado.nombre}, ya estabas en la lista de este {palabra}
-                  </div>
+                  <>
+                    <div className="pb-t">
+                      {resultado.nombre}, ya estabas en la lista de este {palabra}
+                    </div>
+                    <div className="pb-fin-salida">
+                      <CuadroSalida v={v} enFin conCalendario />
+                      <LlegasDirecto e={v.encuentro} />
+                    </div>
+                  </>
                 ) : (
                   <>
                     <div className="pb-t">
@@ -841,15 +863,16 @@ export default function PublicoViaje({ v, tienda }) {
                         </a>
                       </>
                     )}
-                    {!resultado.enEspera && <SubirComprobante slug={v.slug} tipoDoc={resultado.docDe.tipo} doc={resultado.docDe.doc} />}
-                  </>
-                )}
-                {/* V59 (165): otra vez la salida, el calendario y "¿Llegas directo?". */}
+                {/* V60 ("174"): debajo de "Confirmar por WhatsApp", la salida con
+                    "Agregar a mi calendario" y "¿Llegas directo?"; después el comprobante. */}
                 {!resultado.enEspera && (
                   <div className="pb-fin-salida">
-                    <CuadroSalida v={v} enFin />
+                    <CuadroSalida v={v} enFin conCalendario />
                     <LlegasDirecto e={v.encuentro} />
                   </div>
+                )}
+                    {!resultado.enEspera && <SubirComprobante slug={v.slug} tipoDoc={resultado.docDe.tipo} doc={resultado.docDe.doc} />}
+                  </>
                 )}
                 <button className="pb-btn sec pb-chico" onClick={otraPersona}>
                   Inscribir a otra persona
