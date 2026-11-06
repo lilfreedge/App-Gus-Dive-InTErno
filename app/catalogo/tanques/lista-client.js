@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { textoAlquilado } from "@/lib/alquilados";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -32,7 +33,7 @@ function rechazadoEnPH(t) {
   return !t.activo && (t.motivo_inactivo || "").startsWith("Rechazado en prueba hidrostática");
 }
 
-export default function ListaTanques({ tanques, puedeAdministrar, esTitular, esAdmin = false }) {
+export default function ListaTanques({ tanques, alquilados = {}, puedeAdministrar, esTitular, esAdmin = false }) {
   const router = useRouter();
   const supabase = createClient();
   const [loadingId, setLoadingId] = useState(null);
@@ -82,6 +83,11 @@ export default function ListaTanques({ tanques, puedeAdministrar, esTitular, esA
             {t.codigo}
           </Link>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {alquilados[String(t.codigo).toUpperCase()] && (
+              <span className="badge badge-alquilado" title={textoAlquilado(alquilados[String(t.codigo).toUpperCase()])}>
+                Alquilado
+              </span>
+            )}
             {!t.activo && (
               <span className="badge badge-rojo">
                 Inactivo{t.motivo_inactivo ? ` · ${t.motivo_inactivo.replace("Rechazado en prueba hidrostática", "rechazado en PH")}` : ""}

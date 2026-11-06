@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { soloDigitos, formatoCedula, rd, fechaCorta, fechaLarga } from "@/lib/viajes/modelo";
 import { semanaDe, menorDe12 } from "@/lib/estudiantes/modelo";
+import FechaNacimiento from "@/components/FechaNacimiento";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck, IconLock, IconCamera } from "@/components/icons";
@@ -192,6 +193,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
   const [paso, setPaso] = useState("doc"); // doc | hola | cel | datos | curso | docs | listo | estado
   const [tipoDoc, setTipoDoc] = useState("cedula");
   const [avisoDni, setAvisoDni] = useState(false);
+  const [adelanto, setAdelanto] = useState(false); // V61: subió documentos desde la lista de espera
   const [nacionalidad, setNacionalidad] = useState("");
   const [nacOtra, setNacOtra] = useState("");
   const [doc, setDoc] = useState("");
@@ -245,7 +247,9 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
       const nac = tipoDoc === "pasaporte" ? (nacionalidad === "Otra" ? nacOtra.trim() : nacionalidad) : "";
       const r = await api({ accion: "registrar", tipoDoc, doc, cel, datos: { ...d, emergencia, ...(nac ? { nacionalidad: nac } : {}) }, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, ...extra });
       setRes(r);
-      ir("docs");
+      // V61 ("201"): si queda en lista de espera, va directo a "¡Listo!"; los
+      // documentos son opcionales ("¿Quieres adelantar?").
+      ir(r.espera && !r.ya ? "listo" : "docs");
     });
   const cursoElegido = cursos.find((c) => c.id === cursoSel);
 
@@ -382,7 +386,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             {falta.nac && (
               <>
                 <label className="ce-pub-l">Fecha de nacimiento</label>
-                <input className="pb-input" type="date" value={d.nac} onChange={(e) => setD({ ...d, nac: e.target.value })} />
+                <FechaNacimiento value={d.nac} onChange={(v) => setD({ ...d, nac: v })} selectClassName="pb-input" />
                 {/* V60 (nota 2-nov): el buceo es de 12 años en adelante. */}
                 {menorDe12(d.nac) && <div className="pb-error">Para bucear hay que tener 12 años o más. Escríbenos por WhatsApp si tienes dudas.</div>}
               </>
@@ -565,7 +569,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             <div className="pb-ok">
               <IconCheck size={34} />
             </div>
-            <div className="pb-t">¡Listo, {res.primer}!</div>
+            <div className="pb-t">¡Listo, {res.primer}!{res.espera && !res.ya ? " Ya estás anotado." : ""}</div>
             {/* V54: sin lo del pago ni lo de la certificación (nota 1-nov: "porque
                 le esta pidiendo eso si el estudiante ni sabe aún el curso... No
                 hace sentido, el buzo ni siquiera ha empezado el curso"). */}
@@ -586,6 +590,17 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             <a className="pb-btn ce-pub-wa" href={wa} target="_blank" rel="noopener noreferrer">
               Escribir por WhatsApp
             </a>
+            {res.espera && !res.ya && !adelanto && (
+              <div className="ce-pub-adelantar">
+                <b>¿Quieres adelantar?</b>
+                <div className="pb-h" style={{ margin: "2px 0 0" }}>
+                  Si quieres, sube tu foto, tu documento y tu firma desde ya. Así, cuando te llamemos, ya está listo. Es opcional.
+                </div>
+                <button className="pb-btn sec" onClick={() => (setAdelanto(true), ir("docs"))}>
+                  Adelantar mis documentos
+                </button>
+              </div>
+            )}
           </div>
         )}
 

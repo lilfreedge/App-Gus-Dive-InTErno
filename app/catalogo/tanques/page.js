@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { codigosAlquilados } from "@/lib/alquilados";
 import { createClient } from "@/lib/supabase/server";
 import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
@@ -21,6 +22,7 @@ export default async function CatalogoTanquesPage() {
     .from("tanques_alquiler")
     .select("*")
     .order("codigo");
+  const alquilados = await codigosAlquilados(supabase);
 
   return (
     <div>
@@ -41,6 +43,7 @@ export default async function CatalogoTanquesPage() {
         <div className="card">
           <ListaTanques
             tanques={tanques || []}
+            alquilados={alquilados}
             puedeAdministrar={puedeAdministrar}
             esTitular={esTitular}
             esAdmin={esAdmin}

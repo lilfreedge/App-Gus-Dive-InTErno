@@ -33,7 +33,64 @@ function partesIncluye(texto) {
     .map((x) => x.charAt(0).toUpperCase() + x.slice(1));
 }
 
-function SubirComprobante({ slug, tipoDoc, doc, cuentas, copiar, copiado, monto }) {
+// V61 ("198. sí", maqueta V60): todo lo de la transferencia en un solo
+// cuadro, como filas: Banco, Cuenta, Número (Copiar), A nombre de y Cédula
+// (Copiar). Antes "A nombre de… · Cédula…" quedaba suelto debajo.
+function CuadroCuentas({ cuentas, tienda, copiar, copiado }) {
+  const BotonCopiar = ({ valor }) => (
+    <button type="button" className="pb-copiar" onClick={() => copiar(valor)}>
+      {copiado === valor ? (
+        <>
+          <IconCheck size={14} /> Copiado
+        </>
+      ) : (
+        "Copiar"
+      )}
+    </button>
+  );
+  return (
+    <div className="pb-transf">
+      {cuentas.map((c) => (
+        <div key={c.numero} className="pb-transf-cuenta">
+          <div className="pb-transf-fila">
+            <span>Banco</span>
+            <b>{c.banco}</b>
+          </div>
+          <div className="pb-transf-fila">
+            <span>Cuenta</span>
+            <b>
+              {String(c.tipo || "").replace(/^Cuenta de /i, "").replace(/^\w/, (x) => x.toUpperCase())} en {c.moneda === "USD" ? "dólares (US$)" : "pesos (RD$)"}
+            </b>
+          </div>
+          <div className="pb-transf-fila">
+            <span>Número</span>
+            <span className="pb-transf-v">
+              <b className="pb-transf-n">{c.numero}</b>
+              <BotonCopiar valor={c.numero} />
+            </span>
+          </div>
+        </div>
+      ))}
+      {tienda?.titular && (
+        <div className="pb-transf-fila">
+          <span>A nombre de</span>
+          <b>{tienda.titular}</b>
+        </div>
+      )}
+      {tienda?.cedula && (
+        <div className="pb-transf-fila">
+          <span>Cédula</span>
+          <span className="pb-transf-v">
+            <b>{tienda.cedula}</b>
+            <BotonCopiar valor={tienda.cedula} />
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SubirComprobante({ slug, tipoDoc, doc, cuentas, copiar, copiado, monto, tienda }) {
   const [estado, setEstado] = useState(null); // null | "subiendo" | { nombre } | { error }
   async function subir(file) {
     if (!file) return;
@@ -72,26 +129,8 @@ function SubirComprobante({ slug, tipoDoc, doc, cuentas, copiar, copiado, monto 
                   : "Te escribimos por WhatsApp con los datos para el pago. Cuando pagues, sube aquí el comprobante."}
               </div>
               {cuentas.length > 0 && (
-                <div className="pb-cuentas" style={{ marginBottom: 8 }}>
-                  {cuentas.map((c) => (
-                    <div key={c.numero} className="pb-cuenta">
-                      <div style={{ minWidth: 0 }}>
-                        <div className="pb-cuenta-t">
-                          {c.banco} · {c.tipo} en {c.moneda === "USD" ? "dólares (US$)" : "pesos (RD$)"}
-                        </div>
-                        <div className="pb-cuenta-n">{c.numero}</div>
-                      </div>
-                      <button type="button" className="pb-copiar" onClick={() => copiar(c.numero)}>
-                        {copiado === c.numero ? (
-                          <>
-                            <IconCheck size={14} /> Copiado
-                          </>
-                        ) : (
-                          "Copiar"
-                        )}
-                      </button>
-                    </div>
-                  ))}
+                <div style={{ marginBottom: 8 }}>
+                  <CuadroCuentas cuentas={cuentas} tienda={tienda} copiar={copiar} copiado={copiado} />
                 </div>
               )}
             </>
@@ -551,7 +590,7 @@ export default function PublicoViaje({ v, tienda }) {
                         <IconChat size={18} /> Escribir por WhatsApp
                       </a>
                     )}
-                    <SubirComprobante slug={v.slug} tipoDoc={tipoDoc} doc={doc} cuentas={cuentas} copiar={copiar} copiado={copiado} monto={opcionesPagan.length === 1 ? (v.reserva ? `reserva de ${rd(v.reserva.monto)}` : precioTexto(v, opcionesPagan[0])) : ""} />
+                    <SubirComprobante slug={v.slug} tipoDoc={tipoDoc} doc={doc} cuentas={cuentas} tienda={tienda} copiar={copiar} copiado={copiado} monto={opcionesPagan.length === 1 ? (v.reserva ? `reserva de ${rd(v.reserva.monto)}` : precioTexto(v, opcionesPagan[0])) : ""} />
                     {/* V57: "pon el botón de inscribir otra persona más pequeño";
                         sin "← Atrás" aquí ("quita la flechita"): volvía al paso
                         de la cédula, que es lo mismo que inscribir a otra persona. */}
@@ -825,36 +864,7 @@ export default function PublicoViaje({ v, tienda }) {
                         )}
                       </div>
                     )}
-                    {!resultado.enEspera && cuentas.length > 0 && (
-                      <div className="pb-cuentas">
-                        {cuentas.map((c) => (
-                          <div key={c.numero} className="pb-cuenta">
-                            <div style={{ minWidth: 0 }}>
-                              <div className="pb-cuenta-t">
-                                {c.banco} · {c.tipo} en {c.moneda === "USD" ? "dólares (US$)" : "pesos (RD$)"}
-                              </div>
-                              <div className="pb-cuenta-n">{c.numero}</div>
-                            </div>
-                            <button type="button" className="pb-copiar" onClick={() => copiar(c.numero)}>
-                              {copiado === c.numero ? (
-                                <>
-                                  <IconCheck size={14} /> Copiado
-                                </>
-                              ) : (
-                                "Copiar"
-                              )}
-                            </button>
-                          </div>
-                        ))}
-                        {(tienda.titular || tienda.cedula) && (
-                          <div className="pb-h" style={{ margin: "6px 0 0" }}>
-                            {tienda.titular ? `A nombre de ${tienda.titular}` : ""}
-                            {tienda.titular && tienda.cedula ? " · " : ""}
-                            {tienda.cedula ? <span style={{ whiteSpace: "nowrap" }}>Cédula {tienda.cedula}</span> : ""}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    {!resultado.enEspera && cuentas.length > 0 && <CuadroCuentas cuentas={cuentas} tienda={tienda} copiar={copiar} copiado={copiado} />}
                     {linkWA && (
                       <>
                         {/* V59: sin mostrar el mensaje antes ("que si le dan a confirmar por WhatsApp se abra el mensaje y ya"). */}

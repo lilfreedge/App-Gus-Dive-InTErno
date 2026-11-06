@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { codigosAlquilados, textoAlquilado } from "@/lib/alquilados";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { tieneAcceso, requireInterno } from "@/lib/roles";
@@ -14,6 +15,7 @@ import { manualesPara } from "@/lib/manuales";
 // accesos a su historial de mantenimiento y (si hay permiso) a editarlo.
 export default async function FichaReguladorPage({ params }) {
   const supabase = createClient();
+  const alquilados = await codigosAlquilados(supabase);
   const { profile } = await requireInterno(supabase, "catalogo");
   const puedeAdministrar = tieneAcceso(profile, "catalogo_regulador");
 
@@ -43,7 +45,14 @@ export default async function FichaReguladorPage({ params }) {
             { label: regulador.codigo },
           ]}
         />
-        <h1 className="page-title">{regulador.codigo}</h1>
+        <h1 className="page-title">
+          {regulador.codigo}
+          {alquilados[String(regulador.codigo).toUpperCase()] && (
+            <span className="badge badge-alquilado" style={{ marginLeft: 10, verticalAlign: "middle" }}>
+              {textoAlquilado(alquilados[String(regulador.codigo).toUpperCase()])}
+            </span>
+          )}
+        </h1>
 
         <div className="card">
           <div className="section-title">Datos del regulador</div>

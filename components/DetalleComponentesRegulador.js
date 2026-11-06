@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { REGULADOR_DETALLE_CAMPOS } from "@/lib/regulador-detalle";
+import { PREGUNTA_DE, tieneComponente } from "@/lib/regulador-detalle";
 
 // Detalle de componentes de un Regulador (28-sep-2026, pedido explícito).
 // Compartido por los 3 lugares donde se crea/edita un equipo Regulador
@@ -33,42 +33,60 @@ export default function DetalleComponentesRegulador({ detalle, onChange, idPrefi
     onChange({ ...d, [campo]: valor });
   }
 
+  // V61 (nota del 3-nov): el orden es 1ra etapa; Manguera 2da (baja) > 2da
+  // etapa; Manguera de Octopus (baja) > Octopus; Manguera de BC; Manguera de
+  // alta > Manómetro; Profundímetro (Sí/No > marca); Brújula (Sí/No). El
+  // campo de texto solo sale cuando se contesta "Sí".
+  const siNo = (campo, valor) => (
+    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+      {[
+        [true, "Sí"],
+        [false, "No"],
+      ].map(([v, t]) => (
+        <button
+          key={t}
+          type="button"
+          className={valor === v ? "btn btn-primary" : "btn secondary"}
+          onClick={() => set(campo, v)}
+          style={{ marginTop: 0, width: "auto" }}
+        >
+          {t}
+        </button>
+      ))}
+    </div>
+  );
+  const conTexto = (id, etiquetaTexto) => {
+    const q = PREGUNTA_DE[id];
+    const tiene = tieneComponente(d, id);
+    return (
+      <div key={id} className="reg-pregunta">
+        <label style={{ marginTop: 10 }}>{q.label}</label>
+        {siNo(q.flag, tiene)}
+        {tiene === true && (
+          <>
+            <label htmlFor={`${idPrefix}_${id}`}>{etiquetaTexto}</label>
+            <input id={`${idPrefix}_${id}`} type="text" value={d[id] || ""} onChange={(e) => set(id, e.target.value)} placeholder="Marca / modelo (opcional)" />
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div style={{ marginTop: 10, padding: 12, background: "var(--superficie-suave)", borderRadius: 8 }}>
       <div className="section-title" style={{ marginTop: 0, fontSize: 12 }}>
         Detalle de componentes
       </div>
-      {REGULADOR_DETALLE_CAMPOS.map((c) => (
-        <div key={c.id}>
-          <label htmlFor={`${idPrefix}_${c.id}`}>{c.label}</label>
-          <input
-            id={`${idPrefix}_${c.id}`}
-            type="text"
-            value={d[c.id] || ""}
-            onChange={(e) => set(c.id, e.target.value)}
-            placeholder="Opcional"
-          />
-        </div>
-      ))}
+      <label htmlFor={`${idPrefix}_primera`}>1ra etapa</label>
+      <input id={`${idPrefix}_primera`} type="text" value={d.primera || ""} onChange={(e) => set("primera", e.target.value)} placeholder="Opcional" />
+      {conTexto("segunda", "2da etapa")}
+      {conTexto("octopus", "Octopus")}
       <label style={{ marginTop: 10 }}>Manguera de BC</label>
-      <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-        <button
-          type="button"
-          className={d.manguera_bc === true ? "btn btn-primary" : "btn secondary"}
-          onClick={() => set("manguera_bc", true)}
-          style={{ marginTop: 0, width: "auto" }}
-        >
-          Sí
-        </button>
-        <button
-          type="button"
-          className={d.manguera_bc === false ? "btn btn-primary" : "btn secondary"}
-          onClick={() => set("manguera_bc", false)}
-          style={{ marginTop: 0, width: "auto" }}
-        >
-          No
-        </button>
-      </div>
+      {siNo("manguera_bc", d.manguera_bc)}
+      {conTexto("manometro", "Manómetro")}
+      {conTexto("profundimetro", "¿Cuál profundímetro?")}
+      <label style={{ marginTop: 10 }}>Brújula</label>
+      {siNo("brujula", d.brujula)}
     </div>
   );
 }

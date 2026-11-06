@@ -46,52 +46,42 @@ Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzo
 
 ## Estado (6-nov-2026)
 
-- En GitHub está hasta la **V60** (V58, V59 y V60 subidas). La siguiente versión es la **V61**.
-- SQL que él tiene que correr si todavía no lo hizo: `supabase/todo_v60_una_sola_vez.sql` (migraciones 83 a 86). Se puede correr más de una vez.
-- Última lista de verificación que se le mandó: 189–197 (V60). Las siguientes preguntas o puntos siguen desde el **210**.
-- Las maquetas aprobadas están en `public/maquetas/` (la V60: `maqueta-v60.html`).
+- En GitHub está la **V59**. La **V60** y la **V61** están hechas y sin subir; él dijo "No lo subas". Súbelas juntas solo cuando diga "súbela".
+- SQL para correr cuando se suba: `supabase/todo_v61_una_sola_vez.sql` (migraciones 83 a 87). Se puede correr más de una vez.
+- Lista de verificación pendiente, en una sola lista con los dos grupos:
+  - 189–197: V60.
+  - 210 en adelante: V61.
+  - Él dijo: "al final verifico todo".
+- Maquetas en `public/maquetas/`:
+  - `maqueta-v60.html`: ya contestada.
+  - `maqueta-v61.html`: esperando su respuesta.
 
 ## Pendiente
 
-**Aprobado en la maqueta V60 (hacer en la V61).** Sus respuestas tienen número:
-- **198 "sí", link de Buceos:** al final, todo lo de la transferencia va en un solo cuadro, con filas: Banco, Cuenta, Número (con Copiar), A nombre de y Cédula (con Copiar). Es la pestaña 1.
-- **199 "hm ok", ficha en lista de espera (Control Estudiantes):** opción A. Cada curso con cupo sale como una fila (fecha, curso, "0 de 6", instructor) con el botón "Pasarlo aquí". Abajo va "Escribirle por WhatsApp" en verde. Es la pestaña 2. Dijo "hm ok": enséñaselo y confirma que le gusta.
-- **200 "ok", lista de Estudiantes:** no escogió entre A (una sola etiqueta "Open Water Diver · esperando fecha") y B (texto con puntito de color). **Pregúntale otra vez.** Es la pestaña 3.
-- **201 "ok", link del estudiante:** si se anota en lista de espera (curso sin fecha), después de "Tus datos" va directo a "¡Listo, X! Ya estás anotado". Debajo sale, opcional, "¿Quieres adelantar?" con el botón "Adelantar mis documentos" (foto, documento y firma). Es la pestaña 4.
-- **202 "A", fecha de nacimiento:** tres listas (día, mes, año) en vez del calendario. Va en todos lados donde se pide fecha de nacimiento: link del estudiante, link de Buceos y fichas. Es la pestaña 5.
-- **203, menores de edad:** NO es lo de la pestaña 6. Él quiere que el adulto tenga una opción **"Registrar a un menor de edad"**, y que con 11 años o menos simplemente no deje inscribirlo. Hazle una maqueta primero.
-- **204 "ok", ficha del buzo en Buceos:**
-  - "Escribirle por WhatsApp" en verde.
-  - El grupo como pregunta: "¿Está en el grupo de WhatsApp del buceo?" con No está / Ya está.
-  - El pago con una línea grande ("Debe RD$X de RD$Y") y una barrita.
-  - El comprobante nuevo resaltado ("Comprobante nuevo por revisar", con Ver y Ya lo vi).
-  - Abajo, "+ Registrar pago" y "Adjuntar comprobante".
-  - Es la pestaña 7.
-- **208 "sí", Buceos:** botón "Descargar comprobantes" en cada buceo. Baja un ZIP con cada archivo nombrado "Nombre del buzo - monto - fecha", más una lista (nombre, monto, cuenta, fecha, conciliado), para contabilidad.
+**Esperando su respuesta a la maqueta V61:**
+1. Registrar a un menor de edad (203).
+2. Recordatorios para técnicos (compresores, inspección visual, mantenimiento de reguladores).
+3. Página del buceo más ordenada.
+4. Alquiler: premios por lo acumulado.
+5. Alquiler: "Vino con problemas".
+
+**Preguntas abiertas:**
+- **200:** lista de Estudiantes: ¿A (una sola etiqueta) o B (texto con puntito)?
+- **Correos en spam:** se cambió el correo de avisos de Buceos a un documento HTML completo. Si sigue cayendo en spam, pídele los encabezados completos de un correo ("Ver original") y que agregue tienda@gusdivecenter.com a los remitentes seguros. El cambio a `app.gusdivecenter.com` también ayuda, porque los links dejan de ser `vercel.app`.
+- **205:** "¿Llegas directo?". Explicarle con pasos (ver abajo).
 
 **Aprobado de antes y todavía sin hacer:**
 - 162, "Mi registro": el estudiante vuelve a entrar al link y ve su perfil.
   - Cambiar la foto y la firma solo cada 6 meses.
-  - Ve todos sus datos y los puede cambiar.
-  - Ve sus cursos con el avance; los pagos van dentro de cada curso, con un aviso pequeño de lo que debe.
+  - Ve sus datos y los puede cambiar.
+  - Ve sus cursos con el avance; los pagos van dentro de cada curso, con un aviso de lo que debe.
   - El título es "Mis documentos".
   - Después, lo mismo para los buzos en Buceos ("perfiles de los buzos").
 
 **Para más adelante (él lo dijo):**
-- **205, "¿Llegas directo?" no le aparece:** no entendió la explicación y quiere verlo. Explícale en pasos: Buceos › Más › Catálogo › La Caleta › "¿Llegas directo? (punto de encuentro)", llenar y Guardar.
-- **206:** buscar una forma de saber si una cédula dominicana es real. Por ahora no se valida nada nuevo.
-- **207:** botón "Entrar al grupo de WhatsApp" con el link de invitación de cada buceo o curso. Lo quiere, pero más adelante.
-
-**Alquiler (él dijo que el viernes):**
-- Etiqueta "Alquilado" en el tanque o regulador en App Interno, sin sección aparte.
-- Proteger el número de factura para que no se cambie por error.
-- Opción "Estudiante OWD" al alquilar (en los cursos el equipo va incluido).
-- Premios por monto acumulado (por ejemplo, un tanque gratis).
-- Número de factura para la mora, para ponerlo después de cobrar.
-- Botón "Vino con problemas" para cobrar la inspección de un tanque vacío o un manómetro ahogado. Proponer primero.
-- Pestaña Clientes entre Equipos y Más.
-- Editar y borrar alquileres y clientes.
-- Retornos: los últimos retornos abajo y un buscador por equipo o cliente, con una ventana parecida a la de Alquiler.
+- **205:** Buceos › Más › Catálogo › La Caleta › "¿Llegas directo? (punto de encuentro)", llenar y Guardar.
+- **206:** buscar una forma de saber si una cédula dominicana es real.
+- **207:** botón "Entrar al grupo de WhatsApp" con el link de invitación de cada buceo o curso.
 
 **De antes, diferido por él:**
 - Cambiar el dominio a `app.gusdivecenter.com`.

@@ -37,6 +37,7 @@ import {
 import { formatoCel, formatoCedula } from "@/lib/viajes/modelo";
 import { cursoDe, buzoDe } from "./Inicio";
 import { nuevoId } from "@/lib/estudiantes/datos";
+import FechaNacimiento from "@/components/FechaNacimiento";
 
 // V60 ("164"): los intereses abiertos de esta persona (por su ficha de buzo o
 // por el mismo documento).
@@ -216,25 +217,47 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
               Todavía no tiene fecha · {est.via === "link" ? "se anotó por el link" : "lo anotaron"}
               {est.creadoEn ? ` el ${fechaCorta(String(est.creadoEn).slice(0, 10))}` : ""}
             </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-              {p.estudiantes &&
-                fechasLibres.map((f) => (
-                  <button
-                    key={f.id}
-                    className="btn secondary vj-mini"
-                    onClick={() => cambiar({ estado: "curso", fechaId: f.id, fechaInicio: f.inicio, ...(est.instructor ? {} : f.instructor ? { instructor: f.instructor } : {}) }, "Lo pasó a una fecha", "Lista de espera", fechaCursoCorta(f.inicio))}
-                  >
-                    Pasarlo al curso del {fechaCursoCorta(f.inicio)} · {textoCupo(db, f)}
-                  </button>
-                ))}
+            {/* V61 ("199", opción A de la maqueta V60): cada curso con cupo
+                como una fila, con "Pasarlo aquí". */}
+            {p.estudiantes && fechasLibres.length > 0 && (
+              <>
+                <div className="ce-quiere-sub">Pasarlo a un curso:</div>
+                {fechasLibres.map((f) => {
+                  const [, m, dd] = f.inicio.split("-").map(Number);
+                  return (
+                    <div key={f.id} className="ce-quiere-curso">
+                      <span className="ce-fcaja chica">
+                        <small>lun</small>
+                        <b>{dd}</b>
+                        <small>{["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"][m - 1]}</small>
+                      </span>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <b>{c?.nombre || est.curso}</b>
+                        <span className="hint-text" style={{ display: "block", margin: 0 }}>
+                          {textoCupo(db, f)}
+                          {f.instructor ? ` · ${f.instructor}` : ""}
+                        </span>
+                      </span>
+                      <button
+                        className="btn btn-primary vj-mini"
+                        onClick={() => cambiar({ estado: "curso", fechaId: f.id, fechaInicio: f.inicio, ...(est.instructor ? {} : f.instructor ? { instructor: f.instructor } : {}) }, "Lo pasó a una fecha", "Lista de espera", fechaCursoCorta(f.inicio))}
+                      >
+                        Pasarlo aquí
+                      </button>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
               {p.cursos && !fechasLibres.length && (
                 <button className="btn secondary vj-mini" onClick={() => ir("cursos")}>
                   Crear un curso
                 </button>
               )}
               {b.cel && (
-                <a className="btn secondary vj-mini" href={linkWhatsApp(b.cel, "")} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-                  WhatsApp
+                <a className="btn vj-mini ce-wa-verde" href={linkWhatsApp(b.cel, "")} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                  <IconoWA /> Escribirle por WhatsApp
                 </a>
               )}
               {b.docFoto && (
@@ -797,7 +820,7 @@ function EditarDatos({ b, ops, cerrar }) {
         </label>
         <label>
           Fecha de nacimiento
-          <input type="date" value={f.nac} onChange={(e) => set("nac", e.target.value)} />
+          <FechaNacimiento value={f.nac} onChange={(v) => set("nac", v)} />
         </label>
       </div>
       <label>

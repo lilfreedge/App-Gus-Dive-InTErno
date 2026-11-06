@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import FechaNacimiento from "@/components/FechaNacimiento";
 import { Atras, Buscar, CampoCel } from "@/components/viajes/Piezas";
 import { ESCUELAS, pasosIniciales, soloDigitos, hoyISO, fechasDe, textoCupo, fechaCursoCorta, quedan } from "@/lib/estudiantes/modelo";
 import { formatoCel, formatoCedula } from "@/lib/viajes/modelo";
@@ -145,7 +146,7 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
               </label>
               <label>
                 Fecha de nacimiento
-                <input type="date" value={nueva.nac} onChange={(e) => setNueva({ ...nueva, nac: e.target.value })} />
+                <FechaNacimiento value={nueva.nac} onChange={(v) => setNueva({ ...nueva, nac: v })} />
               </label>
             </div>
             <label>

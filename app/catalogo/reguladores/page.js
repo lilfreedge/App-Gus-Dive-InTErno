@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { codigosAlquilados } from "@/lib/alquilados";
 import { createClient } from "@/lib/supabase/server";
 import { tieneAcceso, requireInterno } from "@/lib/roles";
 import AppHeader from "@/components/AppHeader";
@@ -20,6 +21,7 @@ export default async function CatalogoReguladoresPage() {
     .from("reguladores_alquiler")
     .select("*")
     .order("codigo");
+  const alquilados = await codigosAlquilados(supabase);
 
   return (
     <div>
@@ -40,6 +42,7 @@ export default async function CatalogoReguladoresPage() {
         <div className="card">
           <ListaReguladores
             reguladores={reguladores || []}
+            alquilados={alquilados}
             puedeAdministrar={puedeAdministrar}
             esTitular={esTitular}
           />

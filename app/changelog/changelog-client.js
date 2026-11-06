@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V61",
+    fecha: "6 de noviembre, 2026",
+    titulo: "Notas del 3 al 5 de noviembre, lo aprobado de la maqueta V60 y Alquiler más completo",
+    descripcion:
+      "App Equipos de clientes: el detalle del regulador pregunta primero por cada manguera (2da, octopus, alta) y luego pide el componente; el profundímetro lleva Sí/No y se agregó la Brújula (también en Componentes recibidos). Las órdenes en Hold salen arriba de todo en Inicio, en rojo, y cuando una vuelve de Hold sale con la etiqueta \"Hold respondido\". El Informe ya no repite el No. de orden en Equipo, la fecha de ingreso va arriba a la derecha y los componentes recibidos van en viñetas. Los manuales también se buscan por el detalle de cada componente. App Interno: en Inspección visual los tanques pendientes salen arriba, en el cuadro rojo (como Mantenimiento de reguladores), y la lista con el buscador debajo; los tanques y reguladores alquilados tienen la etiqueta \"Alquilado\". Control Estudiantes: en la ficha en lista de espera cada curso con cupo sale como una fila con \"Pasarlo aquí\" y el WhatsApp en verde; quien se anota en lista de espera va directo a \"¡Listo! Ya estás anotado\" y puede adelantar sus documentos si quiere; la fecha de nacimiento se escoge con día, mes y año. Buceos: al final del link, los datos de la transferencia van en un solo cuadro con \"Copiar\"; la ficha del buzo tiene \"Escribirle por WhatsApp\", la pregunta del grupo (No está / Ya está) y el pago ordenado con una barrita; en Reporte hay \"Descargar comprobantes\" (un .zip con el nombre de cada buzo y la lista en Excel); el correo de los avisos se arregló para que no parezca spam. Alquiler: pestaña Clientes (ver, editar y borrar), editar y borrar alquileres, el número de factura queda fijo y para cambiarlo hay que confirmar, factura de la mora, opción \"Estudiante OWD\" (equipo incluido en el curso) y Retornos con los últimos retornos, un buscador y el botón \"Registrar retorno\".",
+  },
+  {
     version: "V60",
     fecha: "2 de noviembre, 2026",
     titulo: "Entrar a un curso, aviso de lista de espera en el link de Buceos, calendario al final y link de Interesados con cédula",

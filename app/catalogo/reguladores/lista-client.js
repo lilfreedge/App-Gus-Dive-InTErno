@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { textoAlquilado } from "@/lib/alquilados";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
@@ -10,7 +11,7 @@ import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 // ahí (antes era solo el texto "Ver ficha"). esTitular: ve
 // "Inactivar/Reactivar" como una acción aparte que no navega (mismo
 // patrón que app/catalogo/lista-client.js para Códigos).
-export default function ListaReguladores({ reguladores, puedeAdministrar, esTitular }) {
+export default function ListaReguladores({ reguladores, alquilados = {}, puedeAdministrar, esTitular }) {
   const router = useRouter();
   const supabase = createClient();
   const [loadingId, setLoadingId] = useState(null);
@@ -66,6 +67,11 @@ export default function ListaReguladores({ reguladores, puedeAdministrar, esTitu
             <div className="list-item-top">
               <span className="list-item-title" style={{ opacity: r.activo ? 1 : 0.5 }}>
                 {r.codigo}
+                {alquilados[String(r.codigo).toUpperCase()] && (
+                  <span className="badge badge-alquilado" style={{ marginLeft: 8 }} title={textoAlquilado(alquilados[String(r.codigo).toUpperCase()])}>
+                    Alquilado
+                  </span>
+                )}
               </span>
               {esTitular && (
                 <button

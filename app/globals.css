@@ -3464,3 +3464,70 @@ html[data-theme="dark"] .vj-cal-curso.empieza { background: #8a6a00; color: #fff
 .ce-curso-espera { display: flex; align-items: center; gap: 8px; }
 .ce-curso-espera > .ce-est { flex: 1; min-width: 0; }
 .ce-curso-espera > .btn { flex: none; }
+
+/* V61 (nota del 3-nov): órdenes en Hold arriba de todo en Inicio de App Equipos de clientes. */
+.hold-arriba { border: 2px solid var(--rojo); background: var(--error-fondo); border-radius: 14px; padding: 10px 10px 2px; margin-bottom: 18px; }
+.hold-arriba-t { color: var(--rojo); font-weight: 800; font-size: 15px; margin: 2px 4px 8px; }
+.hold-arriba .card { margin-bottom: 8px; }
+/* V61: fecha de ingreso a la derecha del encabezado del Informe. */
+.reporte-membrete-fecha { margin-left: auto; color: rgba(255, 255, 255, 0.85); font-size: 12.5px; white-space: nowrap; text-align: right; }
+
+/* V61 ("198"): cuadro de la transferencia, con filas y Copiar. */
+.pb-transf { border: 1px solid #d7e3ea; background: #fff; border-radius: 12px; padding: 4px 12px; margin-top: 10px; text-align: left; }
+.pb-transf-cuenta + .pb-transf-cuenta { border-top: 2px solid #e3eef4; }
+.pb-transf-fila { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #edf2f5; font-size: 14px; }
+.pb-transf > .pb-transf-fila:last-child { border-bottom: 0; }
+.pb-transf-fila > span:first-child { color: #5c6b78; flex: none; }
+.pb-transf-fila b { text-align: right; }
+.pb-transf-v { display: inline-flex; align-items: center; gap: 8px; }
+.pb-transf-n { font-size: 16px; letter-spacing: 0.02em; }
+
+/* V61 ("199"): ficha en lista de espera, cada curso como una fila. */
+.ce-quiere-sub { font-size: 13px; font-weight: 700; margin: 12px 0 4px; }
+.ce-quiere-curso { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #ecdca3; border-radius: 12px; padding: 8px 10px; margin-top: 6px; }
+.ce-quiere-curso .btn { flex: none; white-space: nowrap; }
+.ce-fcaja.chica { width: 44px; padding: 3px 0; }
+.ce-fcaja.chica b { font-size: 16px; }
+.ce-wa-verde { background: #22874a !important; color: #fff !important; border-color: #22874a !important; display: inline-flex !important; align-items: center; gap: 6px; }
+/* V61 ("201"): "¿Quieres adelantar?" en el final de la lista de espera. */
+.ce-pub-adelantar { text-align: left; border: 1px solid var(--borde); background: var(--superficie-suave, #eef3f6); border-radius: 12px; padding: 12px; margin-top: 14px; }
+.ce-pub-adelantar .pb-btn { margin-top: 10px; }
+/* V61 ("202"): fecha de nacimiento con día, mes y año. */
+.fecha-nac { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 6px; }
+.fecha-nac select { width: 100%; min-width: 0; margin-top: 0 !important; }
+
+/* V61 ("204"): ficha del buzo en Buceos. */
+.vj-ficha-acc2 { margin: 6px 0 4px; padding-bottom: 12px; border-bottom: 1px solid var(--borde); }
+.vj-ficha-wa2 { background: #22874a !important; color: #fff !important; display: inline-flex !important; align-items: center; gap: 6px; min-height: 40px; }
+.vj-ficha-wa2 svg { color: #fff; }
+.vj-ficha-preg { font-size: 13px; font-weight: 700; color: var(--texto-suave); margin: 12px 0 6px; }
+.vj-seg { display: flex; border: 1px solid var(--borde); border-radius: 10px; overflow: hidden; }
+.vj-seg button { flex: 1; border: 0; background: var(--tarjeta, #fff); padding: 9px 8px; font: inherit; font-size: 13.5px; font-weight: 700; color: var(--texto-suave); cursor: pointer; }
+.vj-seg button + button { border-left: 1px solid var(--borde); }
+.vj-seg button.sel { background: var(--exito-fondo); color: var(--verde); }
+.vj-seg button:disabled { cursor: default; opacity: 0.7; }
+.vj-pago-grande { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.vj-pago-grande b { font-size: 19px; }
+.vj-pago-grande b.debe { color: var(--rojo); }
+.vj-pago-grande b.ok { color: var(--verde); }
+.vj-pago-barra { height: 8px; border-radius: 4px; background: #f3d3d3; overflow: hidden; margin: 6px 0 3px; }
+.vj-pago-barra i { display: block; height: 100%; background: var(--verde); }
+.vj-comp-nuevo { display: flex; align-items: center; gap: 8px; border: 1px solid #e3c7f5; background: #f8f0fd; border-radius: 10px; padding: 9px 11px; margin-top: 10px; }
+/* V61 ("208"): "Descargar comprobantes" en el menú Reporte. */
+.vj-rep-menu a.vj-rep-link { display: block; text-align: left; border-top: 1px solid var(--superficie-suave); padding: 11px 14px; color: var(--texto); text-decoration: none; }
+.vj-rep-menu a.vj-rep-link:hover { background: var(--superficie-suave); }
+.vj-rep-menu a.vj-rep-link b { display: block; }
+.vj-rep-menu a.vj-rep-link span { display: block; font-size: 12.5px; color: var(--texto-suave); }
+.vj-comp-nuevo b { font-size: 13.5px; }
+
+/* V61: Alquiler (estudiante, factura fija, editar/borrar, clientes). */
+.alq-estudiante { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: #e3f4fc; color: #06567f; }
+.alq-factura-fija { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--superficie-suave); border-radius: 10px; padding: 9px 12px; }
+.alq-factura-fija b { font-size: 16px; }
+.alq-factura-conf { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--rojo); }
+.alq-acciones { margin-top: 18px; padding-top: 12px; border-top: 1px dashed var(--borde); }
+.alq-confirmar { font-size: 14px; }
+.alq-linea.quitado { opacity: 0.45; text-decoration: line-through; }
+.alq-estado.afuera { background: #fff3dc; color: #9a5b0e; }
+/* V61: etiqueta "Alquilado" en App Interno. */
+.badge-alquilado { background: #fdecea; color: #b0291c; border: 1px solid #f3b8b1; }

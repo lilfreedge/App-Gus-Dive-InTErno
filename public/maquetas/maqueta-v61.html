@@ -1,0 +1,258 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Maqueta V61</title><style>
+  :root { --azul:#0a3d62; --fondo:#f4f7f9; --borde:#dfe6ea; --texto:#1a2733; --suave:#5c6b78; --rojo:#d64545; --sup:#eef3f6; --ce:#8a6a00; --ce-barra:#f6ce46; --ce-txt:#2b2200; --ce-claro:#fdf3cf; --bc:#4ebae8; --verde:#2c9e5b; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--fondo); color:var(--texto); font-size:14px; }
+  .maq { background:#1a2733; color:#fff; padding:12px 16px; font-size:13px; }
+  .tabs { display:flex; gap:6px; flex-wrap:wrap; padding:12px 16px; max-width:980px; margin:0 auto; }
+  .tab { border:1px solid var(--borde); background:#fff; border-radius:999px; padding:7px 12px; font-size:12.5px; font-weight:600; color:var(--suave); cursor:pointer; }
+  .tab.on { background:var(--azul); color:#fff; border-color:var(--azul); }
+  .grupo { font-size:11px; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:.4px; width:100%; margin-top:4px; }
+  .vista { display:none; max-width:980px; margin:0 auto; padding:0 16px 40px; } .vista.on { display:block; }
+  .nota { background:#fff8e1; border:1px solid #f1dd9a; color:#5c4700; border-radius:10px; padding:10px 12px; font-size:12.5px; line-height:1.5; margin-bottom:14px; }
+  .doble { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:760px) { .doble { grid-template-columns:1fr; } }
+  .etq { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; } .etq.a { color:#a33; } .etq.d { color:var(--verde); }
+  .card { background:#fff; border:1px solid var(--borde); border-radius:14px; padding:14px; margin-bottom:10px; }
+  .h1 { font-size:19px; font-weight:800; color:var(--azul); margin:2px 0 10px; }
+  .sec { font-size:12px; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:.4px; margin:16px 0 8px; }
+  .hint { color:var(--suave); font-size:12.5px; }
+  .btn { border:0; border-radius:10px; padding:10px 14px; font-weight:700; font-size:13.5px; cursor:pointer; }
+  .mini { padding:5px 10px; font-size:12px; border-radius:8px; border:1px solid var(--borde); background:#fff; font-weight:600; cursor:pointer; }
+  .chip { display:inline-block; font-size:11px; font-weight:700; padding:2px 9px; border-radius:999px; background:var(--sup); color:var(--suave); }
+  .chip.y { background:var(--ce-claro); color:#5c4700; }
+  input, select { font:inherit; border:1px solid var(--borde); border-radius:9px; padding:9px 10px; width:100%; background:#fff; }
+  label.l { display:block; font-size:12px; font-weight:700; color:var(--suave); margin:10px 0 4px; }
+  /* CE app shell */
+  .ce-top { background:var(--ce-barra); color:var(--ce-txt); padding:9px 14px; border-radius:12px 12px 0 0; font-weight:800; font-size:12.5px; }
+  .ce-nav { background:var(--ce-barra); padding:0 10px 10px; display:flex; gap:6px; flex-wrap:wrap; }
+  .ce-nav span { font-size:12px; font-weight:700; padding:5px 10px; border-radius:999px; background:rgba(255,255,255,.5); color:var(--ce-txt); }
+  .ce-nav span.on { background:var(--ce-txt); color:var(--ce-barra); }
+  .pant { background:var(--fondo); border:1px solid var(--borde); border-top:0; border-radius:0 0 12px 12px; padding:14px; }
+  .curso { display:flex; gap:12px; align-items:center; background:#fff; border:1px solid #ecdca3; border-left:5px solid var(--ce); border-radius:12px; padding:12px; margin-bottom:8px; }
+  .fecha-b { width:54px; text-align:center; background:var(--ce-claro); border-radius:10px; padding:6px 0; flex-shrink:0; }
+  .fecha-b b { display:block; font-size:20px; color:var(--ce-txt); line-height:1.1; } .fecha-b small { font-size:11px; font-weight:800; color:var(--ce); text-transform:uppercase; }
+  .cnt { margin-left:auto; text-align:right; } .cnt b { font-size:18px; color:var(--ce-txt); display:block; } .cnt small { color:var(--suave); font-size:11.5px; }
+  .cuad { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; } @media (max-width:600px) { .cuad { grid-template-columns:repeat(2,1fr); } }
+  .cuad div { background:#fff; border:1px solid var(--borde); border-radius:10px; padding:10px; } .cuad b { font-size:20px; display:block; }
+  /* teléfono */
+  .tel { max-width:380px; margin:0 auto; background:#fff; border:1px solid var(--borde); border-radius:18px; overflow:hidden; }
+  .tel-h { display:flex; gap:8px; align-items:center; padding:11px 14px; border-top:4px solid var(--ce-barra); border-bottom:1px solid var(--borde); font-weight:700; font-size:13px; color:var(--ce-txt); }
+  .tel-h.bc { border-top-color:var(--bc); color:#06324f; }
+  .logo { background:#cd392a; color:#fff; font-weight:900; font-size:11px; padding:2px 6px; border-radius:4px; }
+  .tel-b { padding:14px; }
+  .t { font-size:18px; font-weight:800; color:var(--ce-txt); }
+  .b1 { width:100%; background:var(--ce); color:#fff; margin-top:10px; } .b2 { width:100%; background:#fff; border:1px solid var(--borde); margin-top:8px; }
+  .it { display:flex; gap:10px; align-items:center; border:1px solid var(--borde); border-radius:12px; padding:10px 12px; margin-top:8px; }
+  .it .tx { flex:1; min-width:0; } .it b { display:block; font-size:13.5px; } .it small { color:var(--suave); font-size:12px; }
+  .foto { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#c8d3dc,#9fb0bd); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:20px; flex-shrink:0; }
+  .dato { display:flex; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid var(--borde); font-size:13px; } .dato span:first-child { color:var(--suave); }
+  .pasos { display:flex; gap:4px; margin-top:8px; } .pasos i { flex:1; height:6px; border-radius:3px; background:#e7e2cf; } .pasos i.ya { background:var(--ce); }
+  .seg { display:flex; background:var(--sup); border-radius:10px; padding:3px; } .seg span { flex:1; text-align:center; padding:8px 4px; font-weight:700; font-size:12.5px; border-radius:8px; color:var(--suave); cursor:pointer; } .seg span.on { background:#fff; color:var(--texto); box-shadow:0 1px 2px rgba(0,0,0,.08); }
+  /* calendario */
+  .cal-dia { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--borde); }
+  .cal-f { width:46px; text-align:center; flex-shrink:0; } .cal-f b { display:block; font-size:18px; } .cal-f small { color:var(--suave); font-size:11px; text-transform:uppercase; font-weight:700; }
+  .ev { border-radius:8px; padding:7px 10px; font-size:13px; margin-bottom:4px; } .ev.c { background:var(--ce-claro); border-left:4px solid var(--ce); } .ev.b { background:#e6f5fc; border-left:4px solid var(--bc); }
+  /* buceo */
+  .bc-head { background:#6cb6e2; color:#0a2a44; padding:14px; }
+  .salida { background:#fff; border-radius:12px; padding:10px 12px; margin-top:10px; display:grid; gap:6px; }
+  .salida div { display:flex; gap:10px; align-items:center; font-size:14px; } .salida b { font-size:15px; }
+  .alla { border:1px dashed #9ccbe6; background:#f3fafe; border-radius:12px; padding:10px 12px; margin-top:10px; font-size:13px; }
+  .entrada { height:90px; border-radius:8px; background:linear-gradient(135deg,#a9c9a4,#6d9a77); color:#fff; display:flex; align-items:flex-end; padding:6px 8px; font-size:11px; font-weight:700; margin-top:8px; }
+  .modal { max-width:520px; background:#fff; border-radius:16px; border:1px solid var(--borde); overflow:hidden; margin:0 auto; }
+  .m-h { padding:14px 16px; border-bottom:1px solid var(--borde); display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+  .acc { display:flex; gap:6px; flex-wrap:wrap; padding:10px 16px; border-bottom:1px solid var(--borde); background:#fafcfd; }
+  .blk { padding:12px 16px; border-bottom:1px solid var(--borde); } .blk h5 { margin:0 0 6px; font-size:12px; color:var(--suave); text-transform:uppercase; letter-spacing:.4px; }
+  .pago3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; } .pago3 div { background:var(--sup); border-radius:10px; padding:8px; text-align:center; } .pago3 b { display:block; font-size:15px; }
+</style><style>
+  .bc-hero { background:#4ebae8; color:#06324f; padding:16px; }
+  .ok { width:52px; height:52px; border-radius:50%; background:#22874a; color:#fff; display:flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto 8px; }
+  .wa { width:100%; background:#22874a; color:#fff; margin-top:10px; }
+  .cta { border:1px solid var(--borde); background:var(--sup); border-radius:12px; padding:10px 12px; margin-top:10px; }
+  .cta .n { font-size:18px; font-weight:800; letter-spacing:.3px; }
+  .fila { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--borde); font-size:13px; }
+  .fila:last-child { border-bottom:0; } .fila span:first-child { color:var(--suave); }
+  .cp { border:1px solid #4ebae8; color:#06324f; background:#fff; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+  .opt { border:2px solid var(--borde); border-radius:14px; padding:12px; background:#fff; }
+  .opt.rec { border-color:var(--verde); }
+  .rec-t { font-size:11px; font-weight:800; color:var(--verde); text-transform:uppercase; }
+  .cr { display:flex; align-items:center; gap:10px; border:1px solid #ecdca3; border-radius:12px; padding:10px; margin-top:8px; background:#fff; }
+  .cr .fecha-b { width:46px; padding:4px 0; } .cr .fecha-b b { font-size:16px; }
+  .pas { margin-left:auto; background:var(--ce); color:#fff; border:0; border-radius:8px; padding:7px 12px; font-weight:700; font-size:12.5px; cursor:pointer; white-space:nowrap; }
+  .wa-b { display:inline-flex; align-items:center; gap:6px; background:#22874a; color:#fff; border:0; border-radius:10px; padding:9px 14px; font-weight:700; font-size:13px; }
+  .tri { display:grid; grid-template-columns:1fr 1.4fr 1fr; gap:6px; }
+  .seg2 { display:flex; border:1px solid var(--borde); border-radius:10px; overflow:hidden; } .seg2 span { flex:1; text-align:center; padding:8px; font-size:12.5px; font-weight:700; color:var(--suave); background:#fff; cursor:pointer; } .seg2 span.on { background:#e8f6ee; color:#1f7a45; }
+  .barra { height:8px; border-radius:4px; background:#f3d3d3; overflow:hidden; margin:6px 0 2px; } .barra i { display:block; height:100%; background:var(--verde); }
+  .nuevo { border:1px solid #e3c7f5; background:#f8f0fd; border-radius:10px; padding:9px 11px; display:flex; gap:8px; align-items:center; margin-top:8px; }
+  .tutor { border:1px dashed #d9c27a; background:#fffbea; border-radius:12px; padding:10px 12px; margin-top:10px; }
+</style><style>
+  .alq-top { background:#cd392a; color:#fff; padding:9px 14px; border-radius:12px 12px 0 0; font-weight:800; font-size:12.5px; }
+  .bc-top { background:#4ebae8; color:#06324f; padding:9px 14px; border-radius:12px 12px 0 0; font-weight:800; font-size:12.5px; }
+  .gr-top { background:#36454f; color:#fff; padding:9px 14px; border-radius:12px 12px 0 0; font-weight:800; font-size:12.5px; }
+  .rec { display:flex; gap:10px; align-items:center; border:1px solid var(--borde); border-radius:12px; padding:10px 12px; margin-top:8px; background:#fff; }
+  .rec .tx { flex:1; min-width:0; } .rec b { display:block; } .rec small { color:var(--suave); font-size:12px; }
+  .pill { font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+  .pill.r { background:#fdecec; color:#b33a3a; } .pill.a { background:#fff3dc; color:#9a5b0e; } .pill.v { background:#e8f6ee; color:#1f7a45; }
+  .bar2 { height:10px; border-radius:5px; background:#f1e2c3; overflow:hidden; margin:6px 0; } .bar2 i { display:block; height:100%; background:#cd392a; }
+  .stat { display:flex; gap:14px; flex-wrap:wrap; font-size:13px; } .stat b { font-size:18px; display:block; }
+  .chipf { display:inline-block; border:1px solid var(--borde); border-radius:999px; padding:5px 10px; font-size:12px; font-weight:700; margin:0 4px 4px 0; background:#fff; } .chipf.on { background:#1a2733; color:#fff; border-color:#1a2733; }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--borde); font-size:13.5px; }
+  .ck { display:flex; gap:8px; align-items:center; padding:6px 0; font-size:13.5px; }
+  .prob { border:1px dashed #e8a29a; background:#fff6f5; border-radius:10px; padding:10px; margin-top:6px; }
+</style></head><body>
+<div class="maq"><b>Maqueta V61</b>: lo que me pediste que te propusiera en tus notas. Toca las pestañas. Nada de esto está programado todavía.</div>
+<div class="tabs" id="tabs">
+  <div class="grupo">Link del estudiante</div>
+  <button class="tab on" data-v="menor">1. Registrar a un menor de edad (203)</button>
+  <div class="grupo">App Interno</div>
+  <button class="tab" data-v="rec">2. Recordatorios para técnicos</button>
+  <div class="grupo">Buceos</div>
+  <button class="tab" data-v="buceo">3. Página del buceo más ordenada</button>
+  <div class="grupo">Alquiler</div>
+  <button class="tab" data-v="premio">4. Premios por lo acumulado</button>
+  <button class="tab" data-v="prob">5. Vino con problemas</button>
+</div>
+
+<!-- 1 -->
+<div class="vista on" id="v-menor">
+  <div class="nota"><b>203:</b> en la primera pantalla del link sale <b>"Voy a registrar a un menor de edad (hijo, hija…)"</b>. El adulto pone primero <b>sus</b> datos y después los del menor. Si por la fecha de nacimiento el menor tiene <b>11 años o menos</b>, no deja seguir. El WhatsApp y los avisos van al celular del adulto, y el adulto firma.</div>
+  <div class="doble">
+    <div><div class="etq d">Paso 1: la primera pantalla</div>
+      <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Registro de estudiante</div><div class="tel-b">
+        <div class="t">¡Bienvenido!</div><div class="hint">Pon tu documento para empezar.</div>
+        <div class="seg" style="margin-top:10px"><span class="on">Cédula</span><span>Otro documento</span></div>
+        <input style="margin-top:8px" placeholder="000-0000000-0">
+        <button class="btn b1">Seguir</button>
+        <div class="cta" style="margin-top:12px"><b>¿Vas a registrar a un menor de edad?</b><div class="hint">Hijo, hija o alguien a tu cargo. Primero pones tus datos y después los suyos.</div><button class="btn b2">Registrar a un menor de edad</button></div>
+      </div></div>
+    </div>
+    <div><div class="etq d">Paso 2: los datos del menor</div>
+      <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Registro de estudiante</div><div class="tel-b">
+        <div class="hint">Lo registra: <b>Ana Pérez</b> (mamá) · 809-•••-••••</div>
+        <div class="t" style="margin-top:6px">Datos del menor</div>
+        <label class="l">Nombre completo</label><input value="Carlitos Pérez">
+        <label class="l">Fecha de nacimiento</label><div class="tri"><select><option>14</option></select><select><option>mayo</option></select><select><option>2016</option></select></div>
+        <div class="tutor" style="border-color:#e8a29a;background:#fff6f5"><b style="color:#b33a3a">Carlitos tiene 10 años.</b><div class="hint">El buceo es de 12 años en adelante. Escríbenos por WhatsApp si tienes dudas.</div></div>
+        <label class="l">Parentesco</label><select><option>Mamá</option><option>Papá</option><option>Tutor</option></select>
+        <button class="btn b1" style="opacity:.5">Seguir</button>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2 -->
+<div class="vista" id="v-rec">
+  <div class="nota"><b>Nota del 4-nov:</b> los recordatorios de compresores no te gustan y quieres lo mismo para la inspección visual y el mantenimiento de reguladores, asignable a técnicos. Propuesta: <b>una sola sección "Recordatorios"</b> en App Interno (Equipos). Cada recordatorio dice qué hay que hacer, cada cuánto y a quién le toca. A esa persona le sale en su campanita (y por WhatsApp si quieres) unos días antes. Con "Hacerlo", va directo a registrarlo, y el recordatorio se mueve solo a la próxima fecha.</div>
+  <div class="doble">
+    <div><div class="etq d">La lista</div>
+      <div class="gr-top">APP INTERNO · RECORDATORIOS</div><div class="pant">
+        <div style="display:flex;justify-content:space-between;align-items:center"><b class="h1" style="margin:0">Recordatorios</b><button class="btn" style="background:#36454f;color:#fff">+ Nuevo</button></div>
+        <div class="sec">Vencidos</div>
+        <div class="rec"><div class="tx"><b>Inspección compresor 01</b><small>Cada 14 días · le toca a Frederick · tocaba el 2 nov</small></div><span class="pill r">Vencido</span><span class="mini">Hacerlo</span></div>
+        <div class="sec">Esta semana</div>
+        <div class="rec"><div class="tx"><b>Inspección visual de tanques (5 pendientes)</b><small>Cada mes · le toca a Alexander · el 9 nov</small></div><span class="pill a">En 3 días</span><span class="mini">Hacerlo</span></div>
+        <div class="sec">Próximos</div>
+        <div class="rec"><div class="tx"><b>Mantenimiento de reguladores de alquiler</b><small>Cada 6 meses · le toca a Pipe · el 1 dic</small></div><span class="pill v">1 dic</span></div>
+        <div class="rec"><div class="tx"><b>Cambio de filtros compresor NITROX</b><small>Cada 50 horas · le toca a Frederick · faltan 12 h</small></div><span class="pill v">12 h</span></div>
+      </div>
+    </div>
+    <div><div class="etq d">Nuevo recordatorio</div>
+      <div class="card">
+        <label class="l">¿Qué hay que hacer?</label><select><option>Inspección de compresor</option><option>Mantenimiento de compresor</option><option>Inspección visual de tanques</option><option>Mantenimiento de reguladores</option><option>Otra cosa (escribirla)</option></select>
+        <label class="l">¿Cuál?</label><select><option>Compresor 01</option><option>Todos los tanques pendientes</option></select>
+        <label class="l">Cada cuánto</label><div class="tri" style="grid-template-columns:1fr 1.4fr"><input value="14"><select><option>días</option><option>semanas</option><option>meses</option><option>horas de uso (compresor)</option></select></div>
+        <label class="l">¿A quién le toca?</label><div><span class="chipf on">Frederick</span><span class="chipf">Alexander</span><span class="chipf">Dany</span><span class="chipf">Pipe</span></div>
+        <label class="l">Avisarle</label><div><span class="chipf on">Campanita</span><span class="chipf on">WhatsApp</span><span class="chipf">Correo</span></div><div class="hint">2 días antes, y el día que toca.</div>
+        <button class="btn b1" style="background:#36454f">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="vista" id="v-buceo">
+  <div class="nota"><b>Nota del 4-nov:</b> la página del buceo se veía desordenada. Propuesta: arriba solo el nombre, la fecha y el estado. Debajo, un resumen en una sola tarjeta con una barrita del cupo. Los botones juntos en una fila: "Copiar link", "Reporte ▾" y "⋯" (ahí van "Cerrar inscripción" y lo demás). Menos filtros (los que más se usan), y la lista de espera abajo, como una sección que se abre.</div>
+  <div class="doble">
+    <div><div class="etq a">Ahora</div>
+      <div class="bc-top">BUCEOS</div><div class="pant">
+        <b style="font-size:17px">La Caleta</b> <span class="chip">Inscripción abierta</span><div class="hint">lunes 16 de noviembre · 7:00 AM desde la tienda · cupo máx. 15</div>
+        <div style="margin-top:8px"><span class="mini">Copiar link</span> <span class="mini">Reporte ▾</span> <span class="mini">Cerrar inscripción</span></div>
+        <div style="margin-top:8px"><span class="chipf on">Inscritos (2)</span><span class="chipf">Info del buceo</span><span class="chipf">Números</span><span class="chipf">Bitácora</span></div>
+        <div class="cuad" style="margin-top:6px"><div><b>2</b><span class="hint">de 15 inscritos</span></div><div><b>0</b><span class="hint">en el grupo</span></div><div><b>1</b><span class="hint">pagados</span></div><div><b>2</b><span class="hint">en espera</span></div></div>
+        <div style="margin-top:8px"><span class="chipf on">Todos 2</span><span class="chipf">Sin pagar 1</span><span class="chipf">Por conciliar 1</span><span class="chipf">Comprobante nuevo 0</span><span class="chipf">Sin grupo 2</span><span class="chipf">Staff 0</span></div>
+      </div>
+    </div>
+    <div><div class="etq d">Propuesta</div>
+      <div class="bc-top">BUCEOS</div><div class="pant">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><b style="font-size:18px">La Caleta</b><div class="hint">Lunes 16 de noviembre · 7:00 AM</div></div><span class="chip" style="background:#e8f6ee;color:#1f7a45">Abierta</span></div>
+        <div class="card" style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between"><b>2 de 15 cupos</b><span class="hint">13 libres</span></div>
+          <div class="barra" style="background:#e3eef4"><i style="width:13%;background:#4ebae8"></i></div>
+          <div class="stat" style="margin-top:6px"><div><b>1</b>pagado</div><div><b style="color:#b33a3a">1</b>debe</div><div><b>0</b>en el grupo</div><div><b>2</b>en espera</div></div>
+        </div>
+        <div style="display:flex;gap:6px"><span class="mini">Copiar link</span><span class="mini">Reporte ▾</span><span class="mini">⋯</span></div>
+        <div style="margin-top:10px"><span class="chipf on">Inscritos</span><span class="chipf">Info</span><span class="chipf">Números</span><span class="chipf">Bitácora</span></div>
+        <div style="margin-top:6px"><span class="chipf on">Todos 2</span><span class="chipf">Debe 1</span><span class="chipf">Por conciliar 1</span><span class="chipf">Sin grupo 2</span></div>
+        <input placeholder="Buscar en este buceo…" style="margin-top:6px">
+        <div class="row"><span><b>Felipe Torreira</b><br><small class="hint">Buzo</small></span><span class="pill v">Pagado</span></div>
+        <div class="row"><span><b>Juan de Dios</b><br><small class="hint">Buzo</small></span><span class="pill r">Debe RD$2,600</span></div>
+        <div class="row" style="border:0"><b>Lista de espera (2) ▸</b><span class="hint">Joselito, Luis</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4 -->
+<div class="vista" id="v-premio">
+  <div class="nota"><b>Nota del 2-nov ("chulerías"):</b> por lo que el cliente acumula en alquileres, se gana algo. Propuesta: en Alquiler › Más › <b>Premios</b> pones la regla (por ejemplo: <b>cada RD$5,000 alquilados → 1 tanque gratis</b>). En la ficha del cliente se ve cuánto lleva. Cuando se lo gana, al hacerle un alquiler sale "Tiene un tanque gratis" y lo usas con un toque. Queda anotado en la bitácora.</div>
+  <div class="doble">
+    <div><div class="etq d">Ficha del cliente</div>
+      <div class="alq-top">ALQUILER · CLIENTES</div><div class="pant">
+        <b style="font-size:17px">Juan Gómez</b><div class="hint">001-•••••••-• · 829-•••-••••</div>
+        <div class="card" style="margin-top:10px"><b>Premio: tanque gratis</b><div class="bar2"><i style="width:64%"></i></div><div class="hint">Lleva <b>RD$3,200</b> de RD$5,000. Le faltan RD$1,800 para su próximo tanque gratis.</div></div>
+        <div class="card" style="background:#e8f6ee;border-color:#bfe3cc"><b style="color:#1f7a45">Tiene 1 tanque gratis para usar</b><div class="hint">Se lo ganó el 28 oct.</div></div>
+      </div>
+    </div>
+    <div><div class="etq d">Nuevo alquiler / la regla</div>
+      <div class="card"><div class="ck"><input type="checkbox" checked> <b>Usar su tanque gratis</b> (T-12 queda en RD$0)</div><div class="hint">Total a cobrar: RD$1,250 en vez de RD$1,650.</div></div>
+      <div class="card"><b>Premios (Más › Premios)</b>
+        <label class="l">Cada cuánto alquilado</label><input value="RD$5,000">
+        <label class="l">Se gana</label><select><option>1 tanque gratis (3 días)</option><option>10% de descuento en el próximo alquiler</option><option>Otro (escribirlo)</option></select>
+        <div class="hint" style="margin-top:6px">Cuenta lo que ya alquiló desde que actives el premio (o desde el principio, tú decides).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5 -->
+<div class="vista" id="v-prob">
+  <div class="nota"><b>Nota del 2-nov:</b> a veces un tanque llega completamente vacío (hay que hacerle inspección visual) o un regulador con el manómetro ahogado, y eso se le cobra al cliente. Propuesta: en "Registrar retorno", cada equipo tiene <b>"Vino con problemas"</b>. Escoges qué pasó; el cargo sale de una lista con precios que pones en Más › Precios. Ese cargo se suma, como la mora, con su propio número de factura.</div>
+  <div class="doble">
+    <div><div class="etq d">Registrar retorno</div>
+      <div class="alq-top">ALQUILER · RETORNOS</div><div class="pant">
+        <b>Juan Gómez</b><div class="hint">Alquiler No. 12 · devolvía el 5 nov</div>
+        <div class="ck"><input type="checkbox" checked> <b>T-12</b> Aluminio 80cf</div>
+        <div class="prob"><div class="ck" style="padding-top:0"><input type="checkbox" checked> <b>Vino con problemas</b></div>
+          <div><span class="chipf on">Llegó vacío: inspección visual · RD$500</span><span class="chipf">Válvula dañada</span><span class="chipf">Otro…</span></div></div>
+        <div class="ck"><input type="checkbox" checked> <b>RE-4</b> Regulador Aqualung</div>
+        <div class="prob"><div class="ck" style="padding-top:0"><input type="checkbox" checked> <b>Vino con problemas</b></div>
+          <div><span class="chipf on">Manómetro ahogado · RD$1,200</span><span class="chipf">Boquilla rota</span><span class="chipf">Otro…</span></div></div>
+        <button class="btn b1" style="background:#cd392a">Marcar retornado · cargos RD$1,700</button>
+      </div>
+    </div>
+    <div><div class="etq d">En el alquiler</div>
+      <div class="card">
+        <div class="row"><span>Total del alquiler</span><b>RD$2,400</b></div>
+        <div class="row"><span>Mora</span><b>RD$0</b></div>
+        <div class="row"><span>Cargos por problemas<br><small class="hint">T-12 llegó vacío (inspección) · RE-4 manómetro ahogado</small></span><b style="color:#b33a3a">RD$1,700</b></div>
+        <label class="l">Factura de los cargos</label><input placeholder="El número de la factura con que se cobró">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById("tabs").addEventListener("click", (e) => { const b = e.target.closest(".tab"); if (!b) return;
+  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === b));
+  document.querySelectorAll(".vista").forEach((x) => x.classList.toggle("on", x.id === "v-" + b.dataset.v)); window.scrollTo(0, 0); });
+</script>
+</body></html>

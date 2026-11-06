@@ -13,11 +13,12 @@ function filaVacia(tanques) {
 // de inspección de varios tanques el mismo día), sin tener que volver
 // a entrar al formulario por cada una. Con una sola fila se comporta
 // igual que antes.
-export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques }) {
+export default function NuevaInspeccionForm({ userId, nombreUsuario, tanques, inicial = "" }) {
   const router = useRouter();
   const supabase = createClient();
 
-  const [filas, setFilas] = useState([filaVacia(tanques)]);
+  // V61: desde el cuadro de pendientes llega con el tanque ya escogido.
+  const [filas, setFilas] = useState([inicial ? { ...filaVacia(tanques), tanqueId: inicial } : filaVacia(tanques)]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 

@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { IconGear, IconLogout, IconShuffle, IconHistory } from "@/components/icons";
 import { cargarTodo, alquilerAFila, itemAFila, buzoAFila, filaABuzo, nuevoId } from "@/lib/alquiler/datos";
 import { moraDe, rd, hoyISO } from "@/lib/alquiler/modelo";
-import { Inicio, Lista, Detalle, Nuevo, Retornos, Equipos, Mas, Bitacora, Precios, Estadisticas, Reporte } from "./Pantallas";
+import { Inicio, Lista, Detalle, Nuevo, Retornos, RetornosLista, Equipos, Mas, Bitacora, Precios, Estadisticas, Reporte, Clientes, FichaCliente } from "./Pantallas";
 
 // App Alquiler (migration_82.sql). Mismo esquema que Control Estudiantes:
 // un solo componente para todas las pantallas (/alquiler/...), los datos se
@@ -23,6 +23,7 @@ export function rutaDeUrl(path) {
   if (p[0] === "ver" && p[1]) return `ver:${p[1]}`;
   if (p[0] === "alquiler" && p[1]) return `alquiler:${p[1]}`;
   if (p[0] === "retornos" && p[1]) return `retornos:${p[1]}`;
+  if (p[0] === "cliente" && p[1]) return `cliente:${p[1]}`;
   return p[0];
 }
 export function urlDeRuta(r) {
@@ -228,6 +229,93 @@ export default function AlquilerApp({ p, yo }) {
         return null;
       }
     },
+    // V61 (nota del 2-nov: "permíteme poder borrar alquileres y editar"):
+    // cambiar el cliente, la fecha y si es normal o doble; quitar equipos que
+    // no se han devuelto y agregar otros.
+    async editarAlquiler(a, cambios, quitar = [], agregar = []) {
+      const mult = (cambios.dias || a.dias) / 3;
+      const quedan = a.items.filter((x) => !quitar.includes(x.id)).map((x) => (x.devueltoEn ? x : { ...x, total: Number(x.precio || 0) * mult }));
+      const nuevos = agregar.map((x) => ({ ...x, id: nuevoId(), alquilerId: a.id, devueltoEn: null, total: Number(x.precio || 0) * mult }));
+      const nuevo = { ...a, ...cambios, items: [...quedan, ...nuevos] };
+      local((d) => ({ ...d, alquileres: d.alquileres.map((x) => (x.id === a.id ? nuevo : x)) }));
+      try {
+        await guardar(supabase.from("alq_alquileres").update(alquilerAFila(nuevo)).eq("id", a.id));
+        if (quitar.length) await guardar(supabase.from("alq_items").delete().in("id", quitar));
+        for (const x of quedan) if (!x.devueltoEn && x.total !== a.items.find((y) => y.id === x.id)?.total) await guardar(supabase.from("alq_items").update({ total: x.total }).eq("id", x.id));
+        if (nuevos.length) await guardar(supabase.from("alq_items").insert(nuevos.map((x) => itemAFila(x, a.id))));
+        const partes = [];
+        if (cambios.buzoId && cambios.buzoId !== a.buzoId) partes.push(`cliente: ${nombreDe(a.buzoId)} → ${nombreDe(cambios.buzoId)}`);
+        if (cambios.fecha && cambios.fecha !== a.fecha) partes.push(`fecha: ${a.fecha} → ${cambios.fecha}`);
+        if (cambios.dias && cambios.dias !== a.dias) partes.push(cambios.dias === 6 ? "pasó a doble" : "pasó a normal");
+        if (quitar.length) partes.push(`quitó ${a.items.filter((x) => quitar.includes(x.id)).map((x) => x.codigo).join(", ")}`);
+        if (nuevos.length) partes.push(`agregó ${nuevos.map((x) => x.codigo).join(", ")}`);
+        await log(a.id, `Editó el alquiler No. ${a.numero} (${nombreDe(nuevo.buzoId)})`, null, partes.join(" · ") || "sin cambios");
+        avisar("Alquiler guardado");
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
+    async borrarAlquiler(a) {
+      try {
+        const { data, error: e } = await supabase.from("alq_alquileres").delete().eq("id", a.id).select("id");
+        if (e) throw e;
+        if (!data?.length) {
+          avisar("No se pudo borrar: solo el Titular o un administrador puede borrar alquileres (o falta el SQL de la V61).");
+          return false;
+        }
+        local((d) => ({ ...d, alquileres: d.alquileres.filter((x) => x.id !== a.id) }));
+        await log(null, `Borró el alquiler No. ${a.numero} (${nombreDe(a.buzoId)})`, `${a.items.map((x) => x.codigo).join(", ")} · ${rd(a.items.reduce((s, x) => s + Number(x.total || 0), 0))}`, null);
+        avisar("Alquiler borrado");
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
+    // V61: la pestaña Clientes (editar y borrar).
+    async guardarCliente(b, cambios) {
+      const nuevo = { ...b, ...cambios };
+      try {
+        const { data, error: e } = await supabase.from("viajes_buzos").update(buzoAFila(cambios)).eq("id", b.id).select("*");
+        if (e) throw e;
+        if (!data?.length) {
+          avisar("No se pudo guardar: no tienes permiso.");
+          return false;
+        }
+        local((d) => ({ ...d, buzos: d.buzos.map((x) => (x.id === b.id ? nuevo : x)) }));
+        await log(null, `Cambió los datos del cliente ${nuevo.nombre}`, [b.nombre, b.doc, b.cel].filter(Boolean).join(" · "), [nuevo.nombre, nuevo.doc, nuevo.cel].filter(Boolean).join(" · "));
+        avisar("Cliente guardado");
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
+    async borrarCliente(b) {
+      try {
+        const { data, error: e } = await supabase.from("viajes_buzos").delete().eq("id", b.id).select("id");
+        if (e) {
+          if (/foreign key|violates/i.test(e.message || "")) {
+            avisar("No se puede borrar: esta persona tiene alquileres, buceos o cursos.");
+            return false;
+          }
+          throw e;
+        }
+        if (!data?.length) {
+          avisar("No se pudo borrar: solo el Titular puede borrar clientes (o falta el SQL de la V61).");
+          return false;
+        }
+        local((d) => ({ ...d, buzos: d.buzos.filter((x) => x.id !== b.id) }));
+        await log(null, `Borró el cliente ${b.nombre}`, [b.doc, b.cel].filter(Boolean).join(" · ") || null, null);
+        avisar("Cliente borrado");
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
     // V58: precios por tipo (migration_83).
     async guardarPrecioTipo(tipo, precio) {
       const antes = db.preciosTipo[tipo];
@@ -317,6 +405,8 @@ export default function AlquilerApp({ p, yo }) {
     { r: "alquiler", t: "Alquiler" },
     { r: "retornos", t: "Retornos" },
     { r: "equipos", t: "Equipos" },
+    // V61 (nota del 2-nov): "agrega una pestaña de clientes arriba entre equipos y más".
+    { r: "clientes", t: "Clientes" },
     { r: "mas", t: "Más" },
   ];
   const [k, id] = ruta.split(":");
@@ -327,7 +417,11 @@ export default function AlquilerApp({ p, yo }) {
   else if (k === "alquiler") cuerpo = <Lista {...q} filtroInicial={id} />;
   else if (k === "ver") cuerpo = <Detalle {...q} id={id} />;
   else if (k === "nuevo") cuerpo = <Nuevo {...q} />;
-  else if (k === "retornos") cuerpo = <Retornos {...q} id={id} />;
+  // V61: "Retornos" muestra los últimos retornos y un buscador; el botón
+  // "Registrar retorno" (o "Marcar retorno" en un alquiler) abre el retorno.
+  else if (k === "retornos") cuerpo = id ? <Retornos {...q} id={id === "nuevo" ? null : id} /> : <RetornosLista {...q} />;
+  else if (k === "clientes") cuerpo = <Clientes {...q} />;
+  else if (k === "cliente") cuerpo = <FichaCliente {...q} id={id} />;
   else if (k === "equipos") cuerpo = <Equipos {...q} />;
   else if (k === "mas") cuerpo = <Mas {...q} />;
   else if (k === "bitacora") cuerpo = <Bitacora {...q} />;
@@ -335,7 +429,7 @@ export default function AlquilerApp({ p, yo }) {
   else if (k === "estadisticas") cuerpo = <Estadisticas {...q} />;
   else if (k === "reporte") cuerpo = <Reporte {...q} />;
   else cuerpo = <Inicio {...q} />;
-  const activo = ["ver", "nuevo"].includes(k) ? "alquiler" : ["bitacora", "precios", "estadisticas", "reporte"].includes(k) ? "mas" : k;
+  const activo = ["ver", "nuevo"].includes(k) ? "alquiler" : k === "cliente" ? "clientes" : ["bitacora", "precios", "estadisticas", "reporte"].includes(k) ? "mas" : k;
 
   return (
     <div className="alq-app">

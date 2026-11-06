@@ -124,7 +124,18 @@ export default async function FichaOrdenPage({ params }) {
   // "Hold" (27-sep-2026, reemplaza el check "En espera" -- ver lib/holds.js).
   const hold = holdActivo(o.holds);
   // V51: los manuales de este equipo (por marca y modelo).
-  const manualesEquipo = manualesPara(await cargarManuales(supabase), [o.equipo_marca_snapshot, o.equipo_modelo_snapshot].filter(Boolean).join(" "));
+  // V61 (nota del 3-nov: "los manuales no me salen en la ficha de la orden"):
+  // también se busca en el detalle de cada componente (1ra etapa "Oceanic
+  // FDXi", 2da etapa "Oceanic Delta 4"…), no solo en la marca y el modelo.
+  const textosComponentes = Object.values(o.regulador_componentes || {})
+    .map((c) => (c && typeof c === "object" ? c.detalle : ""))
+    .filter(Boolean);
+  const manualesEquipo = manualesPara(
+    await cargarManuales(supabase),
+    [o.equipo_marca_snapshot, o.equipo_modelo_snapshot].filter(Boolean).join(" "),
+    ...textosComponentes,
+    ...textosComponentes.map((t) => [o.equipo_marca_snapshot, t].filter(Boolean).join(" "))
+  );
   // V50: el informe de mantenimiento que se quedó a medias (se guarda solo).
   let borradorInforme = null;
   if (esRegulador && !o.informe_mantenimiento) {

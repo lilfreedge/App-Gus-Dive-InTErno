@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { codigosAlquilados, textoAlquilado } from "@/lib/alquilados";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { tieneAcceso, requireInterno } from "@/lib/roles";
@@ -27,6 +28,7 @@ function Campo({ etiqueta, valor }) {
 
 export default async function FichaTanquePage({ params }) {
   const supabase = createClient();
+  const alquilados = await codigosAlquilados(supabase);
   const { profile } = await requireInterno(supabase, "catalogo");
   const puedeAdministrar = tieneAcceso(profile, "catalogo_tanque");
 
@@ -86,6 +88,11 @@ export default async function FichaTanquePage({ params }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
           <h1 className="page-title" style={{ margin: 0, opacity: tanque.activo ? 1 : 0.6 }}>
             {tanque.codigo}
+            {alquilados[String(tanque.codigo).toUpperCase()] && (
+              <span className="badge badge-alquilado" style={{ marginLeft: 10, verticalAlign: "middle" }}>
+                {textoAlquilado(alquilados[String(tanque.codigo).toUpperCase()])}
+              </span>
+            )}
           </h1>
           {puedeAdministrar && (
             <Link

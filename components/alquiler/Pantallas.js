@@ -37,6 +37,10 @@ function afueraPorCodigo(db) {
   return m;
 }
 
+// V61: la mora ya cobrada (de lo devuelto) sin su número de factura.
+const moraDevuelta = (a) => a.items.filter((x) => x.devueltoEn).reduce((t, x) => t + Number(x.mora || 0), 0);
+const faltaFacturaMora = (a) => moraDevuelta(a) > 0 && !String(a.facturaMora || "").trim();
+
 function FilaAlquiler({ db, a, ir }) {
   const hoy = hoyISO();
   const est = estadoDe(a, hoy);
@@ -49,9 +53,11 @@ function FilaAlquiler({ db, a, ir }) {
       </span>
       <span className="hint-text" style={{ margin: 0, display: "block" }}>
         No. {a.numero} · {a.items.map((x) => x.codigo).join(", ")} · {a.dias === 6 ? "Doble" : "Normal"} · {rd(totalDe(a))}
-        {sinFactura(a) ? "" : ` · Factura ${a.factura}`}
+        {String(a.factura || "").trim() ? ` · Factura ${a.factura}` : ""}
       </span>
-      {sinFactura(a) && <span className="alq-falta">Falta el número de factura</span>}
+      {a.estudiante && <span className="alq-estudiante">Estudiante {a.estudiante}</span>}
+      {sinFactura(a) && !a.estudiante && <span className="alq-falta">Falta el número de factura</span>}
+      {faltaFacturaMora(a) && <span className="alq-falta">Falta la factura de la mora</span>}
       {est === "parcial" && <span className="hint-text" style={{ margin: 0, display: "block" }}>Devolvió una parte</span>}
     </button>
   );
@@ -170,10 +176,11 @@ export function Lista({ db, ir, filtroInicial }) {
 }
 
 // ----------------------------------------------------------------- Detalle
-export function Detalle({ db, ops, ir, avisar, id }) {
+export function Detalle({ db, p, ops, ir, avisar, id }) {
   const a = db.alquileres.find((x) => x.id === id);
-  const [factura, setFactura] = useState(a?.factura || "");
   const [notas, setNotas] = useState(a?.notas || "");
+  const [editando, setEditando] = useState(false);
+  const [borrando, setBorrando] = useState(false);
   if (!a) return <div className="card hint-text">Ese alquiler no existe.</div>;
   const hoy = hoyISO();
   const est = estadoDe(a, hoy);
@@ -193,7 +200,8 @@ export function Detalle({ db, ops, ir, avisar, id }) {
       <div className={`alq-estado-grande ${est}`}>
         {est === "devuelto" ? "Devuelto todo" : est === "atrasado" ? `Atrasado: tenía que devolverlo el ${fechaLarga(a.devolver)}` : `Tiene que devolverlo el ${fechaLarga(a.devolver)}`}
       </div>
-      {sinFactura(a) && <div className="alq-falta grande">Falta el número de factura</div>}
+      {sinFactura(a) && !a.estudiante && <div className="alq-falta grande">Falta el número de factura</div>}
+      {faltaFacturaMora(a) && <div className="alq-falta grande">Falta la factura de la mora</div>}
 
       <div className="section-title">Equipos</div>
       <div className="card" style={{ padding: 0 }}>
@@ -225,15 +233,26 @@ export function Detalle({ db, ops, ir, avisar, id }) {
         </button>
       )}
 
+      {/* V61 (nota del 2-nov: "ponle alguna seguridad al número de factura,
+          así está suelto y pudiera cambiarse por error"): una vez puesta queda
+          fija; para cambiarla hay que tocar "Cambiar" y confirmar (Titular o
+          administrador). Queda en la bitácora. */}
       <div className="section-title">Número de factura</div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <input className="ce-input" value={factura} onChange={(e) => setFactura(e.target.value)} placeholder="El de tu sistema de facturación" />
-        {factura.trim() !== (a.factura || "") && (
-          <button className="btn secondary vj-mini" onClick={() => (ops.cambiarAlquiler(a, { factura: factura.trim() }, "Número de factura", a.factura || "—", factura.trim() || "—"), avisar("Guardado"))}>
-            Guardar
-          </button>
-        )}
-      </div>
+      <CampoFactura valor={a.factura} puedeCambiar={p.admin} placeholder="El de tu sistema de facturación" onGuardar={(v) => (ops.cambiarAlquiler(a, { factura: v }, "Número de factura", a.factura || "—", v || "—"), avisar("Guardado"))} />
+      {a.estudiante && <div className="hint-text">Estudiante {a.estudiante}: el equipo va incluido en el curso.</div>}
+
+      {/* V61 (nota del 2-nov): la factura de la mora, para ponerla después de cobrarla. */}
+      {moraTotal(a, hoy) > 0 && (
+        <>
+          <div className="section-title">Factura de la mora ({rd(moraTotal(a, hoy))})</div>
+          {db.sinCols87 ? (
+            <div className="hint-text">Falta correr el SQL de la V61 en Supabase para guardar la factura de la mora.</div>
+          ) : (
+            <CampoFactura valor={a.facturaMora} puedeCambiar={p.admin} placeholder="El número de la factura con que se cobró la mora" onGuardar={(v) => (ops.cambiarAlquiler(a, { facturaMora: v }, "Factura de la mora", a.facturaMora || "—", v || "—"), avisar("Guardado"))} />
+          )}
+        </>
+      )}
+
       <div className="section-title">Notas</div>
       <textarea className="ce-input" rows={3} value={notas} onChange={(e) => setNotas(e.target.value)} />
       {notas !== (a.notas || "") && (
@@ -244,7 +263,207 @@ export function Detalle({ db, ops, ir, avisar, id }) {
       <div className="hint-text" style={{ marginTop: 14 }}>
         Lo hizo {a.creadoPor || "—"} · {a.creadoEn ? new Date(a.creadoEn).toLocaleString("es-DO") : ""}
       </div>
+
+      {/* V61 (nota del 2-nov): "permíteme poder borrar alquileres y editar". */}
+      {p.admin && (
+        <div className="alq-acciones">
+          {editando ? (
+            <EditarAlquiler db={db} a={a} ops={ops} cerrar={() => setEditando(false)} />
+          ) : borrando ? (
+            <div className="alq-confirmar">
+              ¿Borrar el alquiler No. {a.numero} de {b.nombre || "—"}? Se borra con sus equipos y no se puede deshacer.
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button className="btn secondary vj-mini" onClick={() => setBorrando(false)}>
+                  No
+                </button>
+                <button className="btn vj-mini vj-rojo" onClick={async () => (await ops.borrarAlquiler(a)) && ir("alquiler")}>
+                  Sí, borrar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button className="btn secondary vj-mini" onClick={() => setEditando(true)}>
+                <IconEdit size={14} /> Editar alquiler
+              </button>
+              <button className="btn secondary vj-mini vj-rojo-txt" onClick={() => setBorrando(true)}>
+                Borrar alquiler
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </>
+  );
+}
+
+// V61: un número de factura que, una vez puesto, queda fijo. Para cambiarlo:
+// "Cambiar" y confirmar.
+function CampoFactura({ valor, puedeCambiar, placeholder, onGuardar }) {
+  const [abierto, setAbierto] = useState(!valor);
+  const [confirmar, setConfirmar] = useState(false);
+  const [v, setV] = useState(valor || "");
+  if (valor && !abierto)
+    return (
+      <div className="alq-factura-fija">
+        <b>{valor}</b>
+        {puedeCambiar &&
+          (confirmar ? (
+            <span className="alq-factura-conf">
+              ¿Seguro que quieres cambiarla?
+              <button className="btn secondary vj-mini" onClick={() => setConfirmar(false)}>
+                No
+              </button>
+              <button className="btn secondary vj-mini" onClick={() => (setAbierto(true), setConfirmar(false), setV(valor))}>
+                Sí, cambiar
+              </button>
+            </span>
+          ) : (
+            <button className="btn secondary vj-mini" onClick={() => setConfirmar(true)}>
+              Cambiar
+            </button>
+          ))}
+      </div>
+    );
+  return (
+    <div style={{ display: "flex", gap: 8 }}>
+      <input className="ce-input" value={v} onChange={(e) => setV(e.target.value)} placeholder={placeholder} />
+      {v.trim() !== (valor || "") && (
+        <button className="btn secondary vj-mini" onClick={() => (onGuardar(v.trim()), setAbierto(!v.trim()))}>
+          Guardar
+        </button>
+      )}
+      {valor && (
+        <button className="btn secondary vj-mini" onClick={() => (setAbierto(false), setV(valor))}>
+          Cancelar
+        </button>
+      )}
+    </div>
+  );
+}
+
+// V61: editar un alquiler: cliente, fecha, normal o doble, quitar equipos que
+// no se han devuelto y agregar otros.
+function EditarAlquiler({ db, a, ops, cerrar }) {
+  const [buzoId, setBuzoId] = useState(a.buzoId);
+  const [q, setQ] = useState("");
+  const [fecha, setFecha] = useState(a.fecha);
+  const [dias, setDias] = useState(a.dias);
+  const [quitar, setQuitar] = useState([]);
+  const [agregar, setAgregar] = useState([]);
+  const [cod, setCod] = useState("");
+  const [err, setErr] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const fuera = useMemo(() => afueraPorCodigo(db), [db]);
+  const porCodigo = useMemo(() => Object.fromEntries(db.equipos.map((e) => [e.codigo.toUpperCase(), e])), [db.equipos]);
+  const lunes = esLunes(fecha);
+  const t = q.trim().toLowerCase();
+  const td = soloDigitos(q);
+  const sug = t.length >= 2 ? db.buzos.filter((b) => (b.nombre || "").toLowerCase().includes(t) || (td.length >= 4 && (soloDigitos(b.cel).includes(td) || soloDigitos(b.doc).includes(td)))).slice(0, 6) : [];
+  const cliente = db.buzos.find((b) => b.id === buzoId);
+  function sumar() {
+    setErr("");
+    const c = normalizarCodigo(cod);
+    const e = porCodigo[c.toUpperCase()];
+    if (!e) return setErr(`${c} no está en la base de equipos.`);
+    const otro = fuera[c.toUpperCase()];
+    if (otro && otro.id !== a.id) return setErr(`${c} está alquilado ahora mismo (alquiler No. ${otro.numero}).`);
+    if (a.items.some((x) => x.codigo.toUpperCase() === c.toUpperCase() && !quitar.includes(x.id)) || agregar.some((x) => x.codigo === e.codigo)) return setErr(`${c} ya está en el alquiler.`);
+    const precio = a.estudiante ? 0 : Number(precioDe(e, db.preciosTipo) || 0);
+    setAgregar([...agregar, { codigo: e.codigo, tipo: e.tipo || prefijoDe(e.codigo), descripcion: e.descripcion, precio }]);
+    setCod("");
+  }
+  async function guardarCambios() {
+    setGuardando(true);
+    const ok = await ops.editarAlquiler(a, { buzoId, fecha, dias, devolver: devolverDe(fecha, dias) }, quitar, agregar);
+    setGuardando(false);
+    if (ok) cerrar();
+  }
+  const quedanItems = a.items.filter((x) => !quitar.includes(x.id)).length + agregar.length;
+  return (
+    <div className="card alq-form" style={{ marginTop: 10 }}>
+      <b>Editar alquiler No. {a.numero}</b>
+      <label className="alq-l">Cliente</label>
+      {cliente && !q ? (
+        <div className="alq-cliente">
+          <b>{cliente.nombre}</b>
+          <button className="btn secondary vj-mini" onClick={() => setQ(" ")}>
+            Cambiar
+          </button>
+        </div>
+      ) : (
+        <>
+          <Buscar value={q.trim() ? q : ""} onChange={setQ} placeholder="Busca por nombre, cédula o celular" />
+          {sug.length > 0 && (
+            <div className="alq-sug">
+              {sug.map((b) => (
+                <button key={b.id} type="button" onClick={() => (setBuzoId(b.id), setQ(""))}>
+                  <b>{b.nombre}</b> <span className="hint-text">{[b.doc && formatoCedula(b.doc), b.cel && formatoCel(b.cel)].filter(Boolean).join(" · ")}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+      <div className="alq-fila2">
+        <div>
+          <label className="alq-l">Fecha de alquiler</label>
+          <input type="date" className="ce-input" value={fecha} onChange={(e) => (setFecha(e.target.value), esLunes(e.target.value) && setDias(DIAS_NORMAL))} />
+        </div>
+        <div>
+          <label className="alq-l">&nbsp;</label>
+          <div className="alq-seg">
+            <button type="button" className={dias === 3 ? "sel" : ""} onClick={() => setDias(3)}>
+              Normal · 3 días
+            </button>
+            <button type="button" className={dias === 6 ? "sel" : ""} disabled={lunes} onClick={() => setDias(6)}>
+              Doble · 6 días
+            </button>
+          </div>
+        </div>
+      </div>
+      <label className="alq-l">Equipos</label>
+      <div className="alq-lineas">
+        {a.items.map((x) => (
+          <div key={x.id} className={`alq-linea${quitar.includes(x.id) ? " quitado" : ""}`}>
+            <code>{x.codigo}</code>
+            <span>{x.devueltoEn ? "Devuelto" : x.descripcion || tipoDe(x.codigo)?.uno || ""}</span>
+            <span />
+            {!x.devueltoEn && (
+              <button type="button" className="alq-x" title={quitar.includes(x.id) ? "Dejarlo" : "Quitar"} onClick={() => setQuitar(quitar.includes(x.id) ? quitar.filter((y) => y !== x.id) : [...quitar, x.id])}>
+                {quitar.includes(x.id) ? "↺" : "×"}
+              </button>
+            )}
+          </div>
+        ))}
+        {agregar.map((x) => (
+          <div key={x.codigo} className="alq-linea">
+            <code>{x.codigo}</code>
+            <span>{x.descripcion || tipoDe(x.codigo)?.uno || ""} (nuevo)</span>
+            <span />
+            <button type="button" className="alq-x" onClick={() => setAgregar(agregar.filter((y) => y.codigo !== x.codigo))}>
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <input className="ce-input" value={cod} placeholder="Agregar equipo: código (ej. RE-4)" onChange={(e) => (setCod(e.target.value.toUpperCase()), setErr(""))} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), sumar())} />
+        <button className="btn secondary vj-mini" onClick={sumar}>
+          Agregar
+        </button>
+      </div>
+      {err && <div className="pb-error">{err}</div>}
+      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <button className="btn secondary vj-btn" onClick={cerrar}>
+          Cancelar
+        </button>
+        <button className="btn btn-primary vj-btn" disabled={guardando || !buzoId || !quedanItems || (lunes && dias === 6)} onClick={guardarCambios}>
+          {guardando ? "Guardando…" : "Guardar cambios"}
+        </button>
+      </div>
+      {!quedanItems && <div className="hint-text">El alquiler tiene que tener por lo menos un equipo. Si no, bórralo.</div>}
+    </div>
   );
 }
 
@@ -260,6 +479,7 @@ export function Nuevo({ db, ops, ir, avisar }) {
   const [lineas, setLineas] = useState([]); // códigos
   const [notas, setNotas] = useState("");
   const [factura, setFactura] = useState("");
+  const [estudiante, setEstudiante] = useState(""); // V61: "OWD", "Advanced"… (equipo incluido en el curso)
   const [guardando, setGuardando] = useState(false);
   const fuera = useMemo(() => afueraPorCodigo(db), [db]);
   const porCodigo = useMemo(() => Object.fromEntries(db.equipos.map((e) => [e.codigo.toUpperCase(), e])), [db.equipos]);
@@ -304,7 +524,8 @@ export function Nuevo({ db, ops, ir, avisar }) {
   }
   const items = lineas.map((c) => {
     const e = porCodigo[c.toUpperCase()];
-    const precio = Number(precioDe(e, db.preciosTipo) || 0);
+    // V61: al estudiante el equipo le va incluido en el curso (RD$ 0, sin mora).
+    const precio = estudiante ? 0 : Number(precioDe(e, db.preciosTipo) || 0);
     return { codigo: e.codigo, tipo: e.tipo || prefijoDe(e.codigo), descripcion: e.descripcion, precio, total: precio * mult };
   });
   const total = items.reduce((s, x) => s + x.total, 0);
@@ -314,11 +535,11 @@ export function Nuevo({ db, ops, ir, avisar }) {
   async function guardarAlquiler() {
     if (!puede || guardando) return;
     setGuardando(true);
-    const a = { buzoId: buzo?.id || null, fecha, dias, devolver: devolverDe(fecha, dias), items, notas, factura };
+    const a = { buzoId: buzo?.id || null, fecha, dias, devolver: devolverDe(fecha, dias), items, notas, factura, estudiante };
     const hecho = await ops.crearAlquiler(a, buzo ? null : { nombre: nueva.nombre.trim(), doc: nueva.doc || "", cel: nueva.cel || "" });
     setGuardando(false);
     if (hecho) {
-      avisar(factura.trim() ? "Alquiler guardado" : "Alquiler guardado. Falta el número de factura.");
+      avisar(factura.trim() || estudiante ? "Alquiler guardado" : "Alquiler guardado. Falta el número de factura.");
       ir(`ver:${hecho.id}`);
     }
   }
@@ -368,6 +589,23 @@ export function Nuevo({ db, ops, ir, avisar }) {
               <IconPlus size={14} /> Cliente nuevo
             </button>
           </>
+        )}
+
+        {/* V61 (nota del 2-nov): "una opción de poder poner algo como 'Estudiante
+            OWD' para cuando alquilemos equipo a un estudiante (en los cursos tenemos
+            los equipos incluidos durante el curso)". */}
+        <label className="alq-ck" style={{ marginTop: 12 }}>
+          <input type="checkbox" checked={!!estudiante} onChange={(e) => setEstudiante(e.target.checked ? "OWD" : "")} />
+          Es un estudiante: el equipo va incluido en su curso
+        </label>
+        {estudiante && (
+          <div className="alq-seg" style={{ marginTop: 6 }}>
+            {["OWD", "Advanced", "Rescue", "Otro curso"].map((c) => (
+              <button key={c} type="button" className={estudiante === c ? "sel" : ""} onClick={() => setEstudiante(c)}>
+                Estudiante {c}
+              </button>
+            ))}
+          </div>
         )}
 
         <div className="alq-fila2">
@@ -443,8 +681,12 @@ export function Nuevo({ db, ops, ir, avisar }) {
 
         <label className="alq-l">Notas</label>
         <textarea className="ce-input" rows={2} value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Ej. El BCD tiene un rayón en el bolsillo" />
-        <label className="alq-l">Número de factura</label>
-        <input className="ce-input" value={factura} onChange={(e) => setFactura(e.target.value)} placeholder="El de tu sistema de facturación (se puede poner después)" />
+        {!estudiante && (
+          <>
+            <label className="alq-l">Número de factura</label>
+            <input className="ce-input" value={factura} onChange={(e) => setFactura(e.target.value)} placeholder="El de tu sistema de facturación (se puede poner después)" />
+          </>
+        )}
         <button className="btn btn-primary" style={{ marginTop: 14 }} disabled={!puede || guardando} onClick={guardarAlquiler}>
           {guardando ? "Guardando…" : "Guardar alquiler"}
         </button>
@@ -489,7 +731,10 @@ export function Retornos({ db, ops, avisar, ir, id }) {
   }
   return (
     <>
-      <h1 className="page-title">Retornos</h1>
+      <a className="back-link" onClick={() => ir("retornos")} style={{ cursor: "pointer" }}>
+        ← Retornos
+      </a>
+      <h1 className="page-title">Registrar retorno</h1>
       {hecho && (
         <div className={`alq-hecho${hecho.mora ? " mora" : ""}`}>
           <b>Retornado: {hecho.codigos.join(", ")}</b> ({hecho.nombre}).
@@ -548,6 +793,214 @@ export function Retornos({ db, ops, avisar, ir, id }) {
           </div>
         );
       })}
+    </>
+  );
+}
+
+// V61 (nota del 2-nov): "en retornos, mostrar abajo los últimos retornos y un
+// search bar para buscar equipo y/o cliente. Haz esa ventana similar a la de
+// alquiler, que tenga su botón para registrar retornos".
+export function RetornosLista({ db, ir }) {
+  const [q, setQ] = useState("");
+  const hoy = hoyISO();
+  const abiertos = db.alquileres.filter((a) => estadoDe(a, hoy) !== "devuelto");
+  // Cada retorno: un alquiler y el momento en que se devolvió (puede ser una parte).
+  const retornos = [];
+  for (const a of db.alquileres) {
+    const grupos = {};
+    for (const x of a.items) if (x.devueltoEn) (grupos[x.devueltoEn] = grupos[x.devueltoEn] || []).push(x);
+    for (const [cuando, xs] of Object.entries(grupos)) retornos.push({ a, cuando, xs, mora: xs.reduce((t, x) => t + Number(x.mora || 0), 0) });
+  }
+  retornos.sort((x, y) => y.cuando.localeCompare(x.cuando));
+  const t = q.trim().toLowerCase();
+  const c = normalizarCodigo(q).toLowerCase();
+  const lista = t
+    ? retornos.filter(({ a, xs }) => {
+        const b = db.buzos.find((y) => y.id === a.buzoId) || {};
+        return (b.nombre || "").toLowerCase().includes(t) || xs.some((x) => x.codigo.toLowerCase() === c || x.codigo.toLowerCase().includes(t)) || String(a.numero) === t;
+      })
+    : retornos.slice(0, 30);
+  return (
+    <>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <h1 className="page-title" style={{ margin: 0 }}>
+          Retornos
+        </h1>
+        <button className="btn btn-primary vj-btn" onClick={() => ir("retornos:nuevo")}>
+          <IconPlus size={16} /> Registrar retorno
+        </button>
+      </div>
+      <div className="hint-text" style={{ marginTop: 6 }}>
+        Hay {abiertos.length} alquiler{abiertos.length === 1 ? "" : "es"} afuera.
+      </div>
+      <Buscar value={q} onChange={setQ} placeholder="Buscar por cliente o código del equipo (ej. RE-4)" style={{ marginTop: 12 }} />
+      <div className="section-title">{t ? "Retornos encontrados" : "Últimos retornos"}</div>
+      {lista.map(({ a, cuando, xs, mora }) => (
+        <button key={`${a.id}-${cuando}`} type="button" className="alq-fila" onClick={() => ir(`ver:${a.id}`)}>
+          <span className="alq-fila-top">
+            <b>{nombreDe(db, a)}</b>
+            <span className={`alq-estado ${mora ? "atrasado" : "devuelto"}`}>{mora ? `Mora ${rd(mora)}` : "Sin mora"}</span>
+          </span>
+          <span className="hint-text" style={{ margin: 0, display: "block" }}>
+            {fechaCorta(cuando.slice(0, 10))} · {xs.map((x) => x.codigo).join(", ")} · alquiler No. {a.numero}
+            {xs[0]?.devueltoPor ? ` · lo trajo ${xs[0].devueltoPor}` : ""}
+            {xs[0]?.recibidoPor ? ` · recibió ${xs[0].recibidoPor}` : ""}
+          </span>
+        </button>
+      ))}
+      {!lista.length && <div className="card hint-text">{t ? "No se encontró ningún retorno con eso." : "Todavía no hay retornos."}</div>}
+    </>
+  );
+}
+
+// ----------------------------------------------------------------- Clientes
+// V61 (nota del 2-nov): "agrega una pestaña de clientes" y "permíteme poder
+// borrar clientes y editar". Son las mismas personas de Buceos y Estudiantes.
+export function Clientes({ db, ir }) {
+  const [q, setQ] = useState("");
+  const hoy = hoyISO();
+  const conAlquiler = new Set(db.alquileres.map((a) => a.buzoId));
+  const t = q.trim().toLowerCase();
+  const td = soloDigitos(q);
+  const lista = (t
+    ? db.buzos.filter((b) => (b.nombre || "").toLowerCase().includes(t) || (td.length >= 4 && (soloDigitos(b.cel).includes(td) || soloDigitos(b.doc).includes(td))))
+    : db.buzos.filter((b) => conAlquiler.has(b.id))
+  ).slice(0, 80);
+  return (
+    <>
+      <h1 className="page-title">Clientes</h1>
+      <Buscar value={q} onChange={setQ} placeholder="Buscar por nombre, cédula o celular" />
+      <div className="hint-text" style={{ marginTop: 6 }}>
+        {t ? "Busca en todas las personas (las mismas de Buceos y Estudiantes)." : `${conAlquiler.size} cliente${conAlquiler.size === 1 ? "" : "s"} que han alquilado.`}
+      </div>
+      {lista.map((b) => {
+        const suyos = db.alquileres.filter((a) => a.buzoId === b.id);
+        const afuera = suyos.filter((a) => estadoDe(a, hoy) !== "devuelto").length;
+        const gastado = suyos.reduce((s2, a) => s2 + totalDe(a), 0);
+        return (
+          <button key={b.id} type="button" className="alq-fila" onClick={() => ir(`cliente:${b.id}`)}>
+            <span className="alq-fila-top">
+              <b>{b.nombre}</b>
+              {afuera > 0 && <span className="alq-estado afuera">{afuera} afuera</span>}
+            </span>
+            <span className="hint-text" style={{ margin: 0, display: "block" }}>
+              {[b.doc && formatoCedula(b.doc), b.cel && formatoCel(b.cel)].filter(Boolean).join(" · ") || "Sin cédula ni celular"}
+              {suyos.length ? ` · ${suyos.length} alquiler${suyos.length === 1 ? "" : "es"} · ${rd(gastado)}` : " · sin alquileres"}
+            </span>
+          </button>
+        );
+      })}
+      {!lista.length && <div className="card hint-text">{t ? "No se encontró a nadie." : "Todavía nadie ha alquilado."}</div>}
+    </>
+  );
+}
+
+export function FichaCliente({ db, p, ops, ir, id }) {
+  const b = db.buzos.find((x) => x.id === id);
+  const [edit, setEdit] = useState(null);
+  const [borrando, setBorrando] = useState(false);
+  if (!b) return <div className="card hint-text">Ese cliente no está.</div>;
+  const suyos = db.alquileres.filter((a) => a.buzoId === b.id);
+  const gastado = suyos.reduce((s2, a) => s2 + totalDe(a), 0);
+  return (
+    <>
+      <a className="back-link" onClick={() => ir("clientes")} style={{ cursor: "pointer" }}>
+        ← Clientes
+      </a>
+      <h1 className="page-title" style={{ margin: "4px 0 8px" }}>
+        {b.nombre}
+      </h1>
+      <div className="card">
+        {edit ? (
+          <div className="alq-form">
+            <label className="alq-l">Nombre completo</label>
+            <input className="ce-input" value={edit.nombre} onChange={(e) => setEdit({ ...edit, nombre: e.target.value })} />
+            <div className="alq-fila2">
+              <div>
+                <label className="alq-l">Cédula</label>
+                <input className="ce-input" inputMode="numeric" value={edit.doc} onChange={(e) => setEdit({ ...edit, doc: formatoCedula(e.target.value) })} />
+              </div>
+              <div>
+                <label className="alq-l">Celular</label>
+                <CampoCel className="ce-input" value={edit.cel} onChange={(v) => setEdit({ ...edit, cel: v })} />
+              </div>
+            </div>
+            <label className="alq-l">Correo</label>
+            <input className="ce-input" type="email" value={edit.correo} onChange={(e) => setEdit({ ...edit, correo: e.target.value })} />
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <button className="btn secondary vj-mini" onClick={() => setEdit(null)}>
+                Cancelar
+              </button>
+              <button
+                className="btn btn-primary vj-mini"
+                disabled={!edit.nombre.trim() || (edit.cel && soloDigitos(edit.cel).length !== 10)}
+                onClick={async () => (await ops.guardarCliente(b, { nombre: edit.nombre.trim(), doc: edit.doc, cel: soloDigitos(edit.cel), correo: edit.correo.trim() })) && setEdit(null)}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="vj-dato">
+              <span>Cédula</span>
+              <b>{b.doc ? formatoCedula(b.doc) : b.pasaporte || "—"}</b>
+            </div>
+            <div className="vj-dato">
+              <span>Celular</span>
+              <b>{b.cel ? formatoCel(b.cel) : "—"}</b>
+            </div>
+            <div className="vj-dato">
+              <span>Correo</span>
+              <b>{b.correo || "—"}</b>
+            </div>
+            <div className="vj-dato">
+              <span>Alquileres</span>
+              <b>
+                {suyos.length} · {rd(gastado)}
+              </b>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+              <button className="btn secondary vj-mini" onClick={() => setEdit({ nombre: b.nombre || "", doc: b.doc || "", cel: b.cel ? formatoCel(b.cel) : "", correo: b.correo || "" })}>
+                <IconEdit size={14} /> Editar datos
+              </button>
+              <button className="btn btn-primary vj-mini" onClick={() => ir("nuevo")}>
+                <IconPlus size={14} /> Nuevo alquiler
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="section-title">Sus alquileres</div>
+      {suyos.map((a) => (
+        <FilaAlquiler key={a.id} db={db} a={a} ir={ir} />
+      ))}
+      {!suyos.length && <div className="card hint-text">Todavía no ha alquilado.</div>}
+
+      {p.borrar && (
+        <div className="alq-acciones">
+          {suyos.length ? (
+            <div className="hint-text">Para borrar a este cliente primero hay que borrar sus alquileres. Si tiene buceos o cursos, tampoco se puede borrar.</div>
+          ) : borrando ? (
+            <div className="alq-confirmar">
+              ¿Borrar a {b.nombre}? Es la misma persona de Buceos y Estudiantes; si tiene buceos o cursos no se va a poder.
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button className="btn secondary vj-mini" onClick={() => setBorrando(false)}>
+                  No
+                </button>
+                <button className="btn vj-mini vj-rojo" onClick={async () => (await ops.borrarCliente(b)) && ir("clientes")}>
+                  Sí, borrar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button className="btn secondary vj-mini vj-rojo-txt" onClick={() => setBorrando(true)}>
+              Borrar cliente
+            </button>
+          )}
+        </div>
+      )}
     </>
   );
 }

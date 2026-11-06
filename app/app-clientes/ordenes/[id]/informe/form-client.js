@@ -11,6 +11,7 @@ import {
   componentesRecibidosTexto,
   informeDefault,
   seccionesInforme,
+  fechaIngresoInforme,
 } from "@/lib/informe-mantenimiento";
 import BotonImprimir from "@/components/BotonImprimir";
 import EnviarInformeClient from "./enviar-client";
@@ -605,6 +606,8 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                 <div className="reporte-membrete-titulo">Informe de mantenimiento</div>
                 <div className="reporte-membrete-subtitulo">Regulador — Orden #{orden.no_orden_fisico ?? orden.folio}</div>
               </div>
+              {/* V61: la fecha de ingreso arriba a la derecha. */}
+              {fechaIngresoInforme(orden) && <div className="reporte-membrete-fecha">{fechaIngresoInforme(orden)}</div>}
             </div>
             <div className="reporte-cuerpo" style={{ padding: 18 }}>
               {/* V32: las secciones salen de seccionesInforme() (lib/

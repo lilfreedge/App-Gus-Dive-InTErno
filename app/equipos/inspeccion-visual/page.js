@@ -7,6 +7,7 @@ import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { hoyISO, sumarDias } from "@/lib/fechas";
 import BuscadorLista from "@/components/BuscadorLista";
+import { IconAlert } from "@/components/icons";
 import { todasLasFilas } from "@/lib/todas-las-filas";
 
 export default async function InspeccionVisualPage() {
@@ -58,6 +59,54 @@ export default async function InspeccionVisualPage() {
           </Link>
         )}
 
+        {/* V61 (nota del 3-nov): "pon los tanques pendientes arriba de primero,
+            y la lista abajo con el search bar", con el mismo cuadro rojo que
+            Mantenimiento de reguladores ("me gusta como se ve este listado"). */}
+        {tanquesPendientes.length > 0 && (
+          <div className="mant-pend">
+            <div className="mant-pend-t">
+              <IconAlert size={18} />
+              {tanquesPendientes.length} tanque{tanquesPendientes.length === 1 ? "" : "s"} pendiente{tanquesPendientes.length === 1 ? "" : "s"} por inspección visual
+            </div>
+            <div className="mant-pend-lista">
+              {tanquesPendientes.map((t) => {
+                const contenido = (
+                  <>
+                    <b>{t.codigo}</b>
+                    <span>{t.proxima_inspeccion ? `vencida desde ${formatFechaDDMMAAAADeDate(t.proxima_inspeccion)}` : "nunca inspeccionado"}</span>
+                  </>
+                );
+                return puedeRegistrar ? (
+                  <Link key={t.id} href={`/equipos/inspeccion-visual/nueva?tanque=${t.id}`} className="mant-pend-chip">
+                    {contenido}
+                  </Link>
+                ) : (
+                  <span key={t.id} className="mant-pend-chip">
+                    {contenido}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {tanquesProximos.length > 0 && (
+          <div className="mant-pend proximo">
+            <div className="mant-pend-t">Próximos a vencer (2 semanas o menos)</div>
+            <div className="mant-pend-lista">
+              {tanquesProximos.map((t) => (
+                <span key={t.id} className="mant-pend-chip">
+                  <b>{t.codigo}</b>
+                  <span>{formatFechaDDMMAAAADeDate(t.proxima_inspeccion)}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="section-title" style={{ marginTop: 8 }}>
+          Inspecciones registradas
+        </div>
         <BuscadorLista placeholder="Buscar tanque, resultado o persona...">
         <div className="card">
           {inspecciones && inspecciones.length > 0 ? (
@@ -98,45 +147,6 @@ export default async function InspeccionVisualPage() {
         </div>
         </BuscadorLista>
 
-        {tanquesPendientes.length > 0 && (
-          <>
-            <div className="section-title" style={{ marginTop: 24 }}>
-              Tanques pendientes por inspección visual
-            </div>
-            <div className="card">
-              {tanquesPendientes.map((t) => (
-                <div className="list-item" key={t.id}>
-                  <div className="list-item-top">
-                    <span className="list-item-title">{t.codigo}</span>
-                    <span className="badge badge-rojo">
-                      {t.proxima_inspeccion
-                        ? `Vencida desde ${formatFechaDDMMAAAADeDate(t.proxima_inspeccion)}`
-                        : "Nunca inspeccionado"}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {tanquesProximos.length > 0 && (
-          <>
-            <div className="section-title" style={{ marginTop: 24 }}>
-              Inspección visual próxima a vencer (2 semanas o menos)
-            </div>
-            <div className="card">
-              {tanquesProximos.map((t) => (
-                <div className="list-item" key={t.id}>
-                  <div className="list-item-top">
-                    <span className="list-item-title">{t.codigo}</span>
-                    <span className="list-item-qty">{formatFechaDDMMAAAADeDate(t.proxima_inspeccion)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
       </div>
     </div>
   );

@@ -24,6 +24,11 @@ export default async function AlquilerLayout() {
   };
   // Precios y equipos: el Titular, los administradores o quien tenga
   // "alq_equipos" (lo mismo que revisa la base, alq_puede('alq_equipos')).
-  const p = { equipos: !!(profile.es_titular || profile.is_admin || profile.permisos?.alq_equipos) };
+  const p = {
+    equipos: !!(profile.es_titular || profile.is_admin || profile.permisos?.alq_equipos),
+    // V61: cambiar una factura ya puesta, editar y borrar: Titular o administrador.
+    admin: !!(profile.es_titular || profile.is_admin),
+    borrar: !!profile.es_titular,
+  };
   return <AlquilerApp p={p} yo={yo} />;
 }

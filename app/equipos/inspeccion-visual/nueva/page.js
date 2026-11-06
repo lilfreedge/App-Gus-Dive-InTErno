@@ -6,7 +6,7 @@ import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevaInspeccionForm from "./form-client";
 
-export default async function NuevaInspeccionPage() {
+export default async function NuevaInspeccionPage({ searchParams }) {
   const supabase = createClient();
   await requireInterno(supabase, "registrar_inspeccion");
   const {
@@ -46,6 +46,7 @@ export default async function NuevaInspeccionPage() {
           userId={user.id}
           nombreUsuario={profile?.full_name || user.email}
           tanques={tanques || []}
+          inicial={(tanques || []).some((t) => t.id === searchParams?.tanque) ? searchParams.tanque : ""}
         />
       </div>
     </div>

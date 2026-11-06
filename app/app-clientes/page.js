@@ -130,9 +130,16 @@ export default async function AppClientesPage() {
   // orden, de menor a mayor.
   const numeroDe = (o) => Number(String(o.no_orden_fisico ?? o.folio ?? "").replace(/\D/g, "")) || 0;
   const porNumero = (l) => [...(l || [])].sort((a, b) => numeroDe(a) - numeroDe(b));
-  const porTrabajar = porNumero(
+  const porTrabajarSinMarca = porNumero(
     (porTrabajarRaw || []).filter((o) => !((o.fecha_envio || o.fecha_envio_hidrostatica) && !o.fecha_retorno_tienda))
   );
+  // V61 (nota del 3-nov): "cuando una orden sea devuelta de hold... que
+  // aparezca con una notificación pequeña diciendo 'Hold respondido'".
+  const porTrabajar = porTrabajarSinMarca.map((o) => {
+    const holds = Array.isArray(o.holds) ? o.holds : [];
+    const ultimo = holds[holds.length - 1];
+    return { ...o, hold_respondido: !!ultimo && !ultimo.activo && !!ultimo.fecha_resolucion ? ultimo.fecha_resolucion : null };
+  });
 
   // V39 -- a quién está asignada cada orden (pedido explícito: "que los que
   // estén asignados lo diga en algún lado de cada orden, sutil. Los que no
@@ -203,6 +210,26 @@ export default async function AppClientesPage() {
           </div>
         )}
 
+        {/* V61 (nota del 3-nov): "necesito que arriba aparezca notificaciones para
+            órdenes en hold": si hay alguna en Hold, sale arriba de todo, en rojo. */}
+        {(enEspera || []).length > 0 && (
+          <div className="hold-arriba">
+            <div className="hold-arriba-t">
+              {(enEspera || []).length === 1 ? "1 orden en Hold" : `${enEspera.length} órdenes en Hold`} esperando respuesta del cliente
+            </div>
+            <ListaOrdenes
+              nombresTecnicos={nombresTecnicos}
+              ordenes={enEsperaConHold}
+              vacio="No hay órdenes en Hold."
+              fechaCampo="fecha"
+              fechaLabel="Fecha de ingreso a tienda"
+              mostrarMotivoEspera
+              diasDesdeCampo="hold_fecha_inicio"
+              avisoHoldDias={3}
+            />
+          </div>
+        )}
+
         <div className="section-title" style={{ marginTop: 0 }}>
           Órdenes pendientes por trabajar ({porTrabajar.length})
           <span className="section-fecha">Fecha de ingreso a tienda</span>
@@ -261,20 +288,15 @@ export default async function AppClientesPage() {
         {/* "En Hold" (pedido explícito, ronda grande de feedback,
             27-sep-2026: renombrar "Órdenes en espera" en Inicio y también
             el badge "En espera" en todos lados). */}
-        <div className="section-title">
-          Órdenes en Hold ({(enEspera || []).length})
-          <span className="section-fecha">Fecha de ingreso a tienda</span>
-        </div>
-        <ListaOrdenes
-          nombresTecnicos={nombresTecnicos}
-          ordenes={enEsperaConHold}
-          vacio="No hay órdenes en Hold."
-          fechaCampo="fecha"
-          fechaLabel="Fecha de ingreso a tienda"
-          mostrarMotivoEspera
-          diasDesdeCampo="hold_fecha_inicio"
-          avisoHoldDias={3}
-        />
+        {(enEspera || []).length === 0 && (
+          <>
+            <div className="section-title">
+              Órdenes en Hold (0)
+              <span className="section-fecha">Fecha de ingreso a tienda</span>
+            </div>
+            <ListaOrdenes nombresTecnicos={nombresTecnicos} ordenes={[]} vacio="No hay órdenes en Hold." />
+          </>
+        )}
 
         <div className="section-title">
           Órdenes en prueba hidrostáticas ({(enHidrostatica || []).length})
@@ -391,6 +413,7 @@ function ListaOrdenes({
                     BADGE_ESTADO[o.estado] && <span className={`badge ${BADGE_ESTADO[o.estado]}`}>{o.estado}</span>
                   )}
                   {o.en_espera && <span className="badge badge-rojo">En Hold</span>}
+                  {o.hold_respondido && !o.en_espera && <span className="badge badge-azul">Hold respondido</span>}
                 </span>
                 <span className="list-item-qty" style={{ textAlign: "right", flexShrink: 0 }}>
                   {/* V57: el nombre de la fecha sale una sola vez, arriba al lado del título

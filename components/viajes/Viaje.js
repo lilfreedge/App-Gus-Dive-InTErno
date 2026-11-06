@@ -109,6 +109,13 @@ export function Viaje(props) {
                 <b>Asistencia</b>
                 <span>{yaPaso ? "Quién fue y quién no fue." : `Sale cuando el ${P} ya pasó.`}</span>
               </button>
+              {/* V61 ("208"): los comprobantes con el nombre del buzo, para contabilidad. */}
+              {(p.pagos || p.conciliar) && (
+                <a className="vj-rep-link" href={`/api/viajes/${v.id}/comprobantes`} onClick={() => setRepAbierto(false)}>
+                  <b>Descargar comprobantes</b>
+                  <span>Un .zip con cada comprobante y el nombre del buzo, más la lista de pagos en Excel, para contabilidad.</span>
+                </a>
+              )}
               {p.numeros && (
                 <button type="button" disabled={!yaPaso} onClick={() => ir(`reporte-ganancia:${v.id}`)}>
                   <b>Ganancia</b>
@@ -464,57 +471,66 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
   const esBuzo = x.rol === "buzo";
   const verPago = esBuzo && (p.pagos || p.conciliar);
   const puedePagar = esBuzo && p.pagos && !ro && !x.usaAbono && !x.pagadoPor;
-  const chipPago = !esBuzo
-    ? null
-    : x.usaAbono
-      ? ["azul", "Usa su abono"]
-      : x.pagadoPor
-        ? ["azul", `Lo pagó ${nombreCorto(nombreDe(db, x.pagadoPor))}`]
-        : e.falta
-          ? ["rojo", `Debe ${rd(e.falta)}`]
-          : ["verde", "Pagado"];
   const tipo = x.rol === "staff" ? "Staff" : x.rol === "curso" ? "Estudiante de curso" : x.rol === "invitado" ? "Invitado" : o.nombre;
   const abrirWA = () => window.open(`https://wa.me/${numeroWhatsApp(b.cel)}`, "_blank", "noopener");
   return (
-    <Modal titulo={b.nombre} sub={`${tipo}${x.estado === "espera" ? " · lista de espera" : ""}`} cerrar={cerrar}>
-      {/* V59 (166): arriba cómo está y los botones de lo que más se hace. */}
-      <div className="vj-ficha-chips">
-        {chipPago && <Chip c={chipPago[0]}>{chipPago[1]}</Chip>}
-        {inscritoPor && <Chip c="azul">La inscribió {inscritoPor}</Chip>}
-        <Chip c="gris">{x.via === "mano" ? "Agregado a mano" : "Se inscribió por el link"}</Chip>
-      </div>
+    <Modal titulo={b.nombre} sub={`${tipo}${x.estado === "espera" ? " · lista de espera" : ""} · ${x.via === "mano" ? "agregado a mano" : "se inscribió por el link"}`} cerrar={cerrar}>
+      {/* V61 ("204", maqueta V60 pestaña 7): "Escribirle por WhatsApp" claro, el
+          grupo como pregunta (No está / Ya está), y el pago ordenado: una línea
+          grande, una barrita, el comprobante nuevo resaltado y los botones abajo. */}
+      {inscritoPor && (
+        <div className="vj-ficha-chips">
+          <Chip c="azul">La inscribió {inscritoPor}</Chip>
+        </div>
+      )}
 
-      <div className="vj-ficha-acc">
+      <div className="vj-ficha-acc2">
         {b.cel && (
-          <button className="btn secondary vj-btn vj-ficha-wa" onClick={abrirWA}>
-            <IconoWA /> WhatsApp
+          <button className="btn vj-btn vj-ficha-wa2" onClick={abrirWA}>
+            <IconoWA /> Escribirle por WhatsApp
           </button>
         )}
-        {puedePagar && e.falta > 0 && !pagando && (
-          <button className="btn btn-primary vj-btn" onClick={() => setPagando(true)}>
-            + Registrar pago
-          </button>
+        {!pasado ? (
+          <>
+            <div className="vj-ficha-preg">¿Está en el grupo de WhatsApp del {P}?</div>
+            <div className="vj-seg">
+              {[
+                [false, "No está"],
+                [true, "Ya está"],
+              ].map(([val, t]) => (
+                <button
+                  key={t}
+                  type="button"
+                  disabled={!p.grupo || ro}
+                  className={!!x.grupo === val ? "sel" : ""}
+                  onClick={() => !!x.grupo !== val && cambiar(x, { grupo: val }, "Grupo de WhatsApp", x.grupo ? "Sí" : "No", val ? "Sí" : "No")}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="vj-ficha-preg">¿Vino al {P}?</div>
+            <div className="vj-seg">
+              {[
+                [true, "Asistió"],
+                [false, "No vino"],
+              ].map(([val, t]) => (
+                <button
+                  key={t}
+                  type="button"
+                  disabled={!p.grupo || ro}
+                  className={x.asistio === val ? "sel" : ""}
+                  onClick={() => cambiar(x, { asistio: x.asistio === val ? null : val }, "Asistencia", x.asistio == null ? "—" : x.asistio ? "Asistió" : "No vino", x.asistio === val ? "—" : t)}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </>
         )}
-        {!pasado && (
-          <label className={`vj-toggle vj-ficha-grupo${x.grupo ? " on" : ""}`}>
-            <input type="checkbox" checked={x.grupo} disabled={!p.grupo || ro} onChange={(ev2) => cambiar(x, { grupo: ev2.target.checked }, "Grupo de WhatsApp", x.grupo ? "Sí" : "No", ev2.target.checked ? "Sí" : "No")} />
-            {x.grupo ? "Ya está en el grupo" : "Todavía no está en el grupo"}
-          </label>
-        )}
-        {pasado &&
-          [
-            [true, "Asistió"],
-            [false, "No vino"],
-          ].map(([val, t]) => (
-            <button
-              key={t}
-              disabled={!p.grupo || ro}
-              className={`pb-chip vj-ficha-asis${x.asistio === val ? " sel" : ""}`}
-              onClick={() => cambiar(x, { asistio: x.asistio === val ? null : val }, "Asistencia", x.asistio == null ? "—" : x.asistio ? "Asistió" : "No vino", x.asistio === val ? "—" : t)}
-            >
-              {t}
-            </button>
-          ))}
       </div>
 
       {verPago && (
@@ -531,23 +547,37 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
             </div>
           ) : (
             <>
-              <div className="vj-pago-res">
-                <div>
-                  <span>Precio</span>
-                  <b>{rd(precioInscripcion(v, x))}</b>
-                </div>
-                <div>
-                  <span>Pagado</span>
-                  <b>{rd(e.pagado)}</b>
-                </div>
-                <div>
-                  <span>Falta</span>
-                  <b style={{ color: e.falta ? "var(--rojo)" : "var(--verde)" }}>{e.falta ? rd(e.falta) : "Nada"}</b>
-                </div>
+              <div className="vj-pago-grande">
+                <b className={e.falta ? "debe" : "ok"}>{e.falta ? `Debe ${rd(e.falta)}` : "Pagado"}</b>
+                <span className="hint-text">de {rd(precioInscripcion(v, x))}</span>
               </div>
+              <div className="vj-pago-barra">
+                <i style={{ width: `${Math.min(100, Math.round((e.pagado / Math.max(1, precioInscripcion(v, x))) * 100))}%` }} />
+              </div>
+              <div className="hint-text">Pagado {rd(e.pagado)}</div>
               {v.reserva && <div className="hint-text">{v.reserva.nota}</div>}
             </>
           )}
+          {(x.comprobantes || [])
+            .filter((c) => !c.visto)
+            .map((c) => (
+              <div key={c.id} className="vj-comp-nuevo">
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <b>Comprobante nuevo por revisar</b>
+                  <div className="hint-text">
+                    {c.por === "Link" ? "Lo subió el buzo" : `Lo subió ${c.por}`} el {fechaCorta(c.fecha)}
+                  </div>
+                </div>
+                <button className="btn secondary vj-mini" onClick={() => verComprobante(c)}>
+                  Ver
+                </button>
+                {p.pagos && !ro && (
+                  <button className="btn secondary vj-mini" onClick={() => cambiar(x, { comprobantes: x.comprobantes.map((y) => (y.id === c.id ? { ...y, visto: true } : y)) }, "Vio el comprobante")}>
+                    Ya lo vi
+                  </button>
+                )}
+              </div>
+            ))}
           {pagando && <RegistrarPago v={v} x={x} falta={e.falta} cerrar={() => setPagando(false)} cambiar={cambiar} quien={rol.corto} />}
           {(x.pagos || []).map((pg) => (
             <div key={pg.id} className="vj-pago">
@@ -583,43 +613,39 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
               )}
             </div>
           ))}
-          {(x.comprobantes || []).length > 0 && (
+          {(x.comprobantes || []).filter((c) => c.visto).length > 0 && (
             <div className="vj-comps">
-              {x.comprobantes.map((c) => (
-                <div key={c.id} className={`vj-comp${c.visto ? "" : " nuevo"}`}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <b className="vj-comp-n">
-                      <IconClip size={14} /> {c.nombre || "Comprobante"}
-                    </b>
-                    <div className="hint-text">
-                      {fechaCorta(c.fecha)} · {c.por === "Link" ? "lo subió el buzo" : `lo subió ${c.por}`}
-                      {c.visto ? "" : " · nuevo"}
+              {x.comprobantes
+                .filter((c) => c.visto)
+                .map((c) => (
+                  <div key={c.id} className="vj-comp">
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <b className="vj-comp-n">
+                        <IconClip size={14} /> {c.nombre || "Comprobante"}
+                      </b>
+                      <div className="hint-text">
+                        {fechaCorta(c.fecha)} · {c.por === "Link" ? "lo subió el buzo" : `lo subió ${c.por}`}
+                      </div>
                     </div>
-                  </div>
-                  <button className="btn secondary vj-mini" onClick={() => verComprobante(c)}>
-                    Ver
-                  </button>
-                  {!c.visto && p.pagos && !ro && (
-                    <button className="btn secondary vj-mini" onClick={() => cambiar(x, { comprobantes: x.comprobantes.map((y) => (y.id === c.id ? { ...y, visto: true } : y)) }, "Vio el comprobante")}>
-                      Ya lo vi
+                    <button className="btn secondary vj-mini" onClick={() => verComprobante(c)}>
+                      Ver
                     </button>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ))}
             </div>
           )}
-          {p.pagos && !ro && (
+          {p.pagos && !ro && !pagando && (
             <div className="vj-ficha-pagobtns">
+              {puedePagar && (
+                <button className="btn btn-primary vj-btn" onClick={() => setPagando(true)}>
+                  + Registrar pago
+                </button>
+              )}
               <label className="vj-adjuntar">
                 <IconClip size={15} /> Adjuntar comprobante
                 <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={(ev2) => ev2.target.files?.[0] && adjuntar(ev2.target.files[0])} />
               </label>
-              {puedePagar && !e.falta && !pagando && (
-                <a className="vj-link" onClick={() => setPagando(true)}>
-                  + Registrar otro pago
-                </a>
-              )}
-              {puedePagar && !pagando && (b.abono || 0) > 0 && (
+              {puedePagar && (b.abono || 0) > 0 && (
                 <button className="btn secondary vj-mini" onClick={() => ops.usarAbono(x, b, Math.min(b.abono, e.falta || b.abono))}>
                   Usar su abono ({rd(b.abono)})
                 </button>
