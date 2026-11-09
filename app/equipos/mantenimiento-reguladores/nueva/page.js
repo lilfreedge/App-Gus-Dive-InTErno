@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { codigosAlquilados, sinAlquilados } from "@/lib/alquilados";
+import AvisoAlquilados from "@/components/AvisoAlquilados";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso, requireInterno } from "@/lib/roles";
@@ -25,6 +27,7 @@ export default async function NuevoMantenimientoPage({ searchParams }) {
     .select("*")
     .eq("activo", true)
     .order("codigo");
+  const alq = sinAlquilados(reguladores, await codigosAlquilados(supabase));
 
   return (
     <div>
@@ -43,11 +46,12 @@ export default async function NuevoMantenimientoPage({ searchParams }) {
         <h1 className="page-title">Registrar mantenimiento</h1>
         <p className="page-subtitle">Mantenimiento hecho a un regulador.</p>
 
+        <AvisoAlquilados codigos={alq.fuera} />
         <NuevoMantenimientoForm
           userId={user.id}
           nombreUsuario={profile?.full_name || user.email}
-          reguladores={reguladores || []}
-          inicial={(reguladores || []).some((r) => r.id === searchParams?.regulador) ? searchParams.regulador : ""}
+          reguladores={alq.libres}
+          inicial={alq.libres.some((r) => r.id === searchParams?.regulador) ? searchParams.regulador : ""}
         />
       </div>
     </div>

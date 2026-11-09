@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { codigosAlquilados, sinAlquilados } from "@/lib/alquilados";
+import AvisoAlquilados from "@/components/AvisoAlquilados";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso, requireInterno } from "@/lib/roles";
@@ -33,7 +35,8 @@ export default async function NuevaPruebaHidrostaticaPage() {
     idsTanquesAfuera(supabase),
   ]);
   const idsAfuera = new Set(afuera);
-  const tanques = (todos || []).filter((t) => !idsAfuera.has(t.id));
+  const alq = sinAlquilados((todos || []).filter((t) => !idsAfuera.has(t.id)), await codigosAlquilados(supabase));
+  const tanques = alq.libres;
 
   return (
     <div>
@@ -56,6 +59,7 @@ export default async function NuevaPruebaHidrostaticaPage() {
           <h1 className="page-title" style={{ margin: 0 }}>Anotar una prueba ya hecha</h1>
         </ConInfo>
 
+        <AvisoAlquilados codigos={alq.fuera} />
         <NuevaPruebaHidrostaticaForm
           userId={user.id}
           nombreUsuario={profile?.full_name || user.email}

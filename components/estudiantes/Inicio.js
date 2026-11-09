@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import { Buscar } from "@/components/viajes/Piezas";
-import { IconHistory, IconUsers, IconLink, IconPlus, IconCatalog, IconEdit } from "@/components/icons";
-import { listoParaAlmacen, pagoInstructorPendiente, debe, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, lunesProximos, ocupados, quedan } from "@/lib/estudiantes/modelo";
+import { IconHistory, IconUsers, IconPlus, IconCatalog, IconEdit } from "@/components/icons";
+import { listoParaAlmacen, pagoInstructorPendiente, debe, pagoListo, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, lunesProximos, ocupados, quedan } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
+import CompartirLink from "@/components/CompartirLink";
+import MenuMas from "@/components/MenuMas";
+import { sumarDias } from "@/lib/viajes/modelo";
 
 // Pantallas de Control Estudiantes: Inicio, la lista, Más y la Bitácora.
 
@@ -107,6 +110,11 @@ export function TarjetaCurso({ db, f, onClick, abierta }) {
 // estudiantes y la gente en lista de espera para ese curso.
 export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
   const [form, setForm] = useState(null);
+  // V62 ("242. ok", maqueta V62): como la página de un buceo. Arriba la
+  // fecha grande; una tarjeta con el cupo, quién pagó y quién debe; los
+  // botones en una fila (Compartir link, Editar y ⋯) y las pestañas
+  // Estudiantes, Lista de espera y Datos.
+  const [tab, setTab] = useState("estudiantes");
   const f = (db.fechas || []).find((x) => x.id === fechaId);
   const atras = (
     <a className="back-link" onClick={() => ir("cursos")} style={{ cursor: "pointer" }}>
@@ -124,7 +132,12 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
   const porNombre = (a, b) => buzoDe(db, a).nombre.localeCompare(buzoDe(db, b).nombre);
   const gente = db.estudiantes.filter((e) => e.fechaId === f.id && e.estado !== "cancelado").sort(porNombre);
   const espera = db.estudiantes.filter((e) => e.estado === "espera" && cursoDe(db, e)?.id === f.cursoId).sort(porNombre);
-  const hayCupo = quedan(db, f) !== 0;
+  const q = quedan(db, f);
+  const hayCupo = q !== 0;
+  const pagaron = gente.filter((e) => pagoListo(e)).length;
+  const deben = gente.filter((e) => debe(e) > 0).length;
+  const [, m, d] = f.inicio.split("-").map(Number);
+  const fin = sumarDias(f.inicio, 6);
   const pasar = (e) =>
     ops.cambiarEst(
       e,
@@ -133,80 +146,195 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
       "Lista de espera",
       fechaCursoCorta(f.inicio)
     );
+  const abrirEditar = () => setForm({ id: f.id, cursoId: f.cursoId, inicio: f.inicio, cupo: f.cupo == null ? "" : String(f.cupo), instructor: f.instructor, nota: f.nota });
+  async function borrar() {
+    const k = gente.length;
+    if (!window.confirm(k > 0 ? `Este curso tiene ${k} estudiante${k === 1 ? "" : "s"}. Se quedan sin fecha. ¿Borrarlo?` : "¿Borrar este curso?")) return;
+    const ok = await ops.borrarFecha({ id: f.id, inicio: f.inicio }, c);
+    if (ok !== false) ir("cursos");
+  }
+  const tabs = [
+    { k: "estudiantes", t: "Estudiantes", n: gente.length },
+    { k: "espera", t: "Lista de espera", n: espera.length },
+    { k: "datos", t: "Datos" },
+  ];
   return (
     <>
       {atras}
-      <h1 className="page-title" style={{ marginBottom: 6 }}>
-        {c?.nombre || "Curso"}
-      </h1>
-      <div className="ce-abierto fuerte sel ce-curso-cab">
-        <TarjetaCurso db={db} f={f} />
+      <div className="pg-cab">
+        <span className="ce-fcaja">
+          <small>{["dom", "lun", "mar", "mié", "jue", "vie", "sáb"][new Date(f.inicio + "T12:00:00").getDay()]}</small>
+          <b>{d}</b>
+          <small>{MES3[m - 1]}</small>
+        </span>
+        <div style={{ minWidth: 0 }}>
+          <h1 className="page-title">{c?.nombre || "Curso"}</h1>
+          <div className="hint-text">
+            {[f.instructor || "Instructor por definir", `del ${fechaCursoCorta(f.inicio)} al ${fechaCursoCorta(fin)}`].join(" · ")}
+          </div>
+        </div>
       </div>
-      <div className="card ce-curso-datos">
-        <div className="vj-dato">
-          <span>Empieza</span>
-          <b>
-            {fechaCursoCorta(f.inicio)} {f.inicio.slice(0, 4)}
-          </b>
+
+      <div className="card pg-res">
+        <div className="pg-res-top">
+          <b>{f.cupo == null ? `${gente.length} estudiante${gente.length === 1 ? "" : "s"}` : `${gente.length} de ${f.cupo} cupos`}</b>
+          {f.cupo != null && <span className={q === 0 ? "pg-lleno" : ""}>{q === 0 ? "lleno" : `quedan ${q}`}</span>}
         </div>
-        <div className="vj-dato">
-          <span>Instructor</span>
-          <b>{f.instructor || "Por definir"}</b>
-        </div>
-        <div className="vj-dato">
-          <span>Cupo</span>
-          <b>{textoCupo(db, f)}</b>
-        </div>
-        {f.nota && (
-          <div className="vj-dato">
-            <span>Nota</span>
-            <b>{f.nota}</b>
+        {f.cupo != null && (
+          <div className="pg-barra">
+            <i style={{ width: `${Math.min(100, Math.round((gente.length / Math.max(1, f.cupo)) * 100))}%` }} />
           </div>
         )}
-        {p.cursos &&
-          (form ? (
-            <FormCurso db={db} form={form} setForm={setForm} yo={yo} ops={ops} avisar={avisar} />
-          ) : (
-            <button className="btn secondary vj-mini" style={{ marginTop: 10 }} onClick={() => setForm({ id: f.id, cursoId: f.cursoId, inicio: f.inicio, cupo: f.cupo == null ? "" : String(f.cupo), instructor: f.instructor, nota: f.nota })}>
-              <IconEdit size={14} /> Editar este curso
-            </button>
-          ))}
+        <div className="pg-res-nums">
+          <div>
+            <b>{pagaron}</b>
+            <span>pagaron</span>
+          </div>
+          <div className={deben ? "pg-rojo" : ""}>
+            <b>{deben}</b>
+            <span>{deben === 1 ? "debe" : "deben"}</span>
+          </div>
+          <div>
+            <b>{espera.length}</b>
+            <span>en espera</span>
+          </div>
+        </div>
       </div>
 
-      <div className="section-title">
-        Estudiantes ({gente.length})
+      <div className="pg-acciones">
+        {/* V62 ("249"): Compartir link (copiar, WhatsApp o código QR). */}
+        <CompartirLink ruta="/estudiante" etiqueta="Compartir link" mensaje={`Hola, aquí te dejo el link para registrarte en el curso ${c?.nombre || ""}`.trim() + ":"} tituloQr={`Regístrate: ${c?.nombre || "curso"}`} avisar={avisar} />
+        {p.cursos && (
+          <button className="btn secondary vj-btn" onClick={() => (form ? setForm(null) : abrirEditar())}>
+            <IconEdit size={16} /> Editar
+          </button>
+        )}
+        <MenuMas
+          opciones={[
+            { t: "Ver en el calendario", d: "Los cursos y los buceos de la semana.", onClick: () => ir("calendario") },
+            p.cursos && { t: "Borrar este curso", d: gente.length ? "Sus estudiantes se quedan sin fecha." : "No tiene estudiantes.", onClick: borrar, peligro: true },
+          ]}
+        />
       </div>
-      {gente.map((e) => (
-        <FilaEstudiante key={e.id} db={db} est={e} ir={ir} />
-      ))}
-      {!gente.length && (
-        <div className="card hint-text" style={{ margin: 0 }}>
-          Todavía no tiene estudiantes. Mándales el link de registro o pasa a alguien de la lista de espera.
+      {form && (
+        <div className="card">
+          <FormCurso db={db} form={form} setForm={setForm} yo={yo} ops={ops} avisar={avisar} />
         </div>
       )}
-      <button className="btn secondary vj-btn" style={{ marginTop: 10 }} onClick={() => copiarLink("/estudiante", avisar, "Link de registro copiado")}>
-        <IconLink size={16} /> Copiar link de registro
-      </button>
 
-      {espera.length > 0 && (
+      <div className="vj-tabs">
+        {tabs.map((t) => (
+          <button key={t.k} className={`vj-tab${tab === t.k ? " sel" : ""}`} onClick={() => setTab(t.k)}>
+            {t.t}
+            {t.n != null && <span className="pg-tab-n">{t.n}</span>}
+          </button>
+        ))}
+      </div>
+
+      {tab === "estudiantes" && (
         <>
-          <div className="section-title">
-            En lista de espera para {c?.nombre || "este curso"} ({espera.length})
-          </div>
-          {espera.map((e) => (
-            <div key={e.id} className="ce-curso-espera">
-              <FilaEstudiante db={db} est={e} ir={ir} />
-              {p.estudiantes && hayCupo && (
-                <button className="btn secondary vj-mini" onClick={() => pasar(e)}>
-                  Pasarlo a este curso
-                </button>
-              )}
+          {gente.length > 0 ? (
+            <div className="card vj-lista">
+              {gente.map((e) => (
+                <FilaDeCurso key={e.id} db={db} est={e} ir={ir} />
+              ))}
             </div>
-          ))}
-          {!hayCupo && <div className="hint-text">Este curso está lleno.</div>}
+          ) : (
+            <div className="card hint-text" style={{ margin: 0 }}>
+              Todavía no tiene estudiantes. Mándales el link de registro o pasa a alguien de la lista de espera.
+            </div>
+          )}
         </>
       )}
+
+      {tab === "espera" && (
+        <>
+          {espera.length > 0 ? (
+            <div className="card vj-lista">
+              {espera.map((e) => (
+                <div key={e.id} className="pg-fila-espera">
+                  <FilaDeCurso db={db} est={e} ir={ir} espera />
+                  {p.estudiantes && hayCupo && (
+                    <button className="btn secondary vj-mini" onClick={() => pasar(e)}>
+                      Pasarlo a este curso
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="card hint-text" style={{ margin: 0 }}>
+              Nadie está esperando un cupo de {c?.nombre || "este curso"}.
+            </div>
+          )}
+          {espera.length > 0 && !hayCupo && <div className="hint-text">Este curso está lleno.</div>}
+        </>
+      )}
+
+      {tab === "datos" && (
+        <div className="card ce-curso-datos">
+          <div className="vj-dato">
+            <span>Empieza</span>
+            <b>
+              {fechaCursoCorta(f.inicio)} {f.inicio.slice(0, 4)}
+            </b>
+          </div>
+          <div className="vj-dato">
+            <span>Termina</span>
+            <b>
+              {fechaCursoCorta(fin)} {fin.slice(0, 4)}
+            </b>
+          </div>
+          <div className="vj-dato">
+            <span>Instructor</span>
+            <b>{f.instructor || "Por definir"}</b>
+          </div>
+          <div className="vj-dato">
+            <span>Cupo</span>
+            <b>{textoCupo(db, f)}</b>
+          </div>
+          {f.nota && (
+            <div className="vj-dato">
+              <span>Nota</span>
+              <b>{f.nota}</b>
+            </div>
+          )}
+        </div>
+      )}
     </>
+  );
+}
+
+// V62 ("242"): la fila de un estudiante dentro de la página del curso: el
+// nombre, cómo va y, a la derecha, si pagó o cuánto debe.
+function FilaDeCurso({ db, est, ir, espera }) {
+  const b = buzoDe(db, est);
+  const c = cursoDe(db, est);
+  const a = avance(est, c);
+  const falta = est.estado === "curso" ? faltaDe(est, c) : [];
+  const d = debe(est);
+  const sub = espera
+    ? `Se anotó${est.creadoEn ? ` el ${fechaCorta(String(est.creadoEn).slice(0, 10))}` : ""} · esperando cupo`
+    : est.estado === "curso"
+      ? est.fechaInicio && est.fechaInicio > hoyISO()
+        ? "Todavía no empieza"
+        : falta.length
+          ? `Lleva ${a.hechos} de ${a.total} · falta ${falta.slice(0, 2).join(", ")}${falta.length > 2 ? "…" : ""}`
+          : "Listo para procesar"
+      : nombreEtapa(est.estado);
+  return (
+    <button className="vj-fila pg-fila" onClick={() => ir(`estudiante:${est.id}`)}>
+      <span className="vj-fila-main">
+        <span className="vj-fila-nombre">{b.nombre}</span>
+        <span className="hint-text">{sub}</span>
+        {!espera && est.estado === "curso" && (
+          <span className="ce-barra">
+            <i style={{ width: `${a.pct}%` }} />
+          </span>
+        )}
+      </span>
+      {d > 0 ? <span className="vj-chip rojo">Debe {rd(d)}</span> : pagoListo(est) ? <span className="vj-chip verde">Pagado</span> : <span className="vj-chip gris">Sin precio</span>}
+    </button>
   );
 }
 
@@ -340,9 +468,8 @@ export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
             </button>
           )}
           {/* V59: "quita el botón de nuevo estudiante de aquí y pon el link de registro en cursos". */}
-          <button className="btn secondary vj-btn" onClick={() => copiarLink("/estudiante", avisar, "Link de registro copiado")}>
-            <IconLink size={16} /> Copiar link de registro
-          </button>
+          {/* V62 ("249"): Compartir link (copiar, WhatsApp o código QR). */}
+          <CompartirLink ruta="/estudiante" etiqueta="Compartir link de registro" mensaje="Hola, aquí te dejo el link para registrarte en el curso:" tituloQr="Regístrate en tu curso" avisar={avisar} />
         </div>
       </div>
       {db.sinFechas && <div className="hint-text">Falta correr el SQL de la V55 en Supabase para poder crear cursos con fecha.</div>}
@@ -543,6 +670,20 @@ function FormCurso({ db, form, setForm, yo, ops, avisar }) {
 // V55 -- Estudiantes: el listado de todos los que se han registrado, con
 // buscador ("78": "la pestaña estudiantes debería de ser un listado de los
 // estudiantes registrados, tipo historial con un search bar").
+// V62 ("234. B"): cómo va cada curso, en palabras, con el color del puntito.
+function lineaCurso(e) {
+  if (e.estado === "espera") return { c: "amarillo", t: "esperando fecha" };
+  if (e.estado === "curso") {
+    if (!e.fechaInicio) return { c: "verde", t: "en curso" };
+    return e.fechaInicio > hoyISO() ? { c: "verde", t: `empieza el ${fechaCursoCorta(e.fechaInicio)}` } : { c: "verde", t: `en curso (${fechaCursoCorta(e.fechaInicio)})` };
+  }
+  if (e.estado === "almacen") return { c: "naranja", t: "procesando" };
+  if (e.estado === "certificacion") return { c: "rojo", t: "certificación lista" };
+  if (e.estado === "entregada" || e.estado === "avisado") return { c: "gris", t: "terminado" };
+  if (e.estado === "cancelado") return { c: "gris", t: "cancelado" };
+  return { c: "gris", t: nombreEtapa(e.estado).toLowerCase() };
+}
+
 export function Directorio({ db, p, ir }) {
   const [q, setQ] = useState("");
   const t = q.trim().toLowerCase();
@@ -581,12 +722,19 @@ export function Directorio({ db, p, ir }) {
               {b.nombre}
             </button>
             <div className="ce-dir-cursos">
-              {ests.map((e) => (
-                <button key={e.id} className="ce-dir-curso" onClick={() => ir(`estudiante:${e.id}`)}>
-                  <span className="ce-chip gris">{e.curso}</span>
-                  <span className={`ce-chip ${e.estado === "entregada" || e.estado === "avisado" ? "ok" : e.estado === "cancelado" ? "gris" : e.estado === "certificacion" ? "rojo" : "curso"}`}>{nombreEtapa(e.estado === "certificacion" ? "certificacion" : e.estado)}</span>
-                </button>
-              ))}
+              {/* V62 ("234. B", maqueta de la 200): una línea por curso con un
+                  puntito de color, en vez de dos etiquetas separadas. */}
+              {ests.map((e) => {
+                const l = lineaCurso(e);
+                return (
+                  <button key={e.id} className="ce-dir-curso" onClick={() => ir(`estudiante:${e.id}`)}>
+                    <i className={`ce-punto ${l.c}`} />
+                    <span>
+                      {e.curso} — {l.t}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}

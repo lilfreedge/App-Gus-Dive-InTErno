@@ -195,14 +195,16 @@ export default function AlquilerApp({ p, yo }) {
     },
     // Retornar equipos ("130": todo junto o por equipo; la mora por artículo).
     // `quien`: quién lo trajo, si no fue el cliente.
-    async retornar(a, ids, quien) {
+    // V62 ("233"): `cargos` = { idDeLinea: [{ problema, nombre, monto }] } si
+    // algún equipo vino con problemas.
+    async retornar(a, ids, quien, cargos = {}) {
       const ahora = new Date().toISOString();
       const hoy = hoyISO();
       const cambios = a.items
         .filter((x) => ids.includes(x.id) && !x.devueltoEn)
         .map((x) => {
           const m = moraDe(x, a, hoy);
-          return { ...x, devueltoEn: ahora, devueltoPor: quien || "", recibidoPor: yo.corto, moraDias: m.dias, mora: m.monto };
+          return { ...x, devueltoEn: ahora, devueltoPor: quien || "", recibidoPor: yo.corto, moraDias: m.dias, mora: m.monto, ...(cargos[x.id]?.length ? { cargos: cargos[x.id] } : {}) };
         });
       if (!cambios.length) return 0;
       const items = a.items.map((x) => cambios.find((y) => y.id === x.id) || x);
@@ -212,7 +214,7 @@ export default function AlquilerApp({ p, yo }) {
           await guardar(
             supabase
               .from("alq_items")
-              .update({ devuelto_en: x.devueltoEn, devuelto_por: x.devueltoPor || null, recibido_por: x.recibidoPor, mora_dias: x.moraDias, mora: x.mora })
+              .update({ devuelto_en: x.devueltoEn, devuelto_por: x.devueltoPor || null, recibido_por: x.recibidoPor, mora_dias: x.moraDias, mora: x.mora, ...(cargos[x.id]?.length ? { cargos: cargos[x.id] } : {}) })
               .eq("id", x.id)
           );
         }
@@ -221,7 +223,14 @@ export default function AlquilerApp({ p, yo }) {
           a.id,
           `Retorno del alquiler No. ${a.numero} (${nombreDe(a.buzoId)})`,
           cambios.map((x) => x.codigo).join(", "),
-          `${quien ? `Lo trajo: ${quien}. ` : ""}${mora ? `Mora: ${rd(mora)}` : "Sin mora"}`
+          `${quien ? `Lo trajo: ${quien}. ` : ""}${mora ? `Mora: ${rd(mora)}` : "Sin mora"}${
+            cambios.some((x) => cargos[x.id]?.length)
+              ? `. Vino con problemas: ${cambios
+                  .filter((x) => cargos[x.id]?.length)
+                  .map((x) => `${x.codigo} ${cargos[x.id].map((c) => `${c.nombre} ${rd(c.monto)}`).join(", ")}`)
+                  .join("; ")}`
+              : ""
+          }`
         );
         return mora;
       } catch (e) {
@@ -314,6 +323,23 @@ export default function AlquilerApp({ p, yo }) {
       } catch (e) {
         fallo(e);
         return false;
+      }
+    },
+    // V62 ("233"): la lista de problemas con precio (migration_90).
+    async guardarProblema(x, esNuevo) {
+      const antes = db.problemas.find((y) => y.id === x.id);
+      local((d) => ({ ...d, problemas: esNuevo ? [...d.problemas, x] : d.problemas.map((y) => (y.id === x.id ? x : y)) }));
+      try {
+        await guardar(supabase.from("alq_problemas").upsert({ id: x.id, nombre: x.nombre, tipo: x.tipo || null, precio: x.precio, activo: x.activo !== false, orden: x.orden || 0, actualizado_en: new Date().toISOString() }));
+        await log(
+          null,
+          esNuevo ? `Cargo por problema nuevo: ${x.nombre}` : x.activo === false ? `Quitó un cargo por problema: ${x.nombre}` : `Cargo por problema: ${x.nombre}`,
+          antes ? `${antes.nombre} · ${antes.precio == null ? "sin precio" : rd(antes.precio)}` : null,
+          `${x.nombre} · ${x.precio == null ? "sin precio" : rd(x.precio)}`
+        );
+        avisar("Guardado");
+      } catch (e) {
+        fallo(e);
       }
     },
     // V58: precios por tipo (migration_83).

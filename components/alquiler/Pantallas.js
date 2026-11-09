@@ -17,6 +17,8 @@ import {
   fechaCorta,
   moraDe,
   moraTotal,
+  cargosDe,
+  cargosTotal,
   totalDe,
   estadoDe,
   NOMBRE_ESTADO,
@@ -40,6 +42,8 @@ function afueraPorCodigo(db) {
 // V61: la mora ya cobrada (de lo devuelto) sin su número de factura.
 const moraDevuelta = (a) => a.items.filter((x) => x.devueltoEn).reduce((t, x) => t + Number(x.mora || 0), 0);
 const faltaFacturaMora = (a) => moraDevuelta(a) > 0 && !String(a.facturaMora || "").trim();
+// V62 ("233"): los cargos por problemas sin su número de factura.
+const faltaFacturaCargos = (a) => cargosTotal(a) > 0 && !String(a.facturaCargos || "").trim();
 
 function FilaAlquiler({ db, a, ir }) {
   const hoy = hoyISO();
@@ -58,6 +62,7 @@ function FilaAlquiler({ db, a, ir }) {
       {a.estudiante && <span className="alq-estudiante">Estudiante {a.estudiante}</span>}
       {sinFactura(a) && !a.estudiante && <span className="alq-falta">Falta el número de factura</span>}
       {faltaFacturaMora(a) && <span className="alq-falta">Falta la factura de la mora</span>}
+      {faltaFacturaCargos(a) && <span className="alq-falta">Falta la factura de los cargos</span>}
       {est === "parcial" && <span className="hint-text" style={{ margin: 0, display: "block" }}>Devolvió una parte</span>}
     </button>
   );
@@ -202,6 +207,7 @@ export function Detalle({ db, p, ops, ir, avisar, id }) {
       </div>
       {sinFactura(a) && !a.estudiante && <div className="alq-falta grande">Falta el número de factura</div>}
       {faltaFacturaMora(a) && <div className="alq-falta grande">Falta la factura de la mora</div>}
+      {faltaFacturaCargos(a) && <div className="alq-falta grande">Falta la factura de los cargos</div>}
 
       <div className="section-title">Equipos</div>
       <div className="card" style={{ padding: 0 }}>
@@ -216,6 +222,11 @@ export function Detalle({ db, p, ops, ir, avisar, id }) {
                   {x.devueltoEn ? `Devuelto el ${fechaCorta(x.devueltoEn.slice(0, 10))}${x.devueltoPor ? ` · lo trajo ${x.devueltoPor}` : ""}${x.recibidoPor ? ` · recibió ${x.recibidoPor}` : ""}` : "Afuera"}
                   {m.monto ? ` · mora ${m.dias} día${m.dias === 1 ? "" : "s"}: ${rd(m.monto)}` : ""}
                 </span>
+                {cargosDe(x) > 0 && (
+                  <span className="alq-prob-linea">
+                    Vino con problemas: {(x.cargos || []).map((c) => `${c.nombre} · ${rd(c.monto)}`).join(", ")}
+                  </span>
+                )}
               </span>
               <span>{rd(x.total)}</span>
             </div>
@@ -250,6 +261,21 @@ export function Detalle({ db, p, ops, ir, avisar, id }) {
           ) : (
             <CampoFactura valor={a.facturaMora} puedeCambiar={p.admin} placeholder="El número de la factura con que se cobró la mora" onGuardar={(v) => (ops.cambiarAlquiler(a, { facturaMora: v }, "Factura de la mora", a.facturaMora || "—", v || "—"), avisar("Guardado"))} />
           )}
+        </>
+      )}
+
+      {/* V62 ("233"): los cargos por problemas, con su propio número de factura
+          ("No veo dónde es que se pondrá el No. de factura correspondiente"). */}
+      {cargosTotal(a) > 0 && (
+        <>
+          <div className="section-title">Cargos por problemas ({rd(cargosTotal(a))})</div>
+          <div className="hint-text" style={{ marginTop: -4, marginBottom: 6 }}>
+            {a.items
+              .filter((x) => cargosDe(x) > 0)
+              .map((x) => `${x.codigo} ${(x.cargos || []).map((c) => c.nombre.charAt(0).toLowerCase() + c.nombre.slice(1)).join(", ")}`)
+              .join(" · ")}
+          </div>
+          <CampoFactura valor={a.facturaCargos} puedeCambiar={p.admin} placeholder="El número de la factura con que se cobraron los cargos" onGuardar={(v) => (ops.cambiarAlquiler(a, { facturaCargos: v }, "Factura de los cargos", a.facturaCargos || "—", v || "—"), avisar("Guardado"))} />
         </>
       )}
 
@@ -706,7 +732,9 @@ export function Retornos({ db, ops, avisar, ir, id }) {
   const [sel, setSel] = useState({}); // id de línea -> true
   const [otro, setOtro] = useState(false);
   const [quien, setQuien] = useState("");
-  const [hecho, setHecho] = useState(null); // { nombre, mora, codigos }
+  const [hecho, setHecho] = useState(null); // { nombre, mora, codigos, cargos }
+  // V62 ("233"): "Vino con problemas" por equipo: { idDeLinea: { problema, nombre, monto } }.
+  const [prob, setProb] = useState({});
   const hoy = hoyISO();
   const t = q.trim().toLowerCase();
   const c = normalizarCodigo(q).toLowerCase();
@@ -721,10 +749,21 @@ export function Retornos({ db, ops, avisar, ir, id }) {
     const ids = a.items.filter((x) => sel[x.id] && !x.devueltoEn).map((x) => x.id);
     if (!ids.length) return avisar("Marca los equipos que trajo.");
     if (otro && !quien.trim()) return avisar("Escribe quién lo trajo.");
-    const mora = await ops.retornar(a, ids, otro ? quien.trim() : "");
+    const cargos = {};
+    for (const idL of ids) {
+      const c = prob[idL];
+      if (!c) continue;
+      if (!c.problema) return avisar("Escoge qué problema trajo, o quita \"Vino con problemas\".");
+      if (c.problema === "otro" && !String(c.nombre || "").trim()) return avisar("Escribe qué problema trajo.");
+      if (!(Number(c.monto) > 0)) return avisar("Pon el monto del cargo.");
+      cargos[idL] = [{ problema: c.problema, nombre: String(c.nombre || "").trim(), monto: Number(c.monto) }];
+    }
+    const mora = await ops.retornar(a, ids, otro ? quien.trim() : "", cargos);
     if (mora == null) return;
-    setHecho({ nombre: nombreDe(db, a), mora, codigos: a.items.filter((x) => ids.includes(x.id)).map((x) => x.codigo), id: a.id });
+    const totalCargos = Object.values(cargos).reduce((t, l) => t + l.reduce((u, c) => u + c.monto, 0), 0);
+    setHecho({ nombre: nombreDe(db, a), mora, cargos: totalCargos, codigos: a.items.filter((x) => ids.includes(x.id)).map((x) => x.codigo), id: a.id });
     setSel({});
+    setProb({});
     setOtro(false);
     setQuien("");
     setQ("");
@@ -745,6 +784,11 @@ export function Retornos({ db, ops, avisar, ir, id }) {
           ) : (
             <div>Sin mora.</div>
           )}
+          {hecho.cargos > 0 && (
+            <div>
+              Cargos por problemas: <b>{rd(hecho.cargos)}</b>. Cóbralos en caja y pon la factura en el alquiler.
+            </div>
+          )}
           <a className="vj-link" onClick={() => ir(`ver:${hecho.id}`)}>
             Ver el alquiler ›
           </a>
@@ -757,6 +801,7 @@ export function Retornos({ db, ops, avisar, ir, id }) {
         const pend = a.items.filter((x) => !x.devueltoEn);
         const marcados = pend.filter((x) => sel[x.id]);
         const mora = marcados.reduce((s, x) => s + moraDe(x, a, hoy).monto, 0);
+        const cargosSel = marcados.reduce((s, x) => s + (prob[x.id] ? Number(prob[x.id].monto) || 0 : 0), 0);
         return (
           <div key={a.id} className="card alq-retorno">
             <div className="alq-fila-top">
@@ -772,12 +817,53 @@ export function Retornos({ db, ops, avisar, ir, id }) {
             </label>
             {pend.map((x) => {
               const m = moraDe(x, a, hoy);
+              const c = prob[x.id];
+              const tipoX = x.tipo || prefijoDe(x.codigo);
+              const opciones = (db.problemas || []).filter((pr) => pr.activo && (!pr.tipo || pr.tipo === tipoX));
+              const cambiar = (v) => setProb({ ...prob, [x.id]: { ...c, ...v } });
               return (
-                <label key={x.id} className="alq-ck">
-                  <input type="checkbox" checked={!!sel[x.id]} onChange={(e) => setSel({ ...sel, [x.id]: e.target.checked })} />
-                  <code>{x.codigo}</code> {x.descripcion || tipoDe(x.codigo)?.uno || ""}
-                  {m.monto ? <span className="alq-mora">mora {rd(m.monto)}</span> : null}
-                </label>
+                <div key={x.id} className={`alq-ret-item${c ? " con-prob" : ""}`}>
+                  <label className="alq-ck">
+                    <input
+                      type="checkbox"
+                      checked={!!sel[x.id]}
+                      onChange={(e) => {
+                        setSel({ ...sel, [x.id]: e.target.checked });
+                        if (!e.target.checked && c) setProb(Object.fromEntries(Object.entries(prob).filter(([k]) => k !== x.id)));
+                      }}
+                    />
+                    <code>{x.codigo}</code> {x.descripcion || tipoDe(x.codigo)?.uno || ""}
+                    {m.monto ? <span className="alq-mora">mora {rd(m.monto)}</span> : null}
+                  </label>
+                  {/* V62 ("233", maqueta V61): cada equipo tiene "Vino con problemas". */}
+                  {sel[x.id] && !db.sinCols90 && (
+                    <div className="alq-prob">
+                      <label className="alq-ck alq-prob-ck">
+                        <input type="checkbox" checked={!!c} onChange={(e) => setProb(e.target.checked ? { ...prob, [x.id]: { problema: "", nombre: "", monto: "" } } : Object.fromEntries(Object.entries(prob).filter(([k]) => k !== x.id)))} />
+                        Vino con problemas
+                      </label>
+                      {c && (
+                        <div className="alq-prob-op">
+                          {opciones.map((pr) => (
+                            <button key={pr.id} type="button" className={`alq-prob-b${c.problema === pr.id ? " sel" : ""}`} onClick={() => cambiar({ problema: pr.id, nombre: pr.nombre, monto: pr.precio == null ? "" : String(pr.precio) })}>
+                              {pr.nombre}
+                              {pr.precio != null ? ` · ${rd(pr.precio)}` : ""}
+                            </button>
+                          ))}
+                          <button type="button" className={`alq-prob-b${c.problema === "otro" ? " sel" : ""}`} onClick={() => cambiar({ problema: "otro", nombre: "", monto: "" })}>
+                            Otro…
+                          </button>
+                          {c.problema && (
+                            <div className="alq-prob-monto">
+                              {c.problema === "otro" && <input className="ce-input" placeholder="¿Qué problema trajo?" value={c.nombre} onChange={(e) => cambiar({ nombre: e.target.value })} />}
+                              <input className="ce-input-corto" inputMode="numeric" placeholder="RD$" value={c.monto} onChange={(e) => cambiar({ monto: e.target.value.replace(/[^\d.]/g, "") })} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               );
             })}
             {a.items.some((x) => x.devueltoEn) && <div className="hint-text">Ya devolvió: {a.items.filter((x) => x.devueltoEn).map((x) => x.codigo).join(", ")}</div>}
@@ -789,6 +875,7 @@ export function Retornos({ db, ops, avisar, ir, id }) {
             <button className="btn btn-primary vj-btn" style={{ marginTop: 10 }} disabled={!marcados.length} onClick={() => retornar(a)}>
               Marcar retornado{marcados.length ? ` (${marcados.length})` : ""}
               {mora ? ` · mora ${rd(mora)}` : ""}
+              {cargosSel ? ` · cargos ${rd(cargosSel)}` : ""}
             </button>
           </div>
         );
@@ -1114,7 +1201,7 @@ export function Equipos({ db, p, ops }) {
 export function Mas({ ir }) {
   // V58 (nota 2-nov): precios por tipo, estadísticas y reporte.
   const opciones = [
-    { r: "precios", t: "Precios por tipo", sub: "El precio de alquiler de cada tipo de equipo: careta, regulador, BCD…", I: IconCatalog },
+    { r: "precios", t: "Precios", sub: "El precio de alquiler de cada tipo de equipo y los cargos por problemas (tanque vacío, manómetro ahogado…).", I: IconCatalog },
     { r: "estadisticas", t: "Estadísticas", sub: "Cuánto se alquila, qué se alquila más y cuánto entra.", I: IconChart },
     { r: "reporte", t: "Reporte", sub: "Los alquileres de unas fechas, con totales, para imprimir.", I: IconReport },
     { r: "bitacora", t: "Bitácora", sub: "Todo lo que se hace en Alquiler: quién y cuándo.", I: IconHistory },
@@ -1151,7 +1238,7 @@ export function Precios({ db, p, ops, ir }) {
       <a className="back-link" onClick={() => ir("mas")} style={{ cursor: "pointer" }}>
         ← Más
       </a>
-      <h1 className="page-title">Precios por tipo</h1>
+      <h1 className="page-title">Precios</h1>
       <div className="hint-text" style={{ marginBottom: 8 }}>
         El precio de alquiler por 3 días de cada tipo. Los equipos sin precio propio usan este. Si un equipo tiene su propio precio (en Equipos), se queda con el suyo.
       </div>
@@ -1200,7 +1287,100 @@ export function Precios({ db, p, ops, ir }) {
         })}
       </div>
       {!p.equipos && <div className="hint-text">Solo el Titular, los administradores o quien tenga el permiso de equipos pueden cambiar precios.</div>}
+      <CargosProblemas db={db} p={p} ops={ops} />
     </>
+  );
+}
+
+// V62 ("233"): la lista de problemas que se cobran al registrar un retorno
+// ("Vino con problemas"). Sin precio = se escribe el monto en el retorno.
+function CargosProblemas({ db, p, ops }) {
+  const [edit, setEdit] = useState(null); // { id, nombre, tipo, precio, nuevo }
+  if (db.sinCols90)
+    return (
+      <>
+        <div className="section-title">Cargos por problemas</div>
+        <div className="aviso-box">Falta correr en Supabase el SQL de la V62 para usar los cargos por problemas.</div>
+      </>
+    );
+  const lista = (db.problemas || []).filter((x) => x.activo).sort((a, b) => (a.orden || 0) - (b.orden || 0));
+  const nombreTipo = (t) => (t ? TIPOS.find((x) => x.p === t)?.t || t : "Todos los equipos");
+  function guardar() {
+    if (!edit.nombre.trim()) return;
+    const x = { id: edit.id || `p-${Date.now().toString(36)}`, nombre: edit.nombre.trim(), tipo: edit.tipo || "", precio: edit.precio === "" ? null : Number(edit.precio), activo: true, orden: edit.orden ?? lista.length + 1 };
+    ops.guardarProblema(x, !!edit.nuevo);
+    setEdit(null);
+  }
+  return (
+    <>
+      <div className="section-title">Cargos por problemas</div>
+      <div className="hint-text" style={{ marginBottom: 8 }}>
+        Lo que se le cobra al cliente cuando un equipo vuelve con un problema (por ejemplo, un tanque vacío o un manómetro ahogado). Sale en &quot;Registrar retorno&quot; › &quot;Vino con problemas&quot;. Si no tiene precio, se escribe el monto ahí.
+      </div>
+      <div className="card" style={{ padding: 0 }}>
+        {lista.map((x) =>
+          edit?.id === x.id ? (
+            <FormProblema key={x.id} edit={edit} setEdit={setEdit} guardar={guardar} />
+          ) : (
+            <div key={x.id} className="alq-precio-fila">
+              <span style={{ minWidth: 0 }}>
+                <b>{x.nombre}</b>
+                <span className="hint-text" style={{ display: "block", margin: 0 }}>
+                  {nombreTipo(x.tipo)}
+                </span>
+              </span>
+              <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <b>{x.precio == null ? <span className="hint-text">Sin precio</span> : rd(x.precio)}</b>
+                {p.equipos && (
+                  <button className="btn secondary vj-mini" onClick={() => setEdit({ ...x, precio: x.precio == null ? "" : String(x.precio) })}>
+                    Cambiar
+                  </button>
+                )}
+              </span>
+            </div>
+          )
+        )}
+        {!lista.length && <div className="hint-text" style={{ padding: 12 }}>Todavía no hay cargos.</div>}
+        {edit?.nuevo && <FormProblema edit={edit} setEdit={setEdit} guardar={guardar} />}
+      </div>
+      {p.equipos && !edit && (
+        <button className="btn secondary vj-btn" style={{ marginTop: 8 }} onClick={() => setEdit({ nuevo: true, nombre: "", tipo: "", precio: "" })}>
+          <IconPlus size={16} /> Agregar un cargo
+        </button>
+      )}
+      {edit && !edit.nuevo && p.equipos && (
+        <button className="btn secondary vj-mini vj-rojo-txt" style={{ marginTop: 8 }} onClick={() => (ops.guardarProblema({ ...db.problemas.find((y) => y.id === edit.id), activo: false }, false), setEdit(null))}>
+          Quitar &quot;{edit.nombre}&quot; de la lista
+        </button>
+      )}
+    </>
+  );
+}
+
+function FormProblema({ edit, setEdit, guardar }) {
+  return (
+    <div className="alq-prob-form">
+      <input className="ce-input" placeholder="¿Qué problema? (ej. Llegó vacío: inspección visual)" value={edit.nombre} onChange={(e) => setEdit({ ...edit, nombre: e.target.value })} autoFocus />
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+        <select className="ce-input" style={{ flex: 1, minWidth: 150 }} value={edit.tipo} onChange={(e) => setEdit({ ...edit, tipo: e.target.value })}>
+          <option value="">Todos los equipos</option>
+          {TIPOS.map((t) => (
+            <option key={t.p} value={t.p}>
+              {t.t}
+            </option>
+          ))}
+        </select>
+        <input className="ce-input-corto" inputMode="numeric" placeholder="RD$" value={edit.precio} onChange={(e) => setEdit({ ...edit, precio: e.target.value.replace(/[^\d.]/g, "") })} />
+      </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button className="btn btn-primary vj-mini" disabled={!edit.nombre.trim()} onClick={guardar}>
+          Guardar
+        </button>
+        <button className="btn secondary vj-mini" onClick={() => setEdit(null)}>
+          Cancelar
+        </button>
+      </div>
+    </div>
   );
 }
 

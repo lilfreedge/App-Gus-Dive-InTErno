@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buzoAFila } from "@/lib/viajes/datos";
-import { buscarPorDoc, celCoincide, logLink } from "@/lib/estudiantes/servidor";
+import { buscarPorDoc, celCoincide, logLink, tokenMenorValido, buzoPorId } from "@/lib/estudiantes/servidor";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 
 export const dynamic = "force-dynamic";
@@ -45,8 +45,16 @@ async function preparar(s, datos) {
   if (!(Number(datos.tamano) > 0)) return { error: "No llegó el archivo." };
   if (Number(datos.tamano) > MAX) return { error: "El archivo pesa más de 10 MB." };
 
-  const b = await buscarPorDoc(s, tipoDoc, datos.doc);
-  if (!b || !celCoincide(b, datos.cel)) return { error: "No pudimos confirmar tus datos. Escríbenos por WhatsApp." };
+  // V62 ("229"): un menor (sin cédula) se confirma con el permiso que le dio
+  // el servidor al registrarlo.
+  let b;
+  if (datos.buzoId) {
+    b = tokenMenorValido(datos.buzoId, datos.token) ? await buzoPorId(s, datos.buzoId) : null;
+    if (!b) return { error: "No pudimos confirmar los datos. Escríbenos por WhatsApp." };
+  } else {
+    b = await buscarPorDoc(s, tipoDoc, datos.doc);
+    if (!b || !celCoincide(b, datos.cel)) return { error: "No pudimos confirmar tus datos. Escríbenos por WhatsApp." };
+  }
 
   // El curso: el que diga, si es suyo; si no, el más reciente que tenga abierto.
   const { data: cursos } = await s.from("est_estudiantes").select("id, curso, comprobantes, pasos, estado").eq("buzo_id", b.id).order("creado_en", { ascending: false });

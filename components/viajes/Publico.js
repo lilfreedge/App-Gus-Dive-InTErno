@@ -579,18 +579,26 @@ export default function PublicoViaje({ v, tienda }) {
                     <div className="pb-ok">
                       <IconCheck size={34} strokeWidth={2.6} />
                     </div>
+                    {/* V62 ("246"): la opción A sin "Hola" ("le quitamos el hola? no
+                        hace sentido"), con el buceo y la fecha debajo. */}
                     <div className="pb-t">
-                      {buzo.corto}, ya estás en la lista de este {palabra}
+                      {buzo.enEspera ? `${primerNombre(buzo.corto)}, estás en la lista de espera` : `${primerNombre(buzo.corto)}, ya estás inscrito`}
+                    </div>
+                    <div className="pb-h" style={{ marginTop: 2, fontWeight: 600 }}>
+                      en {v.nombre}, el {fechaLarga(v.fecha)}.
                     </div>
                     <div className="pb-h" style={{ marginTop: 8 }}>
-                      Si tienes alguna pregunta, no dudes en escribirnos. ¿Te hace falta equipo? Avísanos y te lo apartamos.
+                      {buzo.enEspera
+                        ? "Te escribimos por WhatsApp si se abre un cupo. No tienes que pagar nada por ahora."
+                        : "Si tienes alguna pregunta, no dudes en escribirnos. ¿Te hace falta equipo? Avísanos y te lo apartamos."}
                     </div>
                     {linkWAYa && (
                       <a className="pb-btn verde" href={linkWAYa} target="_blank" rel="noreferrer" style={{ display: "block", textDecoration: "none" }}>
                         <IconChat size={18} /> Escribir por WhatsApp
                       </a>
                     )}
-                    <SubirComprobante slug={v.slug} tipoDoc={tipoDoc} doc={doc} cuentas={cuentas} tienda={tienda} copiar={copiar} copiado={copiado} monto={opcionesPagan.length === 1 ? (v.reserva ? `reserva de ${rd(v.reserva.monto)}` : precioTexto(v, opcionesPagan[0])) : ""} />
+                    {/* V62 ("196"): si está en lista de espera, no se le pide pagar. */}
+                    {!buzo.enEspera && <SubirComprobante slug={v.slug} tipoDoc={tipoDoc} doc={doc} cuentas={cuentas} tienda={tienda} copiar={copiar} copiado={copiado} monto={opcionesPagan.length === 1 ? (v.reserva ? `reserva de ${rd(v.reserva.monto)}` : precioTexto(v, opcionesPagan[0])) : ""} />}
                     {/* V57: "pon el botón de inscribir otra persona más pequeño";
                         sin "← Atrás" aquí ("quita la flechita"): volvía al paso
                         de la cédula, que es lo mismo que inscribir a otra persona. */}

@@ -14,11 +14,6 @@ export const runtime = "nodejs";
 //   accion "doc"    -> ¿ya lo tenemos? (solo devuelve el primer nombre)
 //   accion "enviar" -> lo anota en Interesados como "Nuevo"
 const tipoDe = (doc) => (/^\d{11}$/.test(soloDigitos(doc)) && !/[a-z]/i.test(doc) ? "cedula" : "pasaporte");
-const docOk = (doc) => {
-  const t = tipoDe(doc);
-  return t === "cedula" ? true : String(doc || "").replace(/[\s-]/g, "").length >= 6;
-};
-const docGuardar = (doc) => (tipoDe(doc) === "cedula" ? soloDigitos(doc) : String(doc || "").replace(/\s/g, "").toUpperCase());
 
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
@@ -26,8 +21,11 @@ export async function POST(request) {
   if (body.web) return NextResponse.json({ ok: true });
   const s = createServiceClient();
   const doc = String(body.doc || "").trim();
-  if (!docOk(doc)) return NextResponse.json({ error: "Escribe tu cédula (11 números) o tu pasaporte." }, { status: 400 });
-  const b = await buscarPorDoc(s, tipoDe(doc), doc);
+  // V62: el link dice si es cédula u otro documento (como el registro de estudiantes).
+  const tipo = body.tipoDoc === "pasaporte" ? "pasaporte" : body.tipoDoc === "cedula" ? "cedula" : tipoDe(doc);
+  if (tipo === "cedula" ? soloDigitos(doc).length !== 11 : String(doc).replace(/[\s-]/g, "").length < 6)
+    return NextResponse.json({ error: tipo === "cedula" ? "La cédula tiene 11 números." : "Escribe tu pasaporte completo." }, { status: 400 });
+  const b = await buscarPorDoc(s, tipo, doc);
   const persona = b && !b.staff ? b : null;
 
   if (body.accion === "doc") return NextResponse.json({ encontrado: !!persona, primer: persona ? primerNombre(persona.nombre) : "" });
@@ -42,14 +40,15 @@ export async function POST(request) {
 
   // Si ya dejó sus datos hace poco (misma persona, documento o celular), no se repite.
   const abiertos = ["nuevo", "escribimos", "va"];
-  const docG = docGuardar(doc);
+  const docG = tipo === "cedula" ? soloDigitos(doc) : String(doc || "").replace(/\s/g, "").toUpperCase();
   let { data: ya, error: eYa } = await s.from("est_interesados").select("id").eq("documento", docG).in("estado", abiertos).limit(1);
   if (eYa) ya = null; // sin la migration_86 todavía
   if (!ya?.length && cel.length === 10) ({ data: ya } = await s.from("est_interesados").select("id").eq("celular", cel).in("estado", abiertos).limit(1));
   if (ya?.length) return NextResponse.json({ ok: true, ya: true, nombre: primerNombre(nombre) });
 
   const fila = { nombre, celular: cel.length === 10 ? cel : null, curso, fuente: "Link", via: "link" };
-  let { error } = await s.from("est_interesados").insert({ ...fila, buzo_id: persona?.id || null, documento: docG, correo: correo || null });
+  const nacionalidad = tipo === "pasaporte" ? String(body.nacionalidad || "").trim().slice(0, 60) : "";
+  let { error } = await s.from("est_interesados").insert({ ...fila, buzo_id: persona?.id || null, documento: docG, correo: correo || null, ...(nacionalidad ? { nota: `Nacionalidad: ${nacionalidad}` } : {}) });
   // Sin la migration_86 todavía: se guarda sin esas columnas (el documento va en la nota).
   if (error && /buzo_id|documento|correo|column/i.test(error.message || "")) ({ error } = await s.from("est_interesados").insert({ ...fila, nota: `Documento: ${docG}${correo ? ` · ${correo}` : ""}` }));
   if (error) return NextResponse.json({ error: "No se pudo enviar. Intenta de nuevo." }, { status: 500 });

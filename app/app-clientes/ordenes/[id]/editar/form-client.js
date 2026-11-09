@@ -322,7 +322,8 @@ export default function EditarSeguimientoForm({
   // 29-sep-2026: "que no salga ese hold en codigos a cobrar"); la Bitácora
   // de la orden guarda las consultas con sus respuestas.
   async function guardarRespuestasHold() {
-    if (!hold || !respuestasHold.some((r) => r.respuesta)) {
+    // V62: basta un Sí/No o un comentario en alguna consulta.
+    if (!hold || !respuestasHold.some((r) => r.respuesta || String(r.comentario || "").trim())) {
       denegado.denegar("resolverHold");
       return;
     }
@@ -993,8 +994,8 @@ export default function EditarSeguimientoForm({
               )}
             </div>
             <div className="hint-text" style={{ marginTop: 8 }}>
-              Desde el {formatFechaDDMMAAAADeDate(hold.fecha_inicio)} ({diasEnHold(hold)} día{diasEnHold(hold) === 1 ? "" : "s"} en Hold). Marca lo que contestó el cliente en cada
-              punto. Si todavía falta alguno, la orden sigue en Hold.
+              Desde el {formatFechaDDMMAAAADeDate(hold.fecha_inicio)} ({diasEnHold(hold)} día{diasEnHold(hold) === 1 ? "" : "s"} en Hold). Pon lo que contestó el cliente en cada
+              punto (Sí, No o un comentario). Si todavía falta alguno, la orden sigue en Hold.
             </div>
 
             <div style={{ marginTop: 6 }}>
@@ -1023,7 +1024,7 @@ export default function EditarSeguimientoForm({
                     type="text"
                     value={respuestasHold[i]?.comentario || ""}
                     onChange={(e) => setRespuesta(i, { comentario: e.target.value })}
-                    placeholder="Comentario del cliente (opcional)"
+                    placeholder="Comentario"
                   />
                 </div>
               ))}
@@ -1036,7 +1037,7 @@ export default function EditarSeguimientoForm({
               >
                 {guardandoHold
                   ? "Guardando..."
-                  : respuestasHold.every((r) => r.respuesta)
+                  : respuestasHold.every((r) => r.respuesta || String(r.comentario || "").trim())
                   ? "Guardar respuestas y salir de Hold"
                   : "Guardar respuestas"}
               </button>

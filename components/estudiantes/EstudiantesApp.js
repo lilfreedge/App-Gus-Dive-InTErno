@@ -325,9 +325,16 @@ export default function EstudiantesApp({ p, yo, personas }) {
     },
     async guardarInteresado(x, esNuevo, texto) {
       local((d) => ({ ...d, interesados: esNuevo ? [x, ...d.interesados] : d.interesados.map((y) => (y.id === x.id ? x : y)) }));
+      // V62 ("245"): con el seguimiento. Si todavía no se corrió la
+      // migration_88 (no existe la columna), se guarda lo demás y se avisa.
+      const subir = (sin) =>
+        esNuevo ? supabase.from("est_interesados").insert({ ...interesadoAFila(x, { sinSeguimiento: sin }), creado_por: yo.id }) : supabase.from("est_interesados").update(interesadoAFila(x, { sinSeguimiento: sin })).eq("id", x.id);
       try {
-        if (esNuevo) await guardar(supabase.from("est_interesados").insert({ ...interesadoAFila(x), creado_por: yo.id }));
-        else await guardar(supabase.from("est_interesados").update(interesadoAFila(x)).eq("id", x.id));
+        const r = await subir(false);
+        if (r.error && /seguimiento/.test(`${r.error.message || ""} ${r.error.details || ""}`)) {
+          await guardar(subir(true));
+          avisar("Se guardó, pero el seguimiento no: falta correr el SQL de la V62 en Supabase.");
+        } else if (r.error) throw r.error;
         if (texto) await log(null, texto);
       } catch (e) {
         fallo(e);

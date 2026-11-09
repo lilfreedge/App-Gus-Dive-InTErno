@@ -636,8 +636,19 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
                 </span>
               </div>
             )}
+            {/* V62 ("229"): si es menor de edad, quién lo registró por el link. */}
+            {b.tutor && (
+              <div className="ce-dato">
+                <span>Menor de edad</span>
+                <span>
+                  Lo registró {b.tutor.nombre}
+                  {b.tutor.parentesco ? ` (${String(b.tutor.parentesco).toLowerCase()})` : ""}
+                  {b.tutor.doc ? ` · ${b.tutor.tipoDoc === "pasaporte" ? "pasaporte" : "cédula"} ${b.tutor.doc}` : ""}
+                </span>
+              </div>
+            )}
             <div className="ce-dato">
-              <span>Celular</span>
+              <span>{b.tutor ? "Celular (del adulto)" : "Celular"}</span>
               <span>{b.cel ? formatoCel(b.cel) : "—"}</span>
             </div>
             <div className="ce-dato">

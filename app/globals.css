@@ -3184,7 +3184,7 @@ html[data-theme="dark"] .ce-app { --ce-claro: #3a3010; --ce-texto: #f3d77a; }
 .ce-dir-fila:last-child { border-bottom: 0; }
 .ce-dir-nombre { background: none; border: 0; padding: 0; font: inherit; font-weight: 800; font-size: 15px; color: var(--texto); cursor: pointer; text-align: left; }
 .ce-dir-nombre:hover { color: var(--ce); }
-.ce-dir-cursos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.ce-dir-cursos { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 3px; }
 .ce-dir-curso { display: inline-flex; gap: 3px; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; }
 .ce-semana-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
 .ce-semana-form label { font-size: 12px; font-weight: 700; color: var(--texto-suave); margin: 0; }
@@ -3531,3 +3531,91 @@ html[data-theme="dark"] .vj-cal-curso.empieza { background: #8a6a00; color: #fff
 .alq-estado.afuera { background: #fff3dc; color: #9a5b0e; }
 /* V61: etiqueta "Alquilado" en App Interno. */
 .badge-alquilado { background: #fdecea; color: #b0291c; border: 1px solid #f3b8b1; }
+
+/* V62 ("249"): Compartir link, ventana del código QR. */
+.qr-fondo { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.qr-caja { position: relative; background: var(--tarjeta); border-radius: 16px; padding: 22px 20px 18px; width: 340px; max-width: 100%; text-align: center; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25); }
+.qr-x { position: absolute; top: 10px; right: 10px; background: none; border: 0; cursor: pointer; color: var(--texto-suave); padding: 4px; }
+.qr-t { display: block; font-size: 16px; margin: 0 24px 10px; }
+.qr-img { background: #fff; border-radius: 10px; padding: 8px; margin: 0 auto 8px; width: 240px; max-width: 100%; }
+.qr-img svg { width: 100%; height: auto; display: block; }
+.qr-u { font-size: 12px; color: var(--texto-suave); word-break: break-all; margin-bottom: 12px; }
+
+/* V62 ("231" y "242"): cabecera de la página del buceo y del curso. */
+.pg-cab { display: flex; align-items: center; gap: 12px; margin: 4px 0 10px; }
+.pg-cab .page-title { margin: 0; line-height: 1.15; }
+.pg-cab .hint-text { margin: 2px 0 0; font-size: 14px; }
+.pg-cab-chip { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pg-res { padding: 14px 16px; margin-bottom: 10px; }
+.pg-res-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.pg-res-top b { font-size: 20px; }
+.pg-res-top span { font-size: 13.5px; font-weight: 700; color: var(--verde); }
+.pg-res-top span.pg-lleno { color: var(--rojo); }
+.pg-barra { height: 8px; background: var(--superficie-suave); border-radius: 999px; overflow: hidden; margin: 8px 0 12px; }
+.pg-barra i { display: block; height: 100%; background: var(--pg-acento, var(--ce, #8a6a00)); border-radius: 999px; }
+.pg-res-nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 6px; border-top: 1px solid var(--superficie-suave); padding-top: 10px; }
+.pg-res-nums > div { text-align: center; }
+.pg-res-nums b { display: block; font-size: 19px; }
+.pg-res-nums span { font-size: 12px; color: var(--texto-suave); }
+.pg-res-nums .pg-rojo b { color: var(--rojo); }
+.pg-acciones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 12px; }
+.pg-mas { min-width: 44px; justify-content: center; font-size: 18px; letter-spacing: 1px; }
+.pg-mas-menu { left: auto; right: 0; width: 260px; }
+@media (max-width: 420px) { .pg-mas-menu { right: -8px; } }
+.pg-mas-menu .pg-peligro b { color: var(--rojo); }
+.pg-tab-n { display: inline-block; margin-left: 6px; font-size: 12px; font-weight: 800; background: var(--superficie-suave); border-radius: 999px; padding: 1px 7px; }
+.pg-fila { width: 100%; background: none; border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; align-items: center; }
+.pg-fila .vj-fila-main { display: block; flex: 1; min-width: 0; }
+.pg-fila .vj-fila-nombre, .pg-fila .hint-text { display: block; }
+.pg-fila .ce-barra { display: block; margin-top: 6px; max-width: 220px; }
+.pg-fila-espera { border-top: 1px solid var(--superficie-suave); }
+.pg-fila-espera:first-child { border-top: 0; }
+.pg-fila-espera .vj-fila { border-top: 0; }
+.pg-fila-espera > .vj-mini { margin: -4px 12px 10px; }
+.pg-espera { margin-top: 12px; }
+.pg-espera > button.pg-espera-t { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px 14px; font: inherit; color: var(--texto); cursor: pointer; text-align: left; }
+.pg-espera > button.pg-espera-t b { font-size: 15px; }
+.pg-espera > button.pg-espera-t span { font-size: 13px; color: var(--texto-suave); }
+.pg-espera.abierta > button.pg-espera-t { border-radius: 12px 12px 0 0; }
+.pg-espera.abierta .vj-lista { border-radius: 0 0 12px 12px; border-top: 0; margin-top: 0; }
+.vj-app .pg-barra i, .pg-azul .pg-barra i { background: #4EBAE8; }
+@media (max-width: 420px) { .pg-acciones { gap: 6px; } .pg-acciones .vj-btn { padding: 9px 10px !important; } }
+
+/* V62 ("245"): Interesados con seguimiento. */
+.ce-int-ult { color: var(--texto); }
+.ce-int-acc { display: flex; gap: 6px; flex-wrap: wrap; }
+.ce-int-acc a.btn { text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.ce-int-hist { border-left: 3px solid var(--ce, #8a6a00); margin: 4px 0 12px 4px; padding-left: 12px; }
+.ce-int-h { padding: 6px 0; }
+.ce-int-h b { display: block; font-size: 14.5px; }
+.ce-int-h span { display: block; font-size: 13px; color: var(--texto-suave); }
+.ce-int-h.fija b { color: var(--texto-suave); font-weight: 600; }
+.ce-int-nuevo { background: var(--superficie-suave); border-radius: 12px; padding: 12px; }
+.ce-int-txt { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--borde); border-radius: 10px; font: inherit; background: var(--tarjeta); color: var(--texto); }
+
+/* V62 ("229"): registrar a un menor de edad en el link del estudiante. */
+.ce-pub-menor { margin-top: 16px; padding: 12px 14px; border: 1px dashed var(--borde); border-radius: 12px; background: var(--superficie-suave); }
+.ce-pub-menor b { font-size: 15px; }
+.ce-pub-registra { font-size: 13.5px; background: var(--ce-claro, #fdf3cf); border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; color: var(--texto); }
+
+/* V62 ("233"): Alquiler, "Vino con problemas". */
+.alq-ret-item.con-prob { background: #fff7f5; border-radius: 10px; margin: 2px -6px; padding: 0 6px 6px; }
+.alq-prob { margin: -2px 0 4px 28px; }
+.alq-prob-ck { font-size: 13.5px; color: var(--rojo); font-weight: 600; }
+.alq-prob-op { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.alq-prob-b { border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); border-radius: 999px; padding: 5px 11px; font: inherit; font-size: 13px; cursor: pointer; }
+.alq-prob-b.sel { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+.alq-prob-monto { display: flex; gap: 6px; width: 100%; margin-top: 4px; }
+.alq-prob-monto .ce-input { flex: 1; min-width: 0; }
+.alq-prob-linea { display: block; font-size: 12.5px; color: var(--rojo); font-weight: 600; margin-top: 2px; }
+.alq-prob-form { padding: 12px; border-top: 1px solid var(--superficie-suave); }
+
+/* V62 ("234. B"): lista de Estudiantes, una línea por curso con un puntito de color. */
+.ce-dir-curso { align-items: center; gap: 7px !important; font-size: 13.5px; color: var(--texto-suave); text-align: left; }
+.ce-dir-curso:hover span { color: var(--texto); }
+.ce-punto { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--texto-suave); }
+.ce-punto.verde { background: var(--verde); }
+.ce-punto.amarillo { background: #d4a106; }
+.ce-punto.naranja { background: #e07b1a; }
+.ce-punto.rojo { background: var(--rojo); }
+.ce-punto.gris { background: #b5bec6; }

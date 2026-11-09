@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { codigosAlquilados, sinAlquilados } from "@/lib/alquilados";
+import AvisoAlquilados from "@/components/AvisoAlquilados";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser, tieneAcceso, requireInterno } from "@/lib/roles";
@@ -24,6 +26,7 @@ export default async function NuevaInspeccionPage({ searchParams }) {
     .select("id, codigo, descripcion")
     .eq("activo", true)
     .order("codigo");
+  const alq = sinAlquilados(tanques, await codigosAlquilados(supabase));
 
   return (
     <div>
@@ -42,11 +45,12 @@ export default async function NuevaInspeccionPage({ searchParams }) {
         <h1 className="page-title">Registrar inspección visual</h1>
         <p className="page-subtitle">Resultado de la inspección visual de un tanque.</p>
 
+        <AvisoAlquilados codigos={alq.fuera} />
         <NuevaInspeccionForm
           userId={user.id}
           nombreUsuario={profile?.full_name || user.email}
-          tanques={tanques || []}
-          inicial={(tanques || []).some((t) => t.id === searchParams?.tanque) ? searchParams.tanque : ""}
+          tanques={alq.libres}
+          inicial={alq.libres.some((t) => t.id === searchParams?.tanque) ? searchParams.tanque : ""}
         />
       </div>
     </div>

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { buzoAFila, nuevoId } from "@/lib/viajes/datos";
+import { buzoAFila, filaABuzo, nuevoId } from "@/lib/viajes/datos";
 import { filaACurso, filaAEst } from "@/lib/estudiantes/datos";
-import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula, hoyISO, fechaLarga } from "@/lib/viajes/modelo";
+import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula, formatoCel, hoyISO, fechaLarga } from "@/lib/viajes/modelo";
 import { pasosIniciales, pagado, debe, nombreEtapa, menorDe12 } from "@/lib/estudiantes/modelo";
-import { docValido, buscarPorDoc, celCoincide, logLink } from "@/lib/estudiantes/servidor";
+import { docValido, buscarPorDoc, celCoincide, logLink, edadHoy, tokenMenor } from "@/lib/estudiantes/servidor";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 
 export const dynamic = "force-dynamic";
@@ -70,7 +70,54 @@ export async function POST(request) {
   if (cel.length !== 10) return NextResponse.json({ error: "Escribe tu celular completo (10 números)." }, { status: 400 });
 
   let buzo = b;
-  if (buzo) {
+  // V62 ("229. si", maqueta V61): un adulto registra a un menor de edad (12 a
+  // 17 años). El documento y el celular son los del adulto; el menor se crea
+  // con el celular del adulto, y queda anotado quién lo registró.
+  let tutorTxt = "";
+  if (body.menor) {
+    const m = body.menor || {};
+    const nombreM = String(m.nombre || "").trim().slice(0, 120);
+    if (!nombreM) return NextResponse.json({ error: "Falta el nombre del menor." }, { status: 400 });
+    const edad = edadHoy(String(m.nac || "").slice(0, 10));
+    if (edad == null) return NextResponse.json({ error: "Falta la fecha de nacimiento del menor." }, { status: 400 });
+    if (edad < 12) return NextResponse.json({ error: "El buceo es de 12 años en adelante." }, { status: 400 });
+    if (edad >= 18) return NextResponse.json({ error: "Si tiene 18 años o más, que se registre con su propio documento." }, { status: 400 });
+    if (b && soloDigitos(b.cel).length === 10 && !celCoincide(b, cel)) return NextResponse.json({ error: "Ese celular no es el que tenemos con esa cédula. Escríbenos por WhatsApp." }, { status: 400 });
+    const tutorNombre = b ? b.nombre : String(body.tutorNombre || "").trim().slice(0, 120);
+    if (!tutorNombre) return NextResponse.json({ error: "Falta tu nombre completo." }, { status: 400 });
+    const parentesco = ["Mamá", "Papá", "Tutor"].includes(m.parentesco) ? m.parentesco : "Tutor";
+    const docT = tipo === "cedula" ? formatoCedula(body.doc) : String(body.doc || "").toUpperCase().replace(/\s/g, "");
+    const tutor = { nombre: tutorNombre, parentesco, cel, tipoDoc: tipo, doc: docT, buzoId: b?.id || null, en: new Date().toISOString() };
+    tutorTxt = `${tutorNombre} (${parentesco.toLowerCase()})`;
+    // Si ya lo habían registrado (mismo nombre, misma fecha y el celular del adulto), se usa esa ficha.
+    const { data: mismos } = await s.from("viajes_buzos").select("*").eq("fecha_nacimiento", String(m.nac).slice(0, 10)).eq("celular", cel);
+    const ya = (mismos || []).map(filaABuzo).find((x) => String(x.nombre || "").trim().toLowerCase() === nombreM.toLowerCase());
+    if (ya) buzo = ya;
+    else {
+      buzo = {
+        id: nuevoId(),
+        nombre: nombreM,
+        doc: "",
+        pasaporte: "",
+        cel,
+        correo: String(n.correo || "").trim().slice(0, 120),
+        nac: String(m.nac).slice(0, 10),
+        direccion: String(n.direccion || "").trim().slice(0, 200),
+        emergencia: `${tutorNombre} (${parentesco.toLowerCase()}) · ${formatoCel(cel)}`,
+        tallas: {},
+        abono: 0,
+        staff: false,
+        tutor,
+      };
+      let { error } = await s.from("viajes_buzos").insert(buzoAFila(buzo));
+      if (error) {
+        // Sin migration_89 todavía: quién lo registró va en la nota de su ficha.
+        const { tutor: _t, ...sin } = buzo;
+        ({ error } = await s.from("viajes_buzos").insert({ ...buzoAFila(sin), notas: `Menor de edad. Lo registró ${tutorTxt}, ${tipo === "cedula" ? "cédula" : "documento"} ${docT}, cel. ${formatoCel(cel)}.` }));
+      }
+      if (error) return NextResponse.json({ error: "No se pudieron guardar los datos. Intenta de nuevo." }, { status: 500 });
+    }
+  } else if (buzo) {
     // Ya está en la base: tiene que poner el mismo celular. Solo se llena lo
     // que no teníamos; nunca se cambia lo que ya estaba.
     if (soloDigitos(buzo.cel).length === 10 && !celCoincide(buzo, cel)) return NextResponse.json({ error: "Ese celular no es el que tenemos con esa cédula. Escríbenos por WhatsApp." }, { status: 400 });
@@ -118,7 +165,8 @@ export async function POST(request) {
 
   // Si ya tiene ese mismo curso abierto, no se repite.
   const { data: abiertos } = await s.from("est_estudiantes").select("*").eq("buzo_id", buzo.id).eq("curso_id", curso.id).not("estado", "in", "(entregada,avisado,cancelado)");
-  if (abiertos?.length) return NextResponse.json({ ok: true, ya: true, primer: primerNombre(buzo.nombre), estudianteId: abiertos[0].id, curso: curso.nombre });
+  const permisoMenor = body.menor ? { menor: true, buzoId: buzo.id, token: tokenMenor(buzo.id) } : {};
+  if (abiertos?.length) return NextResponse.json({ ok: true, ya: true, primer: primerNombre(buzo.nombre), estudianteId: abiertos[0].id, curso: curso.nombre, ...permisoMenor });
 
   // V55: la fecha que escogió ("64", "71. B"). Si está llena o el curso no
   // tiene fecha, queda en lista de espera ("65").
@@ -159,8 +207,8 @@ export async function POST(request) {
   const { error: eEst } = await s.from("est_estudiantes").insert(fila);
   if (eEst) return NextResponse.json({ error: "No se pudo registrar el curso. Intenta de nuevo." }, { status: 500 });
   const cuando = fecha ? ` · ${fechaLarga(fecha.inicio)}` : espera ? (pidioLlena ? " · lista de espera (la fecha estaba llena)" : " · lista de espera") : "";
-  await logLink(s, fila.id, `Se registró por el link: ${buzo.nombre} (${curso.nombre}${cuando})`);
+  await logLink(s, fila.id, `Se registró por el link: ${buzo.nombre} (${curso.nombre}${cuando})${tutorTxt ? ` · menor de edad, lo registró ${tutorTxt}` : ""}`);
   // V54: aviso en la campanita ("62. si").
-  await avisarEquipoEst(s, { permiso: "estudiantes", titulo: espera ? "Nuevo en lista de espera (link)" : "Nuevo estudiante por el link", texto: `${buzo.nombre} · ${curso.nombre}${fecha ? ` · ${fechaLarga(fecha.inicio)}` : ""}`, url: `/control-estudiantes/estudiante/${fila.id}` });
-  return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio, fecha: fecha ? fecha.inicio : null, espera, llena: pidioLlena, semana: fecha ? curso.semana || null : null });
+  await avisarEquipoEst(s, { permiso: "estudiantes", titulo: espera ? "Nuevo en lista de espera (link)" : "Nuevo estudiante por el link", texto: `${buzo.nombre}${tutorTxt ? ` (menor, lo registró ${tutorTxt})` : ""} · ${curso.nombre}${fecha ? ` · ${fechaLarga(fecha.inicio)}` : ""}`, url: `/control-estudiantes/estudiante/${fila.id}` });
+  return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio, fecha: fecha ? fecha.inicio : null, espera, llena: pidioLlena, semana: fecha ? curso.semana || null : null, ...permisoMenor });
 }

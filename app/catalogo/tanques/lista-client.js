@@ -81,13 +81,14 @@ export default function ListaTanques({ tanques, alquilados = {}, puedeAdministra
             style={{ opacity: t.activo ? 1 : 0.55, textDecoration: "none", color: "inherit" }}
           >
             {t.codigo}
-          </Link>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {/* V62 (216): pegado al código, igual que en Reguladores. */}
             {alquilados[String(t.codigo).toUpperCase()] && (
-              <span className="badge badge-alquilado" title={textoAlquilado(alquilados[String(t.codigo).toUpperCase()])}>
+              <span className="badge badge-alquilado" style={{ marginLeft: 8 }} title={textoAlquilado(alquilados[String(t.codigo).toUpperCase()])}>
                 Alquilado
               </span>
             )}
+          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {!t.activo && (
               <span className="badge badge-rojo">
                 Inactivo{t.motivo_inactivo ? ` · ${t.motivo_inactivo.replace("Rechazado en prueba hidrostática", "rechazado en PH")}` : ""}

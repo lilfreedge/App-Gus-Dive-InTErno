@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { soloDigitos, formatoCedula, rd, fechaCorta, fechaLarga } from "@/lib/viajes/modelo";
-import { semanaDe, menorDe12 } from "@/lib/estudiantes/modelo";
+import { soloDigitos, formatoCedula, rd, fechaCorta, fechaLarga, primerNombre } from "@/lib/viajes/modelo";
+import { semanaDe, menorDe12, edad as edadDe } from "@/lib/estudiantes/modelo";
 import FechaNacimiento from "@/components/FechaNacimiento";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "@/components/viajes/Piezas";
@@ -159,7 +159,7 @@ function Firma({ id, estudianteId, alFirmar }) {
   );
 }
 
-function Privacidad() {
+export function Privacidad() {
   return (
     <div className="pb-priv">
       <IconLock size={15} />
@@ -171,7 +171,7 @@ function Privacidad() {
 const PROGRESO = ["datos", "curso", "docs"];
 
 // V59: las nacionalidades más comunes de quienes vienen a la tienda.
-const NACIONALIDADES = ["Estados Unidos", "España", "Venezuela", "Haití", "Colombia", "Puerto Rico", "Canadá", "Italia", "Francia", "Alemania", "Argentina", "Cuba", "México", "Reino Unido", "Otra"];
+export const NACIONALIDADES = ["Estados Unidos", "España", "Venezuela", "Haití", "Colombia", "Puerto Rico", "Canadá", "Italia", "Francia", "Alemania", "Argentina", "Cuba", "México", "Reino Unido", "Otra"];
 
 // V55 -- La semana del curso (Open Water: "79"), para cuando escoge la fecha.
 function Semana({ inicio, semana }) {
@@ -207,10 +207,19 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
   const [cursoSel, setCursoSel] = useState("");
   const [fechaVista, setFechaVista] = useState("");
   const [res, setRes] = useState(null); // lo que devuelve "registrar"
+  // V62 ("229. si", maqueta V61): "Registrar a un menor de edad". El adulto
+  // pone primero sus datos (documento y celular) y después los del menor.
+  const [menor, setMenor] = useState(false);
+  const [tutorNombre, setTutorNombre] = useState("");
+  const [m, setM] = useState({ nombre: "", nac: "", parentesco: "" });
+  const edadM = edadDe(m.nac);
+  const primerM = primerNombre(m.nombre) || "El menor";
   const [estado, setEstado] = useState(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
-  const id = { tipoDoc, doc, cel: soloDigitos(cel) };
+  // Para subir las fotos: con la cédula y el celular; si es un menor, con el
+  // permiso que da el servidor al registrarlo.
+  const id = res?.menor ? { buzoId: res.buzoId, token: res.token } : { tipoDoc, doc, cel: soloDigitos(cel) };
   const curso = cursos.find((c) => c.id === cursoId);
   const wa = `https://wa.me/${numeroWhatsApp(tienda.whatsapp)}`;
   const ir = (p) => {
@@ -233,7 +242,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
     correr(async () => {
       const r = await api({ accion: "doc", tipoDoc, doc });
       setBuzo(r.encontrado ? r : null);
-      ir(r.encontrado ? "hola" : "datos");
+      ir(menor ? "tutor" : r.encontrado ? "hola" : "datos");
     });
   const verEstado = () =>
     correr(async () => {
@@ -245,7 +254,9 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
       // V59: el contacto de emergencia se guarda como "Nombre · 809-000-0000".
       const emergencia = [String(d.emergenciaNombre || "").trim(), String(d.emergenciaCel || "").trim()].filter(Boolean).join(" · ") || d.emergencia;
       const nac = tipoDoc === "pasaporte" ? (nacionalidad === "Otra" ? nacOtra.trim() : nacionalidad) : "";
-      const r = await api({ accion: "registrar", tipoDoc, doc, cel, datos: { ...d, emergencia, ...(nac ? { nacionalidad: nac } : {}) }, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, ...extra });
+      const r = menor
+        ? await api({ accion: "registrar", tipoDoc, doc, cel, tutorNombre, menor: m, datos: {}, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, ...extra })
+        : await api({ accion: "registrar", tipoDoc, doc, cel, datos: { ...d, emergencia, ...(nac ? { nacionalidad: nac } : {}) }, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, ...extra });
       setRes(r);
       // V61 ("201"): si queda en lista de espera, va directo a "¡Listo!"; los
       // documentos son opcionales ("¿Quieres adelantar?").
@@ -254,7 +265,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
   const cursoElegido = cursos.find((c) => c.id === cursoSel);
 
   const falta = buzo?.falta || { nac: true, direccion: true, emergencia: true, correo: true, foto: true, cedula: true };
-  const pasoN = PROGRESO.indexOf(paso);
+  const pasoN = PROGRESO.indexOf(paso === "tutor" || paso === "menor" ? "datos" : paso);
 
   return (
     <div className="pb ce-pub">
@@ -277,8 +288,17 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
           <div className="pb-card">
             {/* V59 ("163", maqueta-v59 pestaña 6): "¡Bienvenido!", "Cédula" y "Otro
                 documento" (pasaporte o documento de otro país, con la nacionalidad). */}
-            <div className="pb-t">¡Bienvenido!</div>
-            <div className="pb-h">Pon tu documento para empezar.</div>
+            {menor ? (
+              <>
+                <div className="pb-t">Registrar a un menor</div>
+                <div className="pb-h">Primero pon tu documento (el tuyo, del adulto). Después pones los datos del menor.</div>
+              </>
+            ) : (
+              <>
+                <div className="pb-t">¡Bienvenido!</div>
+                <div className="pb-h">Pon tu documento para empezar.</div>
+              </>
+            )}
             <div className="pb-seg">
               <button className={tipoDoc === "cedula" ? "sel" : ""} onClick={() => (setTipoDoc("cedula"), setDoc(""), setAvisoDni(false))}>
                 Cédula
@@ -328,6 +348,86 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
               {cargando ? "Buscando…" : "Seguir"}
             </button>
             <Privacidad />
+            {menor ? (
+              <button className="pb-link" onClick={() => setMenor(false)}>
+                ← No, me voy a registrar yo
+              </button>
+            ) : (
+              <div className="ce-pub-menor">
+                <b>¿Vas a registrar a un menor de edad?</b>
+                <div className="pb-h" style={{ margin: "2px 0 8px" }}>
+                  Hijo, hija o alguien a tu cargo. Primero pones tus datos y después los suyos.
+                </div>
+                <button className="pb-btn sec" onClick={() => (setMenor(true), setError(""), window.scrollTo(0, 0))}>
+                  Registrar a un menor de edad
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* V62 ("229"): los datos del adulto que registra al menor. */}
+        {paso === "tutor" && (
+          <div className="pb-card">
+            {buzo ? (
+              <>
+                <div className="pb-t">¡Hola, {buzo.primer}!</div>
+                <div className="pb-h">{buzo.tieneCel ? `Para confirmar que eres tú, escribe tu celular (el que termina en ${String(buzo.cel).slice(-4)}).` : "Escribe tu celular. Por ahí te escribimos."}</div>
+              </>
+            ) : (
+              <>
+                <div className="pb-t">Tus datos</div>
+                <div className="pb-h">Los tuyos, del adulto. Por WhatsApp te escribimos a ti.</div>
+                <label className="ce-pub-l">Tu nombre completo</label>
+                <input className="pb-input" value={tutorNombre} onChange={(e) => setTutorNombre(e.target.value)} placeholder="Nombre y apellido" />
+                <label className="ce-pub-l">Tu celular</label>
+              </>
+            )}
+            <CampoCel className="pb-input" value={cel} onChange={setCel} />
+            {error && <div className="pb-error">{error}</div>}
+            <button className="pb-btn" disabled={soloDigitos(cel).length !== 10 || (!buzo && !tutorNombre.trim())} onClick={() => ir("menor")}>
+              Seguir
+            </button>
+            <button className="pb-btn sec" onClick={() => ir("doc")}>
+              Atrás
+            </button>
+          </div>
+        )}
+
+        {paso === "menor" && (
+          <div className="pb-card">
+            <div className="ce-pub-registra">
+              Lo registra: <b>{buzo ? buzo.corto : tutorNombre.trim()}</b>
+              {m.parentesco ? ` (${m.parentesco.toLowerCase()})` : ""} · <span style={{ whiteSpace: "nowrap" }}>{String(soloDigitos(cel)).replace(/^(\d{3})\d{3}(\d{4})$/, "$1-•••-$2")}</span>
+            </div>
+            <div className="pb-t">Datos del menor</div>
+            <label className="ce-pub-l">Nombre completo</label>
+            <input className="pb-input" value={m.nombre} onChange={(e) => setM({ ...m, nombre: e.target.value })} placeholder="Nombre y apellido del menor" />
+            <label className="ce-pub-l">Fecha de nacimiento</label>
+            <FechaNacimiento value={m.nac} onChange={(v) => setM({ ...m, nac: v })} selectClassName="pb-input" />
+            {edadM != null && (
+              <div className={edadM < 12 || edadM >= 18 ? "pb-error" : "pb-h"} style={{ marginTop: 6 }}>
+                {primerM} tiene {edadM} año{edadM === 1 ? "" : "s"}.
+                {edadM < 12 ? " El buceo es de 12 años en adelante. Escríbenos por WhatsApp si tienes dudas." : edadM >= 18 ? " Si tiene 18 años o más, que se registre con su propio documento." : ""}
+              </div>
+            )}
+            <label className="ce-pub-l">Parentesco</label>
+            <div className="pb-seg">
+              {["Mamá", "Papá", "Tutor"].map((x) => (
+                <button key={x} className={m.parentesco === x ? "sel" : ""} onClick={() => setM({ ...m, parentesco: x })}>
+                  {x}
+                </button>
+              ))}
+            </div>
+            <label className="ce-pub-l">¿Cuántos buceos tiene?</label>
+            <input className="pb-input" inputMode="numeric" value={buceos} onChange={(e) => setBuceos(e.target.value.replace(/\D/g, ""))} placeholder="0" />
+            {error && <div className="pb-error">{error}</div>}
+            <button className="pb-btn" disabled={!m.nombre.trim() || edadM == null || edadM < 12 || edadM >= 18 || !m.parentesco} onClick={() => ir("curso")}>
+              Seguir
+            </button>
+            <button className="pb-btn sec" onClick={() => ir("tutor")}>
+              Atrás
+            </button>
           </div>
         )}
 
@@ -447,7 +547,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             <button className="pb-btn" disabled={cargando || !cursoId} onClick={() => registrar()}>
               {cargando ? "Registrando…" : "Seguir"}
             </button>
-            <button className="pb-btn sec" onClick={() => ir("datos")}>
+            <button className="pb-btn sec" onClick={() => ir(menor ? "menor" : "datos")}>
               Atrás
             </button>
           </div>
@@ -458,8 +558,8 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             lista de espera ("65"). */}
         {paso === "curso" && conFechas && !cursoElegido && (
           <div className="pb-card">
-            <div className="pb-t">Tu curso</div>
-            <div className="pb-h">¿Qué curso vas a tomar?</div>
+            <div className="pb-t">{menor ? `El curso de ${primerM}` : "Tu curso"}</div>
+            <div className="pb-h">{menor ? "¿Qué curso va a tomar?" : "¿Qué curso vas a tomar?"}</div>
             {cursos.map((c) => (
               <button
                 key={c.id}
@@ -477,7 +577,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
                 {!c.fechas.length && <span className="ce-pub-chip espera">Lista de espera</span>}
               </button>
             ))}
-            <button className="pb-btn sec" onClick={() => ir("datos")}>
+            <button className="pb-btn sec" onClick={() => ir(menor ? "menor" : "datos")}>
               Atrás
             </button>
           </div>
@@ -548,11 +648,22 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
         {paso === "docs" && res && (
           <div className="pb-card">
             <div className="pb-t">Documentos</div>
-            <div className="pb-h">Con esto no tienes que traer copias a la tienda. Si ahora no puedes, lo haces después entrando otra vez con tu cédula.</div>
-            <Subir id={id} que="foto" titulo="Una foto tuya de frente" sub="Para tu certificación. Con buena luz y sin lentes de sol." capture="user" listo={buzo && !falta.foto} />
-            <SubirCedula id={id} tipoDoc={tipoDoc} listo={buzo && !falta.cedula} />
+            {res.menor ? (
+              <>
+                {/* V62 ("229"): las fotos son del menor y firma el adulto. */}
+                <div className="pb-h">Con esto no tienen que traer copias a la tienda.</div>
+                <Subir id={id} que="foto" titulo={`Una foto de ${res.primer} de frente`} sub="Para su certificación. Con buena luz y sin lentes de sol." capture="user" />
+                <Subir id={id} que="cedula" titulo="Su acta de nacimiento o su pasaporte" sub="Una foto o un escaneo donde se lea bien (JPG, PNG, PDF o HEIC)." accept="image/*,application/pdf,.heic,.heif" />
+              </>
+            ) : (
+              <>
+                <div className="pb-h">Con esto no tienes que traer copias a la tienda. Si ahora no puedes, lo haces después entrando otra vez con tu cédula.</div>
+                <Subir id={id} que="foto" titulo="Una foto tuya de frente" sub="Para tu certificación. Con buena luz y sin lentes de sol." capture="user" listo={buzo && !falta.foto} />
+                <SubirCedula id={id} tipoDoc={tipoDoc} listo={buzo && !falta.cedula} />
+              </>
+            )}
             <label className="ce-pub-l" style={{ marginTop: 12 }}>
-              Firma para tu récord de entrenamiento
+              {res.menor ? `${m.parentesco === "Mamá" ? "Firma de la mamá" : m.parentesco === "Papá" ? "Firma del papá" : "Firma del tutor"} para el récord de entrenamiento de ${res.primer}` : "Firma para tu récord de entrenamiento"}
             </label>
             <div className="pb-h" style={{ margin: 0 }}>
               Firma con el dedo dentro del recuadro.
@@ -569,12 +680,18 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             <div className="pb-ok">
               <IconCheck size={34} />
             </div>
-            <div className="pb-t">¡Listo, {res.primer}!{res.espera && !res.ya ? " Ya estás anotado." : ""}</div>
+            <div className="pb-t">{res.menor ? `¡Listo! ${res.primer} quedó registrado.` : `¡Listo, ${res.primer}!${res.espera && !res.ya ? " Ya estás anotado." : ""}`}</div>
             {/* V54: sin lo del pago ni lo de la certificación (nota 1-nov: "porque
                 le esta pidiendo eso si el estudiante ni sabe aún el curso... No
                 hace sentido, el buzo ni siquiera ha empezado el curso"). */}
             <div className="pb-h">
-              {res.ya
+              {res.menor
+                ? res.ya
+                  ? `Ya teníamos a ${res.primer} en ${res.curso}. Te escribiremos por WhatsApp para coordinar.`
+                  : res.espera
+                    ? `${res.primer} está en la lista de espera de ${res.curso}. Te escribiremos por WhatsApp si se abre un cupo o cuando abramos el próximo curso.`
+                    : `Ya tenemos sus datos para ${res.curso}${res.fecha ? `, que empieza el ${fechaLarga(res.fecha)}` : ""}. Te escribiremos por WhatsApp para coordinar.`
+                : res.ya
                 ? `Ya te teníamos en ${res.curso}. Te escribiremos por WhatsApp para coordinar.`
                 : res.espera
                   ? `Estás en la lista de espera de ${res.curso}${res.llena ? " (esa fecha se llenó)" : ""}. Te escribiremos por WhatsApp si se abre un cupo o cuando abramos el próximo curso.`

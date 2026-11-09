@@ -34,8 +34,10 @@ import {
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { Chip, Modal, IconoWA, CampoCel, Atras, Buscar } from "./Piezas";
 import EnviarPdf from "./EnviarPdf";
+import CompartirLink from "@/components/CompartirLink";
+import MenuMas from "@/components/MenuMas";
 import { TIPOS_BITACORA, tipoBitacora, hora12 } from "@/lib/viajes/bitacora";
-import { IconLink, IconReport, IconLock, IconUnlock, IconCheck, IconX, IconClip, IconAlert, IconClipboard, IconPrint } from "@/components/icons";
+import { IconReport, IconCheck, IconX, IconClip, IconAlert, IconClipboard, IconPrint } from "@/components/icons";
 
 const nombreDe = (db, id) => db.buzos.find((b) => b.id === id)?.nombre || "";
 const comprobanteNuevo = (x) => (x.comprobantes || []).some((c) => !c.visto);
@@ -54,47 +56,38 @@ export function Viaje(props) {
   // V46: "buceo" en vez de "viaje" ("viaje" solo los que tienen hotel, como Monte Cristi).
   const P = palabraViaje(v);
   const tabs = [
-    { k: "inscritos", t: `Inscritos (${r.buzos.length})` },
-    { k: "info", t: `Info del ${P}` },
+    // V62 ("231"): "Inscritos" e "Info" sin más texto; el número va en una bolita.
+    { k: "inscritos", t: "Inscritos", n: r.buzos.length },
+    { k: "info", t: "Info" },
     ...(v.equipo.modo === "si" ? [{ k: "equipo", t: "Equipo" }] : []),
     ...(v.habitaciones ? [{ k: "habitaciones", t: "Habitaciones" }] : []),
     ...(p.numeros ? [{ k: "numeros", t: "Números" }] : []),
     ...(p.bitacora ? [{ k: "bitacora", t: "Bitácora" }] : []),
   ];
   const cambiarViaje = (cambios, texto, antes, despues) => ops.cambiarViaje(v, cambios, texto, antes, despues);
-  const link = typeof window !== "undefined" ? `${window.location.origin}/inscripcion/${v.slug}` : `/inscripcion/${v.slug}`;
-  const copiar = (texto, aviso) => {
-    try {
-      navigator.clipboard.writeText(texto);
-      avisar(aviso);
-    } catch {
-      avisar(texto);
-    }
-  };
+
   const q = { ...props, v, r, ev, cerrado, cambiarViaje };
   return (
     <>
       <Atras onClick={() => ir(cerrado ? "historial" : "buceos")}>{cerrado ? "Historial" : "Buceos"}</Atras>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      {/* V62 ("231. ok", maqueta V61): arriba solo el nombre, la fecha y el
+          estado; debajo un resumen en una tarjeta con la barrita del cupo; los
+          botones juntos en una fila (Compartir link, Reporte y ⋯). */}
+      <div className="pg-cab-chip">
         <h1 className="page-title" style={{ margin: 0 }}>
           {v.nombre}
         </h1>
         <Chip c={ESTADOS_VIAJE[ev].c}>{ESTADOS_VIAJE[ev].t}</Chip>
       </div>
       <div className="hint-text" style={{ fontSize: 14, marginTop: 2 }}>
-        {fechaLarga(v.fecha)} · {v.salida} · cupo {v.cupoMin ? `mín. ${v.cupoMin}, ` : ""}máx. {v.cupoMax}
+        {mayuscula(fechaLarga(v.fecha))}
+        {v.salida ? ` · ${v.salida}` : ""}
       </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0 6px" }}>
+      <ResumenBuceo db={db} v={v} r={r} p={p} pasado={yaPaso || cerrado} />
+      <div className="pg-acciones">
         {!cerrado && ev !== "realizado" && (
-          <>
-            <button className="btn secondary vj-btn" onClick={() => copiar(link, "Link de inscripción copiado")}>
-              <IconLink size={16} /> Copiar link
-            </button>
-          </>
+          <CompartirLink ruta={`/inscripcion/${v.slug}`} etiqueta="Compartir link" mensaje={`Hola, aquí te dejo el link para inscribirte en ${v.nombre} del ${fechaLarga(v.fecha)}:`} tituloQr={`${v.nombre} · ${fechaLarga(v.fecha)}`} avisar={avisar} />
         )}
-        {/* V52: "Reporte" abre las opciones (maqueta-v52-nota.html, "37. ok").
-            El del proveedor sigue en la pestaña Equipo ("38. ... quizás sea
-            mejor que esté en otro lado"). */}
         <div className="vj-rep-wrap">
           <button className="btn secondary vj-btn" onClick={() => setRepAbierto((o) => !o)}>
             <IconReport size={16} /> Reporte ▾
@@ -125,16 +118,12 @@ export function Viaje(props) {
             </div>
           )}
         </div>
-        {p.editarViaje && ev === "abierto" && (
-          <button className="btn secondary vj-btn" onClick={() => cambiarViaje({ estado: "cerrado_insc" }, "Cerró la inscripción", "Abierta", "Cerrada")}>
-            <IconLock size={16} /> Cerrar inscripción
-          </button>
-        )}
-        {p.editarViaje && ev === "cerrado_insc" && (
-          <button className="btn secondary vj-btn" onClick={() => cambiarViaje({ estado: "abierto" }, "Abrió la inscripción", "Cerrada", "Abierta")}>
-            <IconUnlock size={16} /> Abrir inscripción
-          </button>
-        )}
+        <MenuMas
+          opciones={[
+            p.editarViaje && ev === "abierto" && { t: "Cerrar inscripción", d: "Ya no se puede inscribir nadie más (quedan en lista de espera).", onClick: () => cambiarViaje({ estado: "cerrado_insc" }, "Cerró la inscripción", "Abierta", "Cerrada") },
+            p.editarViaje && ev === "cerrado_insc" && { t: "Abrir inscripción", d: "Se puede volver a inscribir la gente.", onClick: () => cambiarViaje({ estado: "abierto" }, "Abrió la inscripción", "Cerrada", "Abierta") },
+          ]}
+        />
       </div>
       {cerrado && (
         <div className={`vj-banner ${ev}`}>
@@ -155,6 +144,7 @@ export function Viaje(props) {
         {tabs.map((t) => (
           <button key={t.k} className={`vj-tab${tab === t.k || (tab === "tallas" && t.k === "equipo") ? " sel" : ""}`} onClick={() => ir(`viaje:${id}:${t.k}`)}>
             {t.t}
+            {t.n != null && <span className="pg-tab-n">{t.n}</span>}
           </button>
         ))}
       </div>
@@ -168,6 +158,65 @@ export function Viaje(props) {
   );
 }
 const diasPara0 = (iso) => iso < hoyISO();
+const mayuscula = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
+
+// V62 ("231"): el resumen del buceo en una sola tarjeta, con la barrita del
+// cupo. Antes estaba en cuadritos dentro de Inscritos.
+function ResumenBuceo({ db, v, r, p, pasado }) {
+  const lista = db.inscripciones.filter((x) => x.viajeId === v.id);
+  const inscritos = lista.filter((x) => x.estado === "inscrito");
+  const espera = lista.filter((x) => x.estado === "espera").length;
+  const ep = (x) => estadoPago(v, x);
+  const pagados = r.buzos.filter((x) => ["pagado", "abono", "otro", "curso", "invitado"].includes(ep(x).k)).length;
+  const deben = r.buzos.filter((x) => ["sin", "parcial"].includes(ep(x).k)).length;
+  const libres = Math.max(0, (v.cupoMax || 0) - r.buzos.length);
+  const pct = v.cupoMax ? Math.min(100, Math.round((r.buzos.length / v.cupoMax) * 100)) : 0;
+  return (
+    <div className="card pg-res pg-azul" style={{ marginTop: 10 }}>
+      <div className="pg-res-top">
+        <b>
+          {r.buzos.length} de {v.cupoMax} cupos
+        </b>
+        <span className={libres === 0 ? "pg-lleno" : ""}>
+          {libres === 0 ? "lleno" : `${libres} libre${libres === 1 ? "" : "s"}`}
+          {v.cupoMin && r.buzos.length < v.cupoMin ? ` · mín. ${v.cupoMin}` : ""}
+        </span>
+      </div>
+      <div className="pg-barra">
+        <i style={{ width: `${pct}%` }} />
+      </div>
+      <div className="pg-res-nums">
+        {p.pagos && (
+          <div>
+            <b>{pagados}</b>
+            <span>pagado{pagados === 1 ? "" : "s"}</span>
+          </div>
+        )}
+        {p.pagos && (
+          <div className={deben ? "pg-rojo" : ""}>
+            <b>{deben}</b>
+            <span>{deben === 1 ? "debe" : "deben"}</span>
+          </div>
+        )}
+        {pasado ? (
+          <div>
+            <b>{r.asistieron}</b>
+            <span>asistieron</span>
+          </div>
+        ) : (
+          <div>
+            <b>{inscritos.filter((x) => x.grupo && x.rol !== "staff").length}</b>
+            <span>en el grupo</span>
+          </div>
+        )}
+        <div>
+          <b>{espera}</b>
+          <span>en espera</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ------------------------------------------------------------- cierre
 function Cierre({ db, v, r, p, ir, cambiarViaje, rol }) {
@@ -269,14 +318,16 @@ function Inscritos(props) {
   const espera = lista.filter((x) => x.estado === "espera");
   const pasado = ev === "realizado" || cerrado;
   const ep = (x) => estadoPago(v, x);
+  // V62 ("231"): menos filtros, los que más se usan. "Comprobante nuevo"
+  // sale solo cuando hay alguno; después del buceo, "Sin marcar asistencia"
+  // en vez de "Sin grupo". Staff ya no tiene filtro (sale al final y dice "Staff").
+  const [esperaAbierta, setEsperaAbierta] = useState(false);
   const filtros = [
     { k: "todos", t: "Todos", f: () => true },
-    ...(p.pagos ? [{ k: "sinpagar", t: "Sin pagar", f: (x) => ["sin", "parcial"].includes(ep(x).k) }] : []),
+    ...(p.pagos ? [{ k: "sinpagar", t: "Debe", f: (x) => ["sin", "parcial"].includes(ep(x).k) }] : []),
     ...(p.conciliar ? [{ k: "conciliar", t: "Por conciliar", f: (x) => (x.pagos || []).some((y) => !y.conciliado && !y.abono) }] : []),
-    ...(p.pagos || p.conciliar ? [{ k: "comprobante", t: "Comprobante nuevo", i: IconClip, f: comprobanteNuevo }] : []),
-    { k: "grupo", t: "Sin grupo", f: (x) => !x.grupo },
-    ...(pasado ? [{ k: "asist", t: "Sin marcar asistencia", f: (x) => x.asistio == null }] : []),
-    { k: "staff", t: "Staff", f: (x) => x.rol === "staff" },
+    ...((p.pagos || p.conciliar) && inscritos.some(comprobanteNuevo) ? [{ k: "comprobante", t: "Comprobante nuevo", i: IconClip, f: comprobanteNuevo }] : []),
+    ...(pasado ? [{ k: "asist", t: "Sin marcar asistencia", f: (x) => x.asistio == null }] : [{ k: "grupo", t: "Sin grupo", f: (x) => !x.grupo }]),
   ];
   const fx = filtros.find((f) => f.k === filtro) || filtros[0];
   const visibles = inscritos
@@ -284,38 +335,10 @@ function Inscritos(props) {
     .filter((x) => !q || `${nombreDe(db, x.buzoId)} ${db.buzos.find((b) => b.id === x.buzoId)?.cel}`.toLowerCase().includes(q.toLowerCase().replace(/-/g, "")))
     .sort((a, b) => (a.rol === "staff") - (b.rol === "staff") || nombreDe(db, a.buzoId).localeCompare(nombreDe(db, b.buzoId)));
   const cambiar = (x, cambios, texto, antes, despues) => ops.cambiarIns(x, cambios, `${texto}: ${nombreDe(db, x.buzoId)}`, antes, despues);
-  const pagados = r.buzos.filter((x) => ["pagado", "abono", "otro", "curso", "invitado"].includes(ep(x).k)).length;
 
   return (
     <>
       {v.equipo.modo === "si" && !pasado && <TarjetaProveedor {...props} />}
-      <div className="vj-resumen">
-        <div>
-          <b>{r.buzos.length}</b>
-          <span>de {v.cupoMax} inscritos</span>
-        </div>
-        {pasado ? (
-          <div>
-            <b>{r.asistieron}</b>
-            <span>asistieron</span>
-          </div>
-        ) : (
-          <div>
-            <b>{inscritos.filter((x) => x.grupo && x.rol !== "staff").length}</b>
-            <span>en el grupo</span>
-          </div>
-        )}
-        {p.pagos && (
-          <div>
-            <b>{pagados}</b>
-            <span>pagados</span>
-          </div>
-        )}
-        <div>
-          <b>{espera.length}</b>
-          <span>en lista de espera</span>
-        </div>
-      </div>
       <div className="vj-filtros">
         {filtros.map((f) => {
           const n = inscritos.filter(f.f).length;
@@ -421,9 +444,17 @@ function Inscritos(props) {
           )}
         </>
       )}
+      {/* V62 ("231"): la lista de espera abajo, como una sección que se abre. */}
       {espera.length > 0 && (
-        <>
-          <div className="section-title">Lista de espera ({espera.length})</div>
+        <div className={`pg-espera${esperaAbierta ? " abierta" : ""}`}>
+          <button type="button" className="pg-espera-t" onClick={() => setEsperaAbierta((o) => !o)}>
+            <span style={{ minWidth: 0 }}>
+              <b>Lista de espera ({espera.length})</b>
+              {!esperaAbierta && <span style={{ display: "block" }}>{espera.map((x) => nombreCorto(nombreDe(db, x.buzoId))).join(", ")}</span>}
+            </span>
+            <span>{esperaAbierta ? "▾" : "▸"}</span>
+          </button>
+          {esperaAbierta && (
           <div className="card vj-lista">
             {espera.map((x) => (
               <div key={x.id} className="vj-fila">
@@ -439,7 +470,8 @@ function Inscritos(props) {
               </div>
             ))}
           </div>
-        </>
+          )}
+        </div>
       )}
       {abierto && <PanelInscrito {...props} x={db.inscripciones.find((y) => y.id === abierto)} cerrar={() => setAbierto(null)} cambiar={cambiar} />}
     </>

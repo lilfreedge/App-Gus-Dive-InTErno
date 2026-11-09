@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { codigosAlquilados, sinAlquilados } from "@/lib/alquilados";
+import AvisoAlquilados from "@/components/AvisoAlquilados";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import HeaderSimple from "@/components/HeaderSimple";
@@ -22,6 +24,7 @@ export default async function TecnicoReguladorPage({ searchParams }) {
     .select("*")
     .eq("activo", true)
     .order("codigo");
+  const alq = sinAlquilados(reguladores, await codigosAlquilados(supabase));
 
   return (
     <div>
@@ -36,10 +39,11 @@ export default async function TecnicoReguladorPage({ searchParams }) {
         <Link href={`/tecnico${sufijo}`} className="tec-volver">
           ← Volver
         </Link>
+        <AvisoAlquilados codigos={alq.fuera} />
         <ReguladorPasos
           userId={user.id}
           nombreUsuario={yo.full_name || user.email}
-          reguladores={reguladores || []}
+          reguladores={alq.libres}
           volverA={`/tecnico${sufijo}`}
         />
       </div>

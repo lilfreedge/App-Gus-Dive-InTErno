@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 // año en que nació. value / onChange en formato "AAAA-MM-DD" ("" si falta algo).
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 
-export default function FechaNacimiento({ value, onChange, className = "", selectClassName = "" }) {
+export default function FechaNacimiento({ value, onChange, className = "", selectClassName = "", futuro = false }) {
   const partes = /^\d{4}-\d{2}-\d{2}$/.test(value || "") ? value.split("-") : ["", "", ""];
   const [a, setA] = useState(partes[0]);
   const [m, setM] = useState(partes[1]);
@@ -23,7 +23,9 @@ export default function FechaNacimiento({ value, onChange, className = "", selec
   }, [value]);
   const anioActual = new Date().getFullYear();
   const anios = [];
-  for (let y = anioActual; y >= anioActual - 100; y--) anios.push(String(y));
+  // V62 ("245"): con futuro, los años que vienen (para "Escribirle de nuevo el").
+  if (futuro) for (let y = anioActual; y <= anioActual + 2; y++) anios.push(String(y));
+  else for (let y = anioActual; y >= anioActual - 100; y--) anios.push(String(y));
   const diasMes = a && m ? new Date(Number(a), Number(m), 0).getDate() : 31;
   const cambiar = (na, nm, nd) => {
     setA(na);

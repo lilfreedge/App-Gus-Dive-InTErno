@@ -68,6 +68,8 @@ export async function POST(request) {
       // V47: qué tallas ya tenemos, para no volver a pedirlas.
       tallasGuardadas: { bcd: !!b.tallas?.bcd, wetsuit: !!b.tallas?.wetsuit, chapaletas: !!b.tallas?.chapaletas },
       yaInscrito: !!ya && ya.estado !== "quitado",
+      // V62 ("196"): si está en lista de espera, el link no le pide pagar.
+      enEspera: !!ya && ya.estado === "espera",
       quedan,
       // V48: el link del grupo de WhatsApp solo se lo damos al que está inscrito.
     });

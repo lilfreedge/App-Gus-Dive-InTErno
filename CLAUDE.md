@@ -30,7 +30,7 @@ Producción: `app-gus-dive-in-t-erno.vercel.app`. Vercel publica solo cada vez q
     ```
     NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=x SUPABASE_SERVICE_ROLE_KEY=x npx next build
     ```
-13. **Alquiler: no se toca hasta que él lo diga** (ver "Pendiente").
+13. **Alquiler:** solo lo que él apruebe (ya aprobó y se hizo "Vino con problemas"; los premios, 232, quedan para más adelante).
 
 ## Las apps (en `/espacio` se escoge una)
 
@@ -44,33 +44,28 @@ Control Estudiantes, Buceos y Alquiler salen "En construcción" en `/espacio` (`
 
 Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzos`.
 
-## Estado (6-nov-2026)
+## Estado (8-nov-2026)
 
-- En GitHub está la **V59**. La **V60** y la **V61** están hechas y sin subir; él dijo "No lo subas". Súbelas juntas solo cuando diga "súbela".
-- SQL para correr cuando se suba: `supabase/todo_v61_una_sola_vez.sql` (migraciones 83 a 87). Se puede correr más de una vez.
-- Lista de verificación pendiente, en una sola lista con los dos grupos:
-  - 189–197: V60.
-  - 210 en adelante: V61.
-  - Él dijo: "al final verifico todo".
-- Maquetas en `public/maquetas/`:
-  - `maqueta-v60.html`: ya contestada.
-  - `maqueta-v61.html`: esperando su respuesta.
+- En GitHub está la **V61**. La **V62** está hecha en commits locales, sin subir. Súbela solo cuando él diga "súbela".
+- SQL para correr cuando se suba: `supabase/todo_v62_una_sola_vez.sql` (migraciones 88, 89 y 90). Se puede correr más de una vez.
+- Lista de verificación de la V62: 251–262 y 264 (la 234, B). Él dijo "al final verifico todo".
+- Maquetas: `maqueta-v61.html` y la maqueta V62 ya están contestadas.
 
 ## Pendiente
 
-**Esperando su respuesta a la maqueta V61:**
-1. Registrar a un menor de edad (203).
-2. Recordatorios para técnicos (compresores, inspección visual, mantenimiento de reguladores).
-3. Página del buceo más ordenada.
-4. Alquiler: premios por lo acumulado.
-5. Alquiler: "Vino con problemas".
+**Aprobado y sin hacer (la próxima tanda):**
+- **230, Recordatorios para técnicos** (App Interno, Equipos): una sola sección para compresores, inspección visual y mantenimiento de reguladores.
+  - Cada recordatorio: qué hacer, cada cuánto y a quién le toca.
+  - "Hacerlo" le sale solo a la persona asignada; el Titular y los administradores ven todos.
+  - Avisos solo a la persona asignada: campanita (y WhatsApp o correo si se marca). Al asignarlo le llega "Te asignaron…".
+- **162, Mi registro** (ver abajo).
 
 **Preguntas abiertas:**
-- **200:** lista de Estudiantes: ¿A (una sola etiqueta) o B (texto con puntito)?
-- **Correos en spam:** se cambió el correo de avisos de Buceos a un documento HTML completo. Si sigue cayendo en spam, pídele los encabezados completos de un correo ("Ver original") y que agregue tienda@gusdivecenter.com a los remitentes seguros. El cambio a `app.gusdivecenter.com` también ayuda, porque los links dejan de ser `vercel.app`.
-- **205:** "¿Llegas directo?". Explicarle con pasos (ver abajo).
+- **236, correos en spam:** (8-nov: "por ahora no he vuelto a ver, te mantengo al tanto"). Se cambió el correo de avisos de Buceos a un documento HTML completo. Si sigue cayendo en spam, pídele los encabezados completos de un correo ("Ver original") y que agregue tienda@gusdivecenter.com a los remitentes seguros. El cambio a `app.gusdivecenter.com` también ayuda, porque los links dejan de ser `vercel.app`.
+- **217–228:** lista de verificación que todavía no contesta.
+- **243 / 191:** el 404. Él avisa si le vuelve a salir.
 
-**Aprobado de antes y todavía sin hacer:**
+**162, detalle:**
 - 162, "Mi registro": el estudiante vuelve a entrar al link y ve su perfil.
   - Cambiar la foto y la firma solo cada 6 meses.
   - Ve sus datos y los puede cambiar.
@@ -79,6 +74,8 @@ Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzo
   - Después, lo mismo para los buzos en Buceos ("perfiles de los buzos").
 
 **Para más adelante (él lo dijo):**
+- **232:** Alquiler, premios por lo acumulado.
+- **247:** el link del buceo se queda como estaba (él dijo que no).
 - **205:** Buceos › Más › Catálogo › La Caleta › "¿Llegas directo? (punto de encuentro)", llenar y Guardar.
 - **206:** buscar una forma de saber si una cédula dominicana es real.
 - **207:** botón "Entrar al grupo de WhatsApp" con el link de invitación de cada buceo o curso.

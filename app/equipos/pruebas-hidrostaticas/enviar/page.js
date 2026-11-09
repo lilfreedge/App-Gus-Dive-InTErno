@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { codigosAlquilados, sinAlquilados } from "@/lib/alquilados";
+import AvisoAlquilados from "@/components/AvisoAlquilados";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { tieneAcceso, requireInterno } from "@/lib/roles";
@@ -21,7 +23,8 @@ export default async function EnviarTanquesPage() {
     idsTanquesAfuera(supabase),
   ]);
   const idsAfuera = new Set(afuera);
-  const disponibles = (tanques || []).filter((t) => !idsAfuera.has(t.id));
+  const alq = sinAlquilados((tanques || []).filter((t) => !idsAfuera.has(t.id)), await codigosAlquilados(supabase));
+  const disponibles = alq.libres;
 
   return (
     <div>
@@ -38,6 +41,7 @@ export default async function EnviarTanquesPage() {
           ]}
         />
         <h1 className="page-title">Enviar tanques a PH</h1>
+        <AvisoAlquilados codigos={alq.fuera} />
         <EnviarTanquesForm
           userId={user.id}
           nombreUsuario={profile?.full_name || user.email}
