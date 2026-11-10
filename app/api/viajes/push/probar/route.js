@@ -3,6 +3,7 @@ import webpush from "web-push";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { llavesPush } from "@/lib/viajes/avisos";
+import { origenDe } from "@/lib/direccion";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -19,7 +20,7 @@ export async function POST(request) {
   const { data: subs } = await s.from("viajes_push").select("id, endpoint, p256dh, auth").eq("user_id", user.id);
   if (!subs?.length) return NextResponse.json({ error: "Todavía no has activado las notificaciones en ningún celular." }, { status: 400 });
   const k = await llavesPush(s);
-  const origen = new URL(request.url).origin;
+  const origen = origenDe(request);
   webpush.setVapidDetails(origen.startsWith("https:") ? origen : "mailto:avisos@gusdivecenter.com", k.publica, k.privada);
   // V52: también se prueba desde App Interno y App Equipos de clientes.
   const desde = (() => {

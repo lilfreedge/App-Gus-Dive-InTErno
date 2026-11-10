@@ -248,6 +248,13 @@ export default function TecnicoInicio({
           <ICheck size={20} /> {guardando === r.key ? "..." : "Hecho"}
         </button>
       );
+    } else if (r.url) {
+      // V63 ("230"): inspección visual o mantenimiento de reguladores.
+      accion = (
+        <Link href={conComo(r.url)} className="tec-btn azul chico">
+          Hacerlo
+        </Link>
+      );
     } else if (r.compresorId && accesos.registrarCompresor) {
       accion = (
         <Link

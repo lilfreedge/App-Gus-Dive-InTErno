@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { PREGUNTAS, fechaLarga, rd, soloDigitos, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos, palabraViaje, tallasPara, partesSalida, linkGoogleCalendar } from "@/lib/viajes/modelo";
+import { PREGUNTAS, fechaLarga, rd, soloDigitos, celValido, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos, palabraViaje, tallasPara, partesSalida, linkGoogleCalendar, TALLAS } from "@/lib/viajes/modelo";
+import { subirArchivo } from "@/lib/estudiantes/subir";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "./Piezas";
 import { IconCheck, IconClip, IconCalendar, IconLock, IconChat, IconAlert, IconCamera } from "@/components/icons";
+import { urlPrincipal } from "@/lib/direccion";
 
 // V42 -- Lo que ve el buzo en el link de inscripción (maqueta-viajes-v2).
 // Se identifica con su cédula o pasaporte; el celular queda para escribirle.
@@ -90,6 +92,224 @@ function CuadroCuentas({ cuentas, tienda, copiar, copiado }) {
   );
 }
 
+// V64 ("275", "276", "279", "281"): "Mi perfil" del buzo. Ve y cambia sus
+// datos (correo, emergencia, tallas), cambia su celular una vez al mes, sube
+// su certificación (se ve como una tarjeta; "Revisada por Gus" cuando la
+// tienda la revisa) y ve sus buceos con su pago.
+const AGENCIAS = ["SNSI", "PADI", "SSI", "Raid", "NAUI", "Otra"];
+const dma = (iso) => (iso ? iso.split("-").reverse().join("/") : "");
+function MiPerfil({ perfil, setPerfil, slug, tipoDoc, doc, cel, setCel, tienda, cuentas, copiar, copiado, atras }) {
+  const [d, setD] = useState({ correo: perfil.correo, emergencia: perfil.emergencia, tallas: { ...perfil.tallas }, agencia: perfil.agencia, nivel: perfil.nivel, cert: perfil.cert });
+  const [msj, setMsj] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [cambiaCel, setCambiaCel] = useState(false);
+  const [nuevo, setNuevo] = useState({ a: "", b: "" });
+  const [msjCel, setMsjCel] = useState("");
+  const [subiendo, setSubiendo] = useState(false);
+  const [msjCert, setMsjCert] = useState("");
+  const cambio = JSON.stringify(d) !== JSON.stringify({ correo: perfil.correo, emergencia: perfil.emergencia, tallas: { ...perfil.tallas }, agencia: perfil.agencia, nivel: perfil.nivel, cert: perfil.cert });
+  async function guardar() {
+    setGuardando(true);
+    setMsj("");
+    try {
+      await api({ accion: "perfil-datos", slug, tipoDoc, doc, cel, datos: d });
+      setPerfil({ ...perfil, ...d });
+      setMsj("Guardado.");
+    } catch (e) {
+      setMsj(e.message);
+    }
+    setGuardando(false);
+  }
+  async function guardarCel() {
+    setMsjCel("");
+    try {
+      const r = await api({ accion: "perfil-cel", slug, tipoDoc, doc, cel, nuevo: nuevo.a, otraVez: nuevo.b });
+      setCel(soloDigitos(nuevo.a));
+      const desde = new Date(Date.now() + 30 * 86400000 - 4 * 3600000).toISOString().slice(0, 10);
+      setPerfil({ ...perfil, cel: r.cel, celCambio: { puede: false, desde } });
+      setCambiaCel(false);
+      setNuevo({ a: "", b: "" });
+      setMsjCel("Listo, ya tenemos tu celular nuevo.");
+    } catch (e) {
+      setMsjCel(e.message);
+    }
+  }
+  async function subirCert(e) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    setSubiendo(true);
+    setMsjCert("");
+    try {
+      await subirArchivo({ tipoDoc, doc, cel }, "certificacion", f, null);
+      setPerfil({ ...perfil, certFoto: true, certRevisada: false });
+    } catch (err) {
+      setMsjCert(err.message);
+    }
+    setSubiendo(false);
+  }
+  const wa = tienda?.whatsapp ? `https://wa.me/${numeroWhatsApp(tienda.whatsapp)}` : null;
+  return (
+    <div className="pb-card">
+      <div className="pb-t">Mi perfil</div>
+      <div className="pb-h">Hola, {perfil.primer}.</div>
+
+      <div className="pb-perfil-t">Mis datos</div>
+      <div className="pb-perfil-fijo">
+        <b>{perfil.nombre}</b>
+        <span>
+          Celular que termina en {String(perfil.cel || "").slice(-4)}
+          {perfil.celCambio?.puede ? (
+            !cambiaCel && (
+              <>
+                {" · "}
+                <a className="pb-perfil-link" onClick={() => (setCambiaCel(true), setMsjCel(""))}>
+                  Cambiar mi celular
+                </a>
+              </>
+            )
+          ) : (
+            <> · lo puedes cambiar desde el {dma(perfil.celCambio?.desde)}</>
+          )}
+        </span>
+      </div>
+      {cambiaCel && (
+        <div className="pb-perfil-caja">
+          <b>Cambiar mi celular</b>
+          <div className="pb-h" style={{ margin: "2px 0 6px" }}>
+            Se puede cambiar una vez al mes. Por ese número te escribimos por WhatsApp y con él entras a tu perfil.
+          </div>
+          <label className="ce-pub-l">Celular nuevo (WhatsApp)</label>
+          <CampoCel className="pb-input" value={nuevo.a} onChange={(x) => setNuevo({ ...nuevo, a: x })} />
+          <label className="ce-pub-l">Escríbelo otra vez</label>
+          <CampoCel className="pb-input" value={nuevo.b} onChange={(x) => setNuevo({ ...nuevo, b: x })} />
+          <button className="pb-btn" disabled={!celValido(nuevo.a) || !celValido(nuevo.b)} onClick={guardarCel}>
+            Guardar mi celular nuevo
+          </button>
+          <button className="pb-btn sec pb-chico" onClick={() => (setCambiaCel(false), setMsjCel(""))}>
+            Cancelar
+          </button>
+        </div>
+      )}
+      {msjCel && <div className={/^Listo/.test(msjCel) ? "pb-h" : "pb-error"}>{msjCel}</div>}
+      <label className="ce-pub-l">Correo</label>
+      <input className="pb-input" type="email" value={d.correo} onChange={(e) => setD({ ...d, correo: e.target.value })} placeholder="tucorreo@ejemplo.com" />
+      <label className="ce-pub-l">Contacto de emergencia</label>
+      <input className="pb-input" value={d.emergencia} onChange={(e) => setD({ ...d, emergencia: e.target.value })} placeholder="Nombre · celular" />
+      <label className="ce-pub-l">Mis tallas (para apartarte el equipo)</label>
+      {TALLAS.map((t) => (
+        <select key={t.k} className="pb-input" style={{ marginBottom: 6 }} value={d.tallas?.[t.k] || ""} onChange={(e) => setD({ ...d, tallas: { ...d.tallas, [t.k]: e.target.value } })}>
+          <option value="">{t.t}: sin poner</option>
+          {t.ops.map((o) => (
+            <option key={o.v} value={o.v}>
+              {t.t.replace("Talla del ", "").replace("Talla de ", "")}: {o.t}
+            </option>
+          ))}
+        </select>
+      ))}
+
+      <div className="pb-perfil-t">Mi certificación</div>
+      <div className="pb-perfil-dos">
+        <select className="pb-input" value={d.agencia} onChange={(e) => setD({ ...d, agencia: e.target.value })}>
+          <option value="">Agencia…</option>
+          {AGENCIAS.map((a) => (
+            <option key={a}>{a}</option>
+          ))}
+        </select>
+        <input className="pb-input" value={d.nivel} onChange={(e) => setD({ ...d, nivel: e.target.value })} placeholder="Nivel (ej. Advanced)" />
+      </div>
+      <input className="pb-input" style={{ marginTop: 6 }} value={d.cert} onChange={(e) => setD({ ...d, cert: e.target.value })} placeholder="Número de certificación (si lo tienes)" />
+      {perfil.certFoto ? (
+        <div className="pb-cert">
+          <span className="pb-cert-sello">{perfil.certRevisada ? "Revisada por Gus" : "Sin revisar todavía"}</span>
+          <div className="pb-cert-ag">{d.agencia || "Certificación"}</div>
+          <div className="pb-cert-nv">{d.nivel || "Tu nivel"}</div>
+          <div className="pb-cert-nm">
+            {perfil.nombre}
+            {d.cert ? ` · No. ${d.cert}` : ""}
+          </div>
+          <label className="pb-cert-cambiar">
+            {subiendo ? "Subiendo…" : "Cambiar"}
+            <input type="file" accept="image/*,application/pdf,.heic,.heif" hidden onChange={subirCert} />
+          </label>
+        </div>
+      ) : (
+        <label className="pb-cert-subir">
+          <IconCamera size={18} />
+          <span>
+            <b>{subiendo ? "Subiendo…" : "Subir mi certificación"}</b>
+            <small>Una captura de pantalla de la app de tu agencia o una foto de tu tarjeta (JPG, PNG o PDF).</small>
+          </span>
+          <input type="file" accept="image/*,application/pdf,.heic,.heif" hidden onChange={subirCert} />
+        </label>
+      )}
+      {msjCert && <div className="pb-error">{msjCert}</div>}
+      {cambio && (
+        <button className="pb-btn" disabled={guardando} onClick={guardar}>
+          {guardando ? "Guardando…" : "Guardar mis datos"}
+        </button>
+      )}
+      {msj && <div className={msj === "Guardado." ? "pb-h" : "pb-error"}>{msj}</div>}
+      <div className="pb-h" style={{ fontSize: 12.5 }}>
+        Para cambiar tu nombre o tu documento, escríbenos por WhatsApp.
+      </div>
+
+      <div className="pb-perfil-t">Mis buceos</div>
+      {!perfil.proximos.length && <div className="pb-h">No tienes buceos próximos.</div>}
+      {perfil.proximos.map((b) => (
+        <div key={b.id} className="pb-perfil-bz">
+          <b>{b.nombre}</b>
+          <span className="pb-h" style={{ margin: 0 }}>
+            {fechaLarga(b.fecha)}
+            {b.salida ? ` · ${b.salida}` : ""}
+          </span>
+          <div style={{ marginTop: 6 }}>
+            {b.espera ? (
+              <span className="pb-perfil-chip">Lista de espera</span>
+            ) : b.pago.k === "pagado" || b.pago.k === "abono" || b.pago.k === "otro" ? (
+              <span className="pb-perfil-chip v">Pagado</span>
+            ) : b.pago.falta > 0 ? (
+              <span className="pb-perfil-chip r">Te falta pagar {rd(b.pago.falta)}</span>
+            ) : (
+              <span className="pb-perfil-chip">{b.pago.t}</span>
+            )}
+          </div>
+          {!b.espera && b.pago.falta > 0 && <SubirComprobante slug={b.slug} tipoDoc={tipoDoc} doc={doc} cuentas={cuentas} tienda={tienda} copiar={copiar} copiado={copiado} monto={rd(b.pago.falta)} />}
+        </div>
+      ))}
+      {perfil.anteriores.length > 0 && (
+        <>
+          <div className="pb-h" style={{ fontWeight: 700, margin: "10px 0 4px" }}>
+            Anteriores
+          </div>
+          {perfil.anteriores.map((b) => (
+            <div key={b.id} className="pb-perfil-bz">
+              <b>{b.nombre}</b>
+              <span className="pb-h" style={{ margin: 0 }}>
+                {fechaLarga(b.fecha)}
+                {b.asistio === true ? " · fuiste" : b.asistio === false ? " · no fuiste" : ""}
+              </span>
+            </div>
+          ))}
+        </>
+      )}
+      {perfil.esEstudiante && (
+        <a className="pb-btn sec" href="/estudiante" style={{ display: "block", textDecoration: "none", textAlign: "center" }}>
+          Mis cursos con Gus (Mis documentos)
+        </a>
+      )}
+      {wa && (
+        <a className="pb-btn verde" href={wa} target="_blank" rel="noreferrer" style={{ display: "block", textDecoration: "none" }}>
+          <IconChat size={18} /> Escribir por WhatsApp
+        </a>
+      )}
+      <button type="button" className="pb-link" onClick={atras}>
+        ← Atrás
+      </button>
+    </div>
+  );
+}
+
 function SubirComprobante({ slug, tipoDoc, doc, cuentas, copiar, copiado, monto, tienda }) {
   const [estado, setEstado] = useState(null); // null | "subiendo" | { nombre } | { error }
   async function subir(file) {
@@ -169,7 +389,7 @@ function CuadroSalida({ v, enFin, conCalendario }) {
   const sal = partesSalida(v.salida);
   const f = fechaLarga(v.fecha);
   const agregar = () => {
-    const link = typeof window !== "undefined" ? `${window.location.origin}/inscripcion/${v.slug}` : "";
+    const link = typeof window !== "undefined" ? urlPrincipal(`/inscripcion/${v.slug}`) : "";
     const ios = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Macintosh/i.test(navigator.userAgent) && (navigator.maxTouchPoints > 0 || /iPhone|iPad|iPod/i.test(navigator.userAgent));
     if (ios) window.location.href = `/api/viajes/ics/${encodeURIComponent(v.slug)}`;
     else window.open(linkGoogleCalendar(v, link), "_blank", "noopener");
@@ -263,6 +483,9 @@ export default function PublicoViaje({ v, tienda }) {
   const [inscritoPor, setInscritoPor] = useState(null); // { tipo, doc, corto }
   const [quedan, setQuedan] = useState(v.quedan);
   const [copiado, setCopiado] = useState("");
+  // V64 ("275", "276"): "Mi perfil" del buzo (se entra con su celular).
+  const [perfilCel, setPerfilCel] = useState("");
+  const [perfil, setPerfil] = useState(null);
   // Viajes en pesos: solo la cuenta en pesos. En dólares: las dos.
   const cuentas = (tienda?.cuentas || []).filter((c) => v.moneda === "USD" || c.moneda === "DOP");
   const copiar = (t) => {
@@ -321,6 +544,12 @@ export default function PublicoViaje({ v, tienda }) {
     </button>
   );
 
+  const entrarPerfil = () =>
+    correr(async () => {
+      const j = await api({ accion: "perfil", slug: v.slug, tipoDoc, doc, cel: perfilCel });
+      setPerfil(j);
+      ir("perfil");
+    });
   const buscarDoc = () =>
     correr(async () => {
       const j = await api({ accion: "doc", slug: v.slug, tipoDoc, doc });
@@ -347,7 +576,7 @@ export default function PublicoViaje({ v, tienda }) {
   const seguirDatos = () =>
     !nuevo.nombre.trim() || !nuevo.agencia
       ? setError("Faltan tu nombre y tu certificación.")
-      : soloDigitos(nuevo.cel).length !== 10
+      : !celValido(nuevo.cel)
       ? setError("Escribe tu celular completo.")
       : ir("viaje");
 
@@ -605,10 +834,16 @@ export default function PublicoViaje({ v, tienda }) {
                     <button className="pb-btn sec pb-chico" onClick={otraPersona}>
                       Inscribir a otra persona
                     </button>
+                    {!inscritoPor && (
+                      <button className="pb-btn sec pb-chico" onClick={() => ir("perfil-cel")}>
+                        Ver mi perfil
+                      </button>
+                    )}
                   </>
                 ) : (
                   <>
-                    <div className="pb-t">¿Eres {buzo.corto}?</div>
+                    {/* V64 ("278. A"): el nombre completo desde la cédula. */}
+                    <div className="pb-t">¿Eres {buzo.nombre || buzo.corto}?</div>
                     {buzo.cel && <div className="pb-h">Te escribiremos al {buzo.cel}.</div>}
                     <button className="pb-btn" onClick={() => ir("viaje")}>
                       Sí, {inscritoPor ? "es esa persona" : "soy yo"}
@@ -625,10 +860,32 @@ export default function PublicoViaje({ v, tienda }) {
                     >
                       No {inscritoPor ? "es esa persona" : "soy yo"}
                     </button>
+                    {!inscritoPor && (
+                      <button className="pb-btn sec pb-chico" onClick={() => ir("perfil-cel")}>
+                        Ver mi perfil
+                      </button>
+                    )}
                     <BotonAtras />
                   </>
                 )}
               </div>
+            )}
+
+            {/* V64 ("275"): para entrar a "Mi perfil", su celular. */}
+            {paso === "perfil-cel" && buzo && (
+              <div className="pb-card" onKeyDown={conEnter(() => entrarPerfil())}>
+                <div className="pb-t">Tu celular</div>
+                <div className="pb-h">Para confirmar que eres tú, escribe tu celular (el que termina en {String(buzo.cel || "").slice(-4)}).</div>
+                <CampoCel className="pb-input" value={perfilCel} onChange={setPerfilCel} />
+                {error && <div className="pb-error">{error}</div>}
+                <button className="pb-btn" disabled={cargando || !celValido(perfilCel)} onClick={() => entrarPerfil()}>
+                  {cargando ? "Un momento…" : "Entrar a mi perfil"}
+                </button>
+                <BotonAtras />
+              </div>
+            )}
+            {paso === "perfil" && perfil && (
+              <MiPerfil perfil={perfil} setPerfil={setPerfil} slug={v.slug} tipoDoc={tipoDoc} doc={doc} cel={perfilCel} setCel={setPerfilCel} tienda={tienda} cuentas={cuentas} copiar={copiar} copiado={copiado} atras={atras} />
             )}
 
             {paso === "cel" && (
@@ -638,7 +895,7 @@ export default function PublicoViaje({ v, tienda }) {
                     solo nombre y celular: con el celular se encuentran y se les
                     guarda la cédula. */}
                 <div className="pb-t">¿Primera vez buceando con Gus?</div>
-                <div className="pb-h">Ingresa tu número de celular.</div>
+                <div className="pb-h">Ingresa tu número de celular (el de WhatsApp).</div>
                 <CampoCel className="pb-input" value={nuevo.cel} onChange={(cel) => setNuevo({ ...nuevo, cel })} />
                 {error && <div className="pb-error">{error}</div>}
                 <button className="pb-btn" disabled={cargando} onClick={buscarCel}>

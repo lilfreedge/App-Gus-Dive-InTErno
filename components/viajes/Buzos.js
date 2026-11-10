@@ -205,7 +205,8 @@ export function Buzos({ db, ops, p, ir }) {
   );
 }
 
-export function FichaBuzo({ db, ops, id, p, ir }) {
+export function FichaBuzo({ db, ops, id, p, ir, rol }) {
+  const yo = rol;
   const [editando, setEditando] = useState(false);
   const b = db.buzos.find((x) => x.id === id);
   const mismos = db.buzos.filter((x) => x.id !== b.id && x.cel && x.cel === b.cel);
@@ -260,6 +261,25 @@ export function FichaBuzo({ db, ops, id, p, ir }) {
               {b.agencia || "—"} {b.nivel} {b.cert}
             </b>
           </div>
+          {/* V64 ("281"): la certificación que subió desde "Mi perfil" en el link. */}
+          {b.certFoto && (
+            <div className="vj-cert">
+              <div className="vj-cert-t">
+                <span>{[b.agencia, b.nivel].filter(Boolean).join(" · ") || "Certificación"}</span>
+                {b.certRevisadaEn ? <span className="vj-chip verde">Revisada por {b.certRevisadaPor || "Gus"}</span> : <span className="vj-chip ambar">Sin revisar</span>}
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+                <button className="btn secondary vj-mini" onClick={() => ops.verCertificacion(b)}>
+                  Ver la imagen
+                </button>
+                {p.inscribir && !b.certRevisadaEn && (
+                  <button className="btn secondary vj-mini" onClick={() => ops.guardarBuzo(b, { certRevisadaEn: new Date().toISOString(), certRevisadaPor: yo?.corto || "" }, `Revisó la certificación de ${b.nombre}`)}>
+                    Marcar revisada
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
           <div className="vj-dato">
             <span>Tallas</span>
             <b>

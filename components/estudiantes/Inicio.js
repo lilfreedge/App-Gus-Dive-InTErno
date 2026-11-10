@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { Buscar } from "@/components/viajes/Piezas";
-import { IconHistory, IconUsers, IconPlus, IconCatalog, IconEdit } from "@/components/icons";
+import { IconHistory, IconUsers, IconPlus, IconCatalog, IconEdit, IconChart } from "@/components/icons";
 import { listoParaAlmacen, pagoInstructorPendiente, debe, pagoListo, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, lunesProximos, ocupados, quedan } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
 import CompartirLink from "@/components/CompartirLink";
 import MenuMas from "@/components/MenuMas";
-import { sumarDias } from "@/lib/viajes/modelo";
+import { sumarDias, fechaLarga } from "@/lib/viajes/modelo";
+import { urlPrincipal } from "@/lib/direccion";
 
 // Pantallas de Control Estudiantes: Inicio, la lista, Más y la Bitácora.
 
@@ -17,7 +18,7 @@ export const buzoDe = (db, est) => db.buzos.find((b) => b.id === est.buzoId) || 
 const diasDesde = (iso) => (iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : 0);
 
 export function copiarLink(ruta, avisar, texto) {
-  const url = `${window.location.origin}${ruta}`;
+  const url = urlPrincipal(ruta);
   try {
     navigator.clipboard
       .writeText(url)
@@ -34,7 +35,7 @@ export const FILTROS = [
   { k: "curso", t: "En curso", f: (e) => e.estado === "curso" },
   // V55: antes "Para el almacén" ("78. Cambiar 'listos para el almacén' por 'Listo para procesar'").
   { k: "para-almacen", t: "Listo para procesar", f: (e, db) => listoParaAlmacen(e, cursoDe(db, e)) },
-  { k: "almacen", t: "Procesando", f: (e) => e.estado === "almacen" },
+  { k: "almacen", t: "Pendiente procesar", f: (e) => e.estado === "almacen" },
   { k: "por-avisar", t: "Por avisar", f: (e) => e.estado === "certificacion" },
   { k: "pago-instructor", t: "Pago al instructor", f: (e) => pagoInstructorPendiente(e) },
   { k: "debe", t: "Deben", f: (e) => e.estado !== "cancelado" && debe(e) > 0 },
@@ -45,7 +46,7 @@ export const FILTROS = [
   { k: "cancelados", t: "Cancelados", f: (e) => e.estado === "cancelado" },
 ];
 
-export function FilaEstudiante({ db, est, ir }) {
+export function FilaEstudiante({ db, est, ir, p }) {
   const b = buzoDe(db, est);
   const c = cursoDe(db, est);
   const a = avance(est, c);
@@ -63,7 +64,7 @@ export function FilaEstudiante({ db, est, ir }) {
       <div className="ce-est-m">
         {[est.instructor, est.fechaInicio ? `${est.fechaInicio > hoyISO() ? "empieza" : "empezó"} el ${fechaCorta(est.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
         {est.estado === "curso" ? (falta.length ? ` · falta ${falta.slice(0, 3).join(", ")}${falta.length > 3 ? "…" : ""}` : " · listo para procesar") : ` · ${nombreEtapa(est.estado)}`}
-        {d > 0 && <span className="ce-debe"> · debe {rd(d)}</span>}
+        {d > 0 && p?.montos !== false && <span className="ce-debe"> · debe {rd(d)}</span>}
       </div>
       {est.estado === "curso" && (
         <div className="ce-barra">
@@ -149,7 +150,7 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
   const abrirEditar = () => setForm({ id: f.id, cursoId: f.cursoId, inicio: f.inicio, cupo: f.cupo == null ? "" : String(f.cupo), instructor: f.instructor, nota: f.nota });
   async function borrar() {
     const k = gente.length;
-    if (!window.confirm(k > 0 ? `Este curso tiene ${k} estudiante${k === 1 ? "" : "s"}. Se quedan sin fecha. ¿Borrarlo?` : "¿Borrar este curso?")) return;
+    if (!window.confirm(k > 0 ? `Este curso tiene ${k} estudiante${k === 1 ? "" : "s"}. Ya no van a salir en el curso (quedan cancelados, con su ficha en la base). ¿Borrarlo?` : "¿Borrar este curso?")) return;
     const ok = await ops.borrarFecha({ id: f.id, inicio: f.inicio }, c);
     if (ok !== false) ir("cursos");
   }
@@ -186,14 +187,18 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
           </div>
         )}
         <div className="pg-res-nums">
-          <div>
-            <b>{pagaron}</b>
-            <span>pagaron</span>
-          </div>
-          <div className={deben ? "pg-rojo" : ""}>
-            <b>{deben}</b>
-            <span>{deben === 1 ? "debe" : "deben"}</span>
-          </div>
+          {p.montos && (
+            <>
+              <div>
+                <b>{pagaron}</b>
+                <span>pagaron</span>
+              </div>
+              <div className={deben ? "pg-rojo" : ""}>
+                <b>{deben}</b>
+                <span>{deben === 1 ? "debe" : "deben"}</span>
+              </div>
+            </>
+          )}
           <div>
             <b>{espera.length}</b>
             <span>en espera</span>
@@ -203,7 +208,8 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
 
       <div className="pg-acciones">
         {/* V62 ("249"): Compartir link (copiar, WhatsApp o código QR). */}
-        <CompartirLink ruta="/estudiante" etiqueta="Compartir link" mensaje={`Hola, aquí te dejo el link para registrarte en el curso ${c?.nombre || ""}`.trim() + ":"} tituloQr={`Regístrate: ${c?.nombre || "curso"}`} avisar={avisar} />
+        {/* V66 ("313. ok"): el link de este curso; el estudiante no escoge curso. */}
+        <CompartirLink ruta={`/estudiante?curso=${encodeURIComponent(f.id)}`} etiqueta="Compartir link" mensaje={`Hola, aquí te dejo el link para registrarte en ${c?.nombre || "el curso"}, que empieza el ${fechaLarga(f.inicio)}:`} tituloQr={`Regístrate: ${c?.nombre || "curso"}`} avisar={avisar} />
         {p.cursos && (
           <button className="btn secondary vj-btn" onClick={() => (form ? setForm(null) : abrirEditar())}>
             <IconEdit size={16} /> Editar
@@ -212,7 +218,7 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
         <MenuMas
           opciones={[
             { t: "Ver en el calendario", d: "Los cursos y los buceos de la semana.", onClick: () => ir("calendario") },
-            p.cursos && { t: "Borrar este curso", d: gente.length ? "Sus estudiantes se quedan sin fecha." : "No tiene estudiantes.", onClick: borrar, peligro: true },
+            p.cursos && { t: "Borrar este curso", d: gente.length ? "Sus estudiantes ya no salen en el curso (quedan en la base)." : "No tiene estudiantes.", onClick: borrar, peligro: true },
           ]}
         />
       </div>
@@ -236,7 +242,7 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
           {gente.length > 0 ? (
             <div className="card vj-lista">
               {gente.map((e) => (
-                <FilaDeCurso key={e.id} db={db} est={e} ir={ir} />
+                <FilaDeCurso key={e.id} db={db} est={e} ir={ir} p={p} />
               ))}
             </div>
           ) : (
@@ -253,7 +259,7 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
             <div className="card vj-lista">
               {espera.map((e) => (
                 <div key={e.id} className="pg-fila-espera">
-                  <FilaDeCurso db={db} est={e} ir={ir} espera />
+                  <FilaDeCurso db={db} est={e} ir={ir} espera p={p} />
                   {p.estudiantes && hayCupo && (
                     <button className="btn secondary vj-mini" onClick={() => pasar(e)}>
                       Pasarlo a este curso
@@ -307,7 +313,7 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
 
 // V62 ("242"): la fila de un estudiante dentro de la página del curso: el
 // nombre, cómo va y, a la derecha, si pagó o cuánto debe.
-function FilaDeCurso({ db, est, ir, espera }) {
+function FilaDeCurso({ db, est, ir, espera, p }) {
   const b = buzoDe(db, est);
   const c = cursoDe(db, est);
   const a = avance(est, c);
@@ -333,7 +339,8 @@ function FilaDeCurso({ db, est, ir, espera }) {
           </span>
         )}
       </span>
-      {d > 0 ? <span className="vj-chip rojo">Debe {rd(d)}</span> : pagoListo(est) ? <span className="vj-chip verde">Pagado</span> : <span className="vj-chip gris">Sin precio</span>}
+      {/* V67 ("3"): sin "Ver montos", no sale lo del pago. */}
+      {p?.montos === false ? null : d > 0 ? <span className="vj-chip rojo">Debe {rd(d)}</span> : pagoListo(est) ? <span className="vj-chip verde">Pagado</span> : <span className="vj-chip gris">Sin precio</span>}
     </button>
   );
 }
@@ -353,7 +360,7 @@ export function Inicio({ db, p, ir, avisar }) {
   const cuadros = [
     { k: "curso", t: "En curso" },
     { k: "para-almacen", t: "Listo para procesar" },
-    { k: "almacen", t: "Procesando" },
+    { k: "almacen", t: "Pendiente procesar" },
     { k: "por-avisar", t: "Certificación lista, por avisar", rojo: true },
     { k: "pago-instructor", t: "Pago al instructor pendiente" },
     { k: "espera", t: "En lista de espera" },
@@ -392,7 +399,7 @@ export function Inicio({ db, p, ir, avisar }) {
             <span>Interesados nuevos{intHoy.length ? ` · ${intHoy.length} para escribirles hoy` : ""}</span>
           </button>
         )}
-        {(p.pagos || p.conciliar) && (
+        {p.montos && (
           <button className="ce-cuadro" onClick={() => ir("cursos:debe")}>
             <b>{rd(porCobrar)}</b>
             <span>Pendiente por cobrar</span>
@@ -486,7 +493,7 @@ export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
             {esta && (
               <div className="ce-abierto-cuerpo">
                 {gente.map((e) => (
-                  <FilaEstudiante key={e.id} db={db} est={e} ir={ir} />
+                  <FilaEstudiante key={e.id} db={db} est={e} ir={ir} p={p} />
                 ))}
                 {!gente.length && <div className="hint-text">Todavía no tiene estudiantes.</div>}
                 {p.cursos &&
@@ -518,7 +525,7 @@ export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
           {abierto === "sin" && (
             <div className="ce-abierto-cuerpo">
               {sinFecha.sort(porNombre).map((e) => (
-                <FilaEstudiante key={e.id} db={db} est={e} ir={ir} />
+                <FilaEstudiante key={e.id} db={db} est={e} ir={ir} p={p} />
               ))}
             </div>
           )}
@@ -539,7 +546,7 @@ export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
             {abierto === k && (
               <div className="ce-abierto-cuerpo">
                 {g.gente.sort(porNombre).map((e) => (
-                  <FilaEstudiante key={e.id} db={db} est={e} ir={ir} />
+                  <FilaEstudiante key={e.id} db={db} est={e} ir={ir} p={p} />
                 ))}
                 {p.cursos && g.c && !db.sinFechas && (
                   <button className="btn secondary vj-mini" style={{ marginTop: 8 }} onClick={() => setForm({ cursoId: g.c.id, inicio: "", cupo: "", instructor: "", nota: "" })}>
@@ -555,14 +562,14 @@ export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
 
       <div className="section-title">Por etapa</div>
       <div className="vj-filtros">
-        {FILTROS.map((f) => (
+        {FILTROS.filter((f) => f.k !== "debe" || p.montos).map((f) => (
           <button key={f.k} className={`vj-filtro ce-filtro${filtro === f.k ? " sel" : ""}`} onClick={() => setFiltro(f.k)}>
             {f.t} <span>{db.estudiantes.filter((e) => f.f(e, db)).length}</span>
           </button>
         ))}
       </div>
       {lista.map((e) => (
-        <FilaEstudiante key={e.id} db={db} est={e} ir={ir} />
+        <FilaEstudiante key={e.id} db={db} est={e} ir={ir} p={p} />
       ))}
       {!lista.length && <div className="card hint-text">{`Nadie en "${fx.t}".`}</div>}
     </>
@@ -654,7 +661,7 @@ function FormCurso({ db, form, setForm, yo, ops, avisar }) {
             className="btn secondary vj-btn vj-rojo-txt"
             onClick={async () => {
               const k = ocupados(db, form.id);
-              if (k > 0 && !window.confirm(`Este curso tiene ${k} estudiante${k === 1 ? "" : "s"}. Se quedan sin fecha. ¿Borrarlo?`)) return;
+              if (k > 0 && !window.confirm(`Este curso tiene ${k} estudiante${k === 1 ? "" : "s"}. Ya no van a salir en el curso (quedan cancelados, con su ficha en la base). ¿Borrarlo?`)) return;
               const ok = await ops.borrarFecha({ id: form.id, inicio: form.inicio }, c);
               if (ok) setForm(null);
             }}
@@ -677,7 +684,7 @@ function lineaCurso(e) {
     if (!e.fechaInicio) return { c: "verde", t: "en curso" };
     return e.fechaInicio > hoyISO() ? { c: "verde", t: `empieza el ${fechaCursoCorta(e.fechaInicio)}` } : { c: "verde", t: `en curso (${fechaCursoCorta(e.fechaInicio)})` };
   }
-  if (e.estado === "almacen") return { c: "naranja", t: "procesando" };
+  if (e.estado === "almacen") return { c: "naranja", t: "pendiente procesar" };
   if (e.estado === "certificacion") return { c: "rojo", t: "certificación lista" };
   if (e.estado === "entregada" || e.estado === "avisado") return { c: "gris", t: "terminado" };
   if (e.estado === "cancelado") return { c: "gris", t: "cancelado" };
@@ -750,7 +757,9 @@ export function Mas({ yo, p, ir }) {
   // botón de base de datos").
   const opciones = [
     { r: "basedatos", t: "Base de datos", sub: "Los cursos que damos y los instructores.", I: IconCatalog },
-    { r: "bitacora", t: "Bitácora", sub: "Todo lo que se ha hecho, con quién y cuándo.", I: IconHistory },
+    // V67 ("4"): Estadísticas; y la Bitácora con su permiso ("3").
+    ...(p.estadisticas ? [{ r: "estadisticas", t: "Estadísticas", sub: "Estudiantes, cursos, cobros, interesados y certificaciones.", I: IconChart }] : []),
+    ...(p.bitacora ? [{ r: "bitacora", t: "Bitácora", sub: "Todo lo que se ha hecho, con quién y cuándo.", I: IconHistory }] : []),
     ...(yo.esTitular ? [{ r: "administracion", t: "Administración", sub: "Qué puede hacer cada persona en Control Estudiantes.", I: IconUsers }] : []),
   ];
   return (

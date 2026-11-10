@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { PERMISOS_EST } from "@/lib/estudiantes/modelo";
-import { IconUsers, IconEdit, IconPlus, IconReceipt, IconLock, IconCheck, IconPhone, IconCatalog, IconChat } from "@/components/icons";
+import { PERMISOS_EST, valorPermisoEst } from "@/lib/estudiantes/modelo";
+import { IconUsers, IconEdit, IconPlus, IconReceipt, IconLock, IconCheck, IconPhone, IconCatalog, IconChat, IconEye, IconX, IconTrash, IconHistory, IconGauge } from "@/components/icons";
 
 // ⚙ › Administración de Control Estudiantes (solo el Titular).
 // V55: organizada como la de Buceos ("aquí administración, pónmelo más
@@ -11,13 +11,18 @@ import { IconUsers, IconEdit, IconPlus, IconReceipt, IconLock, IconCheck, IconPh
 // (Titular, Administradores, Usuarios, Sin acceso); se toca a alguien y se
 // ven sus permisos por sección, que se guardan al momento. El Titular y los
 // administradores pueden todo.
+// V67 ("3. sí. Pero ponme en administración esos permisos en orden y
+// organizado, así como lo tenemos en otros apps"): por sección, como en
+// Buceos, con los seis nuevos en su lugar.
 const SECCIONES = [
-  { t: "Estudiantes", ks: ["est_estudiantes", "est_interesados"] },
-  { t: "Pagos", ks: ["est_pagos", "est_conciliar"] },
+  { t: "Estudiantes", ks: ["est_estudiantes", "est_documentos", "est_cancelar", "est_borrar"] },
+  { t: "Interesados", ks: ["est_interesados"] },
+  { t: "Pagos", ks: ["est_montos", "est_pagos", "est_conciliar"] },
   { t: "Certificación", ks: ["est_almacen", "est_entregar", "est_pago_instructor"] },
   { t: "Cursos", ks: ["est_cursos"] },
+  { t: "Bitácora y estadísticas", ks: ["est_bitacora", "est_estadisticas"] },
 ];
-const ICONOS = { est_estudiantes: IconPlus, est_interesados: IconChat, est_pagos: IconReceipt, est_conciliar: IconLock, est_almacen: IconCheck, est_entregar: IconPhone, est_pago_instructor: IconReceipt, est_cursos: IconCatalog };
+const ICONOS = { est_estudiantes: IconPlus, est_documentos: IconEye, est_cancelar: IconX, est_borrar: IconTrash, est_interesados: IconChat, est_montos: IconEye, est_pagos: IconReceipt, est_conciliar: IconLock, est_almacen: IconCheck, est_entregar: IconPhone, est_pago_instructor: IconReceipt, est_cursos: IconCatalog, est_bitacora: IconHistory, est_estadisticas: IconGauge };
 const PERM = Object.fromEntries(PERMISOS_EST.map((x) => [x.k, x]));
 
 const grupoDe = (pf) => (pf.es_titular ? "titular" : pf.is_admin ? "admin" : !pf.permisos?.acceso_estudiantes ? "sin" : "usuario");
@@ -63,7 +68,7 @@ export function AdminEst({ yo, avisar, ir }) {
       </a>
       <h1 className="page-title">Administración</h1>
       <div className="hint-text" style={{ marginBottom: 4 }}>
-        Toca a una persona para ver y cambiar lo que puede hacer en Control Estudiantes. Los cambios se guardan al momento. Todos los que entran pueden ver los estudiantes, y todo lo que se hace queda en la Bitácora. Solo tú (el Titular) entras aquí.
+        Toca a una persona para ver y cambiar lo que puede hacer en Control Estudiantes, por sección. Los cambios se guardan al momento. Todos los que entran pueden ver los estudiantes y los cursos, y todo lo que se hace queda en la Bitácora. Solo tú (el Titular) entras aquí.
       </div>
       {GRUPOS.map(({ g, t }) => {
         const gente = perfiles.filter((pf) => grupoDe(pf) === g);
@@ -76,7 +81,7 @@ export function AdminEst({ yo, avisar, ir }) {
                 const titular = g === "titular";
                 const admin = g === "admin";
                 const entra = titular || admin || !!pf.permisos?.acceso_estudiantes;
-                const cuantos = PERMISOS_EST.filter((x) => pf.permisos?.[x.k]).length;
+                const cuantos = PERMISOS_EST.filter((x) => valorPermisoEst(pf.permisos, x)).length;
                 const esta = abierto === pf.id;
                 return (
                   <div key={pf.id} className="vj-adm-persona" style={{ opacity: guardando === pf.id ? 0.6 : 1 }}>
@@ -105,7 +110,7 @@ export function AdminEst({ yo, avisar, ir }) {
                             <IconUsers size={15} />
                             <span>
                               Entrar a Control Estudiantes
-                              <span className="hint-text">Es el mismo acceso de “Accesos a apps”. Con solo esto, puede ver los estudiantes, los cursos y la bitácora.</span>
+                              <span className="hint-text">Es el mismo acceso de “Accesos a apps”. Con solo esto, puede ver los estudiantes y los cursos.</span>
                             </span>
                           </span>
                           <input type="checkbox" checked={entra} disabled={guardando === pf.id} onChange={(e) => guardar(pf, { acceso_estudiantes: e.target.checked })} />
@@ -134,7 +139,7 @@ export function AdminEst({ yo, avisar, ir }) {
                                       <span className="hint-text">{x.sub}</span>
                                     </span>
                                   </span>
-                                  <input type="checkbox" checked={!!pf.permisos?.[k]} disabled={guardando === pf.id} onChange={(e) => guardar(pf, { [k]: e.target.checked })} />
+                                  <input type="checkbox" checked={valorPermisoEst(pf.permisos, x)} disabled={guardando === pf.id} onChange={(e) => guardar(pf, { [k]: e.target.checked })} />
                                 </label>
                               );
                             })}

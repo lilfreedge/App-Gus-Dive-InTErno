@@ -10,13 +10,18 @@ export const metadata = { title: "Registro de estudiante · Gus Dive Center" };
 
 // Control Estudiantes -- el link de registro (público, sin cuenta). Solo se
 // le manda al navegador la lista de cursos y cómo pagar.
-export default async function EstudiantePage() {
+export default async function EstudiantePage({ searchParams }) {
   const s = createServiceClient();
   const { data } = await s.from("est_cursos").select("*").eq("activo", true).order("orden").order("nombre");
-  const lista = (data || []).map(filaACurso);
+  const lista = (data || []).map((r) => ({ ...filaACurso(r), grupo: r.grupo || null, info: r.info || null, en_link: r.en_link }));
   // V55: con sus fechas próximas y cuántos cupos quedan ("64", "71. B").
   const { conFechas, porCurso } = await fechasProximas(s, lista.map((c) => c.id));
-  const cursos = lista.map((c) => ({ id: c.id, nombre: c.nombre, precio: c.precio, semana: c.semana, fechas: porCurso[c.id] || [] }));
+  // V65 ("286"): por grupos, con la información (la "i"); los que no salen en el link, fuera.
+  const cursos = lista.filter((c) => c.en_link !== false).map((c) => ({ id: c.id, nombre: c.nombre, precio: c.precio, semana: c.semana, grupo: c.grupo || null, info: c.info || null, fechas: porCurso[c.id] || [] }));
   // V54: las cuentas de los cursos, no las de los buceos (nota 1-nov).
-  return <EstudiantePublico cursos={cursos} conFechas={conFechas} tienda={{ whatsapp: TIENDA.whatsapp, titular: TITULAR_CURSOS || TIENDA.titular, rnc: RNC_CURSOS, cuentas: CUENTAS_CURSOS }} />;
+  // V66 ("313. ok", maqueta V66): el link de cada curso (?curso=<fecha>) no
+  // pide escoger curso. Si esa fecha ya no está abierta, el link sigue normal.
+  const pedida = typeof searchParams?.curso === "string" ? searchParams.curso : "";
+  const fijo = conFechas && pedida && cursos.some((c) => c.fechas.some((f) => f.id === pedida)) ? pedida : "";
+  return <EstudiantePublico cursos={cursos} conFechas={conFechas} fijo={fijo} noAbierto={!!pedida && !fijo} tienda={{ whatsapp: TIENDA.whatsapp, titular: TITULAR_CURSOS || TIENDA.titular, rnc: RNC_CURSOS, cuentas: CUENTAS_CURSOS }} />;
 }

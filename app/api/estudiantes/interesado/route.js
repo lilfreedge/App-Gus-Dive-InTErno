@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { soloDigitos, primerNombre } from "@/lib/viajes/modelo";
+import { soloDigitos, primerNombre, celValido, celGuardar } from "@/lib/viajes/modelo";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 import { buscarPorDoc } from "@/lib/estudiantes/servidor";
 
@@ -31,10 +31,10 @@ export async function POST(request) {
   if (body.accion === "doc") return NextResponse.json({ encontrado: !!persona, primer: persona ? primerNombre(persona.nombre) : "" });
 
   const nombre = persona ? persona.nombre : String(body.nombre || "").trim().slice(0, 120);
-  const cel = persona ? soloDigitos(persona.cel) : soloDigitos(body.cel);
+  const cel = persona ? celGuardar(persona.cel) : celGuardar(body.cel);
   const correo = String(body.correo || "").trim().slice(0, 120);
   if (!nombre) return NextResponse.json({ error: "Escribe tu nombre." }, { status: 400 });
-  if (!persona && cel.length !== 10) return NextResponse.json({ error: "Escribe tu celular completo (10 números)." }, { status: 400 });
+  if (!persona && !celValido(body.cel)) return NextResponse.json({ error: "Escribe tu celular completo." }, { status: 400 });
   if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return NextResponse.json({ error: "Revisa tu correo." }, { status: 400 });
   const curso = String(body.curso || "").slice(0, 80) || null;
 
@@ -43,10 +43,10 @@ export async function POST(request) {
   const docG = tipo === "cedula" ? soloDigitos(doc) : String(doc || "").replace(/\s/g, "").toUpperCase();
   let { data: ya, error: eYa } = await s.from("est_interesados").select("id").eq("documento", docG).in("estado", abiertos).limit(1);
   if (eYa) ya = null; // sin la migration_86 todavía
-  if (!ya?.length && cel.length === 10) ({ data: ya } = await s.from("est_interesados").select("id").eq("celular", cel).in("estado", abiertos).limit(1));
+  if (!ya?.length && celValido(cel)) ({ data: ya } = await s.from("est_interesados").select("id").eq("celular", cel).in("estado", abiertos).limit(1));
   if (ya?.length) return NextResponse.json({ ok: true, ya: true, nombre: primerNombre(nombre) });
 
-  const fila = { nombre, celular: cel.length === 10 ? cel : null, curso, fuente: "Link", via: "link" };
+  const fila = { nombre, celular: celValido(cel) ? cel : null, curso, fuente: "Link", via: "link" };
   const nacionalidad = tipo === "pasaporte" ? String(body.nacionalidad || "").trim().slice(0, 60) : "";
   let { error } = await s.from("est_interesados").insert({ ...fila, buzo_id: persona?.id || null, documento: docG, correo: correo || null, ...(nacionalidad ? { nota: `Nacionalidad: ${nacionalidad}` } : {}) });
   // Sin la migration_86 todavía: se guarda sin esas columnas (el documento va en la nota).

@@ -12,6 +12,41 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V67",
+    fecha: "10 de noviembre, 2026",
+    titulo: "Links con la dirección principal, \"Pendiente procesar\", permisos nuevos y Estadísticas en Control Estudiantes",
+    descripcion:
+      "Todos los apps: los links que salen del app (Compartir link, el código QR, Avisar por WhatsApp, los correos y los avisos) llevan siempre la dirección principal, aunque alguien haya abierto el app por otra dirección; cuando esté app.gusdivecenter.com se cambia en un solo lugar. Control Estudiantes: la etapa de cuando se mandó a SNSI se llama \"Pendiente procesar\" (antes \"Procesando\"). En ⚙ › Administración, los permisos van en orden, por sección (Estudiantes, Interesados, Pagos, Certificación, Cursos, y Bitácora y estadísticas), con seis nuevos: Ver documentos, Cancelar cursos, Borrar estudiantes, Ver montos, Ver la bitácora y Ver estadísticas. Los que antes tenía todo el que entraba (ver documentos, montos y la bitácora; cancelar, el que tenía Estudiantes) siguen igual hasta que se cambien. Nueva pantalla Más › Estadísticas: arriba se escoge el tiempo (este mes, últimos 6 meses o este año) y salen estudiantes nuevos, certificados, cobrado y por cobrar; abajo, las secciones cerradas que se abren al tocarlas: estudiantes por mes, por curso, de interesado a estudiante, tiempo hasta la certificación, lista de espera y por instructor. Necesita todo_v67_una_sola_vez.sql (para Borrar estudiantes).",
+  },
+  {
+    version: "V66",
+    fecha: "9 de noviembre, 2026",
+    titulo: "Link de cada curso y pantalla final de la lista de espera más sencilla",
+    descripcion:
+      "Control Estudiantes: \"Compartir link\" en la página de un curso manda el link de ese curso (el mensaje dice el curso y cuándo empieza; el código QR también). Quien lo abre no escoge curso: arriba le sale a qué curso se va a registrar, pone su documento y sus datos como siempre, y le sale su curso con la fecha, los cupos, el precio, la semana y \"Agregar Nitrox\" (o OXY), con el botón \"Inscribirme\"; si esa fecha se llenó, \"Ponerme en la lista de espera\"; \"¿Es otro curso? Ver todos los cursos\" lo lleva a la lista de siempre. El link general de Cursos (escoger el curso) sigue igual. Link del estudiante: quien se anota en lista de espera ve una pantalla sencilla y grande: el visto, \"¡Listo, Juanito!\" y \"Te avisamos por WhatsApp cuando haya fecha para …\" (si la fecha se llenó, lo dice), con el botón \"Adelantar mis documentos\" (opcional) y abajo, chiquito, \"¿Tienes alguna pregunta? Escríbenos\".",
+  },
+  {
+    version: "V65",
+    fecha: "9 de noviembre, 2026",
+    titulo: "Celular de otros países, cursos por grupos con su información, Agregar Nitrox y seguimiento de contacto",
+    descripcion:
+      "Links del estudiante, de Interesados y de Buceos (y Nuevo estudiante): el celular se escribe con el país al lado (República Dominicana +1 ya viene puesto; se puede escoger otro país) y se llama \"Celular (WhatsApp)\". Link del estudiante: los cursos salen por grupos (Cursos de buceo, Primeros auxilios, Especialidades, Otros); cada curso tiene una \"i\" que abre su información; en Open Water se puede marcar \"Agregar Nitrox\" y en BLS \"Agregar OXY\" (con el precio de más), y al final dice \"También quedaste anotado en …\" (queda en lista de espera de ese curso en Control Estudiantes). La lista de espera dice \"Déjanos tus datos y te avisamos por WhatsApp cuando abramos este curso.\" con el botón \"Quiero que me avisen\". Precios nuevos: Open Water, Advanced, Rescue y Freediving RD$29,500; Nitrox RD$7,200; Pez León RD$9,100. Control Estudiantes: en la ficha del estudiante, \"Seguimiento de contacto\" (le escribí, le llamé, no contesta, confirmó, pidió otra fecha, no tiene WhatsApp), con un comentario y cuándo volver a escribirle, en vez de los mensajes rápidos de antes. Necesita todo_v65_una_sola_vez.sql (migration_91, migration_92 y migration_93).",
+  },
+  {
+    version: "V64",
+    fecha: "9 de noviembre, 2026",
+    titulo: "Perfil del buzo, cambiar el celular, certificación y arreglos de Control Estudiantes",
+    descripcion:
+      "Link de Buceos: al poner la cédula sale el nombre completo y el final del celular, y el botón \"Ver mi perfil\". Con su celular entra a su perfil: cambia el correo, el contacto de emergencia y sus tallas; cambia su celular una vez al mes (lo escribe dos veces; a la tienda le llega el aviso y el número viejo queda en la bitácora); sube su certificación (captura de la app de su agencia o foto de la tarjeta), que se ve como una tarjeta con \"Cambiar\"; y ve sus buceos con lo que debe (con \"Subir comprobante\") y los anteriores. En la ficha del buzo en Buceos sale su certificación con \"Ver la imagen\" y \"Marcar revisada\" (en su perfil dice \"Revisada por Gus\"). Link del estudiante: al entrar sale su nombre completo con el final del celular; en \"Mis documentos\" también puede cambiar su celular una vez al mes; en el registro ya no se pide la firma del récord de entrenamiento. Control Estudiantes: en el pago del curso, \"No. de factura\" en vez de \"Subir comprobante\"; si se borra un curso, sus estudiantes ya no salen en él (quedan cancelados, con su ficha en la base); un estudiante en lista de espera ya no tiene \"Cancelar este curso\"; la bitácora del estudiante sale cerrada, con un botón para abrirla; cursos nuevos: BLS, OXY, BLS + OXY y especialidades (con el itinerario vacío). Necesita todo_v64_una_sola_vez.sql (migration_91 y migration_92).",
+  },
+  {
+    version: "V63",
+    fecha: "9 de noviembre, 2026",
+    titulo: "Recordatorios para técnicos, todos juntos en Equipos, y \"Mis documentos\" en el link del estudiante",
+    descripcion:
+      "App Interno: nueva sección Equipos › Recordatorios, una sola para todo: inspección y mantenimiento de compresores (como antes), inspección visual de tanques, mantenimiento de reguladores y otras cosas. Cada recordatorio dice qué hay que hacer, cada cuánto (días, semanas, meses u horas de uso del compresor) y a quién le toca. El Titular y los administradores ven todos y los crean o cambian; los demás ven solo los suyos. \"Hacerlo\" le sale solo a la persona asignada y la lleva directo a registrarlo; al registrarlo, el recordatorio se mueve solo a la próxima fecha (los de \"otra cosa\" tienen \"Hecho\"). El aviso le llega solo a esa persona: al asignárselo (\"Te asignaron…\"), unos días antes y el día que toca, en la campanita y al celular, y por correo si se marca. WhatsApp no se puede mandar solo: al guardar sale el botón \"Mandarle por WhatsApp\" con el mensaje listo. En Equipos y en la pantalla del técnico sale \"Para hacer\" con lo que le toca. Los recordatorios de compresores de antes siguen igual (Compresores › Recordatorios lleva a la sección nueva). Link del estudiante: al volver a entrar con su cédula y su celular, \"Mis documentos\" (antes \"Ver cómo va mi curso\"): ve sus datos y puede cambiar el correo, la dirección y el contacto de emergencia; ve sus cursos con cuánto lleva y qué le falta, y el pago adentro de cada curso con un aviso de lo que debe; su foto y su firma se cambian cada 6 meses (dice desde cuándo); y si registró a un menor, ve cómo va. Necesita migration_91.sql.",
+  },
+  {
     version: "V62",
     fecha: "8 de noviembre, 2026",
     titulo: "Compartir link con QR, páginas del curso y del buceo más ordenadas, Interesados con seguimiento, menores de edad y \"Vino con problemas\"",

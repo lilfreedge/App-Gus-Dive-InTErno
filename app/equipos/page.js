@@ -4,7 +4,9 @@ import { tieneAlguno, requireInterno, PERMISOS_EQUIPOS, esRolEquipos } from "@/l
 import { obtenerPendientesInterno } from "@/lib/notificaciones";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
-import { IconTankFill, IconEye, IconGauge, IconRegulator, IconCompressor, IconAlert } from "@/components/icons";
+import { IconTankFill, IconEye, IconGauge, IconRegulator, IconCompressor, IconAlert, IconClock } from "@/components/icons";
+import { cargarRecordatorios } from "@/lib/recordatorios";
+import { hoyISO } from "@/lib/fechas";
 
 // Grupo "Tanques": llenados, inspección visual y pruebas hidrostáticas, todo lo relacionado
 // a los tanques de alquiler, agrupado bajo un mismo encabezado.
@@ -67,6 +69,10 @@ export default async function EquiposPage() {
   // V34: para el rol con Pantalla de inicio "Equipos (para rol técnico)"
   // esta es su Inicio, así que aquí le salen los avisos que en el Inicio
   // normal salen arriba (solo los de lo que puede ver).
+  // V63 ("230"): "Para hacer": los recordatorios que le tocan a esta persona
+  // y ya vencieron o están por vencer.
+  const { items: misRec } = await cargarRecordatorios(supabase, { usuarioId: profile.id, hoy: hoyISO(), todos: true });
+  const paraHacer = misRec.filter((it) => it.estado === "vencido" || it.estado === "pronto");
   const conAvisos = esRolEquipos(profile);
   const avisos = [];
   if (conAvisos) {
@@ -103,6 +109,21 @@ export default async function EquiposPage() {
             {a.texto}
           </Link>
         ))}
+
+        {paraHacer.length > 0 && (
+          <Link href="/equipos/recordatorios" className="card rec-mios" style={{ display: "block", textDecoration: "none", color: "inherit" }}>
+            <div className="section-title" style={{ marginTop: 0 }}>
+              Para hacer ({paraHacer.length})
+            </div>
+            {paraHacer.slice(0, 4).map((it) => (
+              <div key={`${it.recordatorio.id}-${it.compresor?.id || "x"}`} className="list-item-meta" style={{ color: it.estado === "vencido" ? "var(--rojo)" : "#b5691f", fontWeight: 600 }}>
+                {it.recordatorio.titulo}
+                {it.compresor ? ` · ${it.compresor.codigo}` : ""} — {it.estado === "vencido" ? "vencido" : it.faltanDias === 0 ? "hoy" : it.faltanDias != null ? `en ${it.faltanDias} día${it.faltanDias === 1 ? "" : "s"}` : it.texto}
+              </div>
+            ))}
+            <div style={{ marginTop: 6, color: "var(--azul-claro)", fontWeight: 700, fontSize: 13 }}>Ver y hacerlo ›</div>
+          </Link>
+        )}
 
         {tanques.length > 0 && (
           <div className="section-title" style={{ marginTop: 0 }}>
@@ -143,6 +164,18 @@ export default async function EquiposPage() {
             </div>
           </Link>
         ))}
+
+        {/* V63 ("230"): la sección de Recordatorios (a cada quien los suyos). */}
+        <Link href="/equipos/recordatorios" className="card hub-link-card">
+          <div className="hub-link-card-inner">
+            <span className="hub-link-icon">
+              <IconClock size={22} />
+            </span>
+            <div>
+              <div className="hub-link-title">Recordatorios</div>
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   );

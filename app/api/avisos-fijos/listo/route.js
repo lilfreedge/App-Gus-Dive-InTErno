@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { avisarLeido } from "@/lib/avisos-fijos-avisar";
+import { origenDe } from "@/lib/direccion";
 
 // V51 -- "Listo" en un aviso fijo: lo marca como leído (para esa vez) y le
 // avisa al que lo creó por celular y correo.
@@ -28,7 +29,7 @@ export async function POST(request) {
   // Solo la primera vez que lo marca (si toca dos veces, no le llega dos veces).
   if (!error) {
     try {
-      await avisarLeido(createServiceClient(), { avisoId, vez, quienId: user.id, quien: nombre, origen: new URL(request.url).origin });
+      await avisarLeido(createServiceClient(), { avisoId, vez, quienId: user.id, quien: nombre, origen: origenDe(request) });
     } catch (e) {
       console.error("Avisos fijos (Listo):", e);
     }

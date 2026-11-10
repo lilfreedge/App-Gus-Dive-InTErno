@@ -384,6 +384,18 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
     },
     // Comprobantes de pago (fotos o PDF): bucket privado "viajes-comprobantes".
     // Se ve ahí mismo (VisorComprobante), no en otra ventana.
+    // V64 ("281"): la certificación que el buzo subió desde "Mi perfil".
+    async verCertificacion(b) {
+      const id = `cert-${b.id}`;
+      setVisor({ id, nombre: `Certificación de ${b.nombre}`, url: null, pdf: /\.pdf$/i.test(b.certFoto || "") });
+      const r = await fetch(`/api/viajes/certificacion?buzo=${encodeURIComponent(b.id)}`).then((x) => x.json()).catch(() => ({}));
+      if (!r.url) {
+        setVisor(null);
+        avisar(r.error || "No se pudo abrir la certificación.");
+        return;
+      }
+      setVisor((v) => (v && v.id === id ? { ...v, url: r.url } : v));
+    },
     async verComprobante(c) {
       const id = c.id || c.path;
       setVisor({ id, nombre: c.nombre || "Comprobante", url: null, pdf: /\.pdf$/i.test(c.path || c.nombre || "") });

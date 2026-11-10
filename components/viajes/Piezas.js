@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { formatoCel } from "@/lib/viajes/modelo";
+import { formatoCel, soloDigitos, esCelExtranjero } from "@/lib/viajes/modelo";
 import { IconClip, IconSearch, IconX } from "@/components/icons";
 
 // V42 -- El comprobante se ve ahí mismo, encima de la ficha, en vez de abrir
@@ -123,8 +123,60 @@ export function IconoWA({ on }) {
   );
 }
 
+// V65 ("284. ok"): el país al lado del número (por defecto RD +1). De otro
+// país, el valor queda "+código número" (se guarda solo con los dígitos).
+export const PAISES_CEL = [
+  { k: "do", t: "RD", c: "1", n: "República Dominicana" },
+  { k: "us", t: "EE.UU.", c: "1", n: "Estados Unidos, Puerto Rico o Canadá" },
+  { k: "es", t: "España", c: "34" },
+  { k: "ve", t: "Venezuela", c: "58" },
+  { k: "ht", t: "Haití", c: "509" },
+  { k: "co", t: "Colombia", c: "57" },
+  { k: "mx", t: "México", c: "52" },
+  { k: "ar", t: "Argentina", c: "54" },
+  { k: "cu", t: "Cuba", c: "53" },
+  { k: "it", t: "Italia", c: "39" },
+  { k: "fr", t: "Francia", c: "33" },
+  { k: "de", t: "Alemania", c: "49" },
+  { k: "gb", t: "Reino Unido", c: "44" },
+  { k: "otro", t: "Otro", c: "" },
+];
+function paisDe(valor) {
+  if (!esCelExtranjero(valor)) return null;
+  const d = soloDigitos(valor);
+  return [...PAISES_CEL].filter((p) => p.c && p.c !== "1").sort((a, b) => b.c.length - a.c.length).find((p) => d.startsWith(p.c)) || PAISES_CEL.find((p) => p.k === "otro");
+}
 export function CampoCel({ value, onChange, className = "", placeholder = "809-000-0000", onKeyDown }) {
-  return <input className={className} inputMode="tel" value={value} placeholder={placeholder} onChange={(e) => onChange(formatoCel(e.target.value))} onKeyDown={onKeyDown} />;
+  const [elegido, setElegido] = useState(null);
+  const auto = paisDe(value);
+  const pais = auto || (elegido && elegido.c === "1" ? elegido : null) || (elegido?.k === "otro" ? elegido : null) || PAISES_CEL[0];
+  const extranjero = pais.c !== "1";
+  const resto = extranjero ? soloDigitos(value).slice(pais.c.length) : value;
+  function cambiarPais(k) {
+    const p = PAISES_CEL.find((x) => x.k === k) || PAISES_CEL[0];
+    setElegido(p);
+    const num = extranjero ? soloDigitos(value).slice(pais.c.length) : soloDigitos(value);
+    if (p.c === "1") onChange(formatoCel(num.slice(-10)));
+    else if (p.k === "otro") onChange(num ? `+${num}` : "+");
+    else onChange(`+${p.c}${num}`);
+  }
+  function cambiarNumero(t) {
+    if (!extranjero) return onChange(formatoCel(t));
+    if (pais.k === "otro") return onChange(`+${soloDigitos(t)}`);
+    onChange(`+${pais.c}${soloDigitos(t)}`);
+  }
+  return (
+    <span className="campo-cel">
+      <select className={`campo-cel-pais${className.includes("pb-input") ? " en-pb" : ""}`} value={pais.k} onChange={(e) => cambiarPais(e.target.value)} aria-label="País del celular">
+        {PAISES_CEL.map((p) => (
+          <option key={p.k} value={p.k}>
+            {p.t} {p.c ? `+${p.c}` : "+…"}
+          </option>
+        ))}
+      </select>
+      <input className={className} inputMode="tel" value={pais.k === "otro" ? (value || "+") : resto} placeholder={extranjero ? (pais.k === "otro" ? "+código y número" : "Número") : placeholder} onChange={(e) => cambiarNumero(e.target.value)} onKeyDown={onKeyDown} />
+    </span>
+  );
 }
 
 export function Atras({ onClick, children }) {

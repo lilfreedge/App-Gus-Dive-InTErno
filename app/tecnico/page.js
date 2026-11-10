@@ -88,7 +88,9 @@ export default async function TecnicoPage({ searchParams }) {
     accesos.ordenes
       ? supabase.from("piezas_catalogo").select("id, nombre, codigo, tipos_equipo").eq("activo", true).order("nombre")
       : Promise.resolve({ data: [] }),
-    accesos.compresores ? cargarRecordatorios(supabase, { usuarioId: persona.id, hoy }) : Promise.resolve({ items: [] }),
+    // V63 ("230"): también los de inspección visual, reguladores y otras cosas
+    // que le asignaron (los de compresores, solo si tiene compresores).
+    cargarRecordatorios(supabase, { usuarioId: persona.id, hoy, todos: true }),
   ]);
 
   const ordenes = ordenesRes.data || [];
@@ -118,6 +120,7 @@ export default async function TecnicoPage({ searchParams }) {
 
   const recordatorios = (rec.items || [])
     .filter((it) => it.estado === "vencido" || it.estado === "pronto")
+    .filter((it) => accesos.compresores || (it.recordatorio.que && it.recordatorio.que !== "compresor"))
     .map((it) => ({
       key: `${it.recordatorio.id}-${it.compresor?.id || "x"}`,
       recordatorioId: it.recordatorio.id,
@@ -126,6 +129,9 @@ export default async function TecnicoPage({ searchParams }) {
       texto: textoRecordatorio(it),
       estado: it.estado,
       reinicia: it.recordatorio.reinicia,
+      // V63: "Hacerlo" lleva a registrar la inspección visual o el mantenimiento.
+      url: it.recordatorio.reinicia === "Inspección visual" ? "/equipos/inspeccion-visual/nueva" : it.recordatorio.reinicia === "Mantenimiento de reguladores" ? "/tecnico/regulador" : null,
+      ...(it.pendientes ? { titulo: `${it.recordatorio.titulo} (${it.pendientes} pendiente${it.pendientes === 1 ? "" : "s"})` } : {}),
     }));
 
   const nombre = primerNombre(persona.full_name);

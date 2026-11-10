@@ -7,6 +7,7 @@ import {
   htmlInformeMantenimiento,
   textoInformeMantenimiento,
 } from "@/lib/informe-documento";
+import { origenDe } from "@/lib/direccion";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -51,7 +52,7 @@ export async function POST(request, { params }) {
   const numero = o.no_orden_fisico ?? o.folio;
   // El logo del correo se toma de la misma dirección del app (los correos
   // no muestran imágenes incrustadas).
-  const logoUrl = `${new URL(request.url).origin}/logo-gus-icon.png`;
+  const logoUrl = `${origenDe(request)}/logo-gus-icon.png`;
 
   let pdfBuffer;
   try {

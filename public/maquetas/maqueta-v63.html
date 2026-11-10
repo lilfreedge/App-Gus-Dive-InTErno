@@ -1,0 +1,196 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V63 · Perfil del buzo</title>
+<style>
+:root{--azul:#0a3d62;--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--rojo:#d64545;--sup:#eef3f6;--bc:#4ebae8;--verde:#2c9e5b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:980px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.vista{display:none;max-width:980px;margin:0 auto;padding:0 16px 40px}.vista.on{display:block}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-bottom:14px}
+.nota b.q{font-size:15px;display:block;margin-bottom:4px}
+.doble{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}@media(max-width:760px){.doble{grid-template-columns:1fr}}
+.etq{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}.etq.a{color:#a33}.etq.d{color:var(--verde)}
+.tel{max-width:380px;background:#fff;border:1px solid var(--borde);border-radius:18px;overflow:hidden;margin:0 auto}
+.tel-h{background:#fff;border-bottom:3px solid var(--bc);padding:10px 14px;font-weight:800;font-size:13px;display:flex;gap:8px;align-items:center}
+.logo{background:var(--rojo);color:#fff;font-weight:900;font-size:11px;border-radius:6px;padding:3px 6px}
+.tel-b{padding:14px;background:var(--fondo)}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin-bottom:10px}
+.t{font-size:18px;font-weight:800;margin:0 0 4px}.hint{color:var(--suave);font-size:12.5px}
+.btn{display:block;width:100%;border:0;border-radius:10px;padding:11px 14px;font-weight:700;font-size:14px;cursor:pointer;margin-top:8px;background:var(--bc);color:#06324a;text-align:center}
+.btn.sec{background:#fff;border:1px solid var(--borde);color:var(--texto)}.btn.chico{font-size:12.5px;padding:8px}
+.sec-t{font-weight:800;font-size:14.5px;margin:14px 0 6px}
+.fijo{background:var(--sup);border-radius:10px;padding:8px 12px;font-size:13.5px}
+label.l{display:block;font-size:12px;font-weight:700;color:var(--suave);margin:8px 0 3px}
+input,select{font:inherit;border:1px solid var(--borde);border-radius:9px;padding:9px 10px;width:100%;background:#fff}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bz{border:1px solid var(--borde);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.bz b{display:block}.chip{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--sup);color:var(--suave)}
+.chip.v{background:#e5f6ec;color:var(--verde)}.chip.r{background:#fde8e8;color:var(--rojo)}
+.subir{border:1.5px dashed var(--borde);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;color:var(--azul);margin-top:6px}
+.ok{border:1px solid #bfe5cc;background:#eefaf2;border-radius:10px;padding:9px 12px;font-size:13px;color:#1f6b3d;margin-top:6px}
+.opc{border:1px solid var(--borde);border-radius:12px;padding:12px;background:#fff;margin-bottom:8px}.opc b{display:block}
+</style><style>
+.cardcert{border-radius:14px;padding:14px;color:#fff;background:linear-gradient(135deg,#0a3d62,#1f6f9e);position:relative;margin-top:8px}
+.cardcert .ag{font-size:11px;font-weight:800;letter-spacing:.12em;opacity:.85}.cardcert .nv{font-size:18px;font-weight:800;margin:4px 0}
+.cardcert .nm{font-size:12.5px;opacity:.9}.cardcert .sello{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.18);border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700}
+.cardcert .ver{margin-top:10px;display:inline-block;background:#fff;color:#0a3d62;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700}
+.drop{border:1.5px dashed #9fb3c2;border-radius:12px;padding:14px;text-align:center;background:#fbfdff;margin-top:8px}
+.drop b{display:block;color:var(--azul)}.ico{display:inline-flex;width:34px;height:34px;border-radius:50%;background:#e4f1f9;align-items:center;justify-content:center;color:var(--azul);margin-bottom:6px}
+.opc.sel{border:2px solid var(--verde)}
+.paso{display:flex;gap:10px;align-items:flex-start;margin:8px 0}.paso i{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--azul);color:#fff;font-style:normal;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+.aviso{background:#fdf0f0;border:1px solid #f3c9c9;color:#8a2a2a;border-radius:10px;padding:9px 12px;font-size:12.5px;margin-top:8px}
+</style></head><body>
+<div class="maq"><b>Maqueta V63 (segunda vuelta) · Perfil del buzo y del estudiante</b>. Puse lo que me dijiste en la 275 y la 276 y te propongo lo que preguntaste. Son dibujos: nada está programado. Cada botón de arriba es una pregunta con su número. Contéstame por número.</div>
+<div class="tabs" id="tabs">
+  <button class="tab on" data-v="entrar">278. Nombre completo y final del celular</button>
+  <button class="tab" data-v="cel">279. Cambiar su celular (cada mes)</button>
+  <button class="tab" data-v="titulo">280. Nombre de "Mi certificación"</button>
+  <button class="tab" data-v="cert">281. Cómo sube su certificación</button>
+  <button class="tab" data-v="link">277. Link propio (explicado)</button>
+  <button class="tab" data-v="perfil">El perfil completo</button>
+</div>
+
+<div class="vista on" id="v-entrar">
+  <div class="nota"><b class="q">Pregunta 278: ¿desde cuándo se ve el nombre completo, A o B?</b>
+  275: "que se vea el terminal del celular, nombre completo". Ya sale el final del celular (809-•••-0101). El nombre completo lo pongo en el perfil del buzo y en "Mis documentos" del estudiante.
+  <br><b>Ojo:</b> en la pantalla "¿Eres…?" la persona todavía no ha puesto su celular. Si ahí sale el nombre completo, cualquiera que escriba una cédula ajena vería el nombre completo de esa persona. Por eso te propongo la B.</div>
+  <div class="doble">
+    <div><div class="etq d">A) Nombre completo desde la cédula</div>
+      <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Inscripción · La Caleta</div><div class="tel-b">
+        <div class="card"><div class="t">¿Eres Felipe Torreira Gómez?</div><div class="hint">Te escribiremos al 809-•••-0101.</div>
+        <div class="btn">Sí, inscribirme en este buceo</div><div class="btn sec">Ver mi perfil</div></div>
+      </div></div>
+    </div>
+    <div><div class="etq d">B) "Felipe T." hasta que ponga su celular; después, completo (te la recomiendo)</div>
+      <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Inscripción · La Caleta</div><div class="tel-b">
+        <div class="card"><div class="t">¿Eres Felipe T.?</div><div class="hint">Te escribiremos al 809-•••-0101.</div>
+        <div class="btn">Sí, inscribirme en este buceo</div><div class="btn sec">Ver mi perfil</div></div>
+        <div class="card"><div class="t" style="font-size:16px">Mi perfil</div>
+        <div class="fijo"><b>Felipe Torreira Gómez</b><br>Celular que termina en 0101</div></div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<div class="vista" id="v-cel">
+  <div class="nota"><b class="q">Pregunta 279: ¿pongo "Cambiar mi celular", una vez al mes?</b>
+  Preguntaste si está de más. <b>Creo que sí vale la pena:</b> la gente cambia de número, y si no lo actualiza no le llegan los WhatsApp ni puede volver a entrar (para entrar se pide el celular). Es seguro, porque para llegar ahí ya tuvo que escribir su celular de ahora.
+  <br>Cómo lo haría:
+  <br>• Una vez al mes como máximo. Si ya lo cambió, le dice desde cuándo puede otra vez.
+  <br>• Lo escribe dos veces, para no equivocarse.
+  <br>• A la tienda le llega un aviso en la campanita ("Felipe Torreira cambió su celular") y en su ficha queda el número viejo en la bitácora.
+  <br>• Si perdió el número viejo y no puede entrar, sale "Escríbenos por WhatsApp".
+  <br>• Lo mismo en "Mis documentos" del estudiante.</div>
+  <div class="doble">
+    <div><div class="etq d">En "Mis datos"</div>
+      <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Mi perfil</div><div class="tel-b"><div class="card">
+        <div class="fijo"><b>Felipe Torreira Gómez</b><br>Celular que termina en 0101 · <span style="color:var(--azul);font-weight:700">Cambiar mi celular</span></div>
+        <label class="l">Correo</label><input value="felipe@correo.com">
+      </div></div></div>
+    </div>
+    <div><div class="etq d">Al tocar "Cambiar mi celular"</div>
+      <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Mi perfil</div><div class="tel-b"><div class="card">
+        <div class="t" style="font-size:16px">Cambiar mi celular</div>
+        <div class="hint">Se puede cambiar una vez al mes. Por ese número te escribimos por WhatsApp y con él entras a tu perfil.</div>
+        <label class="l">Celular nuevo</label><input placeholder="809-000-0000">
+        <label class="l">Escríbelo otra vez</label><input placeholder="809-000-0000">
+        <div class="btn">Guardar mi celular nuevo</div><div class="btn sec chico">Cancelar</div>
+        <div class="aviso">Si ya lo cambió este mes: "Ya cambiaste tu celular el 2 de noviembre. Lo puedes cambiar otra vez desde el 2 de diciembre."</div>
+      </div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="vista" id="v-titulo">
+  <div class="nota"><b class="q">Pregunta 280: ¿cómo le ponemos en vez de "Mi certificación" (A, B, C o D)?</b> O dime otro.</div>
+  <div class="doble">
+    <div class="opc"><b>A) Mi nivel de buceo</b><span class="hint">Sencillo; lo entiende cualquiera, también el que no sabe qué es una certificación.</span></div>
+    <div class="opc"><b>B) Mis certificaciones</b><span class="hint">Si tiene varias (Open Water, Advanced, Rescue…), las puede subir todas.</span></div>
+    <div class="opc"><b>C) Mi carnet de buzo</b><span class="hint">Como lo dice la gente en la tienda.</span></div>
+    <div class="opc"><b>D) Certificación de buceo</b><span class="hint">Más formal.</span></div>
+  </div>
+</div>
+
+<div class="vista" id="v-cert">
+  <div class="nota"><b class="q">Pregunta 281: ¿te gusta así para que suba su certificación?</b>
+  Como dijiste, casi siempre mandan una captura de pantalla de la app de su agencia, o una foto de la tarjeta. Te propongo:
+  <br>• El botón dice <b>"Subir mi certificación"</b> y debajo: "Una captura de pantalla de la app de tu agencia o una foto de tu tarjeta (JPG, PNG o PDF)".
+  <br>• Después de subirla, en vez de una foto suelta se ve como una <b>tarjeta</b> con su agencia, su nivel y su número, y "Ver la imagen".
+  <br>• Cuando alguien de la tienda la revisa en su ficha, la tarjeta dice <b>"Revisada por Gus"</b>. Así se ve profesional y tú sabes cuáles ya se revisaron.</div>
+  <div class="doble">
+    <div><div class="etq d">Antes de subirla</div>
+      <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Mi perfil</div><div class="tel-b"><div class="card">
+        <div class="sec-t" style="margin-top:0">Mi nivel de buceo</div>
+        <div class="dos"><select><option>SNSI</option></select><select><option>Advanced</option></select></div>
+        <input style="margin-top:8px" placeholder="Número de certificación (si lo tienes)">
+        <div class="drop"><span class="ico">&#8679;</span><b>Subir mi certificación</b><span class="hint">Una captura de pantalla de la app de tu agencia o una foto de tu tarjeta (JPG, PNG o PDF).</span></div>
+      </div></div></div>
+    </div>
+    <div><div class="etq d">Después de subirla</div>
+      <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Mi perfil</div><div class="tel-b"><div class="card">
+        <div class="sec-t" style="margin-top:0">Mi nivel de buceo</div>
+        <div class="cardcert"><span class="sello">Revisada por Gus</span><div class="ag">SNSI</div><div class="nv">Advanced Open Water</div><div class="nm">Felipe Torreira Gómez · No. 0000000</div><span class="ver">Ver la imagen</span></div>
+        <div class="hint" style="margin-top:8px">¿Sacaste otro nivel? <span style="color:var(--azul);font-weight:700">Subir otra certificación</span></div>
+      </div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="vista" id="v-link">
+  <div class="nota"><b class="q">Pregunta 277 (otra vez, más sencilla): ¿el buzo puede entrar a su perfil cuando quiera, o solo cuando le mandas el link de un buceo?</b>
+  Hoy el buzo solo entra al app cuando le mandas el link de un buceo para inscribirse. La pregunta es si quieres, además, un link fijo solo para su perfil.</div>
+  <div class="doble">
+    <div class="opc"><b>A) Sí, un link fijo "Mi perfil"</b>
+      <div class="paso"><i>1</i><span>En Buceos › Más sale "Compartir link Mi perfil" (copiar, WhatsApp o código QR para la tienda).</span></div>
+      <div class="paso"><i>2</i><span>El buzo lo abre cuando quiera, aunque no haya un buceo abierto.</span></div>
+      <div class="paso"><i>3</i><span>Pone su cédula y su celular, y entra a su perfil.</span></div>
+    </div>
+    <div class="opc"><b>B) No, solo desde el link de un buceo</b>
+      <div class="paso"><i>1</i><span>Le mandas el link de La Caleta (como ahora).</span></div>
+      <div class="paso"><i>2</i><span>Pone su cédula y le sale "Ver mi perfil".</span></div>
+      <div class="paso"><i>3</i><span>Si no hay ningún buceo abierto, no tiene por dónde entrar.</span></div>
+    </div>
+  </div>
+</div>
+<div class="vista" id="v-perfil">
+  <div class="nota"><b class="q">El perfil completo, con lo de la 275 y la 276 (te gustó).</b>
+  Como "Mis documentos" del estudiante, pero con lo de Buceos:
+  <br>• <b>Mis datos:</b> cambia el correo, el contacto de emergencia y sus tallas (para apartarle el equipo). El nombre, la cédula y el celular, por WhatsApp.
+  <br>• <b>Mi certificación:</b> agencia, nivel y número, y una foto de su tarjeta.
+  <br>• <b>Mis buceos:</b> los próximos con su pago (si debe, "Subir comprobante") y los anteriores.
+  <br>• Si también es estudiante, un botón a "Mis documentos".
+  <br>Lo que cambie sale en su ficha de Buceos y queda en la bitácora ("lo cambió por el link").</div>
+  <div class="tel"><div class="tel-h"><span class="logo">GUS</span> Mi perfil</div><div class="tel-b">
+    <div class="card">
+      <div class="t">Mi perfil</div><div class="hint">Hola, Felipe.</div>
+      <div class="sec-t">Mis datos</div>
+      <div class="fijo"><b>Felipe Torreira Gómez</b><br>Celular que termina en 0101 · <span style="color:var(--azul);font-weight:700">Cambiar mi celular</span> (279)</div>
+      <label class="l">Correo</label><input value="felipe@correo.com">
+      <label class="l">Contacto de emergencia</label><input value="Nombre · 809-•••-••••">
+      <label class="l">Mis tallas (para el equipo)</label>
+      <div class="dos"><select><option>BCD: M</option></select><select><option>Wetsuit: M</option></select></div>
+      <select style="margin-top:8px"><option>Chapaletas: 42 / US 9 hombre</option></select>
+      <div class="btn">Guardar mis datos</div>
+
+      <div class="sec-t">Mi nivel de buceo (280)</div>
+      <div class="dos"><select><option>SNSI</option></select><select><option>Advanced</option></select></div>
+      <input style="margin-top:8px" placeholder="Número de certificación">
+      <div class="drop"><b>Subir mi certificación</b><span class="hint">Una captura de pantalla de la app de tu agencia o una foto de tu tarjeta (281).</span></div>
+
+      <div class="sec-t">Mis buceos</div>
+      <div class="bz"><b>La Caleta</b><span class="hint">lunes 16 de noviembre · 7:00 AM desde la tienda</span><div style="margin-top:6px"><span class="chip r">Te falta pagar RD$2,600</span></div><div class="subir">Subir comprobante</div></div>
+      <div class="bz"><b>Buceo con Tiburones, Bávaro</b><span class="hint">domingo 29 de noviembre</span><div style="margin-top:6px"><span class="chip v">Pagado</span></div></div>
+      <div class="hint" style="margin:8px 0 4px;font-weight:700">Anteriores</div>
+      <div class="bz"><b>Catalina</b><span class="hint">sábado 3 de octubre · fuiste</span></div>
+      <div class="btn sec">Mis cursos con Gus (Mis documentos)</div>
+      <div class="btn" style="background:#25d366;color:#fff">Escribir por WhatsApp</div>
+    </div>
+  </div></div>
+</div>
+
+<script>
+document.getElementById("tabs").addEventListener("click",(e)=>{const b=e.target.closest(".tab");if(!b)return;
+document.querySelectorAll(".tab").forEach((x)=>x.classList.toggle("on",x===b));
+document.querySelectorAll(".vista").forEach((x)=>x.classList.toggle("on",x.id==="v-"+b.dataset.v));window.scrollTo(0,0)});
+</script></body></html>

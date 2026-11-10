@@ -4,7 +4,7 @@ import { useState } from "react";
 import FechaNacimiento from "@/components/FechaNacimiento";
 import { Atras, Buscar, CampoCel } from "@/components/viajes/Piezas";
 import { ESCUELAS, pasosIniciales, soloDigitos, hoyISO, fechasDe, textoCupo, fechaCursoCorta, quedan } from "@/lib/estudiantes/modelo";
-import { formatoCel, formatoCedula } from "@/lib/viajes/modelo";
+import { formatoCel, formatoCedula, celValido } from "@/lib/viajes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
 
 // Registrar un estudiante a mano. La persona se busca en Buzos (los de
@@ -53,7 +53,7 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
   async function guardar() {
     if (!buzo && !nueva) return avisar("Escoge o agrega a la persona.");
     if (nueva && !nueva.nombre.trim()) return avisar("Falta el nombre.");
-    if (nueva && soloDigitos(nueva.cel).length !== 10) return avisar("Falta el celular completo.");
+    if (nueva && !celValido(nueva.cel)) return avisar("Falta el celular completo.");
     if (!curso) return avisar("Escoge el curso.");
     if (nueva && nueva.doc && db.buzos.some((b) => soloDigitos(b.doc) === soloDigitos(nueva.doc))) return avisar("Esa cédula ya está en la base: búscala arriba.");
     setGuardando(true);

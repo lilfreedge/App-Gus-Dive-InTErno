@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { filaAViaje, filaABuzo, buzoAFila, nuevoId } from "@/lib/viajes/datos";
-import { formatoCedula, soloDigitos, celOculto, nombreCorto, primerNombre, estadoViaje, PREGUNTAS, fechaCorta, palabraViaje } from "@/lib/viajes/modelo";
+import { filaAViaje, filaABuzo, buzoAFila, nuevoId, filaAIns } from "@/lib/viajes/datos";
+import { formatoCedula, soloDigitos, celOculto, nombreCorto, primerNombre, estadoViaje, PREGUNTAS, fechaCorta, palabraViaje, estadoPago, formatoCel, celValido, celGuardar } from "@/lib/viajes/modelo";
+import { puedeCambiarCel, cambiarCelular } from "@/lib/estudiantes/servidor";
 import { avisar } from "@/lib/viajes/avisos";
+import { origenDe } from "@/lib/direccion";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -64,6 +66,8 @@ export async function POST(request) {
       encontrado: true,
       corto: nombreCorto(b.nombre),
       primer: primerNombre(b.nombre),
+      // V64 ("278. A"): el nombre completo desde la cédula, con el final del celular.
+      nombre: b.nombre,
       cel: celOculto(b.cel),
       // V47: qué tallas ya tenemos, para no volver a pedirlas.
       tallasGuardadas: { bcd: !!b.tallas?.bcd, wetsuit: !!b.tallas?.wetsuit, chapaletas: !!b.tallas?.chapaletas },
@@ -75,9 +79,74 @@ export async function POST(request) {
     });
   }
 
+  // V64 ("275", "276", "279", "281"): "Mi perfil" del buzo, desde el link de
+  // cualquier buceo. Se entra con la cédula y el celular que tenemos.
+  if (["perfil", "perfil-datos", "perfil-cel"].includes(body.accion)) {
+    if (!docValido(tipo, body.doc)) return NextResponse.json({ error: "Revisa tu cédula o pasaporte." }, { status: 400 });
+    const b = await buscarPorDoc(s, tipo, body.doc);
+    if (!b || b.staff || !celValido(b.cel) || celGuardar(b.cel) !== celGuardar(body.cel)) return NextResponse.json({ error: "Ese celular no es el que tenemos con esa cédula. Escríbenos por WhatsApp." }, { status: 400 });
+    const origen = origenDe(request);
+    if (body.accion === "perfil-datos") {
+      const n = body.datos || {};
+      const c = {};
+      if ("correo" in n) c.correo = String(n.correo || "").trim().slice(0, 120);
+      if ("emergencia" in n) c.emergencia = String(n.emergencia || "").trim().slice(0, 200);
+      if ("agencia" in n) c.agencia = String(n.agencia || "").trim().slice(0, 40);
+      if ("nivel" in n) c.nivel = String(n.nivel || "").trim().slice(0, 60);
+      if ("cert" in n) c.cert = String(n.cert || "").trim().slice(0, 60);
+      if (n.tallas && typeof n.tallas === "object") c.tallas = { ...(b.tallas || {}), ...Object.fromEntries(Object.entries(n.tallas).filter(([k]) => ["bcd", "wetsuit", "chapaletas"].includes(k)).map(([k, x]) => [k, String(x || "").slice(0, 20)])) };
+      if (c.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.correo)) return NextResponse.json({ error: "Ese correo no se ve bien." }, { status: 400 });
+      const { error } = await s.from("viajes_buzos").update(buzoAFila(c)).eq("id", b.id);
+      if (error) return NextResponse.json({ error: "No se pudo guardar. Intenta de nuevo." }, { status: 500 });
+      await s.from("viajes_bitacora").insert({ viaje_id: null, quien: "Link", texto: `Cambió sus datos desde Mi perfil: ${b.nombre}`, despues: Object.keys(c).join(", ") });
+      return NextResponse.json({ ok: true });
+    }
+    if (body.accion === "perfil-cel") {
+      const r = await cambiarCelular(s, b, body.nuevo, body.otraVez);
+      if (r.error) return NextResponse.json({ error: r.error }, { status: 400 });
+      await s.from("viajes_bitacora").insert({ viaje_id: null, quien: "Link", texto: `Cambió su celular desde Mi perfil: ${b.nombre}`, antes: formatoCel(r.viejo), despues: formatoCel(r.nuevo) });
+      await avisar(s, "perfil", { titulo: "Cambió su celular", texto: `${b.nombre}: antes ${formatoCel(r.viejo)}, ahora ${formatoCel(r.nuevo)}`, ruta: `/viajes-buceos/buzos/${b.id}` }, origen);
+      return NextResponse.json({ ok: true, cel: celOculto(r.nuevo) });
+    }
+    // Sus buceos: los próximos con su pago y los anteriores.
+    const { data: ins } = await s.from("viajes_inscripciones").select("*").eq("buzo_id", b.id).neq("estado", "quitado");
+    const ids = [...new Set((ins || []).map((x) => x.viaje_id))];
+    const { data: vs } = ids.length ? await s.from("viajes").select("*").in("id", ids) : { data: [] };
+    const porId = Object.fromEntries((vs || []).map((r) => [r.id, filaAViaje(r)]));
+    const hoy = new Date(Date.now() - 4 * 3600000).toISOString().slice(0, 10);
+    const lista = (ins || [])
+      .map(filaAIns)
+      .map((x) => ({ x, v: porId[x.viajeId] }))
+      .filter((y) => y.v && y.v.estado !== "cancelado")
+      .map(({ x, v }) => {
+        const e = estadoPago(v, x);
+        return { id: x.id, slug: v.slug, nombre: v.nombre, fecha: v.fecha, salida: v.salida || "", espera: x.estado === "espera", pago: { k: e.k, t: e.t, falta: e.falta || 0 }, asistio: x.asistio };
+      })
+      .sort((a, c) => a.fecha.localeCompare(c.fecha));
+    const { count: esEst } = await s.from("est_estudiantes").select("id", { count: "exact", head: true }).eq("buzo_id", b.id);
+    const pc = puedeCambiarCel(b);
+    return NextResponse.json({
+      nombre: b.nombre,
+      primer: primerNombre(b.nombre),
+      cel: celOculto(b.cel),
+      celCambio: pc.puede ? { puede: true } : { puede: false, desde: pc.desde },
+      correo: b.correo || "",
+      emergencia: b.emergencia || "",
+      tallas: b.tallas || {},
+      agencia: b.agencia || "",
+      nivel: b.nivel || "",
+      cert: b.cert || "",
+      certFoto: !!b.certFoto,
+      certRevisada: !!b.certRevisadaEn,
+      proximos: lista.filter((y) => y.fecha >= hoy),
+      anteriores: lista.filter((y) => y.fecha < hoy).reverse().slice(0, 12),
+      esEstudiante: (esEst || 0) > 0,
+    });
+  }
+
   if (body.accion === "cel") {
-    const cel = soloDigitos(body.cel);
-    if (cel.length !== 10) return NextResponse.json({ error: "Escribe tu celular completo (10 números)." }, { status: 400 });
+    const cel = celGuardar(body.cel);
+    if (!celValido(body.cel)) return NextResponse.json({ error: "Escribe tu celular completo." }, { status: 400 });
     const { data } = await s.from("viajes_buzos").select("id, nombre, documento, pasaporte, es_staff").eq("celular", cel);
     const candidatos = (data || []).filter((b) => !b.documento && !b.pasaporte && !b.es_staff).map((b) => ({ id: b.id, corto: nombreCorto(b.nombre) }));
     return NextResponse.json({ candidatos });
@@ -110,13 +179,13 @@ export async function POST(request) {
   if (!b) {
     const n = body.nuevo || {};
     if (!String(n.nombre || "").trim() || !n.agencia) return NextResponse.json({ error: "Faltan tu nombre y tu certificación." }, { status: 400 });
-    if (soloDigitos(n.cel).length !== 10) return NextResponse.json({ error: "Escribe tu celular completo." }, { status: 400 });
+    if (!celValido(n.cel)) return NextResponse.json({ error: "Escribe tu celular completo." }, { status: 400 });
     b = {
       id: nuevoId(),
       nombre: String(n.nombre).trim().slice(0, 120),
       doc: tipo === "cedula" ? body.doc : "",
       pasaporte: tipo === "pasaporte" ? body.doc : "",
-      cel: soloDigitos(n.cel),
+      cel: celGuardar(n.cel),
       correo: String(n.correo || "").trim().slice(0, 120),
       agencia: String(n.agencia).slice(0, 60),
       nivel: String(body.respuestas?.nivel || "").slice(0, 60),
@@ -198,7 +267,7 @@ export async function POST(request) {
   });
 
   // V44: avisos (en el app, correo y celular, según lo que escogió el Titular).
-  const origen = new URL(request.url).origin;
+  const origen = origenDe(request);
   const ruta = `/viajes-buceos/viaje/${v.id}`;
   await avisar(
     s,

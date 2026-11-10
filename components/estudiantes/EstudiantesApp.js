@@ -19,6 +19,7 @@ import { Cursos } from "./Cursos";
 import { Interesados } from "./Interesados";
 import { AdminEst } from "./AdminEst";
 import { Calendario } from "./Calendario";
+import { Estadisticas } from "@/components/estudiantes/Estadisticas";
 
 // Control Estudiantes (migration_78.sql). Mismo esquema que Buceos: un solo
 // componente para todas las pantallas (/control-estudiantes/...), los datos
@@ -227,7 +228,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
         const { data, error: e } = await supabase.from("est_estudiantes").delete().eq("id", est.id).select("id");
         if (e) throw e;
         if (!data?.length) {
-          avisar("No se pudo borrar: solo el Titular puede borrar. Si eres tú, falta correr en Supabase el SQL todo_v55_una_sola_vez.sql.");
+          avisar("No se pudo borrar. Si tienes el permiso Borrar estudiantes, falta correr en Supabase el SQL de la V67 (todo_v67_una_sola_vez.sql).");
           return false;
         }
         await log(null, `Borró un estudiante: ${nombre} (${est.curso})`, null, `Borrado. Motivo: ${motivo}`);
@@ -304,8 +305,13 @@ export default function EstudiantesApp({ p, yo, personas }) {
           avisar("No se pudo borrar: solo el Titular puede borrar fechas.");
           return false;
         }
-        local((d) => ({ ...d, fechas: (d.fechas || []).filter((x) => x.id !== f.id), estudiantes: d.estudiantes.map((e) => (e.fechaId === f.id ? { ...e, fechaId: null } : e)) }));
-        await log(null, `Borró la fecha: ${c.nombre} · ${fechaCursoCorta(f.inicio)}`);
+        // V64 ("283"): sus estudiantes (los que estaban en curso) ya no salen en
+        // el curso: quedan cancelados, con su ficha y su historia en la base.
+        const quitar = db.estudiantes.filter((e) => e.fechaId === f.id && e.estado === "curso");
+        if (quitar.length) await supabase.from("est_estudiantes").update({ estado: "cancelado", actualizado_en: new Date().toISOString() }).in("id", quitar.map((e) => e.id));
+        local((d) => ({ ...d, fechas: (d.fechas || []).filter((x) => x.id !== f.id), estudiantes: d.estudiantes.map((e) => (e.fechaId === f.id ? { ...e, fechaId: null, ...(e.estado === "curso" ? { estado: "cancelado" } : {}) } : e)) }));
+        for (const e of quitar) await log(e.id, `Se borró su curso (${c.nombre} · ${fechaCursoCorta(f.inicio)})`, "En curso", "Cancelado");
+        await log(null, `Borró la fecha: ${c.nombre} · ${fechaCursoCorta(f.inicio)}${quitar.length ? ` (${quitar.length} estudiante${quitar.length === 1 ? "" : "s"} quedaron cancelados)` : ""}`);
         avisar("Fecha borrada");
         return true;
       } catch (e) {
@@ -393,7 +399,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
     ...(p.interesados ? [{ r: "interesados", t: "Interesados" }] : []),
     { r: "mas", t: "Más" },
   ];
-  const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "administracion", "basedatos", "notificaciones"].includes(ruta) ? "mas" : ruta.startsWith("curso:") ? "cursos" : ruta.split(":")[0];
+  const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "estadisticas", "administracion", "basedatos", "notificaciones"].includes(ruta) ? "mas" : ruta.startsWith("curso:") ? "cursos" : ruta.split(":")[0];
   const q = { db, p, yo, ops, ir, avisar, personas };
 
   let cuerpo = null;
@@ -419,7 +425,9 @@ export default function EstudiantesApp({ p, yo, personas }) {
   else if (ruta === "interesados") cuerpo = p.interesados ? <Interesados {...q} /> : <Inicio {...q} />;
   else if (ruta === "basedatos") cuerpo = <Cursos {...q} />;
   else if (ruta === "mas") cuerpo = <Mas {...q} />;
-  else if (ruta === "bitacora") cuerpo = <Bitacora {...q} />;
+  else if (ruta === "bitacora") cuerpo = p.bitacora ? <Bitacora {...q} /> : <Inicio {...q} />;
+  // V67 ("4"): Más › Estadísticas, con su permiso.
+  else if (ruta === "estadisticas") cuerpo = p.estadisticas ? <Estadisticas {...q} /> : <Inicio {...q} />;
   else if (ruta === "notificaciones")
     cuerpo = (
       <>

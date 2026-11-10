@@ -84,7 +84,7 @@ export default async function CompresoresPage() {
             })}
             {esAdmin && (
               <Link
-                href="/equipos/compresores/recordatorios"
+                href="/equipos/recordatorios"
                 style={{ display: "inline-block", marginTop: 10, color: "var(--azul-claro)", fontWeight: 700, fontSize: 13, textDecoration: "none" }}
               >
                 Administrar recordatorios ›

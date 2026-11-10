@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import qrcode from "qrcode-generator";
 import { IconLink, IconPrint, IconX } from "@/components/icons";
+import { urlPrincipal } from "@/lib/direccion";
 
 // V62 ("249. ok", maqueta V62): en vez de "Copiar link" (que solo copiaba),
 // "Compartir link". Abre tres opciones: copiarlo, mandarlo por WhatsApp con
@@ -13,8 +14,8 @@ import { IconLink, IconPrint, IconX } from "@/components/icons";
 // un link completo). mensaje: el texto de WhatsApp (el link va al final).
 // tituloQr: lo que sale arriba del código al imprimirlo.
 export function urlCompleta(ruta) {
-  if (/^https?:\/\//.test(ruta)) return ruta;
-  return typeof window !== "undefined" ? `${window.location.origin}${ruta}` : ruta;
+  // V67 ("1. a"): siempre la dirección principal.
+  return urlPrincipal(ruta);
 }
 
 export function svgQr(texto, celda = 6) {

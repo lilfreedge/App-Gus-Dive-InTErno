@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buzoAFila } from "@/lib/viajes/datos";
-import { buscarPorDoc, celCoincide, logLink, tokenMenorValido, buzoPorId } from "@/lib/estudiantes/servidor";
+import { buscarPorDoc, celCoincide, logLink, tokenMenorValido, buzoPorId, puedeCambiarArchivo } from "@/lib/estudiantes/servidor";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
+import { avisar as avisarBuceos } from "@/lib/viajes/avisos";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -28,9 +29,11 @@ const PERMITIDOS = {
   cedula: [...IMAGENES, "application/pdf"],
   comprobante: [...IMAGENES, "application/pdf"],
   firma: ["image/png"],
+  // V64 ("281"): su certificación (captura de la app de su agencia o foto de la tarjeta).
+  certificacion: [...IMAGENES, "application/pdf"],
 };
-const QUE = { foto: "su foto", cedula: "su cédula", comprobante: "su comprobante de pago", firma: "su firma" };
-const MSJ_TIPO = { foto: "Sube una foto (JPG, PNG o HEIC).", cedula: "Sube una foto o un escaneo (JPG, PNG, HEIC o PDF).", comprobante: "Sube una foto (JPG, PNG, HEIC) o un PDF.", firma: "Vuelve a firmar." };
+const QUE = { foto: "su foto", cedula: "su cédula", comprobante: "su comprobante de pago", firma: "su firma", certificacion: "su certificación" };
+const MSJ_TIPO = { certificacion: "Sube una captura o una foto (JPG, PNG, HEIC) o un PDF.", foto: "Sube una foto (JPG, PNG o HEIC).", cedula: "Sube una foto o un escaneo (JPG, PNG, HEIC o PDF).", comprobante: "Sube una foto (JPG, PNG, HEIC) o un PDF.", firma: "Vuelve a firmar." };
 const EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic", "image/heif": "heif", "application/pdf": "pdf" };
 
 const mal = (error, status = 400) => NextResponse.json({ error }, { status });
@@ -57,12 +60,15 @@ async function preparar(s, datos) {
   }
 
   // El curso: el que diga, si es suyo; si no, el más reciente que tenga abierto.
-  const { data: cursos } = await s.from("est_estudiantes").select("id, curso, comprobantes, pasos, estado").eq("buzo_id", b.id).order("creado_en", { ascending: false });
+  const { data: cursos } = await s.from("est_estudiantes").select("id, curso, comprobantes, pasos, estado, firma").eq("buzo_id", b.id).order("creado_en", { ascending: false });
   const abiertos = (cursos || []).filter((x) => !["cancelado"].includes(x.estado));
   const est = abiertos.find((x) => x.id === String(datos.estudianteId || "")) || abiertos.find((x) => !["entregada", "avisado"].includes(x.estado)) || abiertos[0];
   if (["comprobante", "firma"].includes(que) && !est) return { error: "No tienes un curso registrado." };
+  // V63 ("162"): la foto y la firma solo se cambian cada 6 meses.
+  const ya = que === "foto" ? puedeCambiarArchivo(b.foto) : que === "firma" ? puedeCambiarArchivo(est?.firma) : { puede: true };
+  if (!ya.puede) return { error: `${que === "foto" ? "La foto" : "La firma"} se puede cambiar cada 6 meses. La próxima vez: desde el ${ya.desdeCuando.split("-").reverse().join("/")}.` };
   if (que === "comprobante" && (est.comprobantes || []).length >= 10) return { error: "Ya subiste varios comprobantes. Escríbenos por WhatsApp." };
-  const carpeta = ["foto", "cedula"].includes(que) ? `buzo-${b.id}` : est.id;
+  const carpeta = ["foto", "cedula", "certificacion"].includes(que) ? `buzo-${b.id}` : est.id;
   return { b, que, tipo, abiertos, est, carpeta };
 }
 
@@ -76,6 +82,10 @@ async function aplicar(s, { b, que, abiertos, est }, ruta, nombre) {
     for (const x of abiertos.filter((y) => y.estado === "curso" && (y.pasos || {})[paso] === "pendiente")) {
       await s.from("est_estudiantes").update({ pasos: { ...x.pasos, [paso]: "listo" }, actualizado_en: ahora }).eq("id", x.id);
     }
+  } else if (que === "certificacion") {
+    // V64 ("281"): queda en su ficha; vuelve a "sin revisar" hasta que la tienda la vea.
+    const { error } = await s.from("viajes_buzos").update({ cert_foto: ruta, cert_revisada_en: null, cert_revisada_por: null }).eq("id", b.id);
+    if (!error) await avisarBuceos(s, "perfil", { titulo: "Subió su certificación", texto: b.nombre, ruta: `/viajes-buceos/buzos/${b.id}` });
   } else if (que === "comprobante") {
     const ext = ruta.split(".").pop();
     const c = { ruta, nombre: String(nombre || `comprobante.${ext}`).slice(0, 80), en: ahora, via: "link" };

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck } from "@/components/icons";
-import { soloDigitos, formatoCedula } from "@/lib/viajes/modelo";
+import { soloDigitos, formatoCedula, celValido } from "@/lib/viajes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { NACIONALIDADES, Privacidad } from "./Publico";
 
@@ -63,7 +63,7 @@ export default function MeInteresa({ cursos, whatsapp }) {
     }
     setEnviando(false);
   }
-  const puedeEnviar = conocido ? true : f.nombre.trim() && soloDigitos(f.cel).length === 10;
+  const puedeEnviar = conocido ? true : f.nombre.trim() && celValido(f.cel);
 
   return (
     <div className="pb ce-pub">
@@ -164,7 +164,7 @@ export default function MeInteresa({ cursos, whatsapp }) {
                 <div className="pb-h">Déjanos tus datos y te mandamos toda la información.</div>
                 <label className="ce-pub-l">Nombre completo</label>
                 <input className="pb-input" value={f.nombre} onChange={(e) => set("nombre", e.target.value)} placeholder="Nombre y apellido" />
-                <label className="ce-pub-l">Celular</label>
+                <label className="ce-pub-l">Celular (WhatsApp)</label>
                 <CampoCel className="pb-input" value={f.cel} onChange={(v) => set("cel", v)} />
               </>
             )}

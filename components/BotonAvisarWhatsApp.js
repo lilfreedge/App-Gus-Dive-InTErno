@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { linkWhatsAppGrupo, mensajeAsignacion } from "@/lib/whatsapp-tecnico";
+import { urlPrincipal } from "@/lib/direccion";
 
 // V37 -- Botón "Avisar por WhatsApp" al técnico de una orden. Abre WhatsApp
 // (app del teléfono o WhatsApp Web) con el mensaje ya escrito y anota el
@@ -27,7 +28,7 @@ export default function BotonAvisarWhatsApp({ orden, tecnico, miNombre = "", est
   function avisar(e) {
     e?.preventDefault?.();
     e?.stopPropagation?.();
-    const url = typeof window !== "undefined" ? `${window.location.origin}/app-clientes/ordenes/${orden.id}` : "";
+    const url = typeof window !== "undefined" ? urlPrincipal(`/app-clientes/ordenes/${orden.id}`) : "";
     const mensaje = mensajeAsignacion({ nombre: tecnico?.full_name, orden, url });
     // Primero se abre WhatsApp (si se espera a la base de datos, el
     // navegador puede bloquear la ventana nueva).

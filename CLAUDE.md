@@ -44,47 +44,28 @@ Control Estudiantes, Buceos y Alquiler salen "En construcción" en `/espacio` (`
 
 Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzos`.
 
-## Estado (8-nov-2026)
+## Estado (10-nov-2026)
 
-- En GitHub está la **V61**. La **V62** está hecha en commits locales, sin subir. Súbela solo cuando él diga "súbela".
-- SQL para correr cuando se suba: `supabase/todo_v62_una_sola_vez.sql` (migraciones 88, 89 y 90). Se puede correr más de una vez.
+- En GitHub está la **V62** (subida el 8-nov, commit 6378629 en su Mac; mismo árbol que mi commit local 74f269a). Lo próximo se sube igual: solo cuando él diga "súbela".
+- SQL de la V62: `supabase/todo_v62_una_sola_vez.sql` (migraciones 88, 89 y 90). Se le dio para correr una vez.
 - Lista de verificación de la V62: 251–262 y 264 (la 234, B). Él dijo "al final verifico todo".
 - Maquetas: `maqueta-v61.html` y la maqueta V62 ya están contestadas.
 
 ## Pendiente
 
-**Aprobado y sin hacer (la próxima tanda):**
-- **230, Recordatorios para técnicos** (App Interno, Equipos): una sola sección para compresores, inspección visual y mantenimiento de reguladores.
-  - Cada recordatorio: qué hacer, cada cuánto y a quién le toca.
-  - "Hacerlo" le sale solo a la persona asignada; el Titular y los administradores ven todos.
-  - Avisos solo a la persona asignada: campanita (y WhatsApp o correo si se marca). Al asignarlo le llega "Te asignaron…".
-- **162, Mi registro** (ver abajo).
+**V63, V64, V65, V66 y V67 hechas en commits locales, sin subir** (desde 74f269a; él dijo "espera y subes junto"). SQL: `supabase/todo_v67_una_sola_vez.sql` (migration_91, 92, 93 y 94; probado dos veces). Detalle en los docs del proyecto `claude/v64-pedidos.md`, `claude/v65-pedidos.md` y `claude/v66-pedidos.md`.
+- V63: 230 Recordatorios para técnicos, 162 "Mis documentos".
+- V64: perfil del buzo en el link de Buceos (275, 276, 278 A, 279, 281), cambiar el celular en Mis documentos, 282 No. de factura, 283 curso borrado, 285 cursos nuevos (SQL), 288 sin firma en el registro, 290, 291.
+- V65: 284 celular con país y "Celular (WhatsApp)", 286 cursos por grupos con la "i", Agregar Nitrox / OXY y precios (SQL), 287 C, 292 Seguimiento de contacto. 302 A: se queda "Agregar Nitrox".
+- V67: lista nueva desde el 1; 1 A dirección principal en los links, 2 B "Pendiente procesar", 3 seis permisos nuevos por sección, 4 Estadísticas con secciones cerradas, 5 lista 16–40 cerrada.
+- V66: 303 B pantalla final de la lista de espera sencilla y grande, 312 A ("Adelantar mis documentos" como botón y WhatsApp chiquito), 313 link de cada curso (`/estudiante?curso=<fecha>`, sin escoger curso). 304 ok: Buceos se queda como está (se entra al perfil desde el link de cada buceo; no hay link fijo "Mi perfil").
 
-**Preguntas abiertas:**
-- **236, correos en spam:** (8-nov: "por ahora no he vuelto a ver, te mantengo al tanto"). Se cambió el correo de avisos de Buceos a un documento HTML completo. Si sigue cayendo en spam, pídele los encabezados completos de un correo ("Ver original") y que agregue tienda@gusdivecenter.com a los remitentes seguros. El cambio a `app.gusdivecenter.com` también ayuda, porque los links dejan de ser `vercel.app`.
-- **217–228:** lista de verificación que todavía no contesta.
-- **243 / 191:** el 404. Él avisa si le vuelve a salir.
+**Lista nueva (10-nov):** él pidió "junta todo lo pendiente y usemos una secuencia nueva empezando desde el 1". Todo lo pendiente está renumerado en el doc del proyecto `claude/lista-nueva.md` y en `public/maquetas/maqueta-v67.html` (pestaña "Lista nueva"). Los números viejos ya no se usan; cada punto dice qué número tenía antes.
+- **A (1–5), contestadas el 10-nov y HECHAS (V67):** 1 A links siempre con la dirección principal (`lib/direccion.js`: `urlPrincipal` en el navegador y `origenDe(request)` en el servidor; variable opcional NEXT_PUBLIC_DIRECCION_PRINCIPAL; los redirects de login quedan con la dirección por donde entró) · 2 B "Pendiente procesar" · 3 sí, los 6 permisos nuevos en orden por sección (`PERMISOS_EST` con `defecto`, `valorPermisoEst`; se esconden en pantalla; Borrar estudiantes necesita migration_94) · 4 Estadísticas con las secciones cerradas (`components/estudiantes/Estadisticas.js`; el pago al instructor no tiene monto en el app, así que dice a cuántos estudiantes falta pagarle) · 5 ok, la lista 16–40 se cerró.
+- **B. Le toca a él (6–8):** 6 dirección nueva app.gusdivecenter.com · 7 correos en spam (antes 236; contesta después de ver la actualización) · 8 récord de entrenamiento, también el virtual (antes 288; para el miércoles 11-nov).
+- **C. Para más adelante (9–28):** ver el doc.
+- **D. Lista para verificar después de subir (29–70):** V61 a V67 por tema (la 217–228 vieja quedó dentro, rehecha por tema). 67–70 son de la V67. Se le da completa con la subida.
+- Ya hecho, fuera de la lista: 126 teléfonos de otros países (V65).
+- La línea de "Todo lo demás queda anotado como pendiente: la dirección nueva, la pregunta 95…" ya no se usa: esos puntos ahora son la A y la B.
 
-**162, detalle:**
-- 162, "Mi registro": el estudiante vuelve a entrar al link y ve su perfil.
-  - Cambiar la foto y la firma solo cada 6 meses.
-  - Ve sus datos y los puede cambiar.
-  - Ve sus cursos con el avance; los pagos van dentro de cada curso, con un aviso de lo que debe.
-  - El título es "Mis documentos".
-  - Después, lo mismo para los buzos en Buceos ("perfiles de los buzos").
-
-**Para más adelante (él lo dijo):**
-- **232:** Alquiler, premios por lo acumulado.
-- **247:** el link del buceo se queda como estaba (él dijo que no).
-- **205:** Buceos › Más › Catálogo › La Caleta › "¿Llegas directo? (punto de encuentro)", llenar y Guardar.
-- **206:** buscar una forma de saber si una cédula dominicana es real.
-- **207:** botón "Entrar al grupo de WhatsApp" con el link de invitación de cada buceo o curso.
-
-**De antes, diferido por él:**
-- Cambiar el dominio a `app.gusdivecenter.com`.
-- Pregunta 95.
-- Las preguntas 86, 89 y 90.
-- La lista 16–40.
-
-Cuando él conteste una lista de verificación, termina tu respuesta con esta línea, tal cual:
-"Todo lo demás queda anotado como pendiente: la dirección nueva, la pregunta 95, la 86, la 89, la 90 y la lista 16–40."
+**Spam (punto 7), detalle:** se cambió el correo de avisos de Buceos a un documento HTML completo. Si sigue cayendo en spam, pídele los encabezados completos de un correo ("Ver original") y que agregue tienda@gusdivecenter.com a los remitentes seguros. El cambio a `app.gusdivecenter.com` también ayuda, porque los links dejan de ser `vercel.app`.

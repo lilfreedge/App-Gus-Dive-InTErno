@@ -129,6 +129,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
   const [cert, setCert] = useState(est.numeroCert || "");
   const [borrar, setBorrar] = useState(null);
   const [subiendo, setSubiendo] = useState("");
+  const [verBitacora, setVerBitacora] = useState(false);
 
   const cambiar = (cambios, texto, antes, despues) => ops.cambiarEst(est, cambios, `${texto}: ${b.nombre}`, antes, despues);
   const etapas = est.etapas || {};
@@ -260,7 +261,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
                   <IconoWA /> Escribirle por WhatsApp
                 </a>
               )}
-              {b.docFoto && (
+              {b.docFoto && p.documentos && (
                 <button className="btn secondary vj-mini" onClick={() => ops.verArchivo(b.docFoto)}>
                   Ver cédula
                 </button>
@@ -296,7 +297,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
               <span>
                 {x.t}
                 {/* "56. si, es posible que firme virtual?": la firma que hizo en el link. */}
-                {x.k === "record" && est.firma && (
+                {x.k === "record" && est.firma && p.documentos && (
                   <button className="ce-firmo" onClick={() => ops.verArchivo(est.firma)}>
                     Firmó en el link · ver
                   </button>
@@ -312,10 +313,11 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
             </div>
           );
         })}
-        <div className="ce-ck">
+        {/* V67 ("3"): sin "Ver montos", no sale lo del pago. */}
+        {p.montos && <div className="ce-ck">
           Pago
           {pagoListo(est) ? <span className="ce-chip ok">Pagado</span> : est.precio == null ? <span className="ce-chip alm">Falta el precio</span> : <span className="ce-chip rojo">Debe {rd(debe(est))}</span>}
-        </div>
+        </div>}
         {c?.llevaExamen !== false && (
           <div className="ce-ck">
             Examen
@@ -334,7 +336,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
               className="btn btn-primary vj-btn"
               style={{ marginTop: 10 }}
               disabled={!listoParaAlmacen(est, c)}
-              onClick={() => cambiar({ estado: "almacen", etapas: { ...etapas, mandado: sello } }, "Lo mandó a procesar", "En curso", "Procesando")}
+              onClick={() => cambiar({ estado: "almacen", etapas: { ...etapas, mandado: sello } }, "Lo mandó a procesar", "En curso", "Pendiente procesar")}
             >
               Mandar a procesar
             </button>
@@ -347,8 +349,8 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
       </div>
 
       </>)}
-      {/* ---------------------------------------------------- Pago (V59: no en lista de espera) */}
-      {!enEspera && (<>
+      {/* ---------------------------------------------------- Pago (V59: no en lista de espera; V67: solo con "Ver montos") */}
+      {!enEspera && p.montos && (<>
       <div className="ce-etapa">
         <h4>
           Pago del curso
@@ -459,20 +461,18 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
               <button className="btn btn-primary vj-btn" onClick={() => setPago({ monto: "", fecha: hoyISO(), forma: "Transferencia", nota: "" })}>
                 + Registrar pago
               </button>
-              <label className="btn secondary vj-btn" style={{ cursor: "pointer" }}>
-                {subiendo === "comprobante" ? "Subiendo…" : "Subir comprobante"}
-                <input type="file" accept="image/*,application/pdf" hidden onChange={(e) => subir(e, "comprobante")} />
-              </label>
+              {/* V64 ("282"): en vez de "Subir comprobante", el No. de factura. */}
+              <CampoFacturaEst est={est} cambiar={cambiar} puede={p.pagos || p.estudiantes} />
             </div>
           ))}
       </div>
 
       {!enEspera && (<>
       </>)}
-      {/* ---------------------------------------------------- 2. Procesando (antes "Almacén", "86. si") */}
+      {/* ---------------------------------------------------- 2. Pendiente procesar (antes "Almacén" y "Procesando"; V67 "2. B") */}
       <div className={`ce-etapa${idx < 1 ? " gris" : ""}`}>
         <h4>
-          2. Procesando {idx > 1 && <IconCheck size={16} />}
+          2. Pendiente procesar {idx > 1 && <IconCheck size={16} />}
         </h4>
         {idx < 1 ? (
           <div className="hint-text">Recibido · Subido al Drive · Procesado (No. de certificación)</div>
@@ -522,7 +522,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
                 )
               ))}
             {etapas.procesado && est.estado === "almacen" && p.almacen && (
-              <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => cambiar({ estado: "certificacion", etapas: { ...etapas, cert: sello } }, "Llegó la certificación", "Procesando", "Certificación")}>
+              <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => cambiar({ estado: "certificacion", etapas: { ...etapas, cert: sello } }, "Llegó la certificación", "Pendiente procesar", "Certificación")}>
                 Llegó la certificación
               </button>
             )}
@@ -572,40 +572,10 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
 
       </>)}
       {/* ---------------------------------------------------- Seguimiento */}
-      <div className="ce-etapa">
-        <h4>Seguimiento</h4>
-        {(est.seguimiento || []).map((x, i) => (
-          <div key={i} className="ce-nota">
-            {x.texto}
-            <small>
-              {x.por} · {fechaDeIso(x.en)}
-              {yo.esTitular && (
-                <>
-                  {" "}
-                  <QuitarMini que="esta nota" alQuitar={() => cambiar({ seguimiento: est.seguimiento.filter((_, j) => j !== i) }, "Quitó una nota de seguimiento", x.texto, "Quitada")} />
-                </>
-              )}
-            </small>
-          </div>
-        ))}
-        {puedeAlgo && (
-          <>
-            <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-              <input className="ce-input" value={nota} onChange={(e) => setNota(e.target.value)} placeholder="Escribir una nota…" onKeyDown={(e) => e.key === "Enter" && agregarNota(nota)} />
-              <button className="btn secondary vj-mini" onClick={() => agregarNota(nota)} disabled={!nota.trim()}>
-                Guardar
-              </button>
-            </div>
-            <div className="ce-rapidos">
-              {NOTAS_RAPIDAS.map((t) => (
-                <button key={t} onClick={() => agregarNota(t)}>
-                  {t}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+      {/* V65 ("292"): "Seguimiento de contacto", como el de Interesados: en qué va
+          (sale solo de lo último), la historia, y para anotar: qué pasó, un
+          comentario y cuándo volver a escribirle. Sin los mensajes rápidos. */}
+      <SeguimientoContacto est={est} yo={yo} puede={puedeAlgo} cambiar={cambiar} />
 
       {/* ---------------------------------------------------- Sus datos */}
       <div className="ce-etapa">
@@ -682,10 +652,15 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
             { k: "foto", t: "Foto", ruta: b.foto },
             { k: "cedula", t: "Cédula", ruta: b.docFoto },
           ].map((d) =>
-            d.ruta ? (
+            d.ruta && p.documentos ? (
               <button key={d.k} className="ce-doc ok" onClick={() => ops.verArchivo(d.ruta)}>
                 <IconEye size={15} /> {d.t}
               </button>
+            ) : d.ruta ? (
+              // V67 ("3"): sin "Ver documentos" se sabe que está, pero no se abre.
+              <span key={d.k} className="ce-doc ok" title="No tienes permiso para ver documentos">
+                <IconCheck size={15} /> {d.t}
+              </span>
             ) : p.estudiantes ? (
               <label key={d.k} className="ce-doc" style={{ cursor: "pointer" }}>
                 <IconCamera size={15} /> {subiendo === d.k ? "Subiendo…" : `Subir ${d.t.toLowerCase()}`}
@@ -698,7 +673,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
               </span>
             )
           )}
-          {est.firma && (
+          {est.firma && p.documentos && (
             <button className="ce-doc ok" onClick={() => ops.verArchivo(est.firma)}>
               <IconEye size={15} /> Firma
             </button>
@@ -741,12 +716,15 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
       </div>
 
       {/* ---------------------------------------------------- Cancelar / borrar */}
-      {p.estudiantes && ["curso", "espera"].includes(est.estado) && (
+      {/* V64 ("290"): en lista de espera no hay curso que cancelar. */}
+      {/* V67 ("3"): con el permiso "Cancelar cursos". */}
+      {p.cancelar && est.estado === "curso" && (
         <button className="btn secondary vj-mini" style={{ marginTop: 12 }} onClick={() => cambiar({ estado: "cancelado" }, "Canceló el curso", nombreEtapa(est.estado), "Cancelado")}>
           Cancelar este curso
         </button>
       )}
-      {yo.esTitular && (
+      {/* V67 ("3"): con el permiso "Borrar estudiantes" (antes, solo el Titular). */}
+      {p.borrar && (
         <div className="vj-borrar" style={{ marginTop: 14 }}>
           {borrar ? (
             <>
@@ -775,7 +753,12 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
         </div>
       )}
 
-      <div className="section-title">Bitácora de este estudiante</div>
+      {/* V64 ("291"): la bitácora cerrada; se abre con el botón. V67: con "Ver la bitácora". */}
+      {p.bitacora && <button type="button" className="ce-bit-btn" onClick={() => setVerBitacora((x) => !x)}>
+        <span>Bitácora de este estudiante ({db.bitacora.filter((x) => x.estudianteId === est.id).length})</span>
+        <span>{verBitacora ? "▾" : "▸"}</span>
+      </button>}
+      {p.bitacora && verBitacora && (
       <div className="card" style={{ padding: "4px 14px" }}>
         {db.bitacora
           .filter((x) => x.estudianteId === est.id)
@@ -795,7 +778,39 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
           ))}
         {!db.bitacora.some((x) => x.estudianteId === est.id) && <div className="hint-text" style={{ padding: "10px 0" }}>Nada todavía.</div>}
       </div>
+      )}
     </>
+  );
+}
+
+// V64 ("282"): el No. de factura del pago del curso, con su campo al lado.
+function CampoFacturaEst({ est, cambiar, puede }) {
+  const [v, setV] = useState(est.factura || "");
+  const [editando, setEditando] = useState(!est.factura);
+  if (!("factura" in est)) return <span className="hint-text">Para el No. de factura falta correr el SQL de la V64 en Supabase.</span>;
+  if (!editando)
+    return (
+      <span className="ce-factura">
+        <span>
+          Factura <b>{est.factura}</b>
+        </span>
+        {puede && (
+          <button type="button" className="btn secondary vj-mini" onClick={() => setEditando(true)}>
+            Cambiar
+          </button>
+        )}
+      </span>
+    );
+  return (
+    <span className="ce-factura">
+      <label>No. de factura</label>
+      <input className="ce-input-corto" value={v} onChange={(e) => setV(e.target.value)} placeholder="Ej. B0100001234" disabled={!puede} />
+      {puede && v.trim() !== (est.factura || "") && (
+        <button type="button" className="btn secondary vj-mini" onClick={() => (cambiar({ factura: v.trim() }, "No. de factura", est.factura || "—", v.trim() || "—"), setEditando(!v.trim()))}>
+          Guardar
+        </button>
+      )}
+    </span>
   );
 }
 
@@ -950,6 +965,86 @@ function EditarCurso({ db, est, cambiar, cerrar }) {
           Cancelar
         </button>
       </div>
+    </div>
+  );
+}
+
+// V65 ("292"): el seguimiento de contacto del estudiante.
+const TIPOS_CONTACTO = [
+  { k: "escribi", t: "Le escribí" },
+  { k: "llame", t: "Le llamé" },
+  { k: "no_contesta", t: "No contesta" },
+  { k: "confirmo", t: "Confirmó" },
+  { k: "otra_fecha", t: "Pidió otra fecha" },
+  { k: "sin_wa", t: "No tiene WhatsApp" },
+];
+const tipoContacto = (k) => TIPOS_CONTACTO.find((x) => x.k === k)?.t || null;
+function SeguimientoContacto({ est, yo, puede, cambiar }) {
+  const [tipo, setTipo] = useState("");
+  const [texto, setTexto] = useState("");
+  const [proxima, setProxima] = useState("");
+  const lista = est.seguimiento || [];
+  const ultimo = lista.find((x) => x.tipo) || null;
+  const proximaFecha = lista.find((x) => x.proxima)?.proxima || null;
+  function guardar() {
+    const t = texto.trim();
+    if (!tipo && !t) return;
+    const entrada = { ...(tipo ? { tipo } : {}), texto: t, por: yo.corto, en: new Date().toISOString(), ...(proxima ? { proxima } : {}) };
+    cambiar({ seguimiento: [entrada, ...lista] }, "Seguimiento de contacto", null, [tipoContacto(tipo), t].filter(Boolean).join(": "));
+    setTipo("");
+    setTexto("");
+    setProxima("");
+  }
+  return (
+    <div className="ce-etapa">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+        <h4 style={{ margin: 0 }}>Seguimiento de contacto</h4>
+        {ultimo && <span className={`ce-seg-estado ${ultimo.tipo}`}>{tipoContacto(ultimo.tipo)}</span>}
+      </div>
+      {proximaFecha && <div className="hint-text" style={{ marginTop: 4 }}>Volver a escribirle el {fechaCorta(proximaFecha)}</div>}
+      {lista.length > 0 && (
+        <div className="ce-seg-hist">
+          {lista.map((x, i) => (
+            <div key={i}>
+              <b>{tipoContacto(x.tipo) || x.texto}</b>
+              <small>
+                {[x.por, fechaDeIso(x.en)].filter(Boolean).join(" · ")}
+                {x.tipo && x.texto ? ` · "${x.texto}"` : ""}
+                {yo.esTitular && (
+                  <>
+                    {" "}
+                    <QuitarMini que="esta nota" alQuitar={() => cambiar({ seguimiento: lista.filter((_, j) => j !== i) }, "Quitó una nota de seguimiento", x.texto || tipoContacto(x.tipo), "Quitada")} />
+                  </>
+                )}
+              </small>
+            </div>
+          ))}
+        </div>
+      )}
+      {puede && (
+        <div className="ce-seg-nuevo">
+          <div className="hint-text" style={{ margin: "0 0 4px" }}>
+            ¿Qué pasó?
+          </div>
+          <div className="ce-seg-tipos">
+            {TIPOS_CONTACTO.map((x) => (
+              <button key={x.k} type="button" className={tipo === x.k ? "sel" : ""} onClick={() => setTipo(tipo === x.k ? "" : x.k)}>
+                {x.t}
+              </button>
+            ))}
+          </div>
+          <input className="ce-input" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Comentario (opcional)" onKeyDown={(e) => e.key === "Enter" && guardar()} />
+          <label className="hint-text" style={{ display: "block", margin: "8px 0 4px" }}>
+            Volver a escribirle el (opcional)
+          </label>
+          <input className="ce-input" type="date" value={proxima} onChange={(e) => setProxima(e.target.value)} style={{ maxWidth: 200 }} />
+          <div>
+            <button className="btn btn-primary vj-btn" style={{ marginTop: 10 }} disabled={!tipo && !texto.trim()} onClick={guardar}>
+              Guardar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

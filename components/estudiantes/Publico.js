@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { soloDigitos, formatoCedula, rd, fechaCorta, fechaLarga, primerNombre } from "@/lib/viajes/modelo";
+import { soloDigitos, formatoCedula, rd, fechaCorta, fechaLarga, primerNombre, celValido } from "@/lib/viajes/modelo";
 import { semanaDe, menorDe12, edad as edadDe } from "@/lib/estudiantes/modelo";
 import FechaNacimiento from "@/components/FechaNacimiento";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
@@ -173,6 +173,62 @@ const PROGRESO = ["datos", "curso", "docs"];
 // V59: las nacionalidades más comunes de quienes vienen a la tienda.
 export const NACIONALIDADES = ["Estados Unidos", "España", "Venezuela", "Haití", "Colombia", "Puerto Rico", "Canadá", "Italia", "Francia", "Alemania", "Argentina", "Cuba", "México", "Reino Unido", "Otra"];
 
+// V65 ("286"): los grupos del link y la información de cada curso.
+const GRUPOS_CURSO = [
+  { k: "buceo", t: "Cursos de buceo" },
+  { k: "primeros_auxilios", t: "Primeros auxilios" },
+  { k: "especialidad", t: "Especialidades" },
+  { k: "otros", t: "Otros" },
+];
+function gruposCursos(cursos) {
+  if (!cursos.some((c) => c.grupo)) return [{ k: "todos", t: "", lista: cursos }];
+  const conocidos = GRUPOS_CURSO.map((g) => ({ ...g, lista: cursos.filter((c) => (c.grupo || "buceo") === g.k) }));
+  const resto = cursos.filter((c) => c.grupo && !GRUPOS_CURSO.some((g) => g.k === c.grupo));
+  if (resto.length) conocidos[3].lista.push(...resto);
+  return conocidos.filter((g) => g.lista.length);
+}
+// Open Water → Nitrox; BLS → OXY.
+const PAREJAS = [
+  [/^open water diver$/i, /^nitrox$/i],
+  [/^bls$/i, /^oxy$/i],
+];
+function extraDe(cursos, c) {
+  const par = PAREJAS.find(([a]) => a.test(String(c.nombre || "").trim()));
+  return par ? cursos.find((x) => par[1].test(String(x.nombre || "").trim())) || null : null;
+}
+function InfoCurso({ c, cerrar, escoger }) {
+  const i = c.info || {};
+  const filas = [
+    ["Qué es", i.que],
+    ["Aprenderás", i.aprenderas],
+    ["Duración", i.duracion],
+    ["Incluye", i.incluye],
+    ["Requisitos", i.requisitos],
+  ].filter(([, v]) => v);
+  return (
+    <div className="ce-info-fondo" onClick={cerrar}>
+      <div className="ce-info" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="ce-info-x" onClick={cerrar} aria-label="Cerrar">
+          ×
+        </button>
+        <b className="ce-info-t">{c.nombre}</b>
+        <div className="pb-h" style={{ margin: "2px 0 6px" }}>
+          {[i.nivel, c.precio != null ? rd(c.precio) : ""].filter(Boolean).join(" · ")}
+        </div>
+        {filas.map(([k, v]) => (
+          <div key={k} className="ce-info-f">
+            <span>{k}</span>
+            <div>{v}</div>
+          </div>
+        ))}
+        <button className="pb-btn" onClick={escoger}>
+          Escoger este curso
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // V55 -- La semana del curso (Open Water: "79"), para cuando escoge la fecha.
 function Semana({ inicio, semana }) {
   const dias = semanaDe(inicio, semana);
@@ -189,7 +245,7 @@ function Semana({ inicio, semana }) {
   );
 }
 
-export default function EstudiantePublico({ cursos, tienda, conFechas = false }) {
+export default function EstudiantePublico({ cursos, tienda, conFechas = false, fijo = "", noAbierto = false }) {
   const [paso, setPaso] = useState("doc"); // doc | hola | cel | datos | curso | docs | listo | estado
   const [tipoDoc, setTipoDoc] = useState("cedula");
   const [avisoDni, setAvisoDni] = useState(false);
@@ -207,6 +263,12 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
   const [cursoSel, setCursoSel] = useState("");
   const [fechaVista, setFechaVista] = useState("");
   const [res, setRes] = useState(null); // lo que devuelve "registrar"
+  // V65 ("286"): la "i" de un curso y "Agregar Nitrox / OXY" (por curso).
+  const [infoDe, setInfoDe] = useState(null);
+  const [tambien, setTambien] = useState({});
+  // V66 ("313. ok", maqueta V66): el link de un curso con fecha (?curso=) no
+  // pide escoger curso. "¿Es otro curso?" lo quita y sale la lista de siempre.
+  const [fijoId, setFijoId] = useState(fijo);
   // V62 ("229. si", maqueta V61): "Registrar a un menor de edad". El adulto
   // pone primero sus datos (documento y celular) y después los del menor.
   const [menor, setMenor] = useState(false);
@@ -255,14 +317,18 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
       const emergencia = [String(d.emergenciaNombre || "").trim(), String(d.emergenciaCel || "").trim()].filter(Boolean).join(" · ") || d.emergencia;
       const nac = tipoDoc === "pasaporte" ? (nacionalidad === "Otra" ? nacOtra.trim() : nacionalidad) : "";
       const r = menor
-        ? await api({ accion: "registrar", tipoDoc, doc, cel, tutorNombre, menor: m, datos: {}, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, ...extra })
-        : await api({ accion: "registrar", tipoDoc, doc, cel, datos: { ...d, emergencia, ...(nac ? { nacionalidad: nac } : {}) }, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, ...extra });
+        ? await api({ accion: "registrar", tipoDoc, doc, cel, tutorNombre, menor: m, datos: {}, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, tambien: tambien[extra.cursoId || cursoId] || null, ...extra })
+        : await api({ accion: "registrar", tipoDoc, doc, cel, datos: { ...d, emergencia, ...(nac ? { nacionalidad: nac } : {}) }, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, tambien: tambien[extra.cursoId || cursoId] || null, ...extra });
       setRes(r);
       // V61 ("201"): si queda en lista de espera, va directo a "¡Listo!"; los
       // documentos son opcionales ("¿Quieres adelantar?").
       ir(r.espera && !r.ya ? "listo" : "docs");
     });
   const cursoElegido = cursos.find((c) => c.id === cursoSel);
+  const fijoCurso = fijoId ? cursos.find((c) => c.fechas.some((f) => f.id === fijoId)) || null : null;
+  const fijoFecha = fijoCurso ? fijoCurso.fechas.find((f) => f.id === fijoId) : null;
+  const fijoLleno = fijoFecha?.quedan === 0;
+  const fijoExtra = fijoCurso ? extraDe(cursos, fijoCurso) : null;
 
   const falta = buzo?.falta || { nac: true, direccion: true, emergencia: true, correo: true, foto: true, cedula: true };
   const pasoN = PROGRESO.indexOf(paso === "tutor" || paso === "menor" ? "datos" : paso);
@@ -283,6 +349,15 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             ))}
           </div>
         )}
+
+        {fijoCurso && (paso === "doc" || paso === "hola") && (
+          <div className="ce-pub-banda">
+            {menor ? "Vas a registrar a un menor en" : "Te vas a registrar en"}
+            <b>{fijoCurso.nombre}</b>
+            Empieza el {fechaLarga(fijoFecha.inicio)}
+          </div>
+        )}
+        {noAbierto && !fijoCurso && paso === "doc" && <div className="ce-pub-banda gris">Ese curso ya no está abierto. Más adelante escoges tu curso.</div>}
 
         {paso === "doc" && (
           <div className="pb-card">
@@ -372,6 +447,13 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             {buzo ? (
               <>
                 <div className="pb-t">¡Hola, {buzo.primer}!</div>
+            {/* V64 ("278. A"): el nombre completo, con el final del celular. */}
+            {buzo.nombre && (
+              <div className="pb-h" style={{ margin: "0 0 6px" }}>
+                {buzo.nombre}
+                {buzo.tieneCel ? ` · celular que termina en ${String(buzo.cel).slice(-4)}` : ""}
+              </div>
+            )}
                 <div className="pb-h">{buzo.tieneCel ? `Para confirmar que eres tú, escribe tu celular (el que termina en ${String(buzo.cel).slice(-4)}).` : "Escribe tu celular. Por ahí te escribimos."}</div>
               </>
             ) : (
@@ -380,12 +462,12 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
                 <div className="pb-h">Los tuyos, del adulto. Por WhatsApp te escribimos a ti.</div>
                 <label className="ce-pub-l">Tu nombre completo</label>
                 <input className="pb-input" value={tutorNombre} onChange={(e) => setTutorNombre(e.target.value)} placeholder="Nombre y apellido" />
-                <label className="ce-pub-l">Tu celular</label>
+                <label className="ce-pub-l">Tu celular (WhatsApp)</label>
               </>
             )}
             <CampoCel className="pb-input" value={cel} onChange={setCel} />
             {error && <div className="pb-error">{error}</div>}
-            <button className="pb-btn" disabled={soloDigitos(cel).length !== 10 || (!buzo && !tutorNombre.trim())} onClick={() => ir("menor")}>
+            <button className="pb-btn" disabled={!celValido(cel) || (!buzo && !tutorNombre.trim())} onClick={() => ir("menor")}>
               Seguir
             </button>
             <button className="pb-btn sec" onClick={() => ir("doc")}>
@@ -434,6 +516,13 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
         {paso === "hola" && buzo && (
           <div className="pb-card">
             <div className="pb-t">¡Hola, {buzo.primer}!</div>
+            {/* V64 ("278. A"): el nombre completo, con el final del celular. */}
+            {buzo.nombre && (
+              <div className="pb-h" style={{ margin: "0 0 6px" }}>
+                {buzo.nombre}
+                {buzo.tieneCel ? ` · celular que termina en ${String(buzo.cel).slice(-4)}` : ""}
+              </div>
+            )}
             {/* V54: sin "Ya te tenemos registrado de antes" (nota 1-nov). */}
             <div className="pb-h">¿Qué quieres hacer?</div>
             {/* V59 (nota 2-nov): sin "Solo te pedimos lo que nos falta" ni "No soy yo";
@@ -441,9 +530,10 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             <button className="pb-op" onClick={() => ir("cel")}>
               Registrarme en un curso
             </button>
+            {/* V63 ("162", Mi registro): "Mis documentos". */}
             <button className="pb-op" onClick={() => ir("cel-estado")}>
-              Ver cómo va mi curso
-              <div className="pb-op-sub">Tu certificación, tu pago y tus documentos.</div>
+              Mis documentos
+              <div className="pb-op-sub">Tus datos, tus cursos con tu pago, tu foto y tu firma.</div>
             </button>
             <button className="pb-link" onClick={() => ir("doc")}>
               ← Volver
@@ -459,10 +549,10 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
               className="pb-input"
               value={cel}
               onChange={setCel}
-              onKeyDown={(e) => e.key === "Enter" && !cargando && soloDigitos(cel).length === 10 && (paso === "cel-estado" ? verEstado() : ir("datos"))}
+              onKeyDown={(e) => e.key === "Enter" && !cargando && celValido(cel) && (paso === "cel-estado" ? verEstado() : ir("datos"))}
             />
             {error && <div className="pb-error">{error}</div>}
-            <button className="pb-btn" disabled={cargando || soloDigitos(cel).length !== 10} onClick={() => (paso === "cel-estado" ? verEstado() : ir("datos"))}>
+            <button className="pb-btn" disabled={cargando || !celValido(cel)} onClick={() => (paso === "cel-estado" ? verEstado() : ir("datos"))}>
               {cargando ? "Un momento…" : "Seguir"}
             </button>
             <button className="pb-btn sec" onClick={() => ir("hola")}>
@@ -479,7 +569,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
               <>
                 <label className="ce-pub-l">Nombre completo</label>
                 <input className="pb-input" value={d.nombre} onChange={(e) => setD({ ...d, nombre: e.target.value })} placeholder="Nombre y apellido" />
-                <label className="ce-pub-l">Celular</label>
+                <label className="ce-pub-l">Celular (WhatsApp)</label>
                 <CampoCel className="pb-input" value={cel} onChange={setCel} />
               </>
             )}
@@ -518,7 +608,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
             {error && <div className="pb-error">{error}</div>}
             <button
               className="pb-btn"
-              disabled={(!buzo && (!d.nombre.trim() || soloDigitos(cel).length !== 10)) || (falta.nac && !d.nac) || menorDe12(d.nac)}
+              disabled={(!buzo && (!d.nombre.trim() || !celValido(cel))) || (falta.nac && !d.nac) || menorDe12(d.nac)}
               onClick={() => ir("curso")}
             >
               Seguir
@@ -556,34 +646,59 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
         {/* V55: primero el curso y después la fecha ("71. B"), con precio ("74"),
             cupos ("72") y la semana de Open Water ("79"). Sin fecha o llena:
             lista de espera ("65"). */}
-        {paso === "curso" && conFechas && !cursoElegido && (
+        {paso === "curso" && conFechas && !fijoCurso && !cursoElegido && (
           <div className="pb-card">
             <div className="pb-t">{menor ? `El curso de ${primerM}` : "Tu curso"}</div>
             <div className="pb-h">{menor ? "¿Qué curso va a tomar?" : "¿Qué curso vas a tomar?"}</div>
-            {cursos.map((c) => (
-              <button
-                key={c.id}
-                className={`pb-op${c.fechas.length ? "" : " gris"}`}
-                onClick={() => {
-                  setCursoSel(c.id);
-                  setCursoId(c.id);
-                  setFechaVista("");
-                  if (!c.fechas.length) ir("espera");
-                }}
-              >
-                {c.nombre}
-                <div className="pb-op-sub">{c.fechas.length ? `${c.fechas.length} ${c.fechas.length === 1 ? "fecha próxima" : "fechas próximas"}` : "Todavía no hay fecha"}</div>
-                {c.precio != null && <div className="ce-pub-precio">{rd(c.precio)}</div>}
-                {!c.fechas.length && <span className="ce-pub-chip espera">Lista de espera</span>}
-              </button>
+            {/* V65 ("286. ok", maqueta V64): por grupos y por niveles; la "i" con
+                la información; Nitrox dentro de Open Water y OXY dentro de BLS. */}
+            {gruposCursos(cursos).map((g) => (
+              <div key={g.k}>
+                {g.t && <div className="ce-op-grupo">{g.t}</div>}
+                {g.lista.map((c) => {
+                  const extra = extraDe(cursos, c);
+                  return (
+                    <div key={c.id} className={`pb-op ce-op${c.fechas.length ? "" : " gris"}`}>
+                      <button
+                        type="button"
+                        className="ce-op-main"
+                        onClick={() => {
+                          setCursoSel(c.id);
+                          setCursoId(c.id);
+                          setFechaVista("");
+                          if (!c.fechas.length) ir("espera");
+                        }}
+                      >
+                        {c.nombre}
+                        <div className="pb-op-sub">{c.fechas.length ? `${c.fechas.length} ${c.fechas.length === 1 ? "fecha próxima" : "fechas próximas"}` : "Todavía no hay fecha"}</div>
+                        {c.precio != null && <div className="ce-pub-precio">{rd(c.precio)}</div>}
+                        {!c.fechas.length && <span className="ce-pub-chip espera">Lista de espera</span>}
+                      </button>
+                      {c.info && (
+                        <button type="button" className="ce-op-i" aria-label={`Información de ${c.nombre}`} onClick={() => setInfoDe(c)}>
+                          i
+                        </button>
+                      )}
+                      {extra && (
+                        <label className="ce-op-extra">
+                          <input type="checkbox" checked={tambien[c.id] === extra.id} onChange={(e) => setTambien({ ...tambien, [c.id]: e.target.checked ? extra.id : null })} />
+                          Agregar {extra.nombre}
+                          {extra.precio != null ? ` (+${rd(extra.precio)})` : ""}
+                        </label>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             ))}
+            {infoDe && <InfoCurso c={infoDe} cerrar={() => setInfoDe(null)} escoger={() => (setInfoDe(null), setCursoSel(infoDe.id), setCursoId(infoDe.id), setFechaVista(""), !infoDe.fechas.length && ir("espera"))} />}
             <button className="pb-btn sec" onClick={() => ir(menor ? "menor" : "datos")}>
               Atrás
             </button>
           </div>
         )}
 
-        {paso === "curso" && conFechas && cursoElegido && (
+        {paso === "curso" && conFechas && !fijoCurso && cursoElegido && (
           <div className="pb-card">
             <div className="pb-t">{cursoElegido.nombre}</div>
             <div className="pb-h">
@@ -616,6 +731,50 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
           </div>
         )}
 
+        {paso === "curso" && conFechas && fijoCurso && (
+          <div className="pb-card">
+            <div className="pb-h" style={{ margin: 0 }}>{menor ? `El curso de ${primerM}` : "Tu curso"}</div>
+            <div className="pb-t">{fijoCurso.nombre}</div>
+            <div className="pb-h" style={{ marginTop: 0 }}>
+              Empieza el {fechaLarga(fijoFecha.inicio)}
+              {(fijoFecha.quedan != null || fijoLleno) && <> <span className={`ce-pub-chip ${fijoLleno ? "lleno" : "ok"}`}>{fijoLleno ? "Lleno" : `Quedan ${fijoFecha.quedan} ${fijoFecha.quedan === 1 ? "cupo" : "cupos"}`}</span></>}
+            </div>
+            {fijoLleno ? (
+              <div className="pb-h">Esta fecha ya se llenó.</div>
+            ) : (
+              <>
+                {fijoCurso.precio != null && <div className="ce-pub-precio">{rd(fijoCurso.precio)}</div>}
+                <div style={{ textAlign: "left" }}>
+                  <Semana inicio={fijoFecha.inicio} semana={fijoCurso.semana} />
+                </div>
+                {fijoExtra && (
+                  <label className="ce-op-extra ce-fijo-extra">
+                    <input type="checkbox" checked={tambien[fijoCurso.id] === fijoExtra.id} onChange={(e) => setTambien({ ...tambien, [fijoCurso.id]: e.target.checked ? fijoExtra.id : null })} />
+                    Agregar {fijoExtra.nombre}
+                    {fijoExtra.precio != null ? ` (+${rd(fijoExtra.precio)})` : ""}
+                  </label>
+                )}
+              </>
+            )}
+            {error && <div className="pb-error">{error}</div>}
+            <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: fijoCurso.id, fechaId: fijoFecha.id, espera: fijoLleno })}>
+              {cargando ? "Registrando…" : fijoLleno ? "Ponerme en la lista de espera" : "Inscribirme"}
+            </button>
+            {fijoLleno && fijoCurso.fechas.length > 1 ? (
+              <button className="pb-btn sec" onClick={() => (setFijoId(""), setCursoSel(fijoCurso.id), setCursoId(fijoCurso.id), setFechaVista(""))}>
+                Ver otras fechas de {fijoCurso.nombre}
+              </button>
+            ) : (
+              <button className="pb-link" style={{ display: "block", margin: "12px auto 0" }} onClick={() => (setFijoId(""), setCursoSel(""), setFechaVista(""))}>
+                ¿Es otro curso? Ver todos los cursos
+              </button>
+            )}
+            <button className="pb-btn sec" onClick={() => ir(menor ? "menor" : "datos")}>
+              Atrás
+            </button>
+          </div>
+        )}
+
         {paso === "espera" && cursoElegido && (
           <div className="pb-card">
             {/* V59 (maqueta-v57 pestaña 2, "114"; nota 2-nov: "que el estudiante
@@ -633,11 +792,12 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
               </div>
             </div>
             <div className="ce-pub-aviso" style={{ textAlign: "center" }}>
-              Si quieres, te anotamos en la lista de espera y te avisamos por WhatsApp cuando abramos uno.
+              Déjanos tus datos y te avisamos por WhatsApp cuando abramos este curso.
             </div>
             {error && <div className="pb-error">{error}</div>}
             <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: cursoElegido.id, espera: true })}>
-              {cargando ? "Anotando…" : "Anotarme en la lista de espera"}
+              {/* V64 ("287. C") */}
+              {cargando ? "Un momento…" : "Quiero que me avisen"}
             </button>
             <button className="pb-btn sec" onClick={() => (setCursoSel(""), ir("curso"))}>
               Ver otro curso
@@ -662,13 +822,9 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
                 <SubirCedula id={id} tipoDoc={tipoDoc} listo={buzo && !falta.cedula} />
               </>
             )}
-            <label className="ce-pub-l" style={{ marginTop: 12 }}>
-              {res.menor ? `${m.parentesco === "Mamá" ? "Firma de la mamá" : m.parentesco === "Papá" ? "Firma del papá" : "Firma del tutor"} para el récord de entrenamiento de ${res.primer}` : "Firma para tu récord de entrenamiento"}
-            </label>
-            <div className="pb-h" style={{ margin: 0 }}>
-              Firma con el dedo dentro del recuadro.
-            </div>
-            <Firma id={id} estudianteId={res.estudianteId} />
+            {/* V64 ("288"): en el registro ya no se pide la firma del récord de
+                entrenamiento (todavía no ha visto nada). Se integra después con
+                el récord, como diga Pipe. */}
             <button className="pb-btn" onClick={() => ir("listo")}>
               Terminar
             </button>
@@ -676,11 +832,13 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
         )}
 
         {paso === "listo" && res && (
-          <div className="pb-card" style={{ textAlign: "center" }}>
+          <div className={`pb-card${res.espera && !res.ya ? " ce-fin-espera" : ""}`} style={{ textAlign: "center" }}>
             <div className="pb-ok">
-              <IconCheck size={34} />
+              <IconCheck size={res.espera && !res.ya ? 40 : 34} />
             </div>
-            <div className="pb-t">{res.menor ? `¡Listo! ${res.primer} quedó registrado.` : `¡Listo, ${res.primer}!${res.espera && !res.ya ? " Ya estás anotado." : ""}`}</div>
+            <div className="pb-t">{res.menor ? `¡Listo! ${res.primer} quedó ${res.espera && !res.ya ? "anotado" : "registrado"}.` : `¡Listo, ${res.primer}!`}</div>
+            {/* V66 ("303. B", maqueta V65): la de lista de espera es sencilla y
+                grande: el visto, "¡Listo, Juanito!" y una frase. */}
             {/* V54: sin lo del pago ni lo de la certificación (nota 1-nov: "porque
                 le esta pidiendo eso si el estudiante ni sabe aún el curso... No
                 hace sentido, el buzo ni siquiera ha empezado el curso"). */}
@@ -689,98 +847,287 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false })
                 ? res.ya
                   ? `Ya teníamos a ${res.primer} en ${res.curso}. Te escribiremos por WhatsApp para coordinar.`
                   : res.espera
-                    ? `${res.primer} está en la lista de espera de ${res.curso}. Te escribiremos por WhatsApp si se abre un cupo o cuando abramos el próximo curso.`
+                    ? <>Te avisamos por WhatsApp cuando haya fecha para <b>{res.curso}</b>.</>
                     : `Ya tenemos sus datos para ${res.curso}${res.fecha ? `, que empieza el ${fechaLarga(res.fecha)}` : ""}. Te escribiremos por WhatsApp para coordinar.`
                 : res.ya
                 ? `Ya te teníamos en ${res.curso}. Te escribiremos por WhatsApp para coordinar.`
                 : res.espera
-                  ? `Estás en la lista de espera de ${res.curso}${res.llena ? " (esa fecha se llenó)" : ""}. Te escribiremos por WhatsApp si se abre un cupo o cuando abramos el próximo curso.`
+                  ? res.llena
+                    ? <>Esa fecha se llenó. Te avisamos por WhatsApp si se abre un cupo o cuando haya otra fecha para <b>{res.curso}</b>.</>
+                    : <>Te avisamos por WhatsApp cuando haya fecha para <b>{res.curso}</b>.</>
                   : res.fecha
                     ? `Ya tenemos tus datos para ${res.curso}, que empieza el ${fechaLarga(res.fecha)}. Te escribiremos por WhatsApp para coordinar.`
                     : `Ya tenemos tus datos para ${res.curso}. Te escribiremos por WhatsApp para coordinar.`}
             </div>
+            {res.tambien && (
+              <div className="pb-h" style={{ marginTop: 4 }}>
+                También quedaste anotado en <b>{res.tambien}</b>: te escribimos para la fecha.
+              </div>
+            )}
             {res.fecha && res.semana && (
               <div style={{ textAlign: "left" }}>
                 <Semana inicio={res.fecha} semana={res.semana} />
               </div>
             )}
-            <a className="pb-btn ce-pub-wa" href={wa} target="_blank" rel="noopener noreferrer">
-              Escribir por WhatsApp
-            </a>
-            {res.espera && !res.ya && !adelanto && (
-              <div className="ce-pub-adelantar">
-                <b>¿Quieres adelantar?</b>
-                <div className="pb-h" style={{ margin: "2px 0 0" }}>
-                  Si quieres, sube tu foto, tu documento y tu firma desde ya. Así, cuando te llamemos, ya está listo. Es opcional.
-                </div>
-                <button className="pb-btn sec" onClick={() => (setAdelanto(true), ir("docs"))}>
-                  Adelantar mis documentos
-                </button>
-              </div>
+            {res.espera && !res.ya ? (
+              <>
+                {/* V66 ("312. A", maqueta V66): el botón grande es para algo que puede
+                    hacer ya (adelantar sus documentos, opcional); WhatsApp, chiquito
+                    abajo, por si tiene una pregunta. */}
+                {!adelanto && (
+                  <>
+                    <button className="pb-btn ce-fin-btn" onClick={() => (setAdelanto(true), ir("docs"))}>
+                      Adelantar mis documentos
+                    </button>
+                    <div className="ce-fin-mini">
+                      Opcional: {res.menor ? `la foto de ${res.primer} y su documento` : tipoDoc === "cedula" ? "tu foto y tu cédula" : "tu foto y tu documento"}, para que cuando haya fecha ya esté listo.
+                    </div>
+                  </>
+                )}
+                <a className="ce-fin-wa" href={wa} target="_blank" rel="noopener noreferrer">
+                  ¿Tienes alguna pregunta? Escríbenos
+                </a>
+              </>
+            ) : (
+              <a className="pb-btn ce-pub-wa" href={wa} target="_blank" rel="noopener noreferrer">
+                Escribir por WhatsApp
+              </a>
             )}
           </div>
         )}
 
-        {paso === "estado" && estado && (
-          <div className="pb-card">
-            <div className="pb-t">Hola, {estado.primer}</div>
-            {!estado.estudios.length && <div className="pb-h">Todavía no tienes un curso registrado.</div>}
-            {estado.estudios.map((e) => (
-              <div key={e.id} className="ce-pub-curso">
-                <b>{e.curso}</b>
-                <div className="pb-h" style={{ margin: "2px 0 6px" }}>
-                  {[e.escuela, e.fechaInicio ? `empezó el ${fechaCorta(e.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
-                </div>
-                {e.estado === "espera" && <div className="ce-pub-aviso" style={{ marginBottom: 6 }}>Estás en la lista de espera. Te escribimos por WhatsApp cuando haya fecha.</div>}
-                {e.estado !== "espera" && [
-                  { k: "curso", t: "En curso", sub: "Terminando las clases, el pago y el examen." },
-                  { k: "almacen", t: "Estamos procesando tu certificación", sub: `La mandamos a ${e.escuela || "la escuela"}.` },
-                  // V55: llega por correo de la escuela, no hay que buscarla ("87").
-                  { k: "certificacion", t: "Tu certificación está lista", sub: "Te vamos a avisar por WhatsApp." },
-                  { k: "entregada", t: "¡Listo, ya estás certificado!", sub: `${e.escuela || "La escuela"} te mandó un correo con tus datos para entrar a su app. ¡Felicidades!` },
-                ]
-                  .map((x, i, arr) => {
-                    const orden = ["curso", "almacen", "certificacion", "entregada"];
-                    const actual = orden.indexOf(e.estado === "avisado" ? "entregada" : e.estado);
-                    const yo = orden.indexOf(x.k);
-                    return (
-                      <div key={x.k} className="ce-pub-et">
-                        <i className={yo < actual ? "ok" : yo === actual ? "ya" : ""} />
-                        <div>
-                          <b>{x.t}</b>
-                          {yo === actual && <div className="pb-h" style={{ margin: 0 }}>{x.sub}</div>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                {e.precio != null && (
-                  <div className="ce-pub-pago">
-                    <b>Tu pago</b>
-                    <div>
-                      Curso {rd(e.precio)} · pagado {rd(e.pagado)}
-                      {e.debe > 0 ? ` · te falta ${rd(e.debe)}` : " · ¡completo!"}
-                    </div>
-                  </div>
-                )}
-                {e.debe !== 0 && <Pago tienda={tienda} id={id} estudianteId={e.id} soloSubir={e.precio == null} />}
-              </div>
-            ))}
-            {/* V54: los dos documentos siempre, con ✓ el que ya está (nota 1-nov:
-                "Aqui desapareció la foto de frente que subí"). */}
-            <div className="pb-h" style={{ marginTop: 12 }}>
-              Tus documentos:
-            </div>
-            <Subir id={id} que="foto" titulo="Una foto tuya de frente" capture="user" listo={!estado.falta?.foto} />
-            <SubirCedula id={id} tipoDoc={tipoDoc} listo={!estado.falta?.cedula} />
-            <a className="pb-btn ce-pub-wa" href={wa} target="_blank" rel="noopener noreferrer">
-              Escribir por WhatsApp
-            </a>
-            <button className="pb-link" onClick={() => ir("doc")}>
-              Volver al inicio
-            </button>
-          </div>
-        )}
+        {paso === "estado" && estado && <MisDocumentos estado={estado} setEstado={setEstado} id={id} tipoDoc={tipoDoc} doc={doc} cel={cel} setCel={setCel} tienda={tienda} wa={wa} ir={ir} />}
       </div>
+    </div>
+  );
+}
+
+// V63 ("162", Mi registro): cuando el estudiante vuelve a entrar con su
+// cédula y su celular, ve "Mis documentos": sus datos (y los puede cambiar),
+// sus cursos con cómo va y el pago adentro (con un aviso de lo que debe), su
+// foto y su firma (se cambian cada 6 meses) y, si registró a un menor, cómo va.
+const fechaDMA = (iso) => (iso ? iso.split("-").reverse().join("/") : "");
+function MisDocumentos({ estado, setEstado, id, tipoDoc, doc, cel, setCel, tienda, wa, ir }) {
+  // V64 ("279"): cambiar su celular, una vez al mes.
+  const [cambiaCel, setCambiaCel] = useState(false);
+  const [nuevoCel, setNuevoCel] = useState({ a: "", b: "" });
+  const [msjCel, setMsjCel] = useState("");
+  async function guardarCel() {
+    setMsjCel("");
+    try {
+      const r = await api({ accion: "cel-cambiar", tipoDoc, doc, cel, nuevo: nuevoCel.a, otraVez: nuevoCel.b });
+      setCel(soloDigitos(nuevoCel.a));
+      const desde = new Date(Date.now() + 30 * 86400000 - 4 * 3600000).toISOString().slice(0, 10);
+      setEstado({ ...estado, datos: { ...estado.datos, cel: r.cel }, celCambio: { puede: false, desde } });
+      setCambiaCel(false);
+      setNuevoCel({ a: "", b: "" });
+      setMsjCel("Listo, ya tenemos tu celular nuevo.");
+    } catch (e) {
+      setMsjCel(e.message);
+    }
+  }
+  const [d, setD] = useState({ correo: estado.datos?.correo || "", direccion: estado.datos?.direccion || "", emergencia: estado.datos?.emergencia || "" });
+  const [guardando, setGuardando] = useState(false);
+  const [msj, setMsj] = useState("");
+  const [firmando, setFirmando] = useState(null);
+  const cambio = estado.datos && (d.correo !== (estado.datos.correo || "") || d.direccion !== (estado.datos.direccion || "") || d.emergencia !== (estado.datos.emergencia || ""));
+  async function guardar() {
+    setGuardando(true);
+    setMsj("");
+    try {
+      await api({ accion: "datos", tipoDoc, doc, cel, datos: d });
+      setEstado({ ...estado, datos: { ...estado.datos, ...d } });
+      setMsj("Guardado.");
+    } catch (e) {
+      setMsj(e.message);
+    }
+    setGuardando(false);
+  }
+  const ORDEN = ["curso", "almacen", "certificacion", "entregada"];
+  return (
+    <div className="pb-card">
+      <div className="pb-t">Mis documentos</div>
+      <div className="pb-h">Hola, {estado.primer}.</div>
+
+      {estado.datos && (
+        <div className="ce-mis">
+          <div className="ce-mis-t">Mis datos</div>
+          <div className="ce-mis-fijo">
+            <span>{estado.datos.nombre}</span>
+            <span>
+              Celular que termina en {String(estado.datos.cel || "").slice(-4)}
+              {estado.celCambio?.puede !== false ? (
+                !cambiaCel && (
+                  <>
+                    {" · "}
+                    <a className="pb-perfil-link" onClick={() => (setCambiaCel(true), setMsjCel(""))}>
+                      Cambiar mi celular
+                    </a>
+                  </>
+                )
+              ) : (
+                <> · lo puedes cambiar desde el {fechaDMA(estado.celCambio.desde)}</>
+              )}
+            </span>
+            {estado.datos.nac && <span>Nació el {fechaDMA(estado.datos.nac)}</span>}
+          </div>
+          {cambiaCel && (
+            <div className="pb-perfil-caja">
+              <b>Cambiar mi celular</b>
+              <div className="pb-h" style={{ margin: "2px 0 6px" }}>
+                Se puede cambiar una vez al mes. Por ese número te escribimos por WhatsApp y con él entras aquí.
+              </div>
+              <label className="ce-pub-l">Celular nuevo (WhatsApp)</label>
+              <CampoCel className="pb-input" value={nuevoCel.a} onChange={(x) => setNuevoCel({ ...nuevoCel, a: x })} />
+              <label className="ce-pub-l">Escríbelo otra vez</label>
+              <CampoCel className="pb-input" value={nuevoCel.b} onChange={(x) => setNuevoCel({ ...nuevoCel, b: x })} />
+              <button className="pb-btn" disabled={!celValido(nuevoCel.a) || !celValido(nuevoCel.b)} onClick={guardarCel}>
+                Guardar mi celular nuevo
+              </button>
+              <button className="pb-btn sec pb-chico" onClick={() => (setCambiaCel(false), setMsjCel(""))}>
+                Cancelar
+              </button>
+            </div>
+          )}
+          {msjCel && <div className={/^Listo/.test(msjCel) ? "pb-h" : "pb-error"}>{msjCel}</div>}
+          <label className="ce-pub-l">Correo</label>
+          <input className="pb-input" type="email" value={d.correo} onChange={(e) => setD({ ...d, correo: e.target.value })} placeholder="tucorreo@ejemplo.com" />
+          <label className="ce-pub-l">Dirección</label>
+          <input className="pb-input" value={d.direccion} onChange={(e) => setD({ ...d, direccion: e.target.value })} placeholder="Calle, número, sector" />
+          <label className="ce-pub-l">Contacto de emergencia</label>
+          <input className="pb-input" value={d.emergencia} onChange={(e) => setD({ ...d, emergencia: e.target.value })} placeholder="Nombre · celular" />
+          {cambio && (
+            <button className="pb-btn" disabled={guardando} onClick={guardar}>
+              {guardando ? "Guardando…" : "Guardar mis datos"}
+            </button>
+          )}
+          {msj && <div className={msj === "Guardado." ? "pb-h" : "pb-error"}>{msj}</div>}
+          <div className="pb-h" style={{ fontSize: 12.5 }}>
+            Para cambiar tu nombre o tu documento, escríbenos por WhatsApp.
+          </div>
+        </div>
+      )}
+
+      <div className="ce-mis-t" style={{ marginTop: 14 }}>
+        Mis cursos
+      </div>
+      {!estado.estudios.length && <div className="pb-h">Todavía no tienes un curso registrado.</div>}
+      {estado.estudios.map((e) => (
+        <div key={e.id} className="ce-pub-curso">
+          <b>{e.curso}</b>
+          <div className="pb-h" style={{ margin: "2px 0 6px" }}>
+            {[e.escuela, e.fechaInicio ? `${e.fechaInicio > new Date(Date.now() - 4 * 3600000).toISOString().slice(0, 10) ? "empieza" : "empezó"} el ${fechaCorta(e.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
+          </div>
+          {e.estado === "espera" && <div className="ce-pub-aviso" style={{ marginBottom: 6 }}>Estás en la lista de espera. Te escribimos por WhatsApp cuando haya fecha.</div>}
+          {e.estado !== "espera" &&
+            [
+              { k: "curso", t: "En curso", sub: "Terminando las clases, el pago y el examen." },
+              { k: "almacen", t: "Estamos procesando tu certificación", sub: `La mandamos a ${e.escuela || "la escuela"}.` },
+              { k: "certificacion", t: "Tu certificación está lista", sub: "Te vamos a avisar por WhatsApp." },
+              { k: "entregada", t: "¡Listo, ya estás certificado!", sub: `${e.escuela || "La escuela"} te mandó un correo con tus datos para entrar a su app. ¡Felicidades!` },
+            ].map((x) => {
+              const actual = ORDEN.indexOf(e.estado === "avisado" ? "entregada" : e.estado);
+              const yo = ORDEN.indexOf(x.k);
+              return (
+                <div key={x.k} className="ce-pub-et">
+                  <i className={yo < actual ? "ok" : yo === actual ? "ya" : ""} />
+                  <div>
+                    <b>{x.t}</b>
+                    {yo === actual && <div className="pb-h" style={{ margin: 0 }}>{x.sub}</div>}
+                  </div>
+                </div>
+              );
+            })}
+          {e.estado === "curso" && e.avance && (
+            <div className="ce-mis-avance">
+              <div>
+                Llevas {e.avance.hechos} de {e.avance.total}
+                {e.falta?.length ? ` · te falta: ${e.falta.join(", ")}` : ""}
+              </div>
+              <span className="ce-barra">
+                <i style={{ width: `${e.avance.pct}%` }} />
+              </span>
+            </div>
+          )}
+          {e.precio != null && (
+            <div className={`ce-pub-pago${e.debe > 0 ? " debe" : ""}`}>
+              <b>{e.debe > 0 ? `Te falta pagar ${rd(e.debe)}` : "Tu pago está completo"}</b>
+              <div>
+                Curso {rd(e.precio)} · pagado {rd(e.pagado)}
+              </div>
+            </div>
+          )}
+          {e.debe !== 0 && <Pago tienda={tienda} id={id} estudianteId={e.id} soloSubir={e.precio == null} />}
+          {e.firma && e.estado !== "espera" && (
+            <div className="ce-mis-firma">
+              {e.firma.hay && !e.firma.puede ? (
+                <div className="ce-pub-foto ok">
+                  <IconCheck size={18} />
+                  <span>
+                    <b>Firma guardada ✓</b>
+                    <small>Se puede cambiar desde el {fechaDMA(e.firma.desde)}.</small>
+                  </span>
+                </div>
+              ) : firmando === e.id || !e.firma.hay ? (
+                <>
+                  <label className="ce-pub-l">Firma para tu récord de entrenamiento</label>
+                  <Firma id={id} estudianteId={e.id} alFirmar={() => setFirmando(null)} />
+                </>
+              ) : (
+                <button className="pb-btn sec pb-chico" onClick={() => setFirmando(e.id)}>
+                  Cambiar mi firma
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+
+      <div className="ce-mis-t" style={{ marginTop: 14 }}>
+        Mi foto y mi documento
+      </div>
+      {estado.foto?.hay && !estado.foto.puede ? (
+        <div className="ce-pub-foto ok">
+          <IconCheck size={18} />
+          <span>
+            <b>Tu foto ✓</b>
+            <small>Se puede cambiar desde el {fechaDMA(estado.foto.desde)}.</small>
+          </span>
+        </div>
+      ) : (
+        <Subir id={id} que="foto" titulo={estado.foto?.hay ? "Cambiar mi foto de frente" : "Una foto tuya de frente"} capture="user" listo={false} />
+      )}
+      <SubirCedula id={id} tipoDoc={tipoDoc} listo={!estado.falta?.cedula} />
+      <div className="pb-h" style={{ fontSize: 12.5 }}>
+        La foto y la firma se pueden cambiar cada 6 meses.
+      </div>
+
+      {estado.menores?.length > 0 && (
+        <>
+          <div className="ce-mis-t" style={{ marginTop: 14 }}>
+            Los que registraste
+          </div>
+          {estado.menores.map((m, i) => (
+            <div key={i} className="ce-pub-curso">
+              <b>{m.primer}</b>
+              {m.estudios.map((e) => (
+                <div key={e.id} className="pb-h" style={{ margin: "2px 0 0" }}>
+                  {e.curso} — {e.estado === "espera" ? "lista de espera" : e.etapa.toLowerCase()}
+                  {e.debe > 0 ? ` · falta pagar ${rd(e.debe)}` : ""}
+                </div>
+              ))}
+              {!m.estudios.length && <div className="pb-h">Sin curso.</div>}
+            </div>
+          ))}
+        </>
+      )}
+
+      <a className="pb-btn ce-pub-wa" href={wa} target="_blank" rel="noopener noreferrer">
+        Escribir por WhatsApp
+      </a>
+      <button className="pb-link" onClick={() => ir("doc")}>
+        Volver al inicio
+      </button>
     </div>
   );
 }

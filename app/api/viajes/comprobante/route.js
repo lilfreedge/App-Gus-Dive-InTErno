@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { nuevoId } from "@/lib/viajes/datos";
 import { formatoCedula, hoyISO, palabraViaje } from "@/lib/viajes/modelo";
 import { avisar } from "@/lib/viajes/avisos";
+import { origenDe } from "@/lib/direccion";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -50,7 +51,7 @@ export async function POST(request) {
     s,
     "comprobante",
     { titulo: `Comprobante nuevo · ${v.nombre}`, texto: `${b.nombre} subió su comprobante de pago.`, viajeId: v.id, ruta: `/viajes-buceos/viaje/${v.id}` },
-    new URL(request.url).origin
+    origenDe(request)
   );
   return NextResponse.json({ ok: true, nombre: c.nombre });
 }

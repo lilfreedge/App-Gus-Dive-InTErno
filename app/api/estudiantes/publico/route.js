@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buzoAFila, filaABuzo, nuevoId } from "@/lib/viajes/datos";
 import { filaACurso, filaAEst } from "@/lib/estudiantes/datos";
-import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula, formatoCel, hoyISO, fechaLarga } from "@/lib/viajes/modelo";
-import { pasosIniciales, pagado, debe, nombreEtapa, menorDe12 } from "@/lib/estudiantes/modelo";
-import { docValido, buscarPorDoc, celCoincide, logLink, edadHoy, tokenMenor } from "@/lib/estudiantes/servidor";
+import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula, formatoCel, hoyISO, fechaLarga, celValido, celGuardar } from "@/lib/viajes/modelo";
+import { pasosIniciales, pagado, debe, nombreEtapa, menorDe12, avance, faltaDe } from "@/lib/estudiantes/modelo";
+import { docValido, buscarPorDoc, celCoincide, logLink, edadHoy, tokenMenor, puedeCambiarArchivo, puedeCambiarCel, cambiarCelular } from "@/lib/estudiantes/servidor";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 
 export const dynamic = "force-dynamic";
@@ -44,8 +44,10 @@ export async function POST(request) {
       encontrado: true,
       corto: nombreCorto(b.nombre),
       primer: primerNombre(b.nombre),
+      // V64 ("278. A"): el nombre completo, con el final del celular.
+      nombre: b.nombre,
       cel: celOculto(b.cel),
-      tieneCel: soloDigitos(b.cel).length === 10,
+      tieneCel: celValido(b.cel),
       // Lo que nos falta de su ficha, para pedirle solo eso.
       falta: { nac: !b.nac, direccion: !b.direccion, emergencia: !b.emergencia, correo: !b.correo, foto: !b.foto, cedula: !b.docFoto },
     });
@@ -54,7 +56,67 @@ export async function POST(request) {
   if (body.accion === "estado") {
     if (!b || !celCoincide(b, body.cel)) return NextResponse.json({ error: "Ese celular no es el que tenemos con esa cédula. Escríbenos por WhatsApp." }, { status: 400 });
     const { data } = await s.from("est_estudiantes").select("*").eq("buzo_id", b.id).order("creado_en", { ascending: false });
-    return NextResponse.json({ primer: primerNombre(b.nombre), estudios: (data || []).map(filaAEst).filter((e) => e.estado !== "cancelado").map(resumen), falta: { foto: !b.foto, cedula: !b.docFoto } });
+    const ests = (data || []).map(filaAEst).filter((e) => e.estado !== "cancelado");
+    // V63 ("162", "Mis documentos"): sus datos (los puede cambiar), cómo va en
+    // cada curso (los pagos adentro), y si ya puede cambiar la foto y la firma
+    // (cada 6 meses). Solo después de confirmar con su celular.
+    const ids = [...new Set(ests.map((e) => e.cursoId).filter(Boolean))];
+    const { data: cfilas } = ids.length ? await s.from("est_cursos").select("*").in("id", ids) : { data: [] };
+    const cursos = Object.fromEntries((cfilas || []).map((c) => [c.id, filaACurso(c)]));
+    const foto = puedeCambiarArchivo(b.foto);
+    const estudios = ests.map((e) => {
+      const c = cursos[e.cursoId] || null;
+      const a = avance(e, c);
+      const firma = puedeCambiarArchivo(e.firma);
+      return { ...resumen(e), avance: { hechos: a.hechos, total: a.total, pct: a.pct }, falta: e.estado === "curso" ? faltaDe(e, c) : [], firma: { hay: !!e.firma, puede: firma.puede, desde: firma.desdeCuando || null } };
+    });
+    // Los menores que esta persona registró (solo cómo van).
+    const { data: menoresF } = await s.from("viajes_buzos").select("*").eq("celular", soloDigitos(b.cel)).not("tutor", "is", null);
+    const menores = [];
+    for (const m of (menoresF || []).map(filaABuzo).filter((x) => x.id !== b.id)) {
+      const { data: me } = await s.from("est_estudiantes").select("*").eq("buzo_id", m.id).order("creado_en", { ascending: false });
+      menores.push({ primer: primerNombre(m.nombre), estudios: (me || []).map(filaAEst).filter((e) => e.estado !== "cancelado").map(resumen) });
+    }
+    return NextResponse.json({
+      primer: primerNombre(b.nombre),
+      estudios,
+      falta: { foto: !b.foto, cedula: !b.docFoto },
+      datos: { nombre: b.nombre, cel: celOculto(b.cel), correo: b.correo || "", direccion: b.direccion || "", emergencia: b.emergencia || "", nac: b.nac || "" },
+      foto: { hay: !!b.foto, puede: foto.puede, desde: foto.desdeCuando || null },
+      menores,
+      // V64 ("279"): si ya puede cambiar su celular (una vez al mes).
+      celCambio: (() => {
+        const pc = puedeCambiarCel(b);
+        return pc.puede ? { puede: true } : { puede: false, desde: pc.desde };
+      })(),
+    });
+  }
+
+  // V64 ("279"): cambiar su celular desde "Mis documentos" (una vez al mes).
+  if (body.accion === "cel-cambiar") {
+    if (!b || !celCoincide(b, body.cel)) return NextResponse.json({ error: "Ese celular no es el que tenemos con esa cédula. Escríbenos por WhatsApp." }, { status: 400 });
+    const r = await cambiarCelular(s, b, body.nuevo, body.otraVez);
+    if (r.error) return NextResponse.json({ error: r.error }, { status: 400 });
+    await logLink(s, null, `Cambió su celular por el link: ${b.nombre}`, `${formatoCel(r.viejo)} → ${formatoCel(r.nuevo)}`);
+    await avisarEquipoEst(s, { permiso: "estudiantes", titulo: "Cambió su celular (link)", texto: `${b.nombre}: antes ${formatoCel(r.viejo)}, ahora ${formatoCel(r.nuevo)}`, url: "/control-estudiantes/estudiantes" });
+    return NextResponse.json({ ok: true, cel: celOculto(r.nuevo) });
+  }
+
+  // V63 ("162"): cambiar sus datos desde "Mis documentos" (correo, dirección y
+  // contacto de emergencia). El nombre, la cédula y el celular, por WhatsApp.
+  if (body.accion === "datos") {
+    if (!b || !celCoincide(b, body.cel)) return NextResponse.json({ error: "Ese celular no es el que tenemos con esa cédula. Escríbenos por WhatsApp." }, { status: 400 });
+    const n = body.datos || {};
+    const cambios = {};
+    if ("correo" in n) cambios.correo = String(n.correo || "").trim().slice(0, 120);
+    if ("direccion" in n) cambios.direccion = String(n.direccion || "").trim().slice(0, 200);
+    if ("emergencia" in n) cambios.emergencia = String(n.emergencia || "").trim().slice(0, 200);
+    if (cambios.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cambios.correo)) return NextResponse.json({ error: "Ese correo no se ve bien." }, { status: 400 });
+    if (!Object.keys(cambios).length) return NextResponse.json({ ok: true });
+    const { error } = await s.from("viajes_buzos").update(buzoAFila(cambios)).eq("id", b.id);
+    if (error) return NextResponse.json({ error: "No se pudo guardar. Intenta de nuevo." }, { status: 500 });
+    await logLink(s, null, `Cambió sus datos por el link: ${b.nombre}`, Object.keys(cambios).join(", "));
+    return NextResponse.json({ ok: true });
   }
 
   if (body.accion !== "registrar") return NextResponse.json({ error: "Acción desconocida." }, { status: 400 });
@@ -66,8 +128,9 @@ export async function POST(request) {
   const n = body.datos || {};
   // V60 (nota 2-nov): el buceo es de 12 años en adelante.
   if (menorDe12(n.nac)) return NextResponse.json({ error: "Para bucear hay que tener 12 años o más." }, { status: 400 });
-  const cel = soloDigitos(body.cel);
-  if (cel.length !== 10) return NextResponse.json({ error: "Escribe tu celular completo (10 números)." }, { status: 400 });
+  // V65 ("284"): también celulares de otros países.
+  const cel = celGuardar(body.cel);
+  if (!celValido(body.cel)) return NextResponse.json({ error: "Escribe tu celular completo." }, { status: 400 });
 
   let buzo = b;
   // V62 ("229. si", maqueta V61): un adulto registra a un menor de edad (12 a
@@ -82,7 +145,7 @@ export async function POST(request) {
     if (edad == null) return NextResponse.json({ error: "Falta la fecha de nacimiento del menor." }, { status: 400 });
     if (edad < 12) return NextResponse.json({ error: "El buceo es de 12 años en adelante." }, { status: 400 });
     if (edad >= 18) return NextResponse.json({ error: "Si tiene 18 años o más, que se registre con su propio documento." }, { status: 400 });
-    if (b && soloDigitos(b.cel).length === 10 && !celCoincide(b, cel)) return NextResponse.json({ error: "Ese celular no es el que tenemos con esa cédula. Escríbenos por WhatsApp." }, { status: 400 });
+    if (b && celValido(b.cel) && !celCoincide(b, cel)) return NextResponse.json({ error: "Ese celular no es el que tenemos con esa cédula. Escríbenos por WhatsApp." }, { status: 400 });
     const tutorNombre = b ? b.nombre : String(body.tutorNombre || "").trim().slice(0, 120);
     if (!tutorNombre) return NextResponse.json({ error: "Falta tu nombre completo." }, { status: 400 });
     const parentesco = ["Mamá", "Papá", "Tutor"].includes(m.parentesco) ? m.parentesco : "Tutor";
@@ -120,7 +183,7 @@ export async function POST(request) {
   } else if (buzo) {
     // Ya está en la base: tiene que poner el mismo celular. Solo se llena lo
     // que no teníamos; nunca se cambia lo que ya estaba.
-    if (soloDigitos(buzo.cel).length === 10 && !celCoincide(buzo, cel)) return NextResponse.json({ error: "Ese celular no es el que tenemos con esa cédula. Escríbenos por WhatsApp." }, { status: 400 });
+    if (celValido(buzo.cel) && !celCoincide(buzo, cel)) return NextResponse.json({ error: "Ese celular no es el que tenemos con esa cédula. Escríbenos por WhatsApp." }, { status: 400 });
     const llenar = {};
     if (!buzo.cel) llenar.cel = cel;
     if (!buzo.nac && n.nac) llenar.nac = String(n.nac).slice(0, 10);
@@ -206,9 +269,30 @@ export async function POST(request) {
   };
   const { error: eEst } = await s.from("est_estudiantes").insert(fila);
   if (eEst) return NextResponse.json({ error: "No se pudo registrar el curso. Intenta de nuevo." }, { status: 500 });
+  // V65 ("286"): "Agregar Nitrox" en Open Water (o "Agregar OXY" en BLS):
+  // queda anotado también en ese curso, sin fecha (en lista de espera).
+  let tambienNombre = null;
+  if (body.tambien && String(body.tambien) !== curso.id) {
+    const { data: tf } = await s.from("est_cursos").select("*").eq("id", String(body.tambien)).maybeSingle();
+    const t = tf ? filaACurso(tf) : null;
+    if (t && t.activo) {
+      const { data: yaT } = await s.from("est_estudiantes").select("id").eq("buzo_id", buzo.id).eq("curso_id", t.id).not("estado", "in", "(entregada,avisado,cancelado)");
+      if (!yaT?.length) {
+        const pasosT = pasosIniciales(t);
+        if (buzo.foto && pasosT.foto === "pendiente") pasosT.foto = "listo";
+        if (buzo.docFoto && pasosT.identificacion === "pendiente") pasosT.identificacion = "listo";
+        const filaT = { id: nuevoId(), buzo_id: buzo.id, curso_id: t.id, curso: t.nombre, escuela: t.escuelas?.[0] || null, fecha_inicio: null, pasos: pasosT, examen: t.llevaExamen ? "pendiente" : "na", precio: t.precio, estado: "espera", via: "link" };
+        const { error: eT } = await s.from("est_estudiantes").insert(filaT);
+        if (!eT) {
+          tambienNombre = t.nombre;
+          await logLink(s, filaT.id, `Se registró por el link: ${buzo.nombre} (${t.nombre}, junto con ${curso.nombre})`);
+        }
+      }
+    }
+  }
   const cuando = fecha ? ` · ${fechaLarga(fecha.inicio)}` : espera ? (pidioLlena ? " · lista de espera (la fecha estaba llena)" : " · lista de espera") : "";
   await logLink(s, fila.id, `Se registró por el link: ${buzo.nombre} (${curso.nombre}${cuando})${tutorTxt ? ` · menor de edad, lo registró ${tutorTxt}` : ""}`);
   // V54: aviso en la campanita ("62. si").
   await avisarEquipoEst(s, { permiso: "estudiantes", titulo: espera ? "Nuevo en lista de espera (link)" : "Nuevo estudiante por el link", texto: `${buzo.nombre}${tutorTxt ? ` (menor, lo registró ${tutorTxt})` : ""} · ${curso.nombre}${fecha ? ` · ${fechaLarga(fecha.inicio)}` : ""}`, url: `/control-estudiantes/estudiante/${fila.id}` });
-  return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio, fecha: fecha ? fecha.inicio : null, espera, llena: pidioLlena, semana: fecha ? curso.semana || null : null, ...permisoMenor });
+  return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio, fecha: fecha ? fecha.inicio : null, espera, llena: pidioLlena, semana: fecha ? curso.semana || null : null, tambien: tambienNombre, ...permisoMenor });
 }

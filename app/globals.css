@@ -2457,6 +2457,18 @@ a.vj-nombre:hover { text-decoration: underline; }
 .pb-acepto input { margin-top: 3px; }
 .pb-error { color: #c23b3b; font-weight: 700; font-size: 14px; margin-top: 6px; }
 .pb-ok { width: 64px; height: 64px; border-radius: 32px; background: #1f8f4e; color: #fff; font-size: 34px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+.ce-fin-espera { padding-top: 28px; padding-bottom: 22px; }
+.ce-fin-espera .pb-ok { width: 80px; height: 80px; border-radius: 40px; margin-bottom: 14px; }
+.ce-fin-espera .pb-t { font-size: 22px; }
+.ce-fin-espera > .pb-h { font-size: 15px; line-height: 1.45; }
+.ce-fin-espera > .pb-h b { color: #1a2733; }
+.ce-fin-espera .ce-fin-btn { margin-top: 18px; }
+.ce-fin-mini { color: #5c6b78; font-size: 12.5px; margin-top: 6px; line-height: 1.4; }
+.ce-fin-wa { display: block; margin-top: 14px; color: #5c6b78; font-weight: 600; font-size: 13.5px; text-decoration: underline; }
+.ce-pub-banda { background: #fdf3cf; border-radius: 12px; padding: 10px 12px; font-size: 13.5px; color: #5c4700; margin-bottom: 10px; line-height: 1.4; }
+.ce-pub-banda b { display: block; font-size: 15.5px; color: #2b2200; }
+.ce-pub-banda.gris { background: #eef3f6; color: #5c6b78; }
+.ce-op-extra.ce-fijo-extra { margin: 12px 0 0; }
 .pb-wa { background: #e9f8ef; border: 1px solid #bfe8cf; border-radius: 12px; padding: 10px 12px; font-size: 13.5px; text-align: left; margin-top: 12px; color: #1d5c37; }
 
 /* ---- la página web ---- */
@@ -3619,3 +3631,144 @@ html[data-theme="dark"] .vj-cal-curso.empieza { background: #8a6a00; color: #fff
 .ce-punto.naranja { background: #e07b1a; }
 .ce-punto.rojo { background: var(--rojo); }
 .ce-punto.gris { background: #b5bec6; }
+
+/* V63 ("230"): Equipos › Recordatorios. */
+.rec-fila { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--superficie-suave); }
+.rec-fila:last-child { border-bottom: 0; }
+.rec-fila b { font-size: 14.5px; }
+.rec-der { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.rec-chip { font-size: 12px; font-weight: 800; border-radius: 999px; padding: 3px 9px; white-space: nowrap; background: var(--superficie-suave); color: var(--texto-suave); }
+.rec-chip.rojo { background: var(--error-fondo); color: var(--rojo); }
+.rec-chip.naranja { background: #fff1e0; color: #b5691f; }
+.rec-hacer { margin-top: 0 !important; width: auto !important; padding: 6px 14px !important; font-size: 13px !important; text-decoration: none; }
+.rec-editar { color: var(--azul-claro); font-weight: 700; font-size: 12.5px; text-decoration: none; }
+.rec-mios { border: 2px solid #f0c27a; }
+.rec-form label { display: block; }
+.rec-ops { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px; }
+.rec-op { border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 13.5px; cursor: pointer; }
+.rec-op.sel { background: #36454f; border-color: #36454f; color: #fff; }
+.rec-fijo { font-size: 14px; padding: 9px 12px; background: var(--superficie-suave); border-radius: 10px; color: var(--texto-suave); }
+.rec-cada { display: flex; gap: 8px; }
+.rec-cada input { max-width: 110px; }
+.rec-avisar { display: flex; gap: 14px; flex-wrap: wrap; }
+.rec-ck { display: inline-flex !important; align-items: center; gap: 6px; font-weight: 500; font-size: 14px; margin: 4px 0 !important; }
+.rec-ck input { width: 17px; height: 17px; margin: 0; }
+.rec-antes { display: flex; gap: 8px; align-items: center; margin-top: 6px; font-size: 14px; color: var(--texto-suave); }
+.rec-antes input { max-width: 70px; }
+.rec-borrar { margin-top: 12px; padding: 12px; border: 1px solid var(--rojo); border-radius: 10px; color: var(--rojo); font-weight: 600; }
+@media (max-width: 520px) { .rec-fila { flex-direction: column; align-items: flex-start; } .rec-der { justify-content: flex-start; } }
+
+/* V63 ("162"): Mis documentos en el link del estudiante. */
+.ce-mis { border-top: 1px solid var(--superficie-suave); padding-top: 10px; margin-top: 6px; }
+.ce-mis-t { font-weight: 800; font-size: 15px; color: var(--texto); margin-bottom: 4px; }
+.ce-mis-fijo { display: flex; flex-direction: column; font-size: 14px; background: var(--superficie-suave); border-radius: 10px; padding: 8px 12px; }
+.ce-mis-fijo span:first-child { font-weight: 700; }
+.ce-mis-avance { font-size: 13px; color: var(--texto-suave); margin: 6px 0; }
+.ce-mis-avance .ce-barra { display: block; margin-top: 4px; }
+.ce-pub-pago.debe b { color: var(--rojo); }
+.ce-mis-firma { margin-top: 8px; }
+
+/* V64 ("281"): certificación subida por el buzo, en su ficha de Buceos. */
+.vj-cert { border: 1px solid var(--borde); border-radius: 12px; padding: 10px 12px; margin: 8px 0; background: linear-gradient(135deg, #f2f8fc, #ffffff); }
+.vj-cert-t { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; font-weight: 700; }
+.vj-chip.ambar { background: #fff1e0; color: #b5691f; }
+
+/* V64 ("276"): Mi perfil del buzo en el link de Buceos. */
+.pb-perfil-t { font-weight: 800; font-size: 15px; margin: 16px 0 6px; }
+.pb-perfil-fijo { display: flex; flex-direction: column; gap: 2px; background: #eef3f6; border-radius: 10px; padding: 9px 12px; font-size: 14px; }
+.pb-perfil-link { color: #0a3d62; font-weight: 700; cursor: pointer; text-decoration: underline; }
+.pb-perfil-caja { border: 1px solid #dfe6ea; border-radius: 12px; padding: 12px; margin-top: 8px; background: #fff; }
+.pb-perfil-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pb-perfil-bz { border: 1px solid #dfe6ea; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; background: #fff; }
+.pb-perfil-bz b { display: block; }
+.pb-perfil-chip { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: #eef3f6; color: #5c6b78; }
+.pb-perfil-chip.v { background: #e5f6ec; color: #2c9e5b; }
+.pb-perfil-chip.r { background: #fde8e8; color: #d64545; }
+.pb-cert { position: relative; border-radius: 14px; padding: 14px; color: #fff; background: linear-gradient(135deg, #0a3d62, #1f6f9e); margin-top: 8px; }
+.pb-cert-ag { font-size: 11px; font-weight: 800; letter-spacing: .12em; opacity: .85; text-transform: uppercase; }
+.pb-cert-nv { font-size: 18px; font-weight: 800; margin: 4px 0; }
+.pb-cert-nm { font-size: 12.5px; opacity: .9; }
+.pb-cert-sello { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 700; }
+.pb-cert-cambiar { display: inline-block; margin-top: 10px; background: #fff; color: #0a3d62; border-radius: 8px; padding: 5px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.pb-cert-subir { display: flex; gap: 10px; align-items: center; border: 1.5px dashed #9fb3c2; border-radius: 12px; padding: 12px; margin-top: 8px; background: #fbfdff; cursor: pointer; color: #0a3d62; }
+.pb-cert-subir small { display: block; color: #5c6b78; font-size: 12px; margin-top: 2px; }
+
+/* V64 ("282", "291"): ficha del estudiante. */
+.ce-factura { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.ce-factura label { font-weight: 700; color: var(--texto-suave); font-size: 13px; }
+.ce-bit-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding: 11px 14px; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; font: inherit; font-weight: 800; color: var(--azul-texto, #0a3d62); cursor: pointer; }
+
+/* V65 ("284"): el celular con el país al lado. */
+.campo-cel { display: flex; gap: 6px; width: 100%; }
+.campo-cel select { flex: 0 0 auto; width: 136px !important; font-size: 14px !important; min-width: 0; padding-left: 8px !important; padding-right: 4px !important; }
+.campo-cel input { flex: 1 1 auto; min-width: 0; }
+.ce-pub-dos:has(.campo-cel) { grid-template-columns: 1fr; }
+.campo-cel-pais.en-pb { box-sizing: border-box; border: 1.5px solid #cfd8de; border-radius: 12px; padding: 12px 6px 12px 8px; font-size: 14px; margin: 0 0 8px; font-family: inherit; background: #fff; }
+
+/* V65 ("286"): cursos por grupos, la "i" y "Agregar Nitrox / OXY". */
+.ce-op-grupo { font-size: 11.5px; font-weight: 800; color: #5c6b78; text-transform: uppercase; letter-spacing: .4px; margin: 14px 0 6px; }
+.ce-op { position: relative; padding: 0; cursor: default; }
+.ce-op-main { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 12px 46px 12px 12px; font: inherit; font-weight: 700; color: inherit; cursor: pointer; }
+.ce-op-i { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ce, #8a6a00); background: #fff; color: var(--ce, #8a6a00); font-family: Georgia, serif; font-style: italic; font-weight: 800; font-size: 15px; cursor: pointer; }
+.ce-op-extra { display: flex; gap: 8px; align-items: center; margin: -4px 12px 12px; padding: 8px 10px; border-radius: 10px; background: #fdf3cf; font-size: 13.5px; font-weight: 600; color: #5c4700; cursor: pointer; }
+.ce-op-extra input { width: 17px; height: 17px; margin: 0; }
+.ce-info-fondo { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, .45); display: flex; align-items: flex-end; justify-content: center; padding: 12px; }
+@media (min-width: 600px) { .ce-info-fondo { align-items: center; } }
+.ce-info { position: relative; background: #fff; border-radius: 16px; padding: 18px 16px 14px; width: 440px; max-width: 100%; max-height: 88vh; overflow: auto; }
+.ce-info-x { position: absolute; top: 8px; right: 10px; background: none; border: 0; font-size: 26px; line-height: 1; color: #5c6b78; cursor: pointer; }
+.ce-info-t { display: block; font-size: 18px; margin-right: 26px; }
+.ce-info-f { margin-top: 10px; }
+.ce-info-f span { display: block; font-size: 11.5px; font-weight: 800; color: #5c6b78; text-transform: uppercase; letter-spacing: .3px; }
+.ce-info-f div { font-size: 14.5px; line-height: 1.45; color: #1a2733; margin-top: 2px; }
+
+/* V65 ("292"): seguimiento de contacto del estudiante. */
+.ce-seg-estado { font-size: 11.5px; font-weight: 800; border-radius: 999px; padding: 3px 9px; background: var(--superficie-suave); color: var(--texto-suave); white-space: nowrap; }
+.ce-seg-estado.confirmo { background: var(--exito-fondo); color: var(--verde); }
+.ce-seg-estado.no_contesta, .ce-seg-estado.sin_wa { background: var(--error-fondo); color: var(--rojo); }
+.ce-seg-estado.otra_fecha { background: #fff1e0; color: #b5691f; }
+.ce-seg-hist { border-left: 3px solid var(--ce, #8a6a00); margin: 10px 0 4px 2px; padding-left: 10px; }
+.ce-seg-hist > div { padding: 5px 0; }
+.ce-seg-hist b { display: block; font-size: 14px; }
+.ce-seg-hist small { display: block; font-size: 12.5px; color: var(--texto-suave); }
+.ce-seg-nuevo { background: var(--superficie-suave); border-radius: 12px; padding: 10px 12px; margin-top: 10px; }
+.ce-seg-tipos { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.ce-seg-tipos button { border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); border-radius: 999px; padding: 6px 11px; font: inherit; font-size: 13px; cursor: pointer; }
+.ce-seg-tipos button.sel { background: #2b2200; border-color: #2b2200; color: #fff; }
+
+/* V67 ("4"): Control Estudiantes › Más › Estadísticas, con las secciones cerradas. */
+.ce-st-periodo { display: inline-flex; border: 1px solid var(--borde); border-radius: 999px; overflow: hidden; margin: 4px 0 12px; background: var(--tarjeta); }
+.ce-st-periodo button { border: 0; background: none; padding: 7px 13px; font: inherit; font-size: 13px; color: inherit; cursor: pointer; }
+.ce-st-periodo button.sel { background: var(--ce-barra-txt, #2b2200); color: #fff; font-weight: 700; }
+.ce-st-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+@media (max-width: 640px) { .ce-st-kpis { grid-template-columns: 1fr 1fr; } }
+.ce-st-kpis .card { margin: 0; padding: 10px 12px; }
+.ce-st-kpis span { display: block; font-size: 12px; color: var(--texto-suave); }
+.ce-st-kpis b { display: block; font-size: 22px; margin-top: 2px; }
+.ce-st-kpis i { font-style: normal; font-size: 11.5px; color: var(--texto-suave); }
+.ce-st-sec { padding: 0; margin-bottom: 8px; }
+.ce-st-sec summary { list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; }
+.ce-st-sec summary::-webkit-details-marker { display: none; }
+.ce-st-sec summary .hint-text { display: block; margin: 0; font-size: 12px; }
+.ce-st-res { display: flex; align-items: center; gap: 8px; font-weight: 800; white-space: nowrap; }
+.ce-st-res i { font-style: normal; color: var(--texto-suave); transition: transform .15s; }
+.ce-st-sec[open] .ce-st-res i { transform: rotate(90deg); }
+.ce-st-cuerpo { padding: 0 14px 14px; }
+.ce-st-cols { display: flex; align-items: flex-end; gap: 6px; height: 130px; border-bottom: 1px solid var(--borde); padding-top: 16px; }
+.ce-st-cols div { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+.ce-st-cols em { font-style: normal; font-size: 11px; margin-bottom: 3px; }
+.ce-st-cols i { display: block; width: 70%; max-width: 34px; min-height: 2px; background: var(--ce, #8a6a00); border-radius: 4px 4px 0 0; }
+.ce-st-colx { display: flex; gap: 6px; }
+.ce-st-colx span { flex: 1; text-align: center; font-size: 11px; color: var(--texto-suave); margin-top: 4px; }
+.ce-st-hb { display: grid; grid-template-columns: minmax(90px, 140px) 1fr 36px; gap: 8px; align-items: center; font-size: 13px; margin: 6px 0; }
+.ce-st-barra { height: 14px; background: var(--ce-claro, #fdf3cf); border-radius: 4px; overflow: hidden; }
+.ce-st-barra i { display: block; height: 100%; background: var(--ce, #8a6a00); border-radius: 0 4px 4px 0; }
+.ce-st-hb b { text-align: right; }
+.ce-st-emb { display: flex; gap: 6px; align-items: stretch; }
+.ce-st-emb div { flex: 1; background: var(--ce-claro, #fdf3cf); border-radius: 10px; padding: 8px; text-align: center; font-size: 12px; color: var(--ce-texto, #5c4700); }
+.ce-st-emb div b { display: block; font-size: 18px; }
+.ce-st-emb div.rojo { background: #fdecea; color: #a12a1f; }
+.ce-st-emb > span { display: flex; align-items: center; color: var(--texto-suave); }
+.ce-st-tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ce-st-tabla th, .ce-st-tabla td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--borde); }
+.ce-st-tabla th { font-size: 11.5px; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .3px; }
+.ce-st-tabla td.rojo { color: #c0392b; font-weight: 700; }

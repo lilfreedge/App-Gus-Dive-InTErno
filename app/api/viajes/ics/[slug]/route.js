@@ -2,6 +2,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { filaAViaje } from "@/lib/viajes/datos";
 import { textoIcs } from "@/lib/viajes/modelo";
 import { encuentroDe } from "@/lib/viajes/servidor";
+import { origenDe } from "@/lib/direccion";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -15,7 +16,7 @@ export async function GET(request, { params }) {
   if (!fila || fila.estado === "cancelado") return new Response("No encontrado", { status: 404 });
   const v = filaAViaje(fila);
   v.encuentro = await encuentroDe(s, fila, v);
-  const link = `${new URL(request.url).origin}/inscripcion/${v.slug}`;
+  const link = `${origenDe(request)}/inscripcion/${v.slug}`;
   return new Response(textoIcs(v, link), {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
