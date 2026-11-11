@@ -12,8 +12,11 @@ import BotonAvisarWhatsApp from "@/components/BotonAvisarWhatsApp";
 // lo anota en la Bitácora de la orden. Solo se muestra a quien tiene el
 // permiso "Asignar órdenes" (o al Titular).
 //
-// `estilo`: "chip" (Registro de Órdenes: "Asignar ▾" / "Cambiar", chiquito)
-// o "link" (ficha de la orden: "Asignar" / "Cambiar").
+// `estilo`: "chip" (Registro de Órdenes: "Asignar ▾" / "Cambiar", chiquito),
+// "link" (ficha de la orden, cuando ya hay técnico: "Cambiar") o "badge"
+// (ficha de la orden, sin técnico: "Sin asignar" clickeable, V72/V73,
+// maqueta aprobada -- antes era un texto suelto más el botón "Asignar"
+// aparte; ahora la misma etiqueta abre la ventana).
 // V37: después de asignar, sale el botón verde para avisarle al técnico por
 // WhatsApp (plan-v37.html 2A, aprobado). `orden` trae los datos del mensaje.
 export default function AsignarOrden({
@@ -54,22 +57,35 @@ export default function AsignarOrden({
     else setAbierto(false);
   }
 
-  const texto = tecnicoActualId ? "Cambiar" : estilo === "chip" ? "Asignar ▾" : "Asignar";
+  const texto = tecnicoActualId ? "Cambiar" : estilo === "chip" ? "Asignar ▾" : estilo === "badge" ? "Sin asignar" : "Asignar";
 
   return (
     <>
       <button
         type="button"
         onClick={abrir}
-        style={{
-          background: "none",
-          border: "none",
-          padding: 0,
-          cursor: "pointer",
-          color: "var(--azul-claro)",
-          fontWeight: 700,
-          fontSize: estilo === "chip" ? 12 : 13,
-        }}
+        style={
+          estilo === "badge"
+            ? {
+                background: "rgba(196, 130, 33, 0.14)",
+                color: "#b5691f",
+                border: "1px dashed #b5691f",
+                borderRadius: 12,
+                padding: "3px 10px",
+                fontSize: 12.5,
+                fontWeight: 700,
+                cursor: "pointer",
+              }
+            : {
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                color: "var(--azul-claro)",
+                fontWeight: 700,
+                fontSize: estilo === "chip" ? 12 : 13,
+              }
+        }
       >
         {texto}
       </button>

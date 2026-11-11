@@ -19,7 +19,9 @@ import { urlPrincipal } from "@/lib/direccion";
 // orden: { id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo,
 //          tipo_equipo_otro, equipo_marca_snapshot, equipo_modelo_snapshot, que_se_hara }
 // tecnico: { id, full_name, telefono }
-// estilo: "boton" (verde grande) o "link" (texto verde)
+// estilo: "boton" (verde grande), "link" (texto verde) o "sutil" (gris,
+// solo subrayado -- ficha de la orden, V72/V73, maqueta aprobada: "ve a
+// ver si hay manera de que se vea aun mas sutil").
 export default function BotonAvisarWhatsApp({ orden, tecnico, miNombre = "", estilo = "boton", texto }) {
   const router = useRouter();
   const supabase = createClient();
@@ -55,6 +57,28 @@ export default function BotonAvisarWhatsApp({ orden, tecnico, miNombre = "", est
         type="button"
         onClick={avisar}
         style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "#1f8f4e", fontWeight: 700, fontSize: 12.5 }}
+      >
+        {etiqueta}
+      </button>
+    );
+  }
+
+  if (estilo === "sutil") {
+    return (
+      <button
+        type="button"
+        onClick={avisar}
+        style={{
+          background: "none",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+          color: "var(--texto-suave)",
+          fontWeight: 600,
+          fontSize: "inherit",
+          textDecoration: "underline",
+          textDecorationColor: "var(--borde)",
+        }}
       >
         {etiqueta}
       </button>

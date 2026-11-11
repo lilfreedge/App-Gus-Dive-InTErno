@@ -1,0 +1,138 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V73 · Ficha de la orden</title>
+<style>
+:root{--azul:#0a3d62;--azul-claro:#1e6091;--fondo:#f4f7f9;--tarjeta:#fff;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--rojo:#d64545;--sup:#eef3f6;--verde:#2c9e5b;--ambar:#b5691f;--ambar-fondo:rgba(196,130,33,.14)}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}
+.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.tab{background:#2a3b4b;color:#cfe0ec;border:none;border-radius:7px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+.tab.on{background:#ffd166;color:#1a2733}
+.wrap{max-width:920px;margin:0 auto;padding:18px}
+.pane{display:none}.pane.on{display:block}
+.doble{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}@media(max-width:760px){.doble{grid-template-columns:1fr}}
+.etq{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}.etq.a{color:#a33}.etq.d{color:var(--verde)}
+.card{background:var(--tarjeta);border:1px solid var(--borde);border-radius:14px;padding:16px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.btn{border-radius:8px;font-size:13px;font-weight:700;padding:9px 14px;border:1px solid var(--borde);background:var(--tarjeta);color:var(--azul);cursor:pointer}
+.btn.primary{background:var(--azul);color:#fff;border-color:var(--azul)}
+.campo{margin-bottom:12px}
+.campo .et{font-size:11.5px;font-weight:600;color:var(--suave);margin-bottom:2px}
+.campo .val{font-size:14.5px}
+.hint{font-size:12px;color:var(--suave);margin-top:2px}
+.badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;white-space:nowrap;display:inline-block}
+.badge-rojo{background:rgba(214,69,69,.12);color:var(--rojo)}
+.badge-grande{font-size:14px;padding:4px 13px;border-radius:14px}
+.link{color:var(--azul-claro);font-weight:700;font-size:13px;background:none;border:none;cursor:pointer;padding:0}
+.sinasignar-btn{background:var(--ambar-fondo);color:var(--ambar);border:1px dashed var(--ambar);border-radius:12px;font-size:12.5px;font-weight:700;padding:3px 10px;cursor:pointer}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:600px){.row2{grid-template-columns:1fr}}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-top:16px}
+.nota b{color:#5c4700}
+.codigos{background:var(--sup);border:2px solid var(--azul-claro);border-radius:10px;padding:12px}
+.codigos .t{font-size:11px;font-weight:700;color:var(--azul-claro);margin-bottom:4px}
+.sutil-link{color:var(--suave);font-size:12px;font-weight:600;background:none;border:none;cursor:pointer;padding:0;text-decoration:underline;text-decoration-color:var(--borde)}
+.sutil-link:hover{text-decoration-color:var(--suave)}
+.punto{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V73</b> · Correcciones a la V72, según lo que me dijiste. Falta tu aprobación.
+  <div class="tabs">
+    <button class="tab on" data-t="t2">2. Técnico asignado — más sutil</button>
+    <button class="tab" data-t="t3">3. Orden de los datos — corregido</button>
+  </div>
+</div>
+<div class="wrap">
+
+  <!-- PESTAÑA 2: variantes mas sutiles -->
+  <div class="pane on" id="t2">
+    <div class="doble">
+      <div>
+        <div class="etq a">V72 (lo que viste, ámbar/verde fuerte)</div>
+        <div class="card">
+          <div class="campo"><div class="et">Técnico asignado</div>
+            <div class="val" style="display:flex;align-items:center;gap:8px"><b>Cuenta prueba</b> <button class="link" style="font-size:12px">Cambiar</button></div>
+            <div class="hint">Asignado por Pipe el 24/10/2026 · <button class="link" style="font-size:12px;color:var(--ambar)">Sin avisar — avisar ahora</button></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="etq d">Opción 1 — todo en gris, solo subrayado</div>
+        <div class="card">
+          <div class="campo"><div class="et">Técnico asignado</div>
+            <div class="val" style="display:flex;align-items:center;gap:8px"><b>Cuenta prueba</b> <button class="link" style="font-size:12px">Cambiar</button></div>
+            <div class="hint">Asignado por Pipe el 24/10/2026 · <button class="sutil-link">Sin avisar — avisar ahora</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="doble" style="margin-top:18px">
+      <div>
+        <div class="etq d">Opción 2 — un punto de color, texto gris</div>
+        <div class="card">
+          <div class="campo"><div class="et">Técnico asignado</div>
+            <div class="val" style="display:flex;align-items:center;gap:8px"><b>Cuenta prueba</b> <button class="link" style="font-size:12px">Cambiar</button></div>
+            <div class="hint"><span class="punto" style="background:var(--ambar)"></span>Asignado por Pipe el 24/10/2026 · <button class="sutil-link">avisar ahora</button></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="etq d">Lo mismo, ya avisado (ambas opciones)</div>
+        <div class="card">
+          <div class="campo"><div class="et">Técnico asignado</div>
+            <div class="val" style="display:flex;align-items:center;gap:8px"><b>Cuenta prueba</b> <button class="link" style="font-size:12px">Cambiar</button></div>
+            <div class="hint"><span class="punto" style="background:var(--verde)"></span>Asignado por Pipe el 24/10/2026 · avisado el 24/10 (Pipe)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="nota">Quité el ámbar/verde fuerte y el negrita del link. Opción 1: todo en gris parejo, el link solo se nota por el subrayado. Opción 2: un puntito de color (ámbar = falta avisar, verde = ya avisado) y el resto en gris. Dime cuál o si quieres algo todavía más discreto.</div>
+  </div>
+
+  <!-- PESTAÑA 3: orden corregido -->
+  <div class="pane" id="t3">
+    <div class="etq a">V72 (lo que viste — tenía 2 errores)</div>
+    <div class="card" style="margin-bottom:10px">
+      <div class="row2">
+        <div>
+          <div class="campo"><div class="et">No. de orden</div><div class="val" style="font-size:16.5px;font-weight:700">02198</div><div class="hint">Ingreso: 19/10/2026</div></div>
+          <div class="row2" style="margin-top:4px">
+            <div class="campo" style="margin-bottom:0"><div class="et">Cliente</div><div class="val" style="font-weight:700;color:var(--azul-claro);font-size:14.5px">Emil Simon</div></div>
+            <div class="campo" style="margin-bottom:0"><div class="et">Equipo</div><div class="val" style="font-weight:700;color:var(--azul-claro);font-size:14.5px">Regulador — Mares Abyss</div></div>
+          </div>
+          <div class="campo" style="margin-top:12px"><div class="et">Estado</div><div class="val"><span class="badge badge-rojo badge-grande">En Hold</span></div></div>
+        </div>
+        <div><div class="codigos"><div class="t">CÓDIGOS A COBRAR</div>109438 · BOQUILLA AQUALUNG<br>1490 · LP/HP PLUG</div></div>
+      </div>
+    </div>
+    <div class="nota" style="margin:0 0 20px">
+      Se me fue el nombre del cliente al lado del No. de orden (eso ya lo tienes hecho, no se quita) y puse Cliente como campo aparte en vez de dejarlo junto al número — por eso no cuadraba con lo que pediste.
+    </div>
+
+    <div class="etq d">Después (corregido)</div>
+    <div class="card">
+      <div class="row2">
+        <div>
+          <div class="campo"><div class="et">No. de orden</div><div class="val" style="font-size:16.5px;font-weight:700">02198 <span style="color:var(--suave);font-weight:600">— Emil Simon</span></div><div class="hint">Ingreso: 19/10/2026</div></div>
+          <div class="row2" style="margin-top:10px">
+            <div class="campo" style="margin-bottom:0"><div class="et">Equipo</div><div class="val" style="font-weight:700;color:var(--azul-claro);font-size:14.5px">Regulador — Mares Abyss</div></div>
+            <div class="campo" style="margin-bottom:0"><div class="et">Estado</div><div class="val"><span class="badge badge-rojo badge-grande">En Hold</span></div></div>
+          </div>
+          <div class="campo" style="margin-top:12px"><div class="et">Técnico asignado</div><div class="val"><button class="sinasignar-btn">Sin asignar</button></div></div>
+        </div>
+        <div><div class="codigos"><div class="t">CÓDIGOS A COBRAR</div>109438 · BOQUILLA AQUALUNG<br>1490 · LP/HP PLUG</div></div>
+      </div>
+    </div>
+    <div class="nota">
+      No. de orden — Cliente (como ya está hecho) → debajo, Equipo y Estado uno al lado del otro → debajo, Técnico asignado. El campo "Cliente" grande de más abajo (con el teléfono) se queda igual, no se duplica aquí arriba.
+    </div>
+  </div>
+
+</div>
+<script>
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".pane").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  document.getElementById(b.dataset.t).classList.add("on");
+}));
+</script>
+</body></html>

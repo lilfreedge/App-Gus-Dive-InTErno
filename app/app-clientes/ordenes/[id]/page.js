@@ -252,13 +252,10 @@ export default async function FichaOrdenPage({ params }) {
                 </button>
               </Link>
             )}
-            {esRegulador && puedeVerInforme && (
-              <Link href={`/app-clientes/ordenes/${o.id}/informe`}>
-                <button className="btn secondary" type="button" style={{ marginTop: 0, width: "auto", padding: "9px 14px", fontSize: 13 }}>
-                  Informe de mantenimiento
-                </button>
-              </Link>
-            )}
+            {/* V72 (pedido explícito, con foto: "Vamos a remover el boton de
+                informe de mantenimiento de aqui") -- se quita de esta fila;
+                sigue disponible desde "Actualizar estado de orden" y desde
+                el aviso de "A MEDIAS" más abajo. */}
             {/* V54: "Ver Recibo de la orden" sube aquí, al lado del Informe
                 (nota "App Gus interno", 1-nov: "pon el boton de 'ver recibo
                 de orden' Arriba al lado del informe de mantenimiento"). Antes
@@ -313,38 +310,90 @@ export default async function FichaOrdenPage({ params }) {
                   poco mas, es lo principal de una orden"). */}
               {o.no_orden_fisico ? (
                 <div>
-                  <Campo etiqueta="No. de orden" valor={o.no_orden_fisico} destacado />
+                  {/* V70 (pedido explícito: "aqui pon el nombre del cliente
+                      al lado del numero de orden") -- para no tener que
+                      bajar hasta "Cliente" para saber de quién es la orden. */}
+                  <Campo etiqueta="No. de orden" destacado>
+                    {o.no_orden_fisico}
+                    {o.cliente_nombre_snapshot && (
+                      <span style={{ color: "var(--texto-suave)", fontWeight: 600 }}> — {o.cliente_nombre_snapshot}</span>
+                    )}
+                  </Campo>
                   <div className="hint-text" style={{ marginTop: 2 }}>
                     Ingreso: {formatFechaDDMMAAAADeDate(o.fecha)}
                   </div>
                 </div>
               ) : (
-                <Campo etiqueta="Fecha de ingreso" valor={formatFechaDDMMAAAADeDate(o.fecha)} />
+                <Campo etiqueta="Fecha de ingreso">
+                  {formatFechaDDMMAAAADeDate(o.fecha)}
+                  {o.cliente_nombre_snapshot && ` — ${o.cliente_nombre_snapshot}`}
+                </Campo>
               )}
-              <Campo etiqueta="Estado" destacado>
-                {/* El badge de "En Hold" separado se quitó (feedback sobre
-                    v40, pedido explícito) -- ahora `o.estado` ES "En Hold"
-                    mientras dure (ver lib/ordenes-estado.js), así que ya no
-                    hace falta un segundo badge repitiendo lo mismo. */}
-                <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ marginLeft: 0 }}>
-                  {o.estado}
-                </span>
-              </Campo>
+              {/* V72/V73 (pedido explícito, con maqueta aprobada: "el equipo
+                  que salga debajo del numero de orden... y al lado del
+                  equipo... estará estado") -- Equipo (versión corta, igual
+                  que Cliente ya se repite arriba) y Estado uno al lado del
+                  otro. El Estado sale un poco más grande que antes (mismo
+                  pedido: "lo que aparece en 'estado' hazlo quizas un poco
+                  mas grande"). El campo "Equipo" completo (con el link y la
+                  marca/modelo) se queda igual más abajo, no se quita. */}
+              <div className="campos-grid">
+                <Campo etiqueta="Equipo" destacado>
+                  {o.equipo_id ? (
+                    <Link href={`/app-clientes/equipos/${o.equipo_id}`} className="breadcrumb-crumb">
+                      {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
+                      {marcaModelo && ` — ${marcaModelo}`}
+                    </Link>
+                  ) : (
+                    <>
+                      {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
+                      {marcaModelo && ` — ${marcaModelo}`}
+                    </>
+                  )}
+                </Campo>
+                <Campo etiqueta="Estado">
+                  {/* El badge de "En Hold" separado se quitó (feedback sobre
+                      v40, pedido explícito) -- ahora `o.estado` ES "En Hold"
+                      mientras dure (ver lib/ordenes-estado.js), así que ya no
+                      hace falta un segundo badge repitiendo lo mismo. */}
+                  <span
+                    className={`badge ${BADGE_ESTADO[o.estado] || ""}`}
+                    style={{ marginLeft: 0, fontSize: 14, padding: "4px 13px", borderRadius: 14 }}
+                  >
+                    {o.estado}
+                  </span>
+                </Campo>
+              </div>
               {/* V34 -- Técnico asignado (maqueta-v34.html, parte B). Sale si
-                  la orden tiene técnico, o si quien la ve puede asignar. */}
+                  la orden tiene técnico, o si quien la ve puede asignar.
+                  V72/V73 (maqueta aprobada): "Sin asignar" ahora es la misma
+                  etiqueta clickeable (se quitó el botón "Asignar" aparte), y
+                  la línea de abajo ("Asignado por… · avisar") queda en gris
+                  con un punto de color, en vez de ámbar/verde fuerte en
+                  negrita. */}
               {(o.tecnico_asignado_id || (puedeAsignar && o.estado !== "Entregado")) && (
                 <Campo etiqueta="Técnico asignado">
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     {o.tecnico_asignado_id ? (
-                      <b>{o.tecnico_nombre || "—"}</b>
+                      <>
+                        <b>{o.tecnico_nombre || "—"}</b>
+                        {puedeAsignar && o.estado !== "Entregado" && (
+                          <AsignarOrden
+                            ordenId={o.id}
+                            numero={o.no_orden_fisico ?? o.folio}
+                            tecnicoActualId={o.tecnico_asignado_id}
+                            tecnicos={tecnicos}
+                            orden={o}
+                            miNombre={profile?.full_name || ""}
+                          />
+                        )}
+                      </>
                     ) : (
-                      <span style={{ color: "#b5691f", fontWeight: 700 }}>Sin asignar</span>
-                    )}
-                    {puedeAsignar && o.estado !== "Entregado" && (
                       <AsignarOrden
+                        estilo="badge"
                         ordenId={o.id}
                         numero={o.no_orden_fisico ?? o.folio}
-                        tecnicoActualId={o.tecnico_asignado_id}
+                        tecnicoActualId={null}
                         tecnicos={tecnicos}
                         orden={o}
                         miNombre={profile?.full_name || ""}
@@ -352,34 +401,47 @@ export default async function FichaOrdenPage({ params }) {
                     )}
                   </span>
                   {o.tecnico_asignado_id && o.asignada_en && (
-                    <div className="hint-text" style={{ marginTop: 2 }}>
-                      La asignó {o.asignada_por_nombre || "—"} el {formatFechaDDMMAAAA(o.asignada_en)}
-                    </div>
-                  )}
-                  {/* V37: aviso por WhatsApp (por si hay que volver a avisarle). */}
-                  {o.tecnico_asignado_id && o.estado !== "Entregado" && (
-                    <div className="hint-text" style={{ marginTop: 2, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                      {aviso ? (
-                        <span style={{ color: "var(--verde)" }}>
-                          Avisado {dondeAviso(aviso.medio)} el {fechaHoraRD(aviso.created_at)}
-                          {aviso.avisado_por_nombre ? ` (lo avisó ${aviso.avisado_por_nombre.split(" ")[0]})` : ""}
-                        </span>
-                      ) : (
-                        <span style={{ color: "#b5691f", fontWeight: 700 }}>Sin avisar</span>
-                      )}
-                      {puedeAsignar && (
-                        <BotonAvisarWhatsApp
-                          estilo="link"
-                          texto={aviso ? "Volver a avisar" : "Avisar en el grupo Taller Gus Dive"}
-                          orden={o}
-                          tecnico={
-                            tecnicos.find((t) => t.id === o.tecnico_asignado_id) || {
-                              id: o.tecnico_asignado_id,
-                              full_name: o.tecnico_nombre,
-                            }
-                          }
-                          miNombre={profile?.full_name || ""}
+                    <div className="hint-text" style={{ marginTop: 2, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                      {o.estado !== "Entregado" && (
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            display: "inline-block",
+                            background: aviso ? "var(--verde)" : "#b5691f",
+                          }}
                         />
+                      )}
+                      Asignado por {o.asignada_por_nombre || "—"} el {formatFechaDDMMAAAA(o.asignada_en)}
+                      {/* V37: aviso por WhatsApp (por si hay que volver a avisarle). */}
+                      {o.estado !== "Entregado" && (
+                        <>
+                          {aviso && (
+                            <>
+                              {" "}
+                              · avisado {dondeAviso(aviso.medio)} el {fechaHoraRD(aviso.created_at)}
+                              {aviso.avisado_por_nombre ? ` (lo avisó ${aviso.avisado_por_nombre.split(" ")[0]})` : ""}
+                            </>
+                          )}
+                          {puedeAsignar && (
+                            <>
+                              {!aviso && " · "}
+                              <BotonAvisarWhatsApp
+                                estilo="sutil"
+                                texto={aviso ? "volver a avisar" : "avisar ahora"}
+                                orden={o}
+                                tecnico={
+                                  tecnicos.find((t) => t.id === o.tecnico_asignado_id) || {
+                                    id: o.tecnico_asignado_id,
+                                    full_name: o.tecnico_nombre,
+                                  }
+                                }
+                                miNombre={profile?.full_name || ""}
+                              />
+                            </>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
