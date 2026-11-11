@@ -50,6 +50,15 @@ export default function RegistroPage() {
       return;
     }
 
+    // V70 (pedido explícito: "quiero que me llegue un correo ... para yo
+    // aprobarlo") -- aviso al Titular de que hay una cuenta por aprobar.
+    // No bloquea el registro ni lo tumba si falla (fire-and-forget).
+    fetch("/api/avisos/nueva-cuenta", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: fullName.trim(), correo: email.trim() }),
+    }).catch(() => {});
+
     setSuccess(true);
   }
 

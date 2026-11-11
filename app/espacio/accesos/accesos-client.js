@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler, IconEstudiantes } from "@/components/icons";
+import { IconUsers, IconTiendaTanque, IconBuzos, IconAlquiler, IconEstudiantes, IconEye } from "@/components/icons";
 
 const PERMISOS_DEFAULT_LOCAL = {
   equipos_clientes: false,
@@ -14,6 +14,12 @@ const PERMISOS_DEFAULT_LOCAL = {
   acceso_alquiler: false,
   // Control Estudiantes (migration_78.sql).
   acceso_estudiantes: false,
+  // V70 (pedido explícito: "una opción para poder dar un acceso especial
+  // que solo será para ver... no podrá hacer nada solamente ver, no
+  // podrá darle a ningún botón"): no abre apps nuevas (sigue viendo solo
+  // las de arriba que ya tenga marcadas), solo apaga los botones de
+  // crear/editar/borrar dentro de ellas (lib/roles.js, tieneAcceso).
+  solo_ver: false,
 };
 
 // Tabla de accesos por app (26-sep-2026) -- mismo patrón de togglePermiso
@@ -60,6 +66,10 @@ export default function AccesosClient({ perfiles, miId }) {
               <IconAlquiler size={15} style={{ display: "block", margin: "0 auto 3px" }} />
               Alquiler
             </th>
+            <th title="Solo puede ver, no puede cambiar nada (en las apps que ya tenga marcadas arriba)">
+              <IconEye size={15} style={{ display: "block", margin: "0 auto 3px" }} />
+              Solo ver
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -71,6 +81,7 @@ export default function AccesosClient({ perfiles, miId }) {
                     {p.full_name}
                     <span className="role-tag role-tag-titular">Titular</span>
                   </td>
+                  <td>—</td>
                   <td>—</td>
                   <td>—</td>
                   <td>—</td>
@@ -125,6 +136,14 @@ export default function AccesosClient({ perfiles, miId }) {
                     checked={!!permisos.acceso_alquiler}
                     disabled={loadingId === p.id}
                     onChange={(e) => togglePermiso(p, "acceso_alquiler", e.target.checked)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={!!permisos.solo_ver}
+                    disabled={loadingId === p.id}
+                    onChange={(e) => togglePermiso(p, "solo_ver", e.target.checked)}
                   />
                 </td>
               </tr>

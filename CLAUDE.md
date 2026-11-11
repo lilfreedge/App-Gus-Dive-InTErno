@@ -73,6 +73,23 @@ Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzo
 - **86, procedimiento de reguladores: se queda en la lista. Él pidió: "al momento que te comente algo relacionado tú me avisas a ver si me acuerdo". Cuando hable de reguladores, mantenimiento, informe del técnico o listas de pasos, recuérdaselo.**
 - ManyChat: se le explicó (precios por contactos + Meta cobra por mensaje de plantilla; hay que confirmar coexistencia con el WhatsApp Business del celular).
 
+## V69 (11-nov, local, sin subir)
+
+- 89 logo nuevo de Alquiler (`public/logo-gus-alquiler.png`, solo en ese app) · 90 loading screen (App Interno/Equipos) también en Control Estudiantes, Buceos y Alquiler, con su color.
+- Explicado sin cambio de código: 77 (correo de lista de espera), 79 ("no lo veo" — probable que mirara antes de que Vercel terminara de desplegar la V68, revisado el código y está bien), 88 (botón que cambia en Documentos), perfil del estudiante (ya existe en "Mis documentos": celular, correo, dirección, contacto de emergencia).
+- Pendiente de investigar: 75, dice que un buceo reabierto aparece "lleno" en el link — falta el nombre del buceo de prueba para revisarlo (ver detalle en `claude/lista-nueva.md`).
+- Preguntas con propuesta pendiente de maqueta: 91 (formulario de recordatorio más sencillo + "anuncio fijo"), 92 (que "Para hacer esta semana" diga de qué es cada recordatorio), 93 (texto del botón "Registrarme en un curso").
+
+## V70 (11-nov, local, sin subir)
+
+- Segunda tanda del 11-nov: 11 fotos de App Equipos de clientes (técnico, ficha de la orden, recibo) y una pregunta sobre estadísticas de compresores. Detalle completo (qué se hizo, qué quedó diagnosticado y las preguntas) en `claude/lista-nueva.md`, sección "Tanda del 11-nov, segunda".
+- HECHO: 94 (técnico: solo puede quitar los códigos que puso él mismo, queda quién los puso), 95 (código en negrita, descripción no, en esa misma lista), 96 (recibo del cliente sin el folio abajo a la derecha), 97 (recibo del cliente sin "Descargar PDF" ni "Ver recibo completo").
+- Maqueta `public/maquetas/maqueta-v70.html` (dos pestañas, sin programar todavía): resumir la parte de arriba de la orden del técnico + dónde va su nota sobre el regulador + "Mantenimiento" más destacado + ícono del informe junto al equipo (98-102), y el botón "Ver holds" con ventana (103) — este último también le da al técnico lo que antes no veía de los Holds.
+- 104 CERRADO: confirmado con la orden 02199 (Tomás Checo) — son Holds de un formato viejo (antes de que se guardara la pregunta como texto); tienen la decisión y el comentario guardados y sí se ven en pantalla, solo con la etiqueta genérica "Consulta al cliente" en vez de la pregunta real (que nunca se guardó como texto en esos Holds viejos). No es un error, y no debería pasar con Holds nuevos (ya guardan la pregunta como texto, `consultas`).
+- 105 CERRADO: se queda como está por ahora, no pidió ningún número nuevo de frecuencia para las estadísticas de compresores.
+- 106 HECHO: aviso por correo de cuenta nueva a felipe@gusdivecenter.com, para que él la apruebe (`/api/avisos/nueva-cuenta`, `lib/correo-nueva-cuenta.js`, `migration_95.sql`; destinatarios editables en Administración › Correos automáticos).
+- 107 HECHO (Equipos de clientes y App Interno; Control Estudiantes y Buceos para después): acceso "solo ver" — columna nueva en Accesos a apps (`profiles.permisos.solo_ver`, `migration_96.sql`). Se resolvió con un solo cambio central: `lib/roles.js` → `tieneAcceso()` apaga la lista `ACCIONES_BLOQUEADAS_SOLO_VER` (crear/editar/borrar/registrar/actualizar estado/etc. de esas 2 apps) cuando el permiso está prendido, sin tocar el acceso de entrar a la app ni los permisos de solo ver una sección — como casi todos los botones de ambas apps (incluido el menú del técnico) ya dependen de `tieneAcceso()`, quedan cubiertos sin tocarlos uno por uno. Dos pantallas (Solicitudes al almacén, Informe de mantenimiento) se ocultan enteras para esta persona porque su único permiso mezcla ver+hacer — pendiente de afinar si hace falta. Puede que algún botón suelto que no dependa de ningún permiso granular se haya quedado sin bloquear; avisarle si encuentra uno.
+
 ## Pendiente
 
 **V63 a V67: SUBIDAS el 10-nov.** SQL: `supabase/todo_v67_una_sola_vez.sql` (migration_91, 92, 93 y 94; probado dos veces). Detalle en los docs del proyecto `claude/v64-pedidos.md`, `claude/v65-pedidos.md` y `claude/v66-pedidos.md`.

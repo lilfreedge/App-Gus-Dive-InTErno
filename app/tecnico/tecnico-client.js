@@ -53,6 +53,21 @@ function equipoDe(o) {
     .join(" ");
 }
 
+// V69 (pedido explícito: "poner en negrita los codigos, no la descripcion,
+// solo los codigos") -- el texto viene como "CÓDIGO · descripción"
+// (etiquetaPieza, lib/orden-tecnico.js); si tiene código, solo ese pedazo
+// va en negrita.
+function codigoNegrita(texto) {
+  const i = String(texto || "").indexOf(" · ");
+  if (i === -1) return texto;
+  return (
+    <>
+      <b>{texto.slice(0, i)}</b>
+      {texto.slice(i)}
+    </>
+  );
+}
+
 const numero = (o) => o.no_orden_fisico ?? o.folio;
 const LISTOS = "listos"; // ?abrir=listos: la pantalla de "Listos hoy"
 
@@ -189,7 +204,8 @@ export default function TecnicoInicio({
     const lista = codigosDe(o);
     const etiqueta = etiquetaPieza(pieza);
     if (lista.some((r) => r.nombre === etiqueta)) return;
-    await cambiar(o, camposCodigos([...lista, { nombre: etiqueta, origen: "manual" }]), `cod-${pieza.id}`);
+    // V69 ("solo pueda borrar los de él mismo"): queda quién lo puso.
+    await cambiar(o, camposCodigos([...lista, { nombre: etiqueta, origen: "manual", agregadoPor: nombreQuienHace || nombre }]), `cod-${pieza.id}`);
   }
 
   async function quitarCodigo(o, i) {
@@ -379,26 +395,36 @@ export default function TecnicoInicio({
                 Códigos usados en la orden
               </span>
             </ConInfo>
-            {lista.map((r, i) => (
-              <div className="tec-chip" key={`${r.nombre}-${i}`}>
-                <span>
-                  {r.nombre}
-                  {r.origen === "autorizado" && (
-                    <span style={{ marginLeft: 6, fontSize: 12, color: "var(--azul-claro)" }}>(autorizado)</span>
+            {lista.map((r, i) => {
+              // V69 ("No permitir al técnico borrar códigos que no haya puesto
+              // él"): solo puede quitar los que puso él mismo. Los códigos de
+              // antes de este cambio (sin "agregadoPor") y el que ve un jefe
+              // viendo "como" el técnico siguen sin esta restricción.
+              const esMio = !r.agregadoPor || r.agregadoPor === (nombreQuienHace || nombre) || !!como;
+              return (
+                <div className="tec-chip" key={`${r.nombre}-${i}`}>
+                  <span>
+                    {codigoNegrita(r.nombre)}
+                    {r.origen === "autorizado" && (
+                      <span style={{ marginLeft: 6, fontSize: 12, color: "var(--azul-claro)" }}>(autorizado)</span>
+                    )}
+                    {r.agregadoPor && r.agregadoPor !== (nombreQuienHace || nombre) && (
+                      <span style={{ marginLeft: 6, fontSize: 12, color: "var(--texto-suave)" }}>· lo puso {r.agregadoPor}</span>
+                    )}
+                  </span>
+                  {accesos.actualizar && r.origen !== "autorizado" && esMio && (
+                    <button
+                      type="button"
+                      className="tec-quitar"
+                      disabled={guardando === `quitar-${o.id}-${i}`}
+                      onClick={() => quitarCodigo(o, i)}
+                    >
+                      <IX size={15} /> Quitar
+                    </button>
                   )}
-                </span>
-                {accesos.actualizar && r.origen !== "autorizado" && (
-                  <button
-                    type="button"
-                    className="tec-quitar"
-                    disabled={guardando === `quitar-${o.id}-${i}`}
-                    onClick={() => quitarCodigo(o, i)}
-                  >
-                    <IX size={15} /> Quitar
-                  </button>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
             {/* V54: el recuadro de Incluido / Se cobra va aquí, cerca de
                 "Agregar código" (nota "App Gus interno", 1-nov: "Mueve ese
                 recuadro y ponlo arriba cerca de agregar codigo"). */}

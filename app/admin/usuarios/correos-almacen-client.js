@@ -11,7 +11,10 @@ import { createClient } from "@/lib/supabase/client";
 // política de app_config solo le deja guardar a él.
 // V34: `nota` reemplaza el texto de arriba (lo usa Más › Solicitudes al
 // almacén, que agrega "es la misma configuración que en Administración").
-export default function CorreosAlmacen({ correosIniciales, nota = null }) {
+// V70: `campo` deja reutilizar este mismo componente para otra lista de
+// correos en app_config (antes solo "solicitudes_correos"); por defecto
+// sigue igual que siempre.
+export default function CorreosAlmacen({ correosIniciales, nota = null, campo = "solicitudes_correos" }) {
   const router = useRouter();
   const supabase = createClient();
   const [correos, setCorreos] = useState(correosIniciales || []);
@@ -22,7 +25,7 @@ export default function CorreosAlmacen({ correosIniciales, nota = null }) {
   async function guardar(lista) {
     setGuardando(true);
     setMensaje(null);
-    const { error } = await supabase.from("app_config").update({ solicitudes_correos: lista }).eq("id", true);
+    const { error } = await supabase.from("app_config").update({ [campo]: lista }).eq("id", true);
     setGuardando(false);
     if (error) {
       setMensaje({ tipo: "error", texto: error.message || "No se pudo guardar." });

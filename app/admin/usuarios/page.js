@@ -13,7 +13,7 @@ import FormatearRegistros from "./formatear-registros-client";
 import RespaldoDatos from "./respaldo-client";
 import CorreosAlmacen from "./correos-almacen-client";
 import ReporteCorreoConfig from "@/app/reportes/reporte-correo-client";
-import { IconPackage } from "@/components/icons";
+import { IconPackage, IconUsers } from "@/components/icons";
 
 // Administración: solo el Titular puede entrar (ni siquiera los
 // administradores comunes). No está en el nav de arriba, solo en el
@@ -27,7 +27,7 @@ export default async function UsuariosPage() {
   // V31: sin las cuentas eliminadas (migration_62.sql).
   const [{ data: perfilesTodos }, { data: config }, { data: roles }, { data: rolesClientes }] = await Promise.all([
     supabase.from("profiles").select("*").order("full_name"),
-    supabase.from("app_config").select("solicitudes_correos, reporte_configs").maybeSingle(),
+    supabase.from("app_config").select("solicitudes_correos, nuevas_cuentas_correos, reporte_configs").maybeSingle(),
     supabase.from("roles_app").select("*").eq("app", "interno").order("nombre"),
     // V34: los roles de la otra app, para "Vinculado con".
     supabase.from("roles_app").select("id, nombre").eq("app", "clientes").order("nombre"),
@@ -71,6 +71,22 @@ export default async function UsuariosPage() {
             <div style={{ fontWeight: 700, fontSize: 14.5, color: "var(--azul-texto)" }}>Aviso de solicitudes al almacén</div>
           </div>
           <CorreosAlmacen correosIniciales={config?.solicitudes_correos || []} />
+
+          {/* V70 (pedido explícito: "quiero que me llegue un correo ...
+              cada vez que alguien se cree una cuenta ... para yo
+              aprobarlo") -- mismo patrón que el aviso de arriba. */}
+          <div style={{ borderTop: "1px solid var(--borde)", margin: "22px 0 14px" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+            <div style={{ color: "var(--azul)", display: "flex" }}>
+              <IconUsers size={15} />
+            </div>
+            <div style={{ fontWeight: 700, fontSize: 14.5, color: "var(--azul-texto)" }}>Aviso de cuentas nuevas</div>
+          </div>
+          <CorreosAlmacen
+            correosIniciales={config?.nuevas_cuentas_correos || []}
+            campo="nuevas_cuentas_correos"
+            nota="A estos correos les llega el aviso cada vez que alguien crea una cuenta, para que la apruebes en Usuarios nuevos."
+          />
         </SeccionColapsable>
 
         <div style={{ marginTop: 14 }}>

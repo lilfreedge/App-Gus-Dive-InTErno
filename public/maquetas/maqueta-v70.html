@@ -1,0 +1,156 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V70 · Pantalla del técnico y Holds</title>
+<style>
+:root{--azul:#0a3d62;--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--rojo:#d64545;--sup:#eef3f6;--verde:#2c9e5b;--ambar:#b5691f}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1000px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.vista{display:none;max-width:1000px;margin:0 auto;padding:0 16px 40px}.vista.on{display:block}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-bottom:14px}
+.nota b.q{font-size:15px;display:block;margin-bottom:4px}
+.doble{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}@media(max-width:760px){.doble{grid-template-columns:1fr}}
+.etq{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}.etq.a{color:#a33}.etq.d{color:var(--verde)}
+.tel{max-width:380px;background:#fff;border:1px solid var(--borde);border-radius:18px;overflow:hidden;margin:0 auto}
+.tel-h{background:var(--azul);color:#fff;border-bottom:3px solid #06243a;padding:10px 14px;font-weight:800;font-size:13px;display:flex;gap:8px;align-items:center}
+.logo{background:var(--rojo);color:#fff;font-weight:900;font-size:11px;border-radius:6px;padding:3px 6px}
+.tel-b{padding:14px;background:var(--fondo)}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin-bottom:10px}
+.hint{color:var(--suave);font-size:12.5px}
+.btn{display:block;width:100%;border:0;border-radius:10px;padding:10px 14px;font-weight:700;font-size:13.5px;cursor:pointer;margin-top:8px;background:var(--azul);color:#fff;text-align:center}
+.btn.sec{background:#fff;border:1px solid var(--borde);color:var(--texto)}
+.btn.dis{opacity:.4;cursor:not-allowed}
+.no{font-size:19px;font-weight:800}
+.equipo-fila{display:flex;align-items:center;gap:7px;margin-top:2px}
+.equipo{font-size:15px;font-weight:700}
+.ico-sutil{width:22px;height:22px;border-radius:50%;background:var(--sup);color:var(--suave);display:inline-flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;flex-shrink:0;position:relative}
+.ico-sutil:hover{background:#dbe9f2;color:var(--azul)}
+.ico-sutil .tip{display:none;position:absolute;top:26px;left:50%;transform:translateX(-50%);background:#1a2733;color:#fff;font-size:11px;font-weight:600;padding:5px 8px;border-radius:6px;white-space:nowrap;z-index:5}
+.ico-sutil:hover .tip{display:block}
+.mant-chip{display:inline-block;margin-top:6px;font-size:13px;font-weight:800;color:var(--azul);background:#e4f1f9;border-radius:8px;padding:3px 9px}
+.dijo{background:#fff8e1;border-radius:10px;padding:9px 11px;font-size:13px;color:#5c4700;margin-top:8px;line-height:1.4}
+.dijo .ver{display:block;margin-top:4px;font-weight:700;color:var(--azul);cursor:pointer;font-size:12px}
+.cliente{font-size:13.5px;color:var(--suave);margin-top:10px;line-height:1.45}
+.cliente b{color:var(--texto)}
+.tunota{background:#eef3f6;border-left:3px solid var(--azul);border-radius:8px;padding:8px 10px;margin-top:10px;font-size:13px}
+.tunota .t{font-size:11px;font-weight:800;color:var(--azul);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
+.bitacora{border:1px solid var(--borde);border-radius:10px;padding:9px 10px;margin-top:10px;font-size:12.5px}
+.bitacora .t{font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px}
+.bitacora .it{padding:5px 0;border-top:1px solid var(--sup)}.bitacora .it:first-child{border-top:0}
+.bitacora .it small{display:block;color:var(--suave)}
+.holdbtn{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1.5px solid var(--borde);border-radius:10px;padding:9px 12px;margin-top:10px;cursor:pointer;background:#fff;font-weight:700;font-size:13.5px}
+.holdbtn.dis{opacity:.45;cursor:not-allowed}
+.holdbtn .n{font-size:11.5px;font-weight:800;background:var(--sup);color:var(--suave);border-radius:999px;padding:2px 8px}
+.holdbtn.tiene .n{background:#fde8e8;color:var(--rojo)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);align-items:center;justify-content:center;padding:20px;z-index:20}
+.overlay.on{display:flex}
+.modal{background:#fff;border-radius:14px;padding:16px;max-width:360px;width:100%;max-height:80vh;overflow:auto}
+.modal h4{margin:0 0 8px;font-size:15.5px}
+.modal .cerrar{float:right;border:0;background:var(--sup);border-radius:50%;width:26px;height:26px;cursor:pointer;font-weight:800}
+.hreg{border:1px solid var(--borde);border-radius:10px;padding:10px;margin-bottom:8px}
+.hreg .f{font-size:11.5px;font-weight:700;color:var(--suave);margin-bottom:6px}
+.consulta{font-size:13px;margin:5px 0}
+.chip-si{background:#e5f6ec;color:var(--verde);font-weight:800;font-size:11.5px;border-radius:999px;padding:1px 8px;margin-left:5px}
+.chip-no{background:#fde8e8;color:var(--rojo);font-weight:800;font-size:11.5px;border-radius:999px;padding:1px 8px;margin-left:5px}
+.coment{color:var(--suave);font-size:12px;margin-top:1px}
+.pasos2{background:var(--sup);border-radius:10px;padding:9px 10px;font-size:12.5px;margin-top:10px}
+</style></head><body>
+<div class="maq"><b>Maqueta V70</b> · Pantalla del técnico ("Mis trabajos") y cómo verían los Holds resueltos. En la pestaña 2, toca el botón "Ver holds" de cada tarjeta. Nada de esto está programado — falta tu respuesta.</div>
+<div class="tabs" id="tabs">
+  <button class="tab on" data-v="a">94. Arriba de la orden (4, 5, 6, 7)</button>
+  <button class="tab" data-v="b">95. Ver holds (tócalo)</button>
+</div>
+
+<div class="vista on" id="v-a">
+<div class="nota"><b class="q">Preguntas 94-97: ¿así está mejor? ¿le cambiarías algo?</b>
+Es la misma información de siempre, en la orden abierta del técnico. Lo que cambia: se resume "Lo que dijo el cliente" (94, foto 4), la nota del técnico sube y queda clara (95, foto 5), "Mantenimiento" se ve tan destacado como el cliente (96, foto 5) y el informe pasa a un ícono junto al equipo (97, foto 6-7).</div>
+<div class="doble">
+<div>
+<div class="etq a">Antes</div>
+<div class="tel"><div class="tel-h"><span class="logo">GUS</span> Equipos de clientes · Mis trabajos</div><div class="tel-b">
+<div class="card">
+<div class="no">No. 1248</div>
+<div class="equipo-fila"><span class="equipo">Regulador Mares Instinct</span></div>
+<div class="hint" style="margin-top:2px">Mantenimiento · llegó hace 2 días</div>
+<div class="dijo"><b>LO QUE DIJO EL CLIENTE</b><br>Se queda pegado el segundo al respirar fuerte, sobre todo pasados los 20 metros. También quisiera que revisaran la manguera de baja porque se ve algo desgastada por fuera, aunque no ha tenido fugas visibles.</div>
+<div class="cliente">Cliente: <b>Juan Pérez</b><br>Serie SN-88213</div>
+<div class="hint" style="margin-top:8px">Autorización del cliente: <b style="color:var(--texto)">Hasta $40</b></div>
+<div class="bitacora"><div class="t">Notas internas · no las ve el cliente</div>
+<div class="it">Lo dejé conectado al tanque del escritorio.<small>Gugi · hoy</small></div></div>
+</div>
+<div class="pasos2">… más abajo: Paso 1 Códigos, Paso 2 Informe de mantenimiento, <b>Paso 3 "Nota interna" (otra, para el regulador — es fácil confundirla con la de arriba)</b>.</div>
+</div></div></div>
+
+<div>
+<div class="etq d">Después (propuesta)</div>
+<div class="tel"><div class="tel-h"><span class="logo">GUS</span> Equipos de clientes · Mis trabajos</div><div class="tel-b">
+<div class="card">
+<div class="no">No. 1248</div>
+<div class="equipo-fila">
+  <span class="equipo">Regulador Mares Instinct</span>
+  <span class="ico-sutil">i<span class="tip">Ver informe de mantenimiento</span></span>
+</div>
+<div><span class="mant-chip">Mantenimiento</span></div>
+<div class="cliente" style="margin-top:8px">Cliente: <b>Juan Pérez</b> · Serie SN-88213</div>
+<div class="dijo">LO QUE DIJO EL CLIENTE: Se queda pegado el segundo al respirar fuerte, sobre todo pasados…<span class="ver">Ver todo ▾</span></div>
+<div class="hint" style="margin-top:8px">Autorización del cliente: <b style="color:var(--texto)">Hasta $40</b></div>
+<div class="tunota"><div class="t">Tu nota sobre el regulador</div>Lo dejé armado, falta probarlo en agua antes de entregar.</div>
+<div class="holdbtn">Ver holds <span class="n">—</span></div>
+<div class="bitacora" style="margin-top:10px"><div class="t">Bitácora (cualquiera puede escribir) · no la ve el cliente</div>
+<div class="it">Lo dejé conectado al tanque del escritorio.<small>Gugi · hoy</small></div></div>
+</div>
+</div></div></div>
+</div>
+<div class="hint" style="margin-top:12px">El ícono junto al equipo muestra con el cursor (o un toque) "Ver informe de mantenimiento"; si el equipo no lleva informe (otro tipo de equipo), no sale. "Tu nota sobre el regulador" es el Paso 3 de antes, ya no dice "nota interna" para no confundirla con la bitácora. "Ver holds" se explica en la pestaña 2.</div>
+</div>
+
+<div class="vista" id="v-b">
+<div class="nota"><b class="q">Pregunta 98: ¿así está bien el botón y la ventana?</b>
+Es la propuesta de la foto 9, y también resuelve lo de la foto 1 y 2-3: ahora el técnico SÍ ve los holds (antes no veía nada) y la respuesta del cliente sale clara (antes, en algunos holds viejos, no se veía la respuesta — ver la pregunta aparte sobre eso más abajo en el chat).</div>
+<div class="doble">
+<div>
+<div class="etq d">Con holds</div>
+<div class="tel"><div class="tel-h"><span class="logo">GUS</span> Equipos de clientes</div><div class="tel-b">
+<div class="card">
+<div class="no">No. 1248</div>
+<div class="equipo">Regulador Mares Instinct</div>
+<div class="holdbtn tiene" id="btn-con">Ver holds <span class="n">2 resueltos</span></div>
+</div>
+</div></div>
+</div>
+<div>
+<div class="etq a">Sin holds</div>
+<div class="tel"><div class="tel-h"><span class="logo">GUS</span> Equipos de clientes</div><div class="tel-b">
+<div class="card">
+<div class="no">No. 1301</div>
+<div class="equipo">Tanque 80 cu ft</div>
+<div class="holdbtn dis">Ver holds <span class="n">Sin holds</span></div>
+</div>
+</div></div>
+</div>
+</div>
+</div>
+
+<div class="overlay" id="modal-holds"><div class="modal">
+<button class="cerrar" id="cerrar-modal">×</button>
+<h4>Holds de la orden No. 1248</h4>
+<div class="hreg"><div class="f">Falta de pago · 3-nov-2026 → 5-nov-2026</div>
+<div class="consulta">¿Autoriza cambiar el o-ring principal?<span class="chip-si">Sí</span></div>
+<div class="coment">Dijo que sí, que lo cambiemos.</div>
+<div class="consulta">¿Autoriza la manguera nueva?<span class="chip-no">No</span></div>
+<div class="coment">Prefiere revisarla él mismo primero.</div>
+</div>
+<div class="hreg"><div class="f">Autorización de repuesto · 28-oct-2026 → 29-oct-2026</div>
+<div class="consulta">¿Autoriza el kit completo ($35)?<span class="chip-si">Sí</span></div>
+</div>
+</div></div>
+
+<script>
+document.getElementById("tabs").addEventListener("click",(e)=>{const b=e.target.closest(".tab");if(!b)return;
+document.querySelectorAll(".tab").forEach((x)=>x.classList.toggle("on",x===b));
+document.querySelectorAll(".vista").forEach((x)=>x.classList.toggle("on",x.id==="v-"+b.dataset.v));window.scrollTo(0,0)});
+document.getElementById("btn-con").addEventListener("click",()=>document.getElementById("modal-holds").classList.add("on"));
+document.getElementById("cerrar-modal").addEventListener("click",()=>document.getElementById("modal-holds").classList.remove("on"));
+document.getElementById("modal-holds").addEventListener("click",(e)=>{if(e.target.id==="modal-holds")e.target.classList.remove("on");});
+</script>
+</body></html>

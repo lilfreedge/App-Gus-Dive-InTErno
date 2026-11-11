@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { DESCARGO } from "@/lib/descargo";
 import BotonImprimir from "@/components/BotonImprimir";
 import EnviarReporteClient from "./enviar-client";
@@ -19,30 +18,20 @@ import EnviarReporteClient from "./enviar-client";
 // también al PDF y al envío por correo, para que impriman/envíen
 // exactamente lo que se está viendo en pantalla.
 export default function ReciboClient({ orden: o, filasSimple, filasCompleto }) {
-  const [vista, setVista] = useState("simple");
-  const filas = vista === "simple" ? filasSimple : filasCompleto;
+  // V69 (pedido explícito: "quitar boton de descargar pdf y quitar boton de
+  // ver recibo completo") -- este recibo queda solo con la vista sencilla,
+  // la que se le imprime/entrega al cliente. `filasCompleto` ya no se usa
+  // aquí (la vista completa, para consulta interna, sigue en la ficha de la
+  // orden en App Equipos de clientes).
+  const vista = "simple";
+  const filas = filasSimple;
   const numero = o.no_orden_fisico ?? o.folio;
 
   return (
     <>
       <div style={{ marginBottom: 14, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }} className="no-print">
         <BotonImprimir />
-        <a
-          href={`/api/reportes-clientes/${o.id}/pdf?vista=${vista}`}
-          className="btn secondary"
-          style={{ marginTop: 0, textDecoration: "none" }}
-        >
-          Descargar PDF
-        </a>
         <EnviarReporteClient ordenId={o.id} vista={vista} />
-        <button
-          type="button"
-          className="btn secondary"
-          onClick={() => setVista((v) => (v === "simple" ? "completo" : "simple"))}
-          style={{ marginTop: 0, marginLeft: "auto" }}
-        >
-          {vista === "simple" ? "Ver recibo completo →" : "← Ver recibo (cliente)"}
-        </button>
       </div>
 
       {/* Membrete navy + logo (item 2, pedido explícito, 27-sep-2026:
@@ -79,12 +68,9 @@ export default function ReciboClient({ orden: o, filasSimple, filasCompleto }) {
               </tbody>
             </table>
           </div>
-          {/* Folio movido abajo a la derecha, chico (pedido explícito,
-              27-sep-2026: "pon el folio abajo a la derecha pequeño") --
-              mismo lugar/estilo que ya usa la ficha de la orden. */}
-          <div className="folio-discreto" style={{ marginTop: 10, textAlign: "right" }}>
-            folio #{o.folio}
-          </div>
+          {/* V69 (pedido explícito: "que no aparezca el folio abajo a la
+              derecha, se ve mal") -- se quitó; antes iba aquí (27-sep-2026,
+              también pedido explícito). */}
           {/* V57: el Descargo de Responsabilidad al final del Recibo. */}
           <div className="recibo-descargo">
             <b className="recibo-descargo-t">{DESCARGO.titulo}</b>
