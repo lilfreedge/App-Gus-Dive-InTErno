@@ -1,0 +1,90 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V71 · Holds resueltos</title>
+<style>
+:root{--azul:#0a3d62;--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--rojo:#d64545;--sup:#eef3f6;--verde:#2c9e5b;--ambar:#b5691f}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+.doble{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}@media(max-width:760px){.doble{grid-template-columns:1fr}}
+.etq{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}.etq.a{color:#a33}.etq.d{color:var(--verde)}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px}
+.section-title{font-size:12.5px;font-weight:700;color:var(--azul);margin-bottom:6px}
+.hold{background:var(--sup);border-radius:8px;padding:9px 11px;font-size:13px;margin-bottom:8px}
+.hold .f{font-weight:600;font-size:12.5px;margin-bottom:4px}
+.ol{margin:0;padding-left:18px}
+.txt{line-height:1.5}
+.resp-linea{margin-top:4px;line-height:1.5}
+.resp-linea b{color:var(--suave);font-weight:700;font-size:12.5px}
+.chip{font-weight:800;font-size:11.5px;border-radius:999px;padding:2px 9px;display:inline-block;margin-left:6px;vertical-align:middle}
+.chip-si{background:#e5f6ec;color:var(--verde)}
+.chip-no{background:#fde8e8;color:var(--rojo)}
+.chip-ok{background:#e4f1f9;color:var(--azul)}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-top:14px}
+</style></head><body>
+<div class="maq"><b>Maqueta V71</b> · "Holds resueltos" cuando la respuesta quedó solo en un comentario, sin Sí/No (orden 02198 que me mostraste). Nada de esto está programado — falta tu aprobación.</div>
+<div class="wrap">
+  <div class="doble">
+    <div>
+      <div class="etq a">Antes (como lo viste)</div>
+      <div class="card">
+        <div class="section-title">Holds resueltos</div>
+        <div class="hold">
+          <div class="f">Consulta al cliente · 04/11/2026 → 10/11/2026</div>
+          <ol class="ol">
+            <li class="txt">Hay que cambiarle piezas, pero está descontinuado. No tenemos como conseguirlo. Si el cliente consigue el kit por su vía, podemos ofrecerle el servicio de ponérselo.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="etq d">Después (propuesta)</div>
+      <div class="card">
+        <div class="section-title">Holds resueltos</div>
+        <div class="hold">
+          <div class="f">Consulta al cliente · 04/11/2026 → 10/11/2026 <span class="chip chip-ok">Contestado</span></div>
+          <ol class="ol">
+            <li class="txt">Hay que cambiarle piezas, pero está descontinuado.
+              <div class="resp-linea"><b>Respondió:</b> No tenemos como conseguirlo. Si el cliente consigue el kit por su vía, podemos ofrecerle el servicio de ponérselo.</div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="doble" style="margin-top:22px">
+    <div>
+      <div class="etq a">Antes — cuando sí hay Sí/No</div>
+      <div class="card">
+        <div class="section-title">Holds resueltos</div>
+        <div class="hold">
+          <div class="f">Consulta al cliente · 03/11/2026 → 04/11/2026</div>
+          <ol class="ol">
+            <li class="txt">Consulta al cliente <span class="chip chip-si">Sí</span>
+              <div class="resp-linea" style="margin-top:2px;color:var(--suave)">El cliente quiere que le envíen la lista de lo que hay que cambiarle para comprarlo y enviárnoslo.</div>
+            </li>
+          </ol>
+        </div>
+      </div>
+      <div class="nota">Este caso ya se ve bien hoy (tiene Sí/No) — no cambia.</div>
+    </div>
+    <div>
+      <div class="etq d">Después — igual, sin tocarlo</div>
+      <div class="card">
+        <div class="section-title">Holds resueltos</div>
+        <div class="hold">
+          <div class="f">Consulta al cliente · 03/11/2026 → 04/11/2026</div>
+          <ol class="ol">
+            <li class="txt">Consulta al cliente <span class="chip chip-si">Sí</span>
+              <div class="resp-linea"><b>Respondió:</b> El cliente quiere que le envíen la lista de lo que hay que cambiarle para comprarlo y enviárnoslo.</div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nota">
+    Resumen del cambio: la respuesta (el comentario) pasa a su propia línea con "Respondió:" delante, en vez de pegarse a la pregunta. Si no hay Sí/No pero sí hay comentario, se pone una etiqueta azul "Contestado" al lado de la fecha, para que se note de una vez que ese Hold sí tiene respuesta. Si no hay ni Sí/No ni comentario (no debería pasar, pero por si acaso), no se pone ninguna etiqueta — igual que hoy.
+  </div>
+</div>
+</body></html>

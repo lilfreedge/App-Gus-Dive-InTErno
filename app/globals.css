@@ -2856,6 +2856,8 @@ html[data-theme="dark"] .vj-prov-btns .btn { background: var(--tarjeta); }
 .hold-cons-r.sin { background: var(--tarjeta); color: #8a6d00; border: 1px solid #e0c46a; }
 .hold-cons-r.si { background: var(--exito-fondo); color: var(--verde); border: 1px solid var(--exito-borde); }
 .hold-cons-r.no { background: var(--tarjeta); color: var(--rojo); border: 1px solid var(--error-borde); }
+.hold-cons-r.ok { background: #e4f1f9; color: var(--azul); border: 1px solid var(--azul-claro); }
+.hold-cons-com b { color: inherit; font-weight: 700; }
 .hold-resp { border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; margin-top: 8px; background: var(--tarjeta); }
 .hold-resp-t { display: flex; gap: 8px; font-size: 14px; margin-bottom: 8px; }
 .hold-resp-bt { display: flex; gap: 6px; flex-wrap: wrap; }
