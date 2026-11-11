@@ -25,7 +25,7 @@ export default async function EditarSalidaPage({ params }) {
           ← Volver a Salidas
         </Link>
         <Breadcrumb items={[{ label: "Salidas", href: "/salidas" }, { label: "Editar salida" }]} />
-        <p className="page-subtitle">El cambio queda anotado en el historial de cambios.</p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <EditarSalidaForm registro={registro} articulos={articulos || []} />
       </div>

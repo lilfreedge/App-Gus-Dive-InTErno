@@ -42,7 +42,7 @@ export default async function EditarPruebaHidrostaticaPage({ params }) {
           ]}
         />
         <h1 className="page-title">Editar prueba hidrostática</h1>
-        <p className="page-subtitle">El cambio queda anotado en el historial de cambios.</p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <EditarPruebaHidrostaticaForm registro={registro} tanques={tanques || []} />
       </div>

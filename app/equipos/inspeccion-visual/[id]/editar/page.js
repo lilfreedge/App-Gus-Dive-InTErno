@@ -39,7 +39,7 @@ export default async function EditarInspeccionPage({ params }) {
           ]}
         />
         <h1 className="page-title">Editar inspección</h1>
-        <p className="page-subtitle">El cambio queda anotado en el historial de cambios.</p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <EditarInspeccionForm registro={registro} tanques={tanques || []} />
       </div>

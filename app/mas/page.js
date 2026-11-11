@@ -4,7 +4,7 @@ import { requireInterno, tieneAlguno, esOperativo, getProfileYUser } from "@/lib
 import { MAS_PERMISOS } from "@/lib/nav";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
-import { IconCatalog, IconReport, IconHistory, IconShuffle, IconCalendar, IconBook } from "@/components/icons";
+import { IconCatalog, IconReport, IconHistory, IconShuffle, IconCalendar, IconBook, IconClock } from "@/components/icons";
 
 // Hub "Más": une Catálogo, Historial y Reportes en un solo botón del menú
 // superior para no sobrecargarlo (antes eran 3 botones fijos aparte).
@@ -33,6 +33,15 @@ const OPCIONES = [
     descripcion: "Mantenimientos, inspecciones y pruebas hidrostáticas vencidas o por vencer.",
     permiso: "proximos_vencimientos",
     Icono: IconCalendar,
+  },
+  // V68 ("46. ok. pon el botón de recordatorios en 'más'"): a cada quien
+  // los suyos; el Titular y los administradores, todos. ("72": solo aquí, ya no en Equipos.)
+  {
+    href: "/equipos/recordatorios",
+    titulo: "Recordatorios",
+    descripcion: "Lo que hay que hacer en los equipos, cada cuánto y a quién le toca.",
+    permiso: null,
+    Icono: IconClock,
   },
   {
     href: "/reportes",

@@ -25,7 +25,7 @@ export default async function AvisosFijosInternoPage() {
         </Link>
         <Breadcrumb items={[{ label: "App Interno", href: "/dashboard" }, { label: "Avisos fijos" }]} />
         <h1 className="page-title">Avisos fijos</h1>
-        <p className="page-subtitle">Salen arriba del Inicio de App Interno.</p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
         {d.falta ? (
           <div className="error-box">Para usar los avisos fijos falta correr migration_76.sql en Supabase.</div>
         ) : (

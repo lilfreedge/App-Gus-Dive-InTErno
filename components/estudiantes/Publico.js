@@ -55,15 +55,16 @@ function Subir({ id, que, titulo, sub, accept = "image/*", capture, estudianteId
 // acepte formato png jpg, pdf o heic" y "En vez foto, pongamos 'cédula'... O
 // algo relacionado con escaneo"). Sin capture, para que pueda escoger la
 // cámara o un archivo.
-function SubirCedula({ id, tipoDoc, listo }) {
+function SubirCedula({ id, tipoDoc, listo, alSubir }) {
   return (
     <Subir
       id={id}
       que="cedula"
       titulo={tipoDoc === "pasaporte" ? "Tu pasaporte" : "Tu cédula"}
-      sub="Una foto o un escaneo donde se lea bien (JPG, PNG, PDF o HEIC)."
+      sub="Una foto o un escaneo donde se lea bien."
       accept="image/*,application/pdf,.heic,.heif"
       listo={listo}
+      alSubir={alSubir}
     />
   );
 }
@@ -266,6 +267,8 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
   // V65 ("286"): la "i" de un curso y "Agregar Nitrox / OXY" (por curso).
   const [infoDe, setInfoDe] = useState(null);
   const [tambien, setTambien] = useState({});
+  // V69 ("83. A"): lo que ya subió en Documentos (para el botón que cambia).
+  const [subidos, setSubidos] = useState({});
   // V66 ("313. ok", maqueta V66): el link de un curso con fecha (?curso=) no
   // pide escoger curso. "¿Es otro curso?" lo quita y sale la lista de siempre.
   const [fijoId, setFijoId] = useState(fijo);
@@ -811,23 +814,36 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
             {res.menor ? (
               <>
                 {/* V62 ("229"): las fotos son del menor y firma el adulto. */}
-                <div className="pb-h">Con esto no tienen que traer copias a la tienda.</div>
-                <Subir id={id} que="foto" titulo={`Una foto de ${res.primer} de frente`} sub="Para su certificación. Con buena luz y sin lentes de sol." capture="user" />
-                <Subir id={id} que="cedula" titulo="Su acta de nacimiento o su pasaporte" sub="Una foto o un escaneo donde se lea bien (JPG, PNG, PDF o HEIC)." accept="image/*,application/pdf,.heic,.heif" />
+                {/* V68 ("16"): sin "Con esto no tienen que traer copias a la tienda"; el texto nuevo de la foto. */}
+                <Subir id={id} que="foto" titulo={`La foto de ${res.primer} para la certificación`} sub="Sale en su carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol." capture="user" alSubir={() => setSubidos((x) => ({ ...x, foto: true }))} />
+                <Subir id={id} que="cedula" titulo="Su acta de nacimiento o su pasaporte" sub="Una foto o un escaneo donde se lea bien." accept="image/*,application/pdf,.heic,.heif" alSubir={() => setSubidos((x) => ({ ...x, cedula: true }))} />
               </>
             ) : (
               <>
-                <div className="pb-h">Con esto no tienes que traer copias a la tienda. Si ahora no puedes, lo haces después entrando otra vez con tu cédula.</div>
-                <Subir id={id} que="foto" titulo="Una foto tuya de frente" sub="Para tu certificación. Con buena luz y sin lentes de sol." capture="user" listo={buzo && !falta.foto} />
-                <SubirCedula id={id} tipoDoc={tipoDoc} listo={buzo && !falta.cedula} />
+                {/* V68 ("16"): sin "Con esto no tienes que traer copias a la tienda"; el texto nuevo de la foto. */}
+                <div className="pb-h">Si ahora no puedes, lo haces después entrando otra vez con tu cédula.</div>
+                <Subir id={id} que="foto" titulo="Tu foto para la certificación" sub="Sale en tu carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol." capture="user" listo={buzo && !falta.foto} alSubir={() => setSubidos((x) => ({ ...x, foto: true }))} />
+                <SubirCedula id={id} tipoDoc={tipoDoc} listo={buzo && !falta.cedula} alSubir={() => setSubidos((x) => ({ ...x, cedula: true }))} />
               </>
             )}
             {/* V64 ("288"): en el registro ya no se pide la firma del récord de
                 entrenamiento (todavía no ha visto nada). Se integra después con
                 el récord, como diga Pipe. */}
-            <button className="pb-btn" onClick={() => ir("listo")}>
-              Terminar
-            </button>
+            {/* V69 ("83. A"): un solo botón que cambia: "Lo hago después"
+                mientras falte algo y "Terminar" cuando ya subió las dos. */}
+            {(() => {
+              const fotoOk = subidos.foto ?? (!res.menor && !!buzo && !falta.foto);
+              const cedOk = subidos.cedula ?? (!res.menor && !!buzo && !falta.cedula);
+              const n = (fotoOk ? 1 : 0) + (cedOk ? 1 : 0);
+              return (
+                <>
+                  <button className="pb-btn" onClick={() => ir("listo")}>
+                    {n === 2 ? "Terminar" : "Lo hago después"}
+                  </button>
+                  {n === 1 && <div className="pb-h" style={{ textAlign: "center", margin: "6px 0 0" }}>Te falta una; la puedes subir después.</div>}
+                </>
+              );
+            })()}
           </div>
         )}
 
@@ -1095,7 +1111,7 @@ function MisDocumentos({ estado, setEstado, id, tipoDoc, doc, cel, setCel, tiend
           </span>
         </div>
       ) : (
-        <Subir id={id} que="foto" titulo={estado.foto?.hay ? "Cambiar mi foto de frente" : "Una foto tuya de frente"} capture="user" listo={false} />
+        <Subir id={id} que="foto" titulo={estado.foto?.hay ? "Cambiar mi foto para la certificación" : "Tu foto para la certificación"} sub="Sale en tu carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol." capture="user" listo={false} />
       )}
       <SubirCedula id={id} tipoDoc={tipoDoc} listo={!estado.falta?.cedula} />
       <div className="pb-h" style={{ fontSize: 12.5 }}>

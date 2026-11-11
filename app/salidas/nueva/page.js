@@ -25,9 +25,7 @@ export default async function NuevaSalidaPage() {
           ← Regresar
         </Link>
         <Breadcrumb items={[{ label: "Salidas", href: "/salidas" }, { label: "Registrar salida" }]} />
-        <p className="page-subtitle">
-          Pieza, ring o artículo que se saca para uso interno de la tienda.
-        </p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <NuevaSalidaForm
           userId={user.id}

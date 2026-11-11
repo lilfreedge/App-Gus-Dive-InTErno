@@ -436,14 +436,14 @@ export function Inicio({ db, p, ir, avisar }) {
 // estudiantes deberían de estar en cursos"; maqueta-v55c). Arriba se escoge el
 // curso (o Todos) y abajo en qué van. Con un curso escogido sale su tarjeta:
 // precio, próximas fechas con cupos y "+ Agregar fecha".
-export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
-  const [filtro, setFiltro] = useState(FILTROS.some((f) => f.k === filtroInicial) ? filtroInicial : "curso");
+export function Lista({ db, p, yo, ops, ir, avisar }) {
   const [abierto, setAbierto] = useState(null); // id de la fecha abierta, "sin" o "espera:<curso>"
   const [form, setForm] = useState(null); // crear o editar un curso (una fecha)
   // V57 -- "123": solo los cursos abiertos (cada fecha es un curso), con
   // cuántos estudiantes tiene; "+ Crear curso"; la lista de espera por curso.
   // Ya no salen los botones de todo el catálogo (eso está en Más > Base de
-  // datos). "Por etapa" se queda abajo mientras se decide cómo ponerlo.
+  // datos). V68 ("17. A"): sin "Por etapa"; los cuadros de Inicio llevan a
+  // cada etapa (PorEtapa, más abajo).
   const hoy = hoyISO();
   const haceUnaSemana = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
   const deFecha = (f) => db.estudiantes.filter((e) => e.fechaId === f.id && e.estado !== "cancelado");
@@ -458,8 +458,6 @@ export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
     nombre: db.cursos.find((c) => c.id === k)?.nombre || k,
     gente: espera.filter((e) => (cursoDe(db, e)?.id || e.curso) === k),
   }));
-  const fx = FILTROS.find((f) => f.k === filtro);
-  const lista = db.estudiantes.filter((e) => fx.f(e, db)).sort((a, b) => buzoDe(db, a).nombre.localeCompare(buzoDe(db, b).nombre));
   const porNombre = (a, b) => buzoDe(db, a).nombre.localeCompare(buzoDe(db, b).nombre);
   const n = (k) => `${k} estudiante${k === 1 ? "" : "s"}`;
   return (
@@ -559,15 +557,23 @@ export function Lista({ db, p, yo, ops, ir, avisar, filtroInicial }) {
         );
       })}
       {!esperaPorCurso.length && <div className="card hint-text">Nadie en lista de espera.</div>}
+    </>
+  );
+}
 
-      <div className="section-title">Por etapa</div>
-      <div className="vj-filtros">
-        {FILTROS.filter((f) => f.k !== "debe" || p.montos).map((f) => (
-          <button key={f.k} className={`vj-filtro ce-filtro${filtro === f.k ? " sel" : ""}`} onClick={() => setFiltro(f.k)}>
-            {f.t} <span>{db.estudiantes.filter((e) => f.f(e, db)).length}</span>
-          </button>
-        ))}
-      </div>
+// V68 ("17. A"): los estudiantes de una etapa. Se llega tocando un cuadro de
+// "Seguimiento" en Inicio (antes era "Por etapa", abajo en Cursos).
+export function PorEtapa({ db, p, ir, etapa }) {
+  const fx = FILTROS.find((f) => f.k === etapa && (f.k !== "debe" || p.montos)) || FILTROS[0];
+  const lista = db.estudiantes.filter((e) => fx.f(e, db)).sort((a, b) => buzoDe(db, a).nombre.localeCompare(buzoDe(db, b).nombre));
+  return (
+    <>
+      <a className="back-link" onClick={() => ir("inicio")} style={{ cursor: "pointer" }}>
+        ← Inicio
+      </a>
+      <h1 className="page-title">
+        {fx.t} <span className="ce-etapa-n">{lista.length}</span>
+      </h1>
       {lista.map((e) => (
         <FilaEstudiante key={e.id} db={db} est={e} ir={ir} p={p} />
       ))}

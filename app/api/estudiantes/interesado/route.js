@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { soloDigitos, primerNombre, celValido, celGuardar } from "@/lib/viajes/modelo";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 import { buscarPorDoc } from "@/lib/estudiantes/servidor";
+import { cedulaValida, MSG_CEDULA_MALA } from "@/lib/viajes/modelo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -26,6 +27,8 @@ export async function POST(request) {
   if (tipo === "cedula" ? soloDigitos(doc).length !== 11 : String(doc).replace(/[\s-]/g, "").length < 6)
     return NextResponse.json({ error: tipo === "cedula" ? "La cédula tiene 11 números." : "Escribe tu pasaporte completo." }, { status: 400 });
   const b = await buscarPorDoc(s, tipo, doc);
+  // V68 ("13. B").
+  if (tipo === "cedula" && !b && !cedulaValida(doc)) return NextResponse.json({ error: MSG_CEDULA_MALA }, { status: 400 });
   const persona = b && !b.staff ? b : null;
 
   if (body.accion === "doc") return NextResponse.json({ encontrado: !!persona, primer: persona ? primerNombre(persona.nombre) : "" });

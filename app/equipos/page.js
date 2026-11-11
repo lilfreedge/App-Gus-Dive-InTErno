@@ -4,7 +4,7 @@ import { tieneAlguno, requireInterno, PERMISOS_EQUIPOS, esRolEquipos } from "@/l
 import { obtenerPendientesInterno } from "@/lib/notificaciones";
 import AppHeader from "@/components/AppHeader";
 import NavArrowsServer from "@/components/NavArrowsServer";
-import { IconTankFill, IconEye, IconGauge, IconRegulator, IconCompressor, IconAlert, IconClock } from "@/components/icons";
+import { IconTankFill, IconEye, IconGauge, IconRegulator, IconCompressor, IconAlert } from "@/components/icons";
 import { cargarRecordatorios } from "@/lib/recordatorios";
 import { hoyISO } from "@/lib/fechas";
 
@@ -165,17 +165,7 @@ export default async function EquiposPage() {
           </Link>
         ))}
 
-        {/* V63 ("230"): la sección de Recordatorios (a cada quien los suyos). */}
-        <Link href="/equipos/recordatorios" className="card hub-link-card">
-          <div className="hub-link-card-inner">
-            <span className="hub-link-icon">
-              <IconClock size={22} />
-            </span>
-            <div>
-              <div className="hub-link-title">Recordatorios</div>
-            </div>
-          </div>
-        </Link>
+        {/* V68 ("72. pienso que hace más sentido en más"): Recordatorios pasó a Más. "Para hacer" sigue arriba. */}
       </div>
     </div>
   );

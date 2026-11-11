@@ -275,6 +275,7 @@ function MiPerfil({ perfil, setPerfil, slug, tipoDoc, doc, cel, setCel, tienda, 
             )}
           </div>
           {!b.espera && b.pago.falta > 0 && <SubirComprobante slug={b.slug} tipoDoc={tipoDoc} doc={doc} cuentas={cuentas} tienda={tienda} copiar={copiar} copiado={copiado} monto={rd(b.pago.falta)} />}
+          {b.linkGrupo && <BotonGrupo link={b.linkGrupo} chico />}
         </div>
       ))}
       {perfil.anteriores.length > 0 && (
@@ -412,6 +413,21 @@ function CuadroSalida({ v, enFin, conCalendario }) {
           <IconCalendar size={16} /> Agregar a mi calendario
         </button>
       )}
+    </div>
+  );
+}
+
+// V68 ("14. sí, hagamos el intento. Recuerda que también debe de verse la
+// parte donde el cliente puede poner comprobante de pago"): el botón para
+// entrar al grupo de WhatsApp del buceo. WhatsApp no deja meter a la gente
+// sola: el buzo toca y entra con el link de invitación.
+function BotonGrupo({ link, chico }) {
+  return (
+    <div className={`pb-grupo${chico ? " chico" : ""}`}>
+      <a className="pb-btn sec pb-grupo-btn" href={link} target="_blank" rel="noreferrer">
+        <IconChat size={17} /> Entrar al grupo de WhatsApp
+      </a>
+      {!chico && <div className="pb-h" style={{ margin: "4px 0 0", textAlign: "center" }}>Ahí mandamos la hora y el punto de encuentro.</div>}
     </div>
   );
 }
@@ -826,6 +842,8 @@ export default function PublicoViaje({ v, tienda }) {
                         <IconChat size={18} /> Escribir por WhatsApp
                       </a>
                     )}
+                    {/* V68 ("14"): el grupo de WhatsApp del buceo (el comprobante sigue abajo). */}
+                    {!buzo.enEspera && v.linkGrupo && <BotonGrupo link={v.linkGrupo} />}
                     {/* V62 ("196"): si está en lista de espera, no se le pide pagar. */}
                     {!buzo.enEspera && <SubirComprobante slug={v.slug} tipoDoc={tipoDoc} doc={doc} cuentas={cuentas} tienda={tienda} copiar={copiar} copiado={copiado} monto={opcionesPagan.length === 1 ? (v.reserva ? `reserva de ${rd(v.reserva.monto)}` : precioTexto(v, opcionesPagan[0])) : ""} />}
                     {/* V57: "pon el botón de inscribir otra persona más pequeño";
@@ -1138,6 +1156,8 @@ export default function PublicoViaje({ v, tienda }) {
                         </a>
                       </>
                     )}
+                    {/* V68 ("14"): el grupo de WhatsApp del buceo; el comprobante sigue abajo. */}
+                    {!resultado.enEspera && v.linkGrupo && <BotonGrupo link={v.linkGrupo} />}
                 {/* V60 ("174"): debajo de "Confirmar por WhatsApp", la salida con
                     "Agregar a mi calendario" y "¿Llegas directo?"; después el comprobante. */}
                 {!resultado.enEspera && (

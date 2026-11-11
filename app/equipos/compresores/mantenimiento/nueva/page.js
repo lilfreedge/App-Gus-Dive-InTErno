@@ -51,7 +51,7 @@ export default async function NuevoMantenimientoCompresorPage({ searchParams }) 
           ]}
         />
         <h1 className="page-title">Registrar mantenimiento</h1>
-        <p className="page-subtitle">Mantenimiento hecho a un compresor.</p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <NuevoMantenimientoCompresorForm
           userId={user.id}

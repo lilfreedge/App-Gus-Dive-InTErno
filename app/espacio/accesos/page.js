@@ -53,9 +53,7 @@ export default async function AccesosAppsPage() {
         </Link>
         <Breadcrumb items={[{ label: "Selecciona tu espacio", href: "/espacio" }, { label: "Accesos a apps" }]} />
         <h1 className="page-title">Accesos a apps</h1>
-        <p className="page-subtitle">
-          Quién puede entrar a cada app. Quien no tenga el acceso marcado ya no ve el botón de esa app en &quot;Selecciona tu espacio&quot;.
-        </p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         {totalUsuarios > 0 && (
           <div className="stat-row" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>

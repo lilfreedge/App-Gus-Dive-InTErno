@@ -18,7 +18,7 @@ export default async function NuevoRecordatorioPage() {
         <Link href="/equipos/recordatorios" className="back-link">
           ← Volver
         </Link>
-        <Breadcrumb items={[{ label: "Equipos", href: "/equipos" }, { label: "Recordatorios", href: "/equipos/recordatorios" }, { label: "Nuevo" }]} />
+        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Recordatorios", href: "/equipos/recordatorios" }, { label: "Nuevo" }]} />
         <h1 className="page-title">Nuevo recordatorio</h1>
         <RecordatorioForm compresores={compresores} usuarios={usuarios} miNombre={profile?.full_name || ""} sinColumnas={!!error} />
       </div>

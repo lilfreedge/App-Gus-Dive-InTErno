@@ -33,14 +33,7 @@ export default async function AprobacionesPage() {
         </Link>
         <Breadcrumb items={[{ label: "Selecciona tu espacio", href: "/espacio" }, { label: "Usuarios nuevos" }]} />
         <h1 className="page-title">Usuarios nuevos</h1>
-        <p className="page-subtitle">
-          Cuentas creadas que todavía no pueden entrar a ninguna app -- apruébalas una vez que sepas quién es. Después
-          de aprobar, dale acceso a la app que le toque desde{" "}
-          <Link href="/espacio/accesos" style={{ color: "var(--azul-claro)", fontWeight: 600 }}>
-            Accesos a apps
-          </Link>
-          .
-        </p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <AprobacionesClient pendientes={pendientes || []} />
       </div>

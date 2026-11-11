@@ -332,15 +332,11 @@ export default function ListaUsuarios({ perfiles, miId, roles = [] }) {
                                       background: it.destacado && activo ? "var(--acento-fondo)" : undefined,
                                     }}
                                   >
-                                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span style={{ display: "flex", alignItems: "center", gap: 8 }} title={it.sub || undefined}>
                                       <it.Icono size={15} style={{ color: "var(--texto-suave)", flexShrink: 0 }} />
                                       <span>
                                         {it.label}
-                                        {it.sub && (
-                                          <span className="hint-text" style={{ display: "block", marginTop: 1 }}>
-                                            {it.sub}
-                                          </span>
-                                        )}
+                                        {/* V68 ("27. ok"): sin la explicación debajo de cada permiso (grupo 3); queda al pasar el mouse. */}
                                       </span>
                                     </span>
                                     <input

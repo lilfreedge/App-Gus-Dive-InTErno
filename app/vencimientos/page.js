@@ -129,9 +129,7 @@ export default async function ProximosVencimientosPage() {
       <div className="page" style={{ paddingTop: 24 }}>
         <NavArrowsServer />
         <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Próximos vencimientos" }]} />
-        <p className="page-subtitle">
-          Primero lo vencido (rojo), después lo que vence en los próximos 2 meses (ámbar), lo más urgente arriba.
-        </p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <Seccion
           titulo="Mantenimiento de reguladores"

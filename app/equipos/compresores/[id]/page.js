@@ -8,6 +8,7 @@ import AppHeader from "@/components/AppHeader";
 import Breadcrumb from "@/components/Breadcrumb";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import EstadoCompresor from "./estado-client";
+import BorrarCompresor from "./borrar-client";
 import ManualesAtajo from "@/components/ManualesAtajo";
 import { cargarManuales } from "@/lib/manuales-server";
 import { manualesPara } from "@/lib/manuales";
@@ -41,6 +42,8 @@ export default async function FichaCompresorPage({ params }) {
   ]);
 
   if (!compresor) notFound();
+  // V68 ("26"): los recordatorios hechos de este compresor también cuentan como historial.
+  const { count: hechosCompresor } = esTitular ? await supabase.from("recordatorios_hechos").select("id", { count: "exact", head: true }).eq("compresor_id", params.id) : { count: 0 };
 
   // V51: el manual de ese modelo, si hay.
   const susManuales = manualesPara(await cargarManuales(supabase), `${compresor.marca || ""} ${compresor.modelo || ""}`);
@@ -164,6 +167,8 @@ export default async function FichaCompresorPage({ params }) {
             )}
             {esTitular && <EstadoCompresor compresor={compresor} />}
           </div>
+          {/* V68 ("26. A"): borrar, solo el Titular y solo sin historial. */}
+          {esTitular && <BorrarCompresor compresor={compresor} historial={(mantenimientos || []).length + (hechosCompresor || 0)} />}
         </div>
       </div>
     </div>

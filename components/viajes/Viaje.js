@@ -30,6 +30,7 @@ import {
   resumenTalla,
   puntos,
   palabraViaje,
+  linkGrupoValido,
 } from "@/lib/viajes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { Chip, Modal, IconoWA, CampoCel, Atras, Buscar } from "./Piezas";
@@ -1033,6 +1034,8 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir, yo, avisar })
   const nIns = db.inscripciones.filter((x) => x.viajeId === v.id && x.estado !== "quitado").length;
   const P = palabraViaje(v);
   const [motivo, setMotivo] = useState("");
+  // V68 ("14"): el link del grupo de WhatsApp de este buceo.
+  const [linkGrupo, setLinkGrupo] = useState(v.linkGrupo || "");
   const [nuevoRec, setNuevoRec] = useState(null);
   const ro = cerrado || !p.editarViaje;
   return (
@@ -1190,6 +1193,39 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir, yo, avisar })
           )}
         </div>
         <div style={{ fontSize: 14, whiteSpace: "pre-wrap" }}>{(v.mensajeGrupo || "—").replace("[día]", fechaLarga(v.fecha))}</div>
+        {/* V68 ("14. sí, hagamos el intento"): el link de invitación del grupo.
+            Al buzo le sale "Entrar al grupo de WhatsApp" al terminar la
+            inscripción, si ya estaba inscrito y en Mi perfil. */}
+        <div className="hint-text" style={{ margin: "14px 0 4px" }}>
+          Link del grupo de WhatsApp
+        </div>
+        {(p.editarViaje || p.grupo) && !cerrado ? (
+          <>
+            <div style={{ display: "flex", gap: 6 }}>
+              <input style={{ flex: 1, minWidth: 0 }} value={linkGrupo} onChange={(e) => setLinkGrupo(e.target.value.trim())} placeholder="https://chat.whatsapp.com/…" />
+              {linkGrupo !== (v.linkGrupo || "") && (
+                <button
+                  className="btn btn-primary vj-mini"
+                  disabled={!!linkGrupo && !linkGrupoValido(linkGrupo)}
+                  onClick={() => cambiarViaje({ linkGrupo }, "Link del grupo de WhatsApp", v.linkGrupo ? "Tenía uno" : "—", linkGrupo ? "Puesto" : "Quitado")}
+                >
+                  Guardar
+                </button>
+              )}
+            </div>
+            {linkGrupo && !linkGrupoValido(linkGrupo) ? (
+              <div className="hint-text" style={{ color: "var(--rojo)", margin: "4px 0 0" }}>
+                Ese no parece un link de invitación de WhatsApp (empieza con https://chat.whatsapp.com/).
+              </div>
+            ) : (
+              <div className="hint-text" style={{ margin: "4px 0 0" }}>
+                En WhatsApp: el grupo › Invitar con enlace › Copiar enlace. A los buzos les sale el botón &quot;Entrar al grupo de WhatsApp&quot;.
+              </div>
+            )}
+          </>
+        ) : (
+          <div style={{ fontSize: 14, wordBreak: "break-all" }}>{v.linkGrupo || "—"}</div>
+        )}
       </div>
       {p.web && !cerrado && (
         <>

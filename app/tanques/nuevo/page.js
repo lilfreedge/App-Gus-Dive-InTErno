@@ -40,7 +40,7 @@ export default async function NuevoLlenadoPage() {
           ]}
         />
         <h1 className="page-title">Registrar llenados de tanque</h1>
-        <p className="page-subtitle">Para llevar el conteo de llenados internos.</p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <NuevoLlenadoForm userId={user.id} nombreUsuario={perfil?.full_name || user.email} />
       </div>

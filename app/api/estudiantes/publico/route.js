@@ -6,6 +6,9 @@ import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula, forma
 import { pasosIniciales, pagado, debe, nombreEtapa, menorDe12, avance, faltaDe } from "@/lib/estudiantes/modelo";
 import { docValido, buscarPorDoc, celCoincide, logLink, edadHoy, tokenMenor, puedeCambiarArchivo, puedeCambiarCel, cambiarCelular } from "@/lib/estudiantes/servidor";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
+import { cedulaValida, MSG_CEDULA_MALA } from "@/lib/viajes/modelo";
+import { mandarListaEspera } from "@/lib/correo-lista-espera";
+const TIENDA_WA = process.env.VIAJES_WHATSAPP_TIENDA || "8095660818";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -37,6 +40,8 @@ export async function POST(request) {
   const tipo = body.tipoDoc === "pasaporte" ? "pasaporte" : "cedula";
   if (!docValido(tipo, body.doc)) return NextResponse.json({ error: tipo === "cedula" ? "La cédula tiene 11 números." : "Escribe tu pasaporte completo." }, { status: 400 });
   const b = await buscarPorDoc(s, tipo, body.doc);
+  // V68 ("13. B"): una cédula que no pasa la prueba no deja seguir (si la persona ya está en la base, sí).
+  if (tipo === "cedula" && !b && !cedulaValida(body.doc)) return NextResponse.json({ error: MSG_CEDULA_MALA }, { status: 400 });
 
   if (body.accion === "doc") {
     if (!b || b.staff) return NextResponse.json({ encontrado: false });
@@ -292,6 +297,14 @@ export async function POST(request) {
   }
   const cuando = fecha ? ` · ${fechaLarga(fecha.inicio)}` : espera ? (pidioLlena ? " · lista de espera (la fecha estaba llena)" : " · lista de espera") : "";
   await logLink(s, fila.id, `Se registró por el link: ${buzo.nombre} (${curso.nombre}${cuando})${tutorTxt ? ` · menor de edad, lo registró ${tutorTxt}` : ""}`);
+  // V68 ("15"): correo de lista de espera, si dejó su correo. En su ficha sale que se le mandó.
+  if (espera && !tutorTxt) {
+    const correo = buzo.correo || String(body.datos?.correo || "").trim();
+    if (await mandarListaEspera({ correo, nombre: primerNombre(buzo.nombre), que: curso.nombre, whatsapp: TIENDA_WA })) {
+      await s.from("est_estudiantes").update({ etapas: { correo_espera: { en: new Date().toISOString(), por: "Link" } } }).eq("id", fila.id);
+      await logLink(s, fila.id, `Se le mandó el correo de lista de espera (${curso.nombre})`);
+    }
+  }
   // V54: aviso en la campanita ("62. si").
   await avisarEquipoEst(s, { permiso: "estudiantes", titulo: espera ? "Nuevo en lista de espera (link)" : "Nuevo estudiante por el link", texto: `${buzo.nombre}${tutorTxt ? ` (menor, lo registró ${tutorTxt})` : ""} · ${curso.nombre}${fecha ? ` · ${fechaLarga(fecha.inicio)}` : ""}`, url: `/control-estudiantes/estudiante/${fila.id}` });
   return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio, fecha: fecha ? fecha.inicio : null, espera, llena: pidioLlena, semana: fecha ? curso.semana || null : null, tambien: tambienNombre, ...permisoMenor });

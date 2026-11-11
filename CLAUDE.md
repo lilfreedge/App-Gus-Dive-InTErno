@@ -46,14 +46,36 @@ Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzo
 
 ## Estado (10-nov-2026)
 
-- En GitHub está la **V62** (subida el 8-nov, commit 6378629 en su Mac; mismo árbol que mi commit local 74f269a). Lo próximo se sube igual: solo cuando él diga "súbela".
-- SQL de la V62: `supabase/todo_v62_una_sola_vez.sql` (migraciones 88, 89 y 90). Se le dio para correr una vez.
-- Lista de verificación de la V62: 251–262 y 264 (la 234, B). Él dijo "al final verifico todo".
-- Maquetas: `maqueta-v61.html` y la maqueta V62 ya están contestadas.
+- En GitHub está la **V67** (subida el 10-nov junto con la V63 a la V66; commit c4fe08d en su Mac, mismo árbol e6061de… que mi commit local a579d56). Lo próximo se arma con `git diff --name-only a579d56 HEAD` y se sube solo cuando él diga "súbela".
+- SQL: `supabase/todo_v67_una_sola_vez.sql` (migraciones 91 a 94). Se le dio en el portapapeles y por el chat para correr una vez.
+- La lista para verificar (29–70 de `claude/lista-nueva.md`) se le dio completa con la subida.
+
+## V68 (10-nov, local, sin subir)
+
+- Lo próximo se sube con `git diff --name-only a579d56 HEAD`. La V68 no tiene SQL.
+- Respuestas a la lista 29–70: "Asumamos que está bien". 42 ok · 43 ok · 47 explicado.
+- Respuestas a la maqueta V68 (HECHO salvo lo marcado):
+  - 9: pendiente para más adelante (premios del Alquiler).
+  - 13 B: cédula que no pasa el dígito verificador no deja seguir, solo si la persona NO está en la base (`cedulaValida` en lib/viajes/modelo.js; en las APIs de estudiantes, interesado y viajes).
+  - 14: solo Buceos. `linkGrupo` en los datos del buceo (Info › Grupo de WhatsApp), botón "Entrar al grupo de WhatsApp" en la pantalla final, en "ya estás inscrito" y en Mi perfil; el comprobante sigue igual. Control Estudiantes tendrá un link de pago más adelante.
+  - 15: correo de lista de espera (estudiantes y buzos), `lib/correo-lista-espera.js`; en la ficha `etapas.correo_espera`; en Buceos, bitácora.
+  - 16: textos de Documentos cambiados. PREGUNTA: los botones (A o B) no los contestó; el texto de la cédula ya dice "Una foto o un escaneo donde se lea bien (JPG, PNG, PDF o HEIC)" y ya acepta PDF; se le propuso otro texto.
+  - 17 A: Cursos sin "Por etapa"; `PorEtapa` se abre desde los cuadros de Inicio (`cursos:<etapa>`).
+  - 18: él quiere la B (Google Cloud). Se le explicó; falta que confirme y haga los pasos.
+  - 19 A: celular al lado del nombre en la ficha.
+  - 20: ya tienen un formato de correo; se le dijo cómo mandarlo.
+  - 26 A: borrar compresor solo sin historial (`app/equipos/compresores/[id]/borrar-client.js`).
+  - 27 "ok": se quitaron los grupos 2 y 3 (17 frases debajo del título; la explicación de cada permiso de App Interno queda como title). Se dejaron 4: bitácora de la orden y movimientos (son datos), Códigos a cobrar (él pidió dejarla) .
+  - 72: Recordatorios solo en Más (migas: Más › Recordatorios).
+  - 10: él da los precios. 11 ok (maqueta aparte). 12 explicado. 21 ok. 22: ¿para qué app? (se le preguntó). 23/24: dio permiso para leer su Drive: se encontró "Control Estudiantes" (de Gugi) y unos 20 sheets "Viaje … (Responses)". 25: sí lo pidió (23-oct). 28 ok.
+- 10-nov, segunda vuelta: 83 "no entiendo, tengo que ver" → maqueta V69 (`public/maquetas/maqueta-v69.html`, pestaña 1 interactiva: Hoy / A / B). 84 HECHO: "Una foto o un escaneo donde se lea bien" (sin los formatos; sigue aceptando PDF). 85 "dime de la otra opción" → maqueta V69 pestaña 2 compara A (link, Google refresca cada horas hasta un día) y B (Google Cloud, al momento). 86 "ni yo recuerdo, busca": no se encontró dónde lo pidió (aparece por primera vez en la lista del 8-nov); se le preguntó si se queda o se quita. 87: ManyChat para después; por ahora correos.
+- 10-nov, tercera vuelta: 83 A HECHO (un botón que cambia: "Lo hago después" / "Terminar"; sin "Puedes subirlos cuando quieras…"; con una subida dice "Te falta una; la puedes subir después."). 83 CERRADO: la frase "Si ahora no puedes, lo haces después entrando otra vez con tu cédula." se queda como está, no se toca. 85: escogió la B (Google Cloud, al momento) — **queda para la próxima actualización** (maqueta de los pasos para que él prepare Google Cloud). 20 (formato del correo de bienvenida): **queda para la próxima actualización.**
+- **86, procedimiento de reguladores: se queda en la lista. Él pidió: "al momento que te comente algo relacionado tú me avisas a ver si me acuerdo". Cuando hable de reguladores, mantenimiento, informe del técnico o listas de pasos, recuérdaselo.**
+- ManyChat: se le explicó (precios por contactos + Meta cobra por mensaje de plantilla; hay que confirmar coexistencia con el WhatsApp Business del celular).
 
 ## Pendiente
 
-**V63, V64, V65, V66 y V67 hechas en commits locales, sin subir** (desde 74f269a; él dijo "espera y subes junto"). SQL: `supabase/todo_v67_una_sola_vez.sql` (migration_91, 92, 93 y 94; probado dos veces). Detalle en los docs del proyecto `claude/v64-pedidos.md`, `claude/v65-pedidos.md` y `claude/v66-pedidos.md`.
+**V63 a V67: SUBIDAS el 10-nov.** SQL: `supabase/todo_v67_una_sola_vez.sql` (migration_91, 92, 93 y 94; probado dos veces). Detalle en los docs del proyecto `claude/v64-pedidos.md`, `claude/v65-pedidos.md` y `claude/v66-pedidos.md`.
 - V63: 230 Recordatorios para técnicos, 162 "Mis documentos".
 - V64: perfil del buzo en el link de Buceos (275, 276, 278 A, 279, 281), cambiar el celular en Mis documentos, 282 No. de factura, 283 curso borrado, 285 cursos nuevos (SQL), 288 sin firma en el registro, 290, 291.
 - V65: 284 celular con país y "Celular (WhatsApp)", 286 cursos por grupos con la "i", Agregar Nitrox / OXY y precios (SQL), 287 C, 292 Seguimiento de contacto. 302 A: se queda "Agregar Nitrox".

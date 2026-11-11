@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V68",
+    fecha: "10 de noviembre, 2026",
+    titulo: "Grupo de WhatsApp del buceo, cédulas revisadas, correo de lista de espera y más orden",
+    descripcion:
+      "Buceos: en la Info de cada buceo se pega el link de invitación del grupo de WhatsApp; al buzo le sale \"Entrar al grupo de WhatsApp\" al terminar la inscripción, si ya estaba inscrito y en Mi perfil (la parte de subir el comprobante sigue igual). Links del estudiante, de Interesados y de Buceos: si la cédula no pasa la prueba de su último número, no deja seguir (\"Esa cédula no es válida\"); a quien ya está en la base se le deja pasar. Cuando alguien se anota en una lista de espera (curso o buceo) y dejó su correo, le llega un correo; en la ficha del estudiante sale \"Correo de lista de espera · Enviado\" y en Buceos queda en la bitácora. Link del estudiante: en Documentos ya no dice \"Con esto no tienes que traer copias a la tienda\", el botón de abajo dice \"Lo hago después\" mientras falte subir algo y \"Terminar\" cuando ya subió las dos; la cédula dice \"Una foto o un escaneo donde se lea bien\" (acepta foto o PDF) y la foto dice \"Tu foto para la certificación · Sale en tu carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol\". Control Estudiantes: Cursos ya no tiene \"Por etapa\" (los cuadros de Inicio abren cada etapa) y en la ficha el celular sale chiquito al lado del nombre (al tocarlo abre WhatsApp). App Interno: Recordatorios pasó a Más; el Titular puede borrar un compresor que no tenga historial (con motivo y escribiendo BORRAR; si tiene historial, se inactiva); sin la frase debajo del título de las pantallas ni la explicación debajo de cada permiso en Administración (queda al pasar el mouse).",
+  },
+  {
     version: "V67",
     fecha: "10 de noviembre, 2026",
     titulo: "Links con la dirección principal, \"Pendiente procesar\", permisos nuevos y Estadísticas en Control Estudiantes",

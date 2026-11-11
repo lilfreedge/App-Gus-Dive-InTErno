@@ -44,7 +44,7 @@ export default async function NuevoMantenimientoPage({ searchParams }) {
           ]}
         />
         <h1 className="page-title">Registrar mantenimiento</h1>
-        <p className="page-subtitle">Mantenimiento hecho a un regulador.</p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <AvisoAlquilados codigos={alq.fuera} />
         <NuevoMantenimientoForm

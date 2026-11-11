@@ -5,6 +5,9 @@ import { formatoCedula, soloDigitos, celOculto, nombreCorto, primerNombre, estad
 import { puedeCambiarCel, cambiarCelular } from "@/lib/estudiantes/servidor";
 import { avisar } from "@/lib/viajes/avisos";
 import { origenDe } from "@/lib/direccion";
+import { cedulaValida, MSG_CEDULA_MALA, linkGrupoValido } from "@/lib/viajes/modelo";
+import { mandarListaEspera } from "@/lib/correo-lista-espera";
+const TIENDA_WA = process.env.VIAJES_WHATSAPP_TIENDA || "8095660818";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -59,6 +62,8 @@ export async function POST(request) {
   if (body.accion === "doc") {
     if (!docValido(tipo, body.doc)) return NextResponse.json({ error: tipo === "cedula" ? "La cédula tiene 11 números." : "Escribe tu pasaporte completo." }, { status: 400 });
     const b = await buscarPorDoc(s, tipo, body.doc);
+    // V68 ("13. B"): cédula que no pasa la prueba y no está en la base.
+    if (tipo === "cedula" && !b && !cedulaValida(body.doc)) return NextResponse.json({ error: MSG_CEDULA_MALA }, { status: 400 });
     const quedan = await cuposAhora();
     if (!b || b.staff) return NextResponse.json({ encontrado: false, quedan });
     const { data: ya } = await s.from("viajes_inscripciones").select("estado").eq("viaje_id", v.id).eq("buzo_id", b.id).maybeSingle();
@@ -120,7 +125,7 @@ export async function POST(request) {
       .filter((y) => y.v && y.v.estado !== "cancelado")
       .map(({ x, v }) => {
         const e = estadoPago(v, x);
-        return { id: x.id, slug: v.slug, nombre: v.nombre, fecha: v.fecha, salida: v.salida || "", espera: x.estado === "espera", pago: { k: e.k, t: e.t, falta: e.falta || 0 }, asistio: x.asistio };
+        return { id: x.id, slug: v.slug, nombre: v.nombre, fecha: v.fecha, salida: v.salida || "", espera: x.estado === "espera", pago: { k: e.k, t: e.t, falta: e.falta || 0 }, asistio: x.asistio, linkGrupo: x.estado !== "espera" && linkGrupoValido(v.linkGrupo) ? v.linkGrupo : "" };
       })
       .sort((a, c) => a.fecha.localeCompare(c.fecha));
     const { count: esEst } = await s.from("est_estudiantes").select("id", { count: "exact", head: true }).eq("buzo_id", b.id);
@@ -165,6 +170,7 @@ export async function POST(request) {
   if (v.requisito && !body.acepto) return NextResponse.json({ error: `Debes aceptar el requisito del ${palabraViaje(v)}.` }, { status: 400 });
 
   let b = await buscarPorDoc(s, tipo, body.doc);
+  if (tipo === "cedula" && !b && !body.vincularId && !cedulaValida(body.doc)) return NextResponse.json({ error: MSG_CEDULA_MALA }, { status: 400 });
   let nuevo = false;
   if (!b && body.vincularId) {
     // Buzo viejo (de antes del app) que todavía no tenía cédula: se le guarda.
@@ -265,6 +271,10 @@ export async function POST(request) {
     quien: "Link",
     texto: `Se inscribió por el link: ${b.nombre}${nuevo ? " (nuevo)" : ""}${inscritoPor ? ` (la inscribió ${nombreCorto(inscritoPor.nombre)})` : ""}${enEspera ? " · lista de espera" : ""}`,
   });
+  // V68 ("15"): correo de lista de espera al buzo, si dejó su correo.
+  if (enEspera && (await mandarListaEspera({ correo: b.correo, nombre: primerNombre(b.nombre), que: `${v.nombre} (${fechaCorta(v.fecha)})`, whatsapp: TIENDA_WA, buceo: true }))) {
+    await s.from("viajes_bitacora").insert({ viaje_id: v.id, quien: "Link", texto: `Se le mandó el correo de lista de espera a ${b.nombre}` });
+  }
 
   // V44: avisos (en el app, correo y celular, según lo que escogió el Titular).
   const origen = origenDe(request);

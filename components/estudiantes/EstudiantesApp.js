@@ -12,7 +12,7 @@ import NotificacionesPagina from "@/components/NotificacionesPagina";
 import { IconGear, IconLogout, IconShuffle, IconHistory, IconUsers } from "@/components/icons";
 import { cargarTodo, estAFila, buzoAFila, cursoAFila, interesadoAFila, fechaAFila, nuevoId } from "@/lib/estudiantes/datos";
 import { fechaCursoCorta } from "@/lib/estudiantes/modelo";
-import { Inicio, Lista, Mas, Bitacora, Directorio, DetalleCurso } from "./Inicio";
+import { Inicio, Lista, Mas, Bitacora, Directorio, DetalleCurso, PorEtapa } from "./Inicio";
 import { Ficha } from "./Ficha";
 import { Nuevo } from "./Nuevo";
 import { Cursos } from "./Cursos";
@@ -415,7 +415,9 @@ export default function EstudiantesApp({ p, yo, personas }) {
   else if (!db) cuerpo = <div className="hint-text">Cargando…</div>;
   else if (ruta === "inicio") cuerpo = <Inicio {...q} />;
   else if (ruta === "estudiantes") cuerpo = <Directorio {...q} />;
-  else if (ruta === "cursos" || ruta.startsWith("cursos:")) cuerpo = <Lista key={ruta} {...q} filtroInicial={ruta.split(":")[1] || "curso"} />;
+  else if (ruta === "cursos") cuerpo = <Lista key={ruta} {...q} />;
+  // V68 ("17. A"): un cuadro de Inicio abre los estudiantes de esa etapa.
+  else if (ruta.startsWith("cursos:")) cuerpo = <PorEtapa key={ruta} {...q} etapa={ruta.split(":")[1]} />;
   else if (ruta.startsWith("estudiante:")) {
     const id = ruta.split(":")[1];
     cuerpo = db.estudiantes.some((x) => x.id === id) ? <Ficha key={id} {...q} id={id} /> : <div className="hint-text">Ese estudiante no existe.</div>;

@@ -191,6 +191,12 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
       <h1 className="page-title" style={{ margin: "4px 0 2px" }}>
         {b.nombre}
       </h1>
+      {/* V68 ("19. A"): el celular chiquito al lado del nombre; al tocarlo abre WhatsApp (como en Buceos). */}
+      {b.cel && (
+        <a className="ce-cel-nombre" href={linkWhatsApp(b.cel, "")} target="_blank" rel="noreferrer">
+          <IconoWA /> {formatoCel(b.cel)}
+        </a>
+      )}
       {!enEspera && (
         <div className="hint-text" style={{ fontSize: 14 }}>
           {[est.curso, est.escuela, est.instructor, est.fechaInicio ? `${est.fechaInicio > hoyISO() ? "empieza" : "empezó"} el ${fechaCorta(est.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
@@ -218,6 +224,13 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
               Todavía no tiene fecha · {est.via === "link" ? "se anotó por el link" : "lo anotaron"}
               {est.creadoEn ? ` el ${fechaCorta(String(est.creadoEn).slice(0, 10))}` : ""}
             </div>
+            {/* V68 ("15"): el correo de lista de espera que le llegó. */}
+            {est.etapas?.correo_espera && (
+              <div className="ce-dato" style={{ marginTop: 6 }}>
+                <span>Correo de lista de espera</span>
+                <span className="ce-chip ok">Enviado · {fechaCorta(String(est.etapas.correo_espera.en).slice(0, 10))}</span>
+              </div>
+            )}
             {/* V61 ("199", opción A de la maqueta V60): cada curso con cupo
                 como una fila, con "Pasarlo aquí". */}
             {p.estudiantes && fechasLibres.length > 0 && (

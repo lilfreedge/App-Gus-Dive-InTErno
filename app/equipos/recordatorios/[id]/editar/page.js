@@ -19,7 +19,7 @@ export default async function EditarRecordatorioPage({ params }) {
         <Link href="/equipos/recordatorios" className="back-link">
           ← Volver
         </Link>
-        <Breadcrumb items={[{ label: "Equipos", href: "/equipos" }, { label: "Recordatorios", href: "/equipos/recordatorios" }, { label: r.titulo }]} />
+        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Recordatorios", href: "/equipos/recordatorios" }, { label: r.titulo }]} />
         <h1 className="page-title">Editar recordatorio</h1>
         <RecordatorioForm recordatorio={r} compresores={compresores} usuarios={usuarios} miNombre={profile?.full_name || ""} sinColumnas={!("que" in r)} />
       </div>

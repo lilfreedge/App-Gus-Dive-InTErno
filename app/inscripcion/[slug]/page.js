@@ -4,6 +4,7 @@ import { filaAViaje } from "@/lib/viajes/datos";
 import { estadoViaje } from "@/lib/viajes/modelo";
 import { TIENDA, encuentroDe } from "@/lib/viajes/servidor";
 import PublicoViaje from "@/components/viajes/Publico";
+import { linkGrupoValido } from "@/lib/viajes/modelo";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,8 @@ export default async function InscripcionPage({ params }) {
     incluye: v.incluye || "",
     noIncluye: v.noIncluye || "",
     habitaciones: !!v.habitaciones,
+    // V68 ("14"): el grupo de WhatsApp del buceo.
+    linkGrupo: linkGrupoValido(v.linkGrupo) ? v.linkGrupo : "",
     // V59: con la inscripción cerrada sale como lleno (lista de espera).
     quedan: estadoViaje(v) === "cerrado_insc" ? 0 : Math.max(0, (v.cupoMax || 0) - (count || 0)),
     abierto: ["abierto", "cerrado_insc"].includes(estadoViaje(v)),

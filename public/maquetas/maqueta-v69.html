@@ -1,0 +1,102 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V69 · Botones de Documentos y Google Calendar</title>
+<style>
+:root{--azul:#0a3d62;--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--rojo:#d64545;--sup:#eef3f6;--bc:#4ebae8;--verde:#2c9e5b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:980px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.vista{display:none;max-width:980px;margin:0 auto;padding:0 16px 40px}.vista.on{display:block}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-bottom:14px}
+.nota b.q{font-size:15px;display:block;margin-bottom:4px}
+.doble{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}@media(max-width:760px){.doble{grid-template-columns:1fr}}
+.etq{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}.etq.a{color:#a33}.etq.d{color:var(--verde)}
+.tel{max-width:380px;background:#fff;border:1px solid var(--borde);border-radius:18px;overflow:hidden;margin:0 auto}
+.tel-h{background:#fff;border-bottom:3px solid var(--bc);padding:10px 14px;font-weight:800;font-size:13px;display:flex;gap:8px;align-items:center}
+.logo{background:var(--rojo);color:#fff;font-weight:900;font-size:11px;border-radius:6px;padding:3px 6px}
+.tel-b{padding:14px;background:var(--fondo)}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin-bottom:10px}
+.t{font-size:18px;font-weight:800;margin:0 0 4px}.hint{color:var(--suave);font-size:12.5px}
+.btn{display:block;width:100%;border:0;border-radius:10px;padding:11px 14px;font-weight:700;font-size:14px;cursor:pointer;margin-top:8px;background:var(--bc);color:#06324a;text-align:center}
+.btn.sec{background:#fff;border:1px solid var(--borde);color:var(--texto)}.btn.chico{font-size:12.5px;padding:8px}
+.sec-t{font-weight:800;font-size:14.5px;margin:14px 0 6px}
+.fijo{background:var(--sup);border-radius:10px;padding:8px 12px;font-size:13.5px}
+label.l{display:block;font-size:12px;font-weight:700;color:var(--suave);margin:8px 0 3px}
+input,select{font:inherit;border:1px solid var(--borde);border-radius:9px;padding:9px 10px;width:100%;background:#fff}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bz{border:1px solid var(--borde);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.bz b{display:block}.chip{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--sup);color:var(--suave)}
+.chip.v{background:#e5f6ec;color:var(--verde)}.chip.r{background:#fde8e8;color:var(--rojo)}
+.subir{border:1.5px dashed var(--borde);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;color:var(--azul);margin-top:6px}
+.ok{border:1px solid #bfe5cc;background:#eefaf2;border-radius:10px;padding:9px 12px;font-size:13px;color:#1f6b3d;margin-top:6px}
+.opc{border:1px solid var(--borde);border-radius:12px;padding:12px;background:#fff;margin-bottom:8px}.opc b{display:block}
+</style><style>
+.cardcert{border-radius:14px;padding:14px;color:#fff;background:linear-gradient(135deg,#0a3d62,#1f6f9e);position:relative;margin-top:8px}
+.cardcert .ag{font-size:11px;font-weight:800;letter-spacing:.12em;opacity:.85}.cardcert .nv{font-size:18px;font-weight:800;margin:4px 0}
+.cardcert .nm{font-size:12.5px;opacity:.9}.cardcert .sello{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.18);border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700}
+.cardcert .ver{margin-top:10px;display:inline-block;background:#fff;color:#0a3d62;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700}
+.drop{border:1.5px dashed #9fb3c2;border-radius:12px;padding:14px;text-align:center;background:#fbfdff;margin-top:8px}
+.drop b{display:block;color:var(--azul)}.ico{display:inline-flex;width:34px;height:34px;border-radius:50%;background:#e4f1f9;align-items:center;justify-content:center;color:var(--azul);margin-bottom:6px}
+.opc.sel{border:2px solid var(--verde)}
+.paso{display:flex;gap:10px;align-items:flex-start;margin:8px 0}.paso i{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--azul);color:#fff;font-style:normal;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+.aviso{background:#fdf0f0;border:1px solid #f3c9c9;color:#8a2a2a;border-radius:10px;padding:9px 12px;font-size:12.5px;margin-top:8px}
+</style><style>
+.ce-h{background:#fff;border-bottom:3px solid #f6ce46}.grp{font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 6px}
+.op{border:1px solid var(--borde);border-radius:12px;padding:10px 12px;background:#fff;margin-bottom:8px;position:relative}.op b{display:block;font-size:14.5px}.op .pr{font-weight:800;color:#5c4700;font-size:13px;margin-top:2px}
+.op .i{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;border:1.5px solid #8a6a00;color:#8a6a00;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-style:italic}
+.op .chk{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px;background:#fdf3cf;border-radius:8px;padding:7px 9px}.op .chk input{width:16px;height:16px;margin:0}
+.chipw{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:#fdf3cf;color:#5c4700;margin-top:4px}
+.modal{border:1px solid var(--borde);border-radius:14px;background:#fff;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.12)}.modal h4{margin:0 0 2px;font-size:16px}.modal .k{font-size:11.5px;font-weight:800;color:var(--suave);text-transform:uppercase;margin-top:10px}
+.pais{display:flex;gap:6px}.pais select{max-width:120px}.lista-p{border:1px solid var(--borde);border-radius:10px;background:#fff;margin-top:6px;font-size:13px}.lista-p div{padding:7px 10px;border-top:1px solid var(--sup)}.lista-p div:first-child{border-top:0;font-weight:700}
+.btnc{display:block;width:100%;border:0;border-radius:10px;padding:11px;font-weight:700;text-align:center;margin-top:8px;background:#8a6a00;color:#fff}.btnc.sec{background:#fff;border:1px solid var(--borde);color:var(--texto)}.btnc.wa{background:#1f8a4c}
+.aviso-y{background:#fdf3cf;color:#5c4700;border-radius:10px;padding:10px;font-size:13px;text-align:center}
+.fin-ic{width:64px;height:64px;border-radius:50%;background:#1f8a4c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 8px}
+.pasos{background:var(--sup);border-radius:12px;padding:10px 12px;margin-top:10px;text-align:left}.pasos div{display:flex;gap:8px;margin:6px 0;font-size:13px}.pasos i{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#8a6a00;color:#fff;font-style:normal;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+.seg-t{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.seg-t span{border:1px solid var(--borde);border-radius:999px;padding:6px 11px;font-size:12.5px;background:#fff}.seg-t span.on{background:#2b2200;color:#fff;border-color:#2b2200}
+.hist{border-left:3px solid #8a6a00;padding-left:10px;margin:8px 0}.hist div{margin:6px 0;font-size:13px}.hist small{display:block;color:var(--suave)}
+.estado{display:inline-block;font-size:11.5px;font-weight:800;border-radius:999px;padding:3px 9px;background:#e5f6ec;color:#2c9e5b}
+</style><style>
+.tres{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}@media(max-width:900px){.tres{grid-template-columns:1fr}}
+.sb{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1.5px dashed var(--borde);border-radius:10px;padding:10px 12px;margin-top:8px;background:#fff;cursor:pointer;user-select:none}
+.sb b{display:block;font-size:13.5px}.sb .peq{font-size:12px;color:var(--suave)}
+.sb .est{font-size:12px;font-weight:800;color:var(--azul);white-space:nowrap}
+.sb.ok{border:1.5px solid #bfe5cc;background:#eefaf2}.sb.ok .est{color:#1f6b3d}
+.btnc{cursor:pointer}.btnc.dis{opacity:.4;cursor:not-allowed}
+.fin{display:none;background:#e5f6ec;color:#1f6b3d;border-radius:10px;padding:8px 10px;font-size:12.5px;margin-top:8px;text-align:center;font-weight:700}
+.pista{font-size:12px;color:var(--suave);text-align:center;margin-top:6px;min-height:16px}
+.pasos{counter-reset:p;margin:0;padding:0;list-style:none}
+.pasos li{counter-increment:p;position:relative;padding:8px 10px 8px 40px;border:1px solid var(--borde);border-radius:10px;background:#fff;margin-bottom:6px;font-size:13.5px}
+.pasos li::before{content:counter(p);position:absolute;left:10px;top:8px;width:22px;height:22px;border-radius:50%;background:var(--azul);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.pc div{border-radius:10px;padding:9px 11px;font-size:13px}
+.pro{background:#eefaf2;color:#1f6b3d}.con{background:#fff4f2;color:#a12a1f}
+.pc b{display:block;margin-bottom:4px}
+.quien{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:middle}
+.quien.tu{background:#fdf3cf;color:#5c4700}.quien.yo{background:#e6f1fa;color:#1f5f8b}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px;font-size:10.5px}.cal div{border:1px solid var(--borde);border-radius:6px;min-height:46px;padding:3px;background:#fff}
+.cal div b{display:block;font-size:10px;color:var(--suave)}.cal .ev{display:block;background:#f6ce46;border-radius:4px;padding:1px 3px;margin-top:2px;font-size:9.5px}.cal .ev.bz{background:#4ebae8;color:#06324a}
+.gcal{border:1px solid var(--borde);border-radius:12px;background:#fff;padding:10px;margin-top:8px}.gcal .g-h{display:flex;gap:6px;align-items:center;font-weight:800;font-size:13px}.gcal .g-h i{width:18px;height:18px;border-radius:4px;background:#4285f4;display:inline-block}
+</style></head><body>
+<div class="maq"><b>Maqueta V69</b> · Para que veas la diferencia. En la primera pestaña puedes tocar: toca "Subir" en la foto y en la cédula y mira cómo cambian los botones. Nada de esto está programado.</div>
+<div class="tabs" id="tabs">
+  <button class="tab on" data-v="b">83. Botones de Documentos (tócalo)</button>
+  <button class="tab" data-v="g">85. Google Calendar: A y B</button>
+</div>
+<div class="vista on" id="v-b"><div class="nota"><b class="q">Pregunta 83: ¿cuál te gusta, A o B? (o dejarlo como está)</b>Es la última pantalla del registro, donde sube su foto y su cédula. Toca "Subir" en cada caja (aquí no sube nada, solo cambia a "Subida") y mira qué pasa con los botones de abajo. Tócala otra vez para quitarla.</div><div class="tres"><div><div class="etq a">Hoy</div><div class="hint" style="margin-bottom:6px">Un solo botón "Terminar", haya subido o no.</div><div class="tel"><div class="tel-h ce-h"><span class="logo">GUS</span> Registro de estudiante</div><div class="tel-b"><div class="card" data-op="hoy"><div class="t">Documentos</div><div class="hint">Si ahora no puedes, lo haces después entrando otra vez con tu cédula.</div><div class="sb" data-que="foto"><span><b>Tu foto para la certificación</b><span class="peq">Sale en tu carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol.</span></span><span class="est">Subir</span></div><div class="sb" data-que="cedula"><span><b>Tu cédula</b><span class="peq">Una foto o un escaneo donde se lea bien.</span></span><span class="est">Subir</span></div><div class="btnc" data-btn="terminar" style="margin-top:12px">Terminar</div><div class="pista"></div><div class="fin">Aquí pasa a la pantalla final (¡Listo!).</div></div></div></div></div><div><div class="etq d">A) Un botón que cambia (recomendada)</div><div class="hint" style="margin-bottom:6px">Dice "Lo hago después" mientras falte algo; con las dos, "Terminar".</div><div class="tel"><div class="tel-h ce-h"><span class="logo">GUS</span> Registro de estudiante</div><div class="tel-b"><div class="card" data-op="A"><div class="t">Documentos</div><div class="hint">Si ahora no puedes, lo haces después entrando otra vez con tu cédula.</div><div class="sb" data-que="foto"><span><b>Tu foto para la certificación</b><span class="peq">Sale en tu carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol.</span></span><span class="est">Subir</span></div><div class="sb" data-que="cedula"><span><b>Tu cédula</b><span class="peq">Una foto o un escaneo donde se lea bien.</span></span><span class="est">Subir</span></div><div class="btnc" data-btn="cambia" style="margin-top:12px">Lo hago después</div><div class="pista"></div><div class="fin">Aquí pasa a la pantalla final (¡Listo!).</div></div></div></div></div><div><div class="etq d">B) Dos botones</div><div class="hint" style="margin-bottom:6px">"Terminar" se activa con las dos; "Lo hago después" siempre está.</div><div class="tel"><div class="tel-h ce-h"><span class="logo">GUS</span> Registro de estudiante</div><div class="tel-b"><div class="card" data-op="B"><div class="t">Documentos</div><div class="hint">Si ahora no puedes, lo haces después entrando otra vez con tu cédula.</div><div class="sb" data-que="foto"><span><b>Tu foto para la certificación</b><span class="peq">Sale en tu carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol.</span></span><span class="est">Subir</span></div><div class="sb" data-que="cedula"><span><b>Tu cédula</b><span class="peq">Una foto o un escaneo donde se lea bien.</span></span><span class="est">Subir</span></div><div class="btnc dis" data-btn="terminarB" style="margin-top:12px">Terminar</div><div class="btnc sec" data-btn="despues">Lo hago después</div><div class="pista"></div><div class="fin">Aquí pasa a la pantalla final (¡Listo!).</div></div></div></div></div></div></div><div class="vista" id="v-g"><div class="nota"><b class="q">Pregunta 85: ¿A o B?</b>En las dos, en tu Google Calendar salen los cursos y los buceos del app (nombre, fecha y hora; sin datos de las personas). La diferencia es cómo llegan y qué tan rápido.</div><div class="doble"><div><div class="etq d">A) Suscribirte con un link</div><ol class="pasos"><li>En el app, Calendario › <b>Ver en Google Calendar</b> › copias el link.<span class="quien yo">lo hago yo</span></li><li>En Google Calendar (en la computadora): <b>Otros calendarios › + › Desde URL</b>, pegas el link y listo. Una sola vez.<span class="quien tu">tú, 1 minuto</span></li><li>Te sale “Gus · Cursos y buceos” en tu calendario y en tu celular. Cualquiera del equipo lo puede agregar con el mismo link.</li></ol><div class="pc"><div class="pro"><b>A favor</b>Nada que configurar en Google. Funciona desde el primer día.</div><div class="con"><b>En contra</b>Google lo refresca solo y a su ritmo: un curso nuevo puede tardar desde unas horas hasta un día en aparecer, y no se puede forzar. Solo se ve; no se cambia desde Google.</div></div><div class="tel"><div class="tel-h ce-h"><span class="logo">GUS</span> Control Estudiantes · Calendario</div><div class="tel-b"><div class="t" style="font-size:15px">Noviembre</div><div class="cal"><div><b>16</b><span class=ev>OWD</span></div><div><b>17</b></div><div><b>18</b></div><div><b>19</b></div><div><b>20</b></div><div><b>21</b><span class="ev bz">Caleta</span></div><div><b>22</b></div></div><div class="btnc" style="margin-top:10px">Ver en Google Calendar</div><div class="hint" style="margin-top:6px">Copia el link para agregarlo en Google Calendar.</div></div></div><div class="gcal"><div class="g-h"><i></i> Google Calendar</div><div class="hint" style="margin:6px 0">Otros calendarios · <b>Gus · Cursos y buceos</b></div><div class="cal"><div><b>16</b><span class=ev>Open Water Diver</span></div><div><b>17</b></div><div><b>18</b></div><div><b>19</b></div><div><b>20</b></div><div><b>21</b><span class="ev bz">La Caleta</span></div><div><b>22</b></div></div></div></div><div><div class="etq d">B) Sincronizar de verdad</div><ol class="pasos"><li>Crear un proyecto en <b>Google Cloud</b> y una “cuenta de servicio” (te doy los pasos con capturas).<span class="quien tu">tú, una vez</span></li><li>En tu Google Calendar, compartir el calendario de la tienda con esa cuenta.<span class="quien tu">tú</span></li><li>Poner la llave de esa cuenta en Vercel.<span class="quien tu">tú</span></li><li>Programo que el app escriba en ese calendario.<span class="quien yo">lo hago yo</span></li></ol><div class="pc"><div class="pro"><b>A favor</b>Al momento: lo que se crea, se cambia o se borra en el app sale enseguida en el calendario de la tienda.</div><div class="con"><b>En contra</b>La preparación (20 a 30 minutos) la tienes que hacer tú, porque yo no puedo entrar a tu cuenta de Google.</div></div><div class="gcal"><div class="g-h"><i></i> Google Calendar</div><div class="hint" style="margin:6px 0">Mis calendarios · <b>Gus Dive Center (el de la tienda)</b></div><div class="cal"><div><b>16</b><span class=ev>Open Water Diver</span></div><div><b>17</b></div><div><b>18</b></div><div><b>19</b></div><div><b>20</b></div><div><b>21</b><span class="ev bz">La Caleta</span></div><div><b>22</b></div></div></div></div></div></div><script>
+document.querySelectorAll('[data-op]').forEach(function(card){
+  var op=card.getAttribute('data-op');
+  function n(){return card.querySelectorAll('.sb.ok').length;}
+  function pinta(){
+    var k=n(), pista=card.querySelector('.pista');
+    if(op==='A'){var b=card.querySelector('[data-btn="cambia"]');b.textContent=k===2?'Terminar':'Lo hago después';pista.textContent=k===2?'':(k===1?'Te falta una; la puedes subir después.':'Puedes subirlos cuando quieras: entra otra vez con tu cédula.');}
+    if(op==='B'){var t=card.querySelector('[data-btn="terminarB"]');t.classList.toggle('dis',k!==2);pista.textContent=k===2?'':'"Terminar" se activa cuando subas las dos.';}
+    card.querySelector('.fin').style.display='none';
+  }
+  card.querySelectorAll('.sb').forEach(function(s){s.addEventListener('click',function(){s.classList.toggle('ok');s.querySelector('.est').textContent=s.classList.contains('ok')?'Subida':'Subir';pinta();});});
+  card.querySelectorAll('[data-btn]').forEach(function(b){b.addEventListener('click',function(){if(b.classList.contains('dis'))return;card.querySelector('.fin').style.display='block';});});
+  pinta();
+});
+</script><script>
+document.getElementById("tabs").addEventListener("click",(e)=>{const b=e.target.closest(".tab");if(!b)return;
+document.querySelectorAll(".tab").forEach((x)=>x.classList.toggle("on",x===b));
+document.querySelectorAll(".vista").forEach((x)=>x.classList.toggle("on",x.id==="v-"+b.dataset.v));window.scrollTo(0,0)});
+</script></body></html>

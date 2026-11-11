@@ -33,7 +33,7 @@ export default async function EditarLlenadoPage({ params }) {
           ]}
         />
         <h1 className="page-title">Editar llenado</h1>
-        <p className="page-subtitle">El cambio queda anotado en el historial de cambios.</p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <EditarLlenadoForm registro={registro} />
       </div>

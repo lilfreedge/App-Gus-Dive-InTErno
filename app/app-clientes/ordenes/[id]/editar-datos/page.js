@@ -61,9 +61,7 @@ export default async function EditarDatosOrdenPage({ params }) {
           ]}
         />
         <h1 className="page-title">Editar orden</h1>
-        <p className="page-subtitle">
-          Corrige el No. de orden, cliente, equipo o servicio. Para el resto del seguimiento, usa &quot;Actualizar estado de orden&quot;.
-        </p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <EditarDatosOrdenForm orden={orden} clientes={clientes || []} equipos={equipos || []} servicios={servicios || []} />
       </div>

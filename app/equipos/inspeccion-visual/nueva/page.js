@@ -43,7 +43,7 @@ export default async function NuevaInspeccionPage({ searchParams }) {
           ]}
         />
         <h1 className="page-title">Registrar inspección visual</h1>
-        <p className="page-subtitle">Resultado de la inspección visual de un tanque.</p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
 
         <AvisoAlquilados codigos={alq.fuera} />
         <NuevaInspeccionForm

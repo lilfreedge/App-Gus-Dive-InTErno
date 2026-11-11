@@ -115,7 +115,7 @@ export default async function RecordatoriosPage() {
         <Link href="/equipos" className="back-link">
           ← Volver
         </Link>
-        <Breadcrumb items={[{ label: "Equipos", href: "/equipos" }, { label: "Recordatorios" }]} />
+        <Breadcrumb items={[{ label: "Más", href: "/mas" }, { label: "Recordatorios" }]} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <h1 className="page-title" style={{ margin: 0 }}>
             Recordatorios
@@ -126,7 +126,7 @@ export default async function RecordatoriosPage() {
             </Link>
           )}
         </div>
-        <p className="page-subtitle">{esAdmin ? "Todos los recordatorios. A cada persona le llega el aviso de los suyos (campanita y celular) unos días antes y el día que toca." : "Los que te tocan a ti. Te avisamos unos días antes y el día que toca."}</p>
+        {/* V68 ("27. ok"): sin la frase debajo del título (grupo 2 de las letras pequeñas). */}
         {sinSql && <div className="aviso-box">Falta correr en Supabase el SQL de la V63 para los recordatorios de tanques, reguladores y otras cosas, y para semanas o meses.</div>}
         {error && <div className="error-box">No se pudieron cargar los recordatorios ({error.message}).</div>}
 
