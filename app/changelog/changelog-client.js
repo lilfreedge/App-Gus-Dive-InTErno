@@ -12,6 +12,48 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V78",
+    fecha: "12 de noviembre, 2026",
+    titulo: "Correo con el link del curso para los interesados",
+    descripcion:
+      "Control Estudiantes: en el link \"Me interesa\" el correo ahora es obligatorio (solo se puede dejar en blanco si ya teníamos el de esa persona) y la pantalla final dice que le llegará un correo con el link para inscribirse. En la ficha de cada interesado hay un botón nuevo, \"Enviar link de curso por correo\": pide confirmar y le manda un correo con el botón \"Inscribirme\", que lo lleva directo a la primera fecha próxima del curso que tenga cupo; queda anotado en el seguimiento. El correo del interesado se ve en su ficha y se puede poner o corregir en \"Editar datos\" y al agregarlo a mano. Ya no sale el aviso \"Ya lo teníamos registrado\".",
+  },
+  {
+    version: "V77",
+    fecha: "12 de noviembre, 2026",
+    titulo: "Interesados por curso, Caleta Nocturno, itinerario automático e inspección visual aparte",
+    descripcion:
+      "Control Estudiantes: Interesados se filtra por curso (un botón por cada curso que tiene interesados) en vez de por estado; en la ficha, Inscribir más grande, WhatsApp más chico y \"Enviar link de curso a estudiante\", que manda el link de inscripción por WhatsApp y lo anota en el seguimiento. En Cursos, \"Lista de espera\" pasa a llamarse \"Interesados\" y junta a los interesados de cada curso. \"Base de datos\" pasa a llamarse \"Catálogo de cursos\": paso nuevo \"Caleta Nocturno\", el precio se escribe con comas y dice \"Precio con ITBIS incluidos\", los pasos salen en dos grupos y el itinerario ya no se escribe a mano (sale de los pasos marcados). Link \"Me interesa\": saludo más corto, sin botón de WhatsApp al final y lista nueva de \"¿Cómo te enteraste de nosotros?\". App Equipos de clientes: en \"Actualizar estado de orden\" de una prueba hidrostática, \"Inspección visual realizada\" es su propio paso, después de \"Fecha de retorno a tienda\", y sin marcarla no se puede poner la fecha de listo; en Inicio, esas órdenes salen con el aviso rojo \"Le hace falta inspección visual\" y sus días se cuentan desde que volvieron de la prueba.",
+  },
+  {
+    version: "V74 a V76",
+    fecha: "12 de noviembre, 2026",
+    titulo: "Interesados conectado con Buzos y Estudiantes, seguimiento más sencillo y el link del estudiante como app",
+    descripcion:
+      "Control Estudiantes: el link \"Me interesa\" se llama \"Registro de interesado\", pregunta cómo se enteró y su mensaje final ya no promete información inmediata. Interesados pasó al menú entre Inicio y Cursos, con el encabezado igual al de Cursos. El seguimiento de cada interesado se anota en una sola fila (qué pasó, comentario y Guardar) y \"Editar datos\" quedó arriba, discreto. Al inscribir a alguien que ya está en Buzos se usan sus datos, y antes de guardar se confirman (lo que falta sale en rojo) con un botón de WhatsApp para pedírselos. El link de cursos reconoce a un interesado por su celular y, al registrarse, sale solo de Interesados. El link del estudiante se puede instalar como su propia app. Celular: un número de más ya no cambia el país solo.",
+  },
+  {
+    version: "V71 a V73",
+    fecha: "11 de noviembre, 2026",
+    titulo: "Holds resueltos con su respuesta y ficha de la orden más ordenada",
+    descripcion:
+      "App Equipos de clientes: en \"Holds resueltos\" la respuesta sale en su propia línea (\"Respondió:\") y dice \"Contestado\" cuando no hubo Sí o No. En la ficha de la orden, el nombre del cliente va al lado del número, \"Sin asignar\" se puede tocar para asignar, el técnico se ve más discreto y Equipo y Estado cambiaron de lugar.",
+  },
+  {
+    version: "V70",
+    fecha: "11 de noviembre, 2026",
+    titulo: "Códigos del técnico, recibo del cliente más limpio, aviso de cuenta nueva y acceso de solo ver",
+    descripcion:
+      "App Equipos de clientes: el técnico solo puede quitar los códigos que puso él mismo (queda quién puso cada uno) y el código sale en negrita; el recibo del cliente ya no trae el folio abajo ni los botones \"Descargar PDF\" y \"Ver recibo completo\". Todos los apps: cuando alguien crea una cuenta llega un correo para aprobarla. Equipos de clientes y App Interno: acceso nuevo de \"solo ver\" en Accesos a apps.",
+  },
+  {
+    version: "V69",
+    fecha: "11 de noviembre, 2026",
+    titulo: "Pantalla de carga en Control Estudiantes, Buceos y Alquiler",
+    descripcion:
+      "La pantalla de carga con el logo, que ya tenían App Interno y Equipos de clientes, ahora sale también en Control Estudiantes, Buceos y Alquiler, con el color de cada app.",
+  },
+  {
     version: "V68",
     fecha: "10 de noviembre, 2026",
     titulo: "Grupo de WhatsApp del buceo, cédulas revisadas, correo de lista de espera y más orden",

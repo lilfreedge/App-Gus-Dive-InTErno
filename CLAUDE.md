@@ -46,9 +46,9 @@ Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzo
 
 ## Estado (12-nov-2026)
 
-- En GitHub está la **V74 a V76** (subida el 12-nov; commit b091ebc en su Mac, carpeta `App-Gus-Dive-InTErno`). Lo próximo se arma con `git diff origin/main HEAD --name-status` en el working copy de Claude (ya no sirve comparar contra un commit viejo a mano: cada subida queda en un commit nuevo en su Mac, así que `origin/main` siempre es la referencia).
+- En GitHub está la **V77** (subida el 12-nov; commit 87a7ff3 en su Mac, carpeta `App-Gus-Dive-InTErno`). Lo próximo se arma con `git diff origin/main HEAD --name-status` en el working copy de Claude (ya no sirve comparar contra un commit viejo a mano: cada subida queda en un commit nuevo en su Mac, así que `origin/main` siempre es la referencia).
 - **Cómo se sube (recordatorio para la próxima vez):** el working copy de Claude y el clon del Mac tienen historias de commits distintas (árboles de archivos iguales, hashes distintos) porque cada subida se arma como UN commit nuevo directo en el Mac, no como un push de los commits locales de Claude. Pasos: 1) en el working copy, `git diff origin/main HEAD --name-status` para ver qué cambió; 2) empacar esos archivos (tar) y pasarlos al clon del Mac con `device_commit_files`; 3) extraer encima (puede hacer falta `device_request_delete_permission` en esa carpeta, porque tar y git necesitan borrar/reemplazar archivos); 4) `git commit` ahí con `user.name="lilfreedge"` y `user.email="felipetorreira2@gmail.com"` (así quedan sus commits, no los de Claude); 5) `git push origin main` -- si falla por credenciales (este VM del Mac no tiene las suyas), avisarle para que le dé push él mismo desde su Terminal.
-- SQL: ninguno pendiente de correr (las V68 a V76 no necesitaron SQL nuevo). Lo último con SQL fue `supabase/todo_v67_una_sola_vez.sql` (migraciones 91 a 94).
+- SQL: ninguno pendiente de correr (las V68 a V77 no necesitaron SQL nuevo). Lo último con SQL fue `supabase/todo_v67_una_sola_vez.sql` (migraciones 91 a 94).
 
 ## V68 (10-nov, subido)
 
@@ -106,6 +106,23 @@ Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzo
 - Link de cursos (maqueta V78 aprobada): reconoce a un interesado por su celular si no lo encuentra por cédula; le rellena el nombre y, al registrarse, el interesado queda resuelto.
 - Control Estudiantes: se quitó el botón de Administración de "Más" (ya estaba en Settings).
 - Sin SQL nuevo.
+
+## V77 (12-nov, subido -- commit 87a7ff3)
+
+- Control Estudiantes: "Lista de espera" de Cursos pasa a "Interesados" (junta a los interesados por curso); "Base de datos" pasa a "Catálogo de cursos"; "Me interesa" con saludo simple, sin botón de WhatsApp al final y lista nueva de "¿Cómo te enteraste de nosotros?" (`FUENTES`).
+- Catálogo de cursos: paso nuevo "Caleta Nocturno" (`caletaNocturna`), precio con comas y "Precio con ITBIS incluidos (RD$)", pasos en dos grupos, y el itinerario ya no se escribe a mano: sale de los pasos (`semanaDePasos` en Cursos.js: Lun/Mar/Mié Teoría 1/2/3, Jue Examen, Vie Piscina, Sáb Caleta 1, Dom Caleta 2). Caleta Nocturno no tiene día; falta que él diga si lo quiere en el itinerario.
+- Interesados: chips por curso en vez del filtro por estado (maqueta V74); en la ficha, Inscribir más grande, WhatsApp más chico y "Enviar link de curso a estudiante" (WhatsApp, lo anota en el seguimiento como `link_curso`). El chip "Ya es buzo de Gus" quedó como "Ya lo teníamos registrado".
+- App Equipos de clientes: "Inspección visual realizada" es su propio paso después de "Fecha de retorno a tienda" (form-client.js; sin ella no se puede poner "listo" en una hidrostática); en Inicio, badge rojo "Le hace falta inspección visual" y los días se cuentan desde el retorno (`diasDesdeCampo="fecha_retorno_tienda"`).
+
+## V78 (12-nov, commit armado en su Mac; confirmar con `git fetch` que él le dio push)
+
+- "Me interesa": el correo es obligatorio (solo se puede dejar en blanco si ya teníamos el de esa persona: la acción "doc" devuelve `conCorreo`); la pantalla final dice que le llegará un correo con el link para inscribirse.
+- Ficha del interesado: "Enviar link de curso por correo" (pide confirmar; `lib/correo-interesado-curso.js`, `/api/estudiantes/interesado/correo-curso`, que recibe solo el id y arma el link con la primera fecha próxima con cupo). Lo manda una persona con el botón; NO sale solo al crear una fecha. No se pudo probar el envío real desde aquí (no hay llave de Resend): él lo iba a probar.
+- El correo del interesado se ve en la ficha y se edita en "Editar datos" / al agregar a mano (`interesadoAFila` ya guarda `correo`).
+- Se quitó el chip "Ya lo teníamos registrado" (él: "¿en qué me aporta?" → "sí, quítalo"). `buzoId` se sigue guardando.
+- Changelog del app al día (V69 a V78).
+- **Maqueta V79 (`public/maquetas/maqueta-v79.html`), sin programar, esperando sus 3 respuestas:** 1) avisar por correo a todos los interesados de un curso: pestaña "Interesados" en la página del curso, A (solo el botón) o B (además preguntar al crear el curso); 2) formato de los correos: A sencillo, B con logo y datos del curso, C tipo anuncio (o que mande el formato que ya usan; faltan dirección, horario e Instagram para el pie); 3) saber si abrió: A que el app anote cuando abre el link (recomendada, sin SQL: una entrada en `seguimiento`), B aperturas de Resend (él tiene que prenderlo en su cuenta y conectar el webhook), o las dos.
+- Otras preguntas abiertas: foto 7 (borró un estudiante y al registrarlo de nuevo "no lo reconoce"): falta que aclare qué vio; link general de registro de cursos: pidió propuesta, sin ejecutar; Caleta Nocturno en el itinerario.
 
 ## Pendiente
 

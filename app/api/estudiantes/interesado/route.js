@@ -32,7 +32,8 @@ export async function POST(request) {
   if (tipo === "cedula" && !b && !cedulaValida(doc)) return NextResponse.json({ error: MSG_CEDULA_MALA }, { status: 400 });
   const persona = b && !b.staff ? b : null;
 
-  if (body.accion === "doc") return NextResponse.json({ encontrado: !!persona, primer: persona ? primerNombre(persona.nombre) : "" });
+  // V78: "conCorreo" le dice al link si ya tenemos su correo (si no, se lo pide obligatorio).
+  if (body.accion === "doc") return NextResponse.json({ encontrado: !!persona, primer: persona ? primerNombre(persona.nombre) : "", conCorreo: !!(persona && persona.correo) });
 
   const nombre = persona ? persona.nombre : String(body.nombre || "").trim().slice(0, 120);
   const cel = persona ? celGuardar(persona.cel) : celGuardar(body.cel);
@@ -40,6 +41,12 @@ export async function POST(request) {
   if (!nombre) return NextResponse.json({ error: "Escribe tu nombre." }, { status: 400 });
   if (!persona && !celValido(body.cel)) return NextResponse.json({ error: "Escribe tu celular completo." }, { status: 400 });
   if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return NextResponse.json({ error: "Revisa tu correo." }, { status: 400 });
+  // V77: si ya lo teníamos y no escribió correo, se usa el que ya estaba en
+  // su perfil, para poder mandarle el link del curso por correo. V78 (pedido
+  // explícito: "que no deje registrarse si no pone correo"): sin correo (ni
+  // escrito ni en su perfil) no se anota.
+  const correoFinal = correo || (persona?.correo ? String(persona.correo).trim() : "");
+  if (!correoFinal) return NextResponse.json({ error: "Escribe tu correo." }, { status: 400 });
   const curso = String(body.curso || "").slice(0, 80) || null;
 
   // Si ya dejó sus datos hace poco (misma persona, documento o celular), no se repite.
@@ -48,7 +55,11 @@ export async function POST(request) {
   let { data: ya, error: eYa } = await s.from("est_interesados").select("id").eq("documento", docG).in("estado", abiertos).limit(1);
   if (eYa) ya = null; // sin la migration_86 todavía
   if (!ya?.length && celValido(cel)) ({ data: ya } = await s.from("est_interesados").select("id").eq("celular", cel).in("estado", abiertos).limit(1));
-  if (ya?.length) return NextResponse.json({ ok: true, ya: true, nombre: primerNombre(nombre) });
+  if (ya?.length) {
+    // V78: si el registro que ya tenía no traía correo, se le pone el de ahora.
+    await s.from("est_interesados").update({ correo: correoFinal }).eq("id", ya[0].id).is("correo", null);
+    return NextResponse.json({ ok: true, ya: true, nombre: primerNombre(nombre), conCorreo: true });
+  }
 
   // V74 (pedido explícito: "esto no esta apareciendo al momento que el
   // interesado va a llenar el form") -- antes siempre se guardaba "Link";
@@ -57,7 +68,7 @@ export async function POST(request) {
   const fuente = FUENTES.includes(body.fuente) ? body.fuente : "Link";
   const fila = { nombre, celular: celValido(cel) ? cel : null, curso, fuente, via: "link" };
   const nacionalidad = tipo === "pasaporte" ? String(body.nacionalidad || "").trim().slice(0, 60) : "";
-  let { error } = await s.from("est_interesados").insert({ ...fila, buzo_id: persona?.id || null, documento: docG, correo: correo || null, ...(nacionalidad ? { nota: `Nacionalidad: ${nacionalidad}` } : {}) });
+  let { error } = await s.from("est_interesados").insert({ ...fila, buzo_id: persona?.id || null, documento: docG, correo: correoFinal || null, ...(nacionalidad ? { nota: `Nacionalidad: ${nacionalidad}` } : {}) });
   // Sin la migration_86 todavía: se guarda sin esas columnas (el documento va en la nota).
   if (error && /buzo_id|documento|correo|column/i.test(error.message || "")) ({ error } = await s.from("est_interesados").insert({ ...fila, nota: `Documento: ${docG}${correo ? ` · ${correo}` : ""}` }));
   if (error) return NextResponse.json({ error: "No se pudo enviar. Intenta de nuevo." }, { status: 500 });
@@ -65,5 +76,5 @@ export async function POST(request) {
   if (persona && correo && !persona.correo) await s.from("viajes_buzos").update({ correo }).eq("id", persona.id);
   await s.from("est_bitacora").insert({ nombre: "Link", texto: `Dejó sus datos en "Me interesa": ${nombre}${curso ? ` (${curso})` : ""}${persona ? " · ya es buzo de Gus" : ""}` });
   await avisarEquipoEst(s, { permiso: "interesados", titulo: "Interesado nuevo", texto: `${nombre}${curso ? ` · ${curso}` : ""}`, url: "/control-estudiantes/interesados" });
-  return NextResponse.json({ ok: true, nombre: primerNombre(nombre) });
+  return NextResponse.json({ ok: true, nombre: primerNombre(nombre), conCorreo: !!correoFinal });
 }

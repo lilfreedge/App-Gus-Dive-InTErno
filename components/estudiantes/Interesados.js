@@ -13,7 +13,8 @@ import { cursoDe } from "./Inicio";
 // Interesados (1-nov-2026: "Me interesa poder tener un listado de
 // interesados también"): los que preguntan por un curso y todavía no se
 // inscriben. "Inscribir" los pasa a Estudiantes.
-const VACIO = { nombre: "", cel: "", curso: "", cuando: "", fuente: "Instagram", nota: "", recordar: "", seguimiento: [] };
+const VACIO = { nombre: "", cel: "", correo: "", curso: "", cuando: "", fuente: "Instagram", nota: "", recordar: "", seguimiento: [] };
+const correoMalo = (c) => !!String(c || "").trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(c).trim());
 
 // V62 ("245. ok", maqueta V62): un seguimiento como el de los Holds y el de
 // las fichas. Cada interesado tiene su historia (qué le dijiste, qué te dijo y
@@ -72,7 +73,8 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
 
   function guardarNuevo() {
     if (!nuevo.nombre.trim()) return avisar("Falta el nombre.");
-    const x = { ...nuevo, id: nuevoId(), nombre: nuevo.nombre.trim(), cel: soloDigitos(nuevo.cel), estado: "nuevo", via: "mano", creadoEn: new Date().toISOString() };
+    if (correoMalo(nuevo.correo)) return avisar("Revisa el correo.");
+    const x = { ...nuevo, id: nuevoId(), nombre: nuevo.nombre.trim(), cel: soloDigitos(nuevo.cel), correo: String(nuevo.correo || "").trim(), estado: "nuevo", via: "mano", creadoEn: new Date().toISOString() };
     ops.guardarInteresado(x, true, `Agregó un interesado: ${x.nombre}${x.curso ? ` (${x.curso})` : ""}`);
     setNuevo(null);
     setFiltroCurso(null);
@@ -127,15 +129,10 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
             <div className="ce-est-t">
               <b>{x.nombre}</b>
               {x.curso && <span className="ce-chip curso">{x.curso}</span>}
-              {/* V60 ("164"): si ya lo teníamos en el sistema (de Viajes y
-                  Buceos o de otro registro), por su cédula o pasaporte. V76
-                  (pedido explícito, con foto: "por que sale ese ya es buzo
-                  de gus? no hace sentido, porque ese estudiante aun no ha
-                  concluido ningun curso con nosotros") -- decía "Ya es
-                  buzo de Gus", pero solo significa que ya teníamos su
-                  perfil (no que haya completado un curso); se cambia el
-                  texto para que no confunda. */}
-              {x.buzoId && <span className="ce-chip">Ya lo teníamos registrado</span>}
+              {/* V78 (pedido explícito: "por que debe de decir algo? en
+                  que me aporta eso?" → "1. si", quitarlo): ya no sale el
+                  chip de "Ya es buzo de Gus" / "Ya lo teníamos registrado".
+                  El dato (buzoId) se sigue guardando y usando al inscribir. */}
             </div>
             {/* V62 ("245"): en la lista se ve lo último que pasó. V74
                 (pedido explícito, con foto: "Esto es un interesado, Quita
@@ -231,6 +228,12 @@ function FormInteresado({ f, setF, cursos, sinRecordar }) {
           <input type="date" value={f.recordar || ""} onChange={(e) => set("recordar", e.target.value)} />
         </label>
       )}
+      {/* V78: el correo también se puede poner o corregir aquí (ahí le
+          llega el link del curso). */}
+      <label>
+        Correo
+        <input type="email" value={f.correo || ""} onChange={(e) => set("correo", e.target.value)} placeholder="correo@ejemplo.com" />
+      </label>
       <label>
         Nota
         <input value={f.nota} onChange={(e) => set("nota", e.target.value)} />
@@ -248,6 +251,8 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
   const [texto, setTexto] = useState("");
   // V57 -- "dame ese poder absoluto": el Titular puede borrar un interesado.
   const [borrando, setBorrando] = useState(false);
+  const [confirmaCorreo, setConfirmaCorreo] = useState(false);
+  const [mandandoCorreo, setMandandoCorreo] = useState(false);
   const est = x.estudianteId ? db.estudiantes.find((e) => e.id === x.estudianteId) : null;
   const historia = historiaInteresado(x);
   const cerradoYa = x.estado === "inscrito";
@@ -280,14 +285,40 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
     const link = urlCompleta(fecha ? `/estudiante?curso=${fecha.id}` : "/estudiante");
     window.open(linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, aquí tienes el link para inscribirte en ${x.curso || "el curso"}: ${link}`), "_blank", "noopener");
     ops.guardarInteresado(
-      { ...x, estado: cerradoYa ? x.estado : "va", seguimiento: [...(x.seguimiento || []), { id: nuevoId(), tipo: "link_curso", quien: yo?.corto || "", en: new Date().toISOString() }] },
+      { ...x, estado: cerradoYa ? x.estado : "va", seguimiento: [...(x.seguimiento || []), { id: nuevoId(), tipo: "link_curso", texto: "Por WhatsApp", quien: yo?.corto || "", en: new Date().toISOString() }] },
       false,
       `Le envió el link de curso a un interesado: ${x.nombre}`
     );
   }
 
+  // V77 (pedido explícito, con foto de la pantalla final de "Me interesa":
+  // "pon que le va a llegar por correo cuando haya un curso. Y al momento
+  // que le llegue ese correo que le llegue el URL directo para inscribirse
+  // en el curso") -- lo mismo que el botón de arriba, pero por correo. El
+  // correo sale del servidor (/api/estudiantes/interesado/correo-curso),
+  // que arma el link con la fecha próxima del curso. Pide confirmar antes,
+  // porque el correo sale de una vez (WhatsApp todavía deja revisar).
+  async function enviarCorreoCurso() {
+    setMandandoCorreo(true);
+    try {
+      const r = await fetch("/api/estudiantes/interesado/correo-curso", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: x.id }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "No se pudo mandar el correo.");
+      ops.guardarInteresado(
+        { ...x, estado: cerradoYa ? x.estado : "va", seguimiento: [...(x.seguimiento || []), { id: nuevoId(), tipo: "link_curso", texto: "Por correo", quien: yo?.corto || "", en: new Date().toISOString() }] },
+        false,
+        `Le envió el link de curso por correo a un interesado: ${x.nombre}`
+      );
+      avisar(`Correo enviado a ${x.correo}`);
+      setConfirmaCorreo(false);
+    } catch (e) {
+      avisar(e.message || "No se pudo mandar el correo.");
+    }
+    setMandandoCorreo(false);
+  }
+
   return (
-    <Modal titulo={x.nombre} sub={[x.curso || "Sin curso todavía", x.via === "link" ? "por el link" : "a mano", fechaDeIso(x.creadoEn), x.cel ? formatoCel(x.cel) : ""].filter(Boolean).join(" · ")} cerrar={cerrar}>
+    <Modal titulo={x.nombre} sub={[x.curso || "Sin curso todavía", x.via === "link" ? "por el link" : "a mano", fechaDeIso(x.creadoEn), x.cel ? formatoCel(x.cel) : "", x.correo || ""].filter(Boolean).join(" · ")} cerrar={cerrar}>
       {/* V76 (pedido explícito: "Boton de editar datos ponlo abajo a la
           derecha o arriba a la derecha y que sea mas discreto", "poner
           boton de inscribir mas chevere, puede tener el amarillo del
@@ -322,7 +353,24 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
           Enviar link de curso a estudiante
         </button>
       )}
-      {x.buzoId && <div className="hint-text" style={{ marginTop: 6 }}>Ya lo teníamos registrado en el sistema.</div>}
+      {p.interesados && !cerradoYa && x.correo && !confirmaCorreo && (
+        <button className="btn secondary vj-btn ce-int-link-curso" onClick={() => setConfirmaCorreo(true)}>
+          Enviar link de curso por correo
+        </button>
+      )}
+      {confirmaCorreo && (
+        <div className="ce-etapa" style={{ marginTop: 6 }}>
+          <b>¿Mandarle el link de inscripción a {x.correo}?</b>
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <button className="btn btn-primary vj-btn" disabled={mandandoCorreo} onClick={enviarCorreoCurso}>
+              {mandandoCorreo ? "Enviando…" : "Sí, enviar"}
+            </button>
+            <button className="btn secondary vj-btn" disabled={mandandoCorreo} onClick={() => setConfirmaCorreo(false)}>
+              No
+            </button>
+          </div>
+        </div>
+      )}
       {est && (
         <a className="vj-link" onClick={() => (cerrar(), ir(`estudiante:${est.id}`))}>
           Ver su ficha de estudiante ({est.curso}) ›
@@ -337,7 +385,8 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
               className="btn btn-primary vj-btn"
               onClick={() => {
                 if (!f.nombre.trim()) return avisar("Falta el nombre.");
-                ops.guardarInteresado({ ...x, nombre: f.nombre.trim(), cel: soloDigitos(f.cel), curso: f.curso, fuente: f.fuente, cuando: f.cuando, nota: f.nota }, false, `Cambió los datos de un interesado: ${x.nombre}`);
+                if (correoMalo(f.correo)) return avisar("Revisa el correo.");
+                ops.guardarInteresado({ ...x, nombre: f.nombre.trim(), cel: soloDigitos(f.cel), correo: String(f.correo || "").trim(), curso: f.curso, fuente: f.fuente, cuando: f.cuando, nota: f.nota }, false, `Cambió los datos de un interesado: ${x.nombre}`);
                 setEditando(false);
               }}
             >

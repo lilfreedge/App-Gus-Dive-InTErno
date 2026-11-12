@@ -22,6 +22,7 @@ export default function MeInteresa({ cursos, whatsapp }) {
   const [nacionalidad, setNacionalidad] = useState("");
   const [nacOtra, setNacOtra] = useState("");
   const [cursoFin, setCursoFin] = useState("");
+  const [conCorreo, setConCorreo] = useState(false);
   const [doc, setDoc] = useState("");
   const [conocido, setConocido] = useState(null); // { primer } si ya lo tenemos
   const [f, setF] = useState({ nombre: "", cel: "", curso: cursos[0] || "", fuente: "", correo: "", web: "" });
@@ -43,7 +44,7 @@ export default function MeInteresa({ cursos, whatsapp }) {
     setEnviando(true);
     try {
       const j = await api({ accion: "doc", tipoDoc, doc, web: f.web });
-      setConocido(j.encontrado ? { primer: j.primer } : null);
+      setConocido(j.encontrado ? { primer: j.primer, conCorreo: !!j.conCorreo } : null);
       setPaso("datos");
     } catch (e) {
       setError(e.message);
@@ -57,13 +58,19 @@ export default function MeInteresa({ cursos, whatsapp }) {
       const j = await api({ accion: "enviar", tipoDoc, doc, nacionalidad: nac, ...f });
       setNombreFin(j.nombre || f.nombre.trim().split(/\s+/)[0] || "");
       setCursoFin(f.curso);
+      setConCorreo(typeof j.conCorreo === "boolean" ? j.conCorreo : !!f.correo.trim());
       setPaso("listo");
     } catch (e) {
       setError(e.message);
     }
     setEnviando(false);
   }
-  const puedeEnviar = conocido ? true : f.nombre.trim() && celValido(f.cel);
+  // V78 (pedido explícito: "que no deje registrarse si no pone correo") --
+  // el correo es obligatorio; solo se puede dejar en blanco si ya teníamos
+  // el de esa persona en su perfil.
+  const correoBien = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.correo.trim());
+  const correoListo = correoBien || (!!conocido?.conCorreo && !f.correo.trim());
+  const puedeEnviar = (conocido ? true : f.nombre.trim() && celValido(f.cel)) && correoListo;
 
   return (
     <div className="pb ce-pub">
@@ -91,7 +98,17 @@ export default function MeInteresa({ cursos, whatsapp }) {
                 por whatsapp en esta parte... No me gusta para nada la
                 parte de 'si quieres, escribenos tu'") -- se quita esa
                 frase y el botón de WhatsApp de esta pantalla. */}
-            <div className="pb-h">Quedaste anotado{cursoFin ? ` para ${cursoFin}` : ""}. Te contactaremos por WhatsApp cuando tengamos un curso disponible.</div>
+            {/* V77 (pedido explícito, con foto: "cambia el mensaje y pon que
+                le va a llegar por correo cuando haya un curso") -- si dejó
+                su correo, se le dice que le llega por ahí con el link para
+                inscribirse; si no lo dejó, se queda el mensaje de WhatsApp
+                (no se le puede prometer un correo que no tenemos). */}
+            <div className="pb-h">
+              Quedaste anotado{cursoFin ? ` para ${cursoFin}` : ""}.{" "}
+              {conCorreo
+                ? "Cuando tengamos un curso disponible te llegará un correo con el link para inscribirte."
+                : "Te contactaremos por WhatsApp cuando tengamos un curso disponible."}
+            </div>
           </div>
         )}
 
@@ -190,8 +207,9 @@ export default function MeInteresa({ cursos, whatsapp }) {
                 <option key={x}>{x}</option>
               ))}
             </select>
-            <label className="ce-pub-l">Correo electrónico{conocido ? " (opcional)" : ""}</label>
+            <label className="ce-pub-l">Correo electrónico{conocido?.conCorreo ? " (opcional)" : ""}</label>
             <input className="pb-input" type="email" value={f.correo} onChange={(e) => set("correo", e.target.value)} placeholder="tucorreo@ejemplo.com" />
+            <div className="hint-text" style={{ marginTop: 4 }}>Ahí te mandamos el link para inscribirte cuando haya un curso.</div>
             {error && <div className="pb-error">{error}</div>}
             <button className="pb-btn" disabled={enviando || !puedeEnviar} onClick={enviar}>
               {enviando ? "Enviando…" : "Enviar"}
