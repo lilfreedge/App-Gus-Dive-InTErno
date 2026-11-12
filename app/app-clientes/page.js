@@ -11,6 +11,7 @@ import { requiereVerificacion } from "@/lib/procesos-ordenes";
 import { nombreCorto } from "@/lib/tecnicos";
 import AvisosFijos from "@/components/AvisosFijos";
 import { avisosParaMi } from "@/lib/avisos-fijos-server";
+import { esServicioHidrostatica } from "@/lib/ordenes-estado";
 
 const BADGE_ESTADO = {
   "En proceso": "badge-amarillo",
@@ -66,7 +67,7 @@ export default async function AppClientesPage() {
   // la persona lo prendió en "Personalizar mi menú".
   const muestraBotonRegistrarInicio = profile?.atajos_inicio_clientes?.registrar_orden === true;
   const CAMPOS =
-    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, fecha_listo_entrega, verificado_por, en_espera, motivo_espera, holds, tecnico_asignado_id";
+    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, que_se_hara, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, inspeccion_visual_realizada, fecha_listo_entrega, verificado_por, en_espera, motivo_espera, holds, tecnico_asignado_id";
 
   const [{ data: ajustes }, { data: porTrabajarRaw }, { data: porEntregar }, { data: enEspera }, { data: enHidrostatica }, { data: enReparacion }] =
     await Promise.all([
@@ -135,10 +136,19 @@ export default async function AppClientesPage() {
   );
   // V61 (nota del 3-nov): "cuando una orden sea devuelta de hold... que
   // aparezca con una notificación pequeña diciendo 'Hold respondido'".
+  // V76 (pedido explícito, con foto: "al lado de proceso debe de decir
+  // algo como que 'Le hace falta inspeccion visual'. Lo que quiero es
+  // algo que llame la atencion") -- una hidrostática ya vuelta a tienda
+  // pero sin la inspección visual (ver form-client.js de "Actualizar
+  // estado de orden") se marca acá para el badge rojo de abajo.
   const porTrabajar = porTrabajarSinMarca.map((o) => {
     const holds = Array.isArray(o.holds) ? o.holds : [];
     const ultimo = holds[holds.length - 1];
-    return { ...o, hold_respondido: !!ultimo && !ultimo.activo && !!ultimo.fecha_resolucion ? ultimo.fecha_resolucion : null };
+    return {
+      ...o,
+      hold_respondido: !!ultimo && !ultimo.activo && !!ultimo.fecha_resolucion ? ultimo.fecha_resolucion : null,
+      falta_inspeccion: esServicioHidrostatica(o.que_se_hara) && !!o.fecha_retorno_tienda && !o.inspeccion_visual_realizada,
+    };
   });
 
   // V39 -- a quién está asignada cada orden (pedido explícito: "que los que
@@ -241,6 +251,7 @@ export default async function AppClientesPage() {
           fechaCampo="fecha"
           fechaLabel="Fecha de ingreso a tienda"
           avisoAtrasadaDias={5}
+          diasDesdeCampo="fecha_retorno_tienda"
         />
 
         {/* V57 -- "las órdenes que estén en pendientes de entregar pero que
@@ -378,7 +389,13 @@ function ListaOrdenes({
       ) : (
         ordenes.map((o) => {
           const fechaValor = o[fechaCampo];
-          const valorParaDias = o[diasDesdeCampo || fechaCampo];
+          // V76 (pedido explícito, con foto: "que los dias que diga que
+          // sean en base a desde que llego desde la prueba hidrostatica,
+          // no desde la fecha que llego el equipo a tienda") -- si la
+          // orden tiene valor en `diasDesdeCampo`, los días se cuentan
+          // desde ahí; si no (la mayoría, que no tiene ese campo), se
+          // sigue contando desde `fechaCampo` como siempre.
+          const valorParaDias = (diasDesdeCampo && o[diasDesdeCampo]) || o[fechaCampo];
           const diasTranscurridos = valorParaDias
             ? Math.floor((Date.now() - new Date(valorParaDias).getTime()) / (1000 * 60 * 60 * 24))
             : null;
@@ -414,6 +431,10 @@ function ListaOrdenes({
                   )}
                   {o.en_espera && <span className="badge badge-rojo">En Hold</span>}
                   {o.hold_respondido && !o.en_espera && <span className="badge badge-azul">Hold respondido</span>}
+                  {/* V76 (pedido explícito, con foto): llama la atención al
+                      lado de "En proceso" cuando ya volvió de la prueba
+                      hidrostática pero todavía falta la inspección visual. */}
+                  {o.falta_inspeccion && <span className="badge badge-rojo">Le hace falta inspección visual</span>}
                 </span>
                 <span className="list-item-qty" style={{ textAlign: "right", flexShrink: 0 }}>
                   {/* V57: el nombre de la fecha sale una sola vez, arriba al lado del título

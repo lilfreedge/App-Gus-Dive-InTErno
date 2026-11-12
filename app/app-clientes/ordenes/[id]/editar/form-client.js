@@ -534,8 +534,18 @@ export default function EditarSeguimientoForm({
   else if (esReparacion) retornoDesbloqueado = envioReparacionHecho;
   else if (esHidrostatica) retornoDesbloqueado = envioHidrostaticaHecho;
   const retornoHecho = !!ordenLocal.fecha_retorno_tienda;
+  // V76 (pedido explícito, con foto: "Poner que la parte de inspeccion
+  // visual realizada esté separado de la fecha de retorno a tienda. que
+  // vaya despues del retorno a tienda") -- antes se guardaban juntas en
+  // el mismo paso ("Fecha de retorno a tienda"); ahora "Inspección visual
+  // realizada" es su propio paso de la cadena, que se desbloquea al
+  // guardar el retorno, y "Fecha de listo para entrega" ya no se puede
+  // poner (en una hidrostática) sin haberla hecho -- así no se puede
+  // saltar por accidente.
+  const inspeccionDesbloqueada = retornoHecho;
+  const inspeccionHecho = !!ordenLocal.inspeccion_visual_realizada;
 
-  const listoDesbloqueadoNormal = muestraRetorno ? retornoHecho : true;
+  const listoDesbloqueadoNormal = muestraRetorno ? (esHidrostatica ? inspeccionHecho : retornoHecho) : true;
   // V38 -- el técnico no ve el envío a taller ni el retorno ("solo lo que
   // él llena": la fecha de listo). En una reparación que nunca salió al
   // taller, puede poner "listo" igual: al guardarlo queda marcado "Se
@@ -617,10 +627,22 @@ export default function EditarSeguimientoForm({
       setErroresPaso((e) => ({ ...e, retorno: "Indica la fecha de retorno a tienda." }));
       return;
     }
-    guardarPasoSimple("retorno", {
-      fecha_retorno_tienda: valor,
-      inspeccion_visual_realizada: esHidrostatica ? !!drafts.inspeccion : false,
-    });
+    guardarPasoSimple("retorno", { fecha_retorno_tienda: valor });
+  }
+
+  // V76: "Inspección visual realizada" como su propio paso (ver nota más
+  // arriba). Solo avanza si se marca la casilla -- si no, se queda
+  // bloqueado (así no se olvida).
+  function guardarInspeccion() {
+    const valor = drafts.inspeccion !== undefined ? drafts.inspeccion : inspeccionHecho;
+    if (!valor) {
+      setErroresPaso((e) => ({ ...e, inspeccion: "Marca la casilla para confirmar que ya se hizo." }));
+      return;
+    }
+    guardarPasoSimple("inspeccion", { inspeccion_visual_realizada: true });
+  }
+  function borrarInspeccion() {
+    guardarPasoSimple("inspeccion", { inspeccion_visual_realizada: false });
   }
 
   function guardarListo() {
@@ -711,7 +733,9 @@ export default function EditarSeguimientoForm({
   }
   function editarRetorno() {
     abrirEdicion("retorno", ordenLocal.fecha_retorno_tienda);
-    setDraft("inspeccion", !!ordenLocal.inspeccion_visual_realizada);
+  }
+  function editarInspeccion() {
+    abrirEdicion("inspeccion", !!ordenLocal.inspeccion_visual_realizada);
   }
   function editarListo() {
     abrirEdicion("listo", ordenLocal.fecha_listo_entrega);
@@ -1556,12 +1580,7 @@ export default function EditarSeguimientoForm({
               hecho={retornoHecho}
               editando={editando === "retorno"}
               onEditar={editarRetorno}
-              preview={
-                <>
-                  {formatFechaDDMMAAAADeDate(ordenLocal.fecha_retorno_tienda)}
-                  {esHidrostatica && ` — Inspección visual: ${ordenLocal.inspeccion_visual_realizada ? "Sí" : "No"}`}
-                </>
-              }
+              preview={formatFechaDDMMAAAADeDate(ordenLocal.fecha_retorno_tienda)}
               guardando={guardandoPaso === "retorno"}
               error={erroresPaso.retorno}
               onGuardar={guardarRetorno}
@@ -1577,17 +1596,6 @@ export default function EditarSeguimientoForm({
                 onChange={(e) => setDraft("retorno", e.target.value)}
                 style={{ marginTop: 6 }}
               />
-              {esHidrostatica && (
-                <label className="check-label" style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600, marginTop: 10 }}>
-                  <input
-                    type="checkbox"
-                    checked={drafts.inspeccion !== undefined ? drafts.inspeccion : !!ordenLocal.inspeccion_visual_realizada}
-                    onChange={(e) => setDraft("inspeccion", e.target.checked)}
-                    style={{ width: "auto" }}
-                  />
-                  Inspección visual realizada
-                </label>
-              )}
               {ordenLocal.fecha_retorno_tienda && (
                 <button
                   type="button"
@@ -1597,6 +1605,50 @@ export default function EditarSeguimientoForm({
                   style={{ marginTop: 8, width: "100%" }}
                 >
                   Borrar fecha
+                </button>
+              )}
+            </PasoWizard>
+          )}
+
+          {/* V76: "Inspección visual realizada" separado, después del
+              retorno a tienda (ver nota más arriba). Solo aplica a
+              hidrostática. */}
+          {esHidrostatica && !esTecnico && (
+            <PasoWizard
+              id="inspeccion"
+              label="Inspección visual realizada"
+              locked={!inspeccionHecho && !inspeccionDesbloqueada}
+              mensajeBloqueo="Aún no puedes marcar esto porque falta la fecha de retorno a tienda."
+              hecho={inspeccionHecho}
+              editando={editando === "inspeccion"}
+              onEditar={editarInspeccion}
+              preview={inspeccionHecho ? "Sí" : "No"}
+              guardando={guardandoPaso === "inspeccion"}
+              error={erroresPaso.inspeccion}
+              onGuardar={guardarInspeccion}
+              denegado={denegado}
+              explicado={explicado}
+              onClickBloqueado={clickBloqueado}
+              suprimido={!inspeccionHecho && !!editando}
+            >
+              <label className="check-label" style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600, marginTop: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={drafts.inspeccion !== undefined ? drafts.inspeccion : inspeccionHecho}
+                  onChange={(e) => setDraft("inspeccion", e.target.checked)}
+                  style={{ width: "auto" }}
+                />
+                Ya se hizo la inspección visual
+              </label>
+              {inspeccionHecho && (
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={borrarInspeccion}
+                  disabled={guardandoPaso === "inspeccion"}
+                  style={{ marginTop: 8, width: "100%" }}
+                >
+                  Desmarcar
                 </button>
               )}
             </PasoWizard>
@@ -1617,6 +1669,8 @@ export default function EditarSeguimientoForm({
                 ? "Primero llena el Informe de mantenimiento (arriba)."
                 : esTecnico
                 ? "Este equipo salió de la tienda. Se llena cuando vuelva: la tienda pone la fecha de retorno."
+                : esHidrostatica && retornoHecho && !inspeccionHecho
+                ? "Aún no puedes poner la fecha de listo porque falta la inspección visual."
                 : "Aún no puedes poner la fecha de listo porque falta la fecha de retorno a tienda."
             }
             hecho={listoHecho}

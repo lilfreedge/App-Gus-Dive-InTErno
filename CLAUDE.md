@@ -44,13 +44,13 @@ Control Estudiantes, Buceos y Alquiler salen "En construcción" en `/espacio` (`
 
 Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzos`.
 
-## Estado (10-nov-2026)
+## Estado (12-nov-2026)
 
-- En GitHub está la **V67** (subida el 10-nov junto con la V63 a la V66; commit c4fe08d en su Mac, mismo árbol e6061de… que mi commit local a579d56). Lo próximo se arma con `git diff --name-only a579d56 HEAD` y se sube solo cuando él diga "súbela".
-- SQL: `supabase/todo_v67_una_sola_vez.sql` (migraciones 91 a 94). Se le dio en el portapapeles y por el chat para correr una vez.
-- La lista para verificar (29–70 de `claude/lista-nueva.md`) se le dio completa con la subida.
+- En GitHub está la **V74 a V76** (subida el 12-nov; commit b091ebc en su Mac, carpeta `App-Gus-Dive-InTErno`). Lo próximo se arma con `git diff origin/main HEAD --name-status` en el working copy de Claude (ya no sirve comparar contra un commit viejo a mano: cada subida queda en un commit nuevo en su Mac, así que `origin/main` siempre es la referencia).
+- **Cómo se sube (recordatorio para la próxima vez):** el working copy de Claude y el clon del Mac tienen historias de commits distintas (árboles de archivos iguales, hashes distintos) porque cada subida se arma como UN commit nuevo directo en el Mac, no como un push de los commits locales de Claude. Pasos: 1) en el working copy, `git diff origin/main HEAD --name-status` para ver qué cambió; 2) empacar esos archivos (tar) y pasarlos al clon del Mac con `device_commit_files`; 3) extraer encima (puede hacer falta `device_request_delete_permission` en esa carpeta, porque tar y git necesitan borrar/reemplazar archivos); 4) `git commit` ahí con `user.name="lilfreedge"` y `user.email="felipetorreira2@gmail.com"` (así quedan sus commits, no los de Claude); 5) `git push origin main` -- si falla por credenciales (este VM del Mac no tiene las suyas), avisarle para que le dé push él mismo desde su Terminal.
+- SQL: ninguno pendiente de correr (las V68 a V76 no necesitaron SQL nuevo). Lo último con SQL fue `supabase/todo_v67_una_sola_vez.sql` (migraciones 91 a 94).
 
-## V68 (10-nov, local, sin subir)
+## V68 (10-nov, subido)
 
 - Lo próximo se sube con `git diff --name-only a579d56 HEAD`. La V68 no tiene SQL.
 - Respuestas a la lista 29–70: "Asumamos que está bien". 42 ok · 43 ok · 47 explicado.
@@ -73,14 +73,14 @@ Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzo
 - **86, procedimiento de reguladores: se queda en la lista. Él pidió: "al momento que te comente algo relacionado tú me avisas a ver si me acuerdo". Cuando hable de reguladores, mantenimiento, informe del técnico o listas de pasos, recuérdaselo.**
 - ManyChat: se le explicó (precios por contactos + Meta cobra por mensaje de plantilla; hay que confirmar coexistencia con el WhatsApp Business del celular).
 
-## V69 (11-nov, local, sin subir)
+## V69 (11-nov, subido)
 
 - 89 logo nuevo de Alquiler (`public/logo-gus-alquiler.png`, solo en ese app) · 90 loading screen (App Interno/Equipos) también en Control Estudiantes, Buceos y Alquiler, con su color.
 - Explicado sin cambio de código: 77 (correo de lista de espera), 79 ("no lo veo" — probable que mirara antes de que Vercel terminara de desplegar la V68, revisado el código y está bien), 88 (botón que cambia en Documentos), perfil del estudiante (ya existe en "Mis documentos": celular, correo, dirección, contacto de emergencia).
 - Pendiente de investigar: 75, dice que un buceo reabierto aparece "lleno" en el link — falta el nombre del buceo de prueba para revisarlo (ver detalle en `claude/lista-nueva.md`).
 - Preguntas con propuesta pendiente de maqueta: 91 (formulario de recordatorio más sencillo + "anuncio fijo"), 92 (que "Para hacer esta semana" diga de qué es cada recordatorio), 93 (texto del botón "Registrarme en un curso").
 
-## V70 (11-nov, local, sin subir)
+## V70 (11-nov, subido)
 
 - Segunda tanda del 11-nov: 11 fotos de App Equipos de clientes (técnico, ficha de la orden, recibo) y una pregunta sobre estadísticas de compresores. Detalle completo (qué se hizo, qué quedó diagnosticado y las preguntas) en `claude/lista-nueva.md`, sección "Tanda del 11-nov, segunda".
 - HECHO: 94 (técnico: solo puede quitar los códigos que puso él mismo, queda quién los puso), 95 (código en negrita, descripción no, en esa misma lista), 96 (recibo del cliente sin el folio abajo a la derecha), 97 (recibo del cliente sin "Descargar PDF" ni "Ver recibo completo").
@@ -89,6 +89,23 @@ Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzo
 - 105 CERRADO: se queda como está por ahora, no pidió ningún número nuevo de frecuencia para las estadísticas de compresores.
 - 106 HECHO: aviso por correo de cuenta nueva a felipe@gusdivecenter.com, para que él la apruebe (`/api/avisos/nueva-cuenta`, `lib/correo-nueva-cuenta.js`, `migration_95.sql`; destinatarios editables en Administración › Correos automáticos).
 - 107 HECHO (Equipos de clientes y App Interno; Control Estudiantes y Buceos para después): acceso "solo ver" — columna nueva en Accesos a apps (`profiles.permisos.solo_ver`, `migration_96.sql`). Se resolvió con un solo cambio central: `lib/roles.js` → `tieneAcceso()` apaga la lista `ACCIONES_BLOQUEADAS_SOLO_VER` (crear/editar/borrar/registrar/actualizar estado/etc. de esas 2 apps) cuando el permiso está prendido, sin tocar el acceso de entrar a la app ni los permisos de solo ver una sección — como casi todos los botones de ambas apps (incluido el menú del técnico) ya dependen de `tieneAcceso()`, quedan cubiertos sin tocarlos uno por uno. Dos pantallas (Solicitudes al almacén, Informe de mantenimiento) se ocultan enteras para esta persona porque su único permiso mezcla ver+hacer — pendiente de afinar si hace falta. Puede que algún botón suelto que no dependa de ningún permiso granular se haya quedado sin bloquear; avisarle si encuentra uno.
+
+## V71 a V73 (11-nov, subido)
+
+- Subidas en otra sesión; no quedó esta nota al día con el detalle. Ver `git log` en GitHub para lo que trae cada una (Holds resueltos con la respuesta, ficha de la orden reordenada, "Sin asignar" clickeable, técnico más sutil).
+
+## V74 a V76 (12-nov, subido -- commit b091ebc)
+
+- "Me interesa": título "Registro de interesado", mensaje final ya no promete info inmediata (ahora dice que se contacta cuando haya curso), pregunta "¿Cómo te enteraste?" y esa fuente se guarda de verdad.
+- Interesados se movió en el menú, entre Inicio y Cursos.
+- Celular: un dígito de más ya no cambia de país solo (se recorta a 10 dígitos mientras el país sea RD/EE.UU.).
+- Interesados: "Compartir link" ahora dice "Compartir link de interesados" con su propio mensaje de WhatsApp.
+- Interesados → Seguimiento rediseñado (maquetas V75/V76, propuesta D aprobada): selección rápida en una sola fila (qué pasó + comentario + Guardar); "Editar datos" arriba, discreto; Inscribir y WhatsApp más grandes y en ese orden; se quitó la fecha para recordar del formulario rápido; ya no sale "Nuevo, nadie le ha escrito" sin seguimiento. Encabezado de Interesados igual que el de Cursos abiertos.
+- Inscribir (maqueta V77 aprobada): si la persona ya está en Buzos (por su celular) se usan sus datos, sin pedir la cédula de nuevo; antes de guardar, confirma sus datos (lo que falta en rojo) con botón de WhatsApp.
+- `/estudiante` se puede instalar como su propia app (manifest aparte de la de personal).
+- Link de cursos (maqueta V78 aprobada): reconoce a un interesado por su celular si no lo encuentra por cédula; le rellena el nombre y, al registrarse, el interesado queda resuelto.
+- Control Estudiantes: se quitó el botón de Administración de "Más" (ya estaba en Settings).
+- Sin SQL nuevo.
 
 ## Pendiente
 

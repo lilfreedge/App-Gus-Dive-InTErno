@@ -5,7 +5,6 @@ import { CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck } from "@/components/icons";
 import { soloDigitos, formatoCedula, celValido } from "@/lib/viajes/modelo";
 import { FUENTES } from "@/lib/estudiantes/modelo";
-import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { NACIONALIDADES, Privacidad } from "./Publico";
 
 // El link "Me interesa". V60 ("164", maqueta V59 aprobada, y la nota del
@@ -87,15 +86,12 @@ export default function MeInteresa({ cursos, whatsapp }) {
                 futuro se contacta al cliente para ver si le interesa
                 participar") -- antes decía que le íbamos a escribir "para
                 darte toda la información", como si fuera inmediato; ahora
-                dice que lo contactamos cuando haya un curso. */}
-            <div className="pb-h">
-              Quedaste anotado{cursoFin ? ` para ${cursoFin}` : ""}. Te contactaremos por WhatsApp cuando tengamos un curso disponible. Si quieres, escríbenos tú ahora.
-            </div>
-            {whatsapp && (
-              <a className="pb-btn ce-pub-wa" href={`https://wa.me/${numeroWhatsApp(whatsapp)}?text=${encodeURIComponent(`Hola, soy ${nombreFin || ""}. Me interesa ${cursoFin ? `el curso ${cursoFin}` : "un curso"}.`)}`} target="_blank" rel="noopener noreferrer">
-                Escribir por WhatsApp
-              </a>
-            )}
+                dice que lo contactamos cuando haya un curso. V76 (pedido
+                explícito, con foto: "vamos a quitar la opcion de escribir
+                por whatsapp en esta parte... No me gusta para nada la
+                parte de 'si quieres, escribenos tu'") -- se quita esa
+                frase y el botón de WhatsApp de esta pantalla. */}
+            <div className="pb-h">Quedaste anotado{cursoFin ? ` para ${cursoFin}` : ""}. Te contactaremos por WhatsApp cuando tengamos un curso disponible.</div>
           </div>
         )}
 
@@ -162,10 +158,10 @@ export default function MeInteresa({ cursos, whatsapp }) {
         {paso === "datos" && (
           <div className="pb-card">
             {conocido ? (
-              <>
-                <div className="pb-t">¡Hola, {conocido.primer}! Ya te tenemos.</div>
-                <div className="pb-h">Solo dinos qué curso te interesa.</div>
-              </>
+              // V76 (pedido explícito, con foto: "el 'ya te tenemos' como
+              // que no me gusta" + "Borrar 'Solo dinos qué curso te
+              // interesa'") -- queda solo el saludo, sin esas dos frases.
+              <div className="pb-t">¡Hola, {conocido.primer}!</div>
             ) : (
               <>
                 <div className="pb-t">Registro de interesado</div>
@@ -187,7 +183,7 @@ export default function MeInteresa({ cursos, whatsapp }) {
                 guardaba la fuente como "Link" para todos; ahora se le
                 pregunta a la persona, igual que cuando lo anota alguien del
                 equipo a mano. */}
-            <label className="ce-pub-l">¿Cómo te enteraste?</label>
+            <label className="ce-pub-l">¿Cómo te enteraste de nosotros?</label>
             <select className="pb-input" value={f.fuente} onChange={(e) => set("fuente", e.target.value)}>
               <option value="">Escoge…</option>
               {FUENTES.map((x) => (

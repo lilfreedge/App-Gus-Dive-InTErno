@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { IconEdit, IconPlus } from "@/components/icons";
-import { PASOS, ESCUELAS, rd, DIAS_SEMANA, SEMANA_OWD } from "@/lib/estudiantes/modelo";
+import { PASOS, ESCUELAS, rd, nombrePaso } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
 
 // Base de datos (Más › Base de datos, V55: "ponme en 'más' un botón de base
@@ -22,7 +22,7 @@ export function Cursos({ db, p, yo, ops, ir }) {
       <a className="back-link" onClick={() => ir("mas")} style={{ cursor: "pointer" }}>
         ← Más
       </a>
-      <h1 className="page-title">Base de datos</h1>
+      <h1 className="page-title">Catálogo de cursos</h1>
       <div className="vj-tabs" style={{ marginBottom: 12 }}>
         <button className={`vj-tab${seccion === "cursos" ? " sel" : ""}`} onClick={() => setSeccion("cursos")}>
           Cursos ({activos.length})
@@ -125,16 +125,43 @@ export function Cursos({ db, p, yo, ops, ir }) {
   );
 }
 
+// V76 (pedido explícito, con foto: "aqui deberia de tener una ','. deberia
+// ser 29,500") -- el precio se ve con comas de miles mientras se escribe.
+function formatoPrecioInput(v) {
+  const limpio = String(v).replace(/[^\d.]/g, "");
+  const punto = limpio.indexOf(".");
+  const entero = punto === -1 ? limpio : limpio.slice(0, punto);
+  const decimal = punto === -1 ? "" : limpio.slice(punto, punto + 3);
+  return entero.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + decimal;
+}
+
+// V76 (pedido explícito, con foto: "quita esta parte, el itinerario es lo
+// que uno llena antes de eso, Lunes martes miercoles=teoria 1,2 y 3, Jueve=
+// examen, viernes+practica piscina, Sabado caleta 1, domingo caleta 2. Si
+// se te ocurre alguna manera de mezclarlos avisame") -- se quita el
+// itinerario escrito a mano y sale solo de los pasos marcados arriba,
+// siguiendo ese mismo orden. "Caleta Nocturno" (agregada en esta misma
+// tanda) no tiene día fijo, así que no entra en este cálculo.
+const DIA_PASO = ["teoria1", "teoria2", "teoria3", null, "piscina", "caleta1", "caleta2"]; // null = jueves (examen)
+function semanaDePasos(pasos, llevaExamen) {
+  return DIA_PASO.map((k) => (k === null ? (llevaExamen ? "Examen" : "") : pasos.includes(k) ? nombrePaso(k) : ""));
+}
+
+// V76 (pedido explícito: "quiero poner esta parte mas organizada") -- los
+// pasos se ven en dos grupos en vez de una sola lista.
+const GRUPO_CLASES = ["teoria1", "teoria2", "teoria3", "piscina", "caleta1", "caleta2", "caletaNocturna"];
+const GRUPO_ENTREGA = ["record", "identificacion", "foto", "equipos", "gorra"];
+
 function EditarCurso({ c, ops, yo, cerrar }) {
-  const [semana, setSemana] = useState(Array.isArray(c.semana) ? [...c.semana, "", "", "", "", "", "", ""].slice(0, 7) : ["", "", "", "", "", "", ""]);
   const [borrando, setBorrando] = useState(false);
-  const [f, setF] = useState({ ...c, precio: c.precio == null ? "" : String(c.precio) });
+  const [f, setF] = useState({ ...c, precio: c.precio == null ? "" : formatoPrecioInput(String(c.precio)) });
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const toggle = (lista, v) => (lista.includes(v) ? lista.filter((x) => x !== v) : [...lista, v]);
   async function guardar() {
     if (!f.nombre.trim()) return;
     const { nuevo, ...resto } = f;
-    await ops.guardarCurso({ ...resto, nombre: f.nombre.trim(), precio: f.precio === "" ? null : Number(f.precio), semana: semana.some((x) => x.trim()) ? semana : null }, !!nuevo);
+    const semana = semanaDePasos(f.pasos, f.llevaExamen);
+    await ops.guardarCurso({ ...resto, nombre: f.nombre.trim(), precio: f.precio === "" ? null : Number(f.precio.replace(/,/g, "")), semana: semana.some((x) => x.trim()) ? semana : null }, !!nuevo);
     cerrar();
   }
   return (
@@ -147,8 +174,8 @@ function EditarCurso({ c, ops, yo, cerrar }) {
             <input value={f.nombre} onChange={(e) => set("nombre", e.target.value)} autoFocus={!!c.nuevo} />
           </label>
           <label>
-            Precio (RD$)
-            <input inputMode="numeric" value={f.precio} onChange={(e) => set("precio", e.target.value.replace(/[^\d.]/g, ""))} placeholder="Sin precio" />
+            Precio con ITBIS incluidos (RD$)
+            <input inputMode="numeric" value={f.precio} onChange={(e) => set("precio", formatoPrecioInput(e.target.value))} placeholder="Sin precio" />
           </label>
         </div>
         {/* V55: solo SNSI, así que no se escoge escuela. */}
@@ -169,8 +196,9 @@ function EditarCurso({ c, ops, yo, cerrar }) {
         <div className="hint-text" style={{ margin: 0 }}>
           Pasos que lleva (los demás le salen al estudiante como N/A)
         </div>
+        <div className="ce-pasos-grupo-t">Clases y mar</div>
         <div className="ce-checks">
-          {PASOS.map((x) => (
+          {PASOS.filter((x) => GRUPO_CLASES.includes(x.k)).map((x) => (
             <label key={x.k}>
               <input type="checkbox" checked={f.pasos.includes(x.k)} onChange={() => set("pasos", toggle(f.pasos, x.k))} /> {x.t}
             </label>
@@ -179,24 +207,20 @@ function EditarCurso({ c, ops, yo, cerrar }) {
             <input type="checkbox" checked={f.llevaExamen} onChange={(e) => set("llevaExamen", e.target.checked)} /> Examen
           </label>
         </div>
-        {/* V55: cómo es la semana (le sale al estudiante en el link al escoger
-            la fecha; "79": por ahora solo Open Water). */}
-        <div className="hint-text" style={{ margin: "4px 0 0" }}>
-          Itinerario (opcional; empieza el lunes). Le sale al estudiante al escoger la fecha.
-        </div>
-        <div className="ce-semana-form">
-          {DIAS_SEMANA.map((d, i) => (
-            <label key={d}>
-              {d}
-              <input value={semana[i]} onChange={(e) => setSemana(semana.map((x, j) => (j === i ? e.target.value : x)))} placeholder="—" />
+        <div className="ce-pasos-grupo-t">Entrega y documentos</div>
+        <div className="ce-checks">
+          {PASOS.filter((x) => GRUPO_ENTREGA.includes(x.k)).map((x) => (
+            <label key={x.k}>
+              <input type="checkbox" checked={f.pasos.includes(x.k)} onChange={() => set("pasos", toggle(f.pasos, x.k))} /> {x.t}
             </label>
           ))}
         </div>
-        {!semana.some((x) => x.trim()) && /open water/i.test(f.nombre) && !/advanced/i.test(f.nombre) && (
-          <a className="vj-link" onClick={() => setSemana([...SEMANA_OWD])}>
-            Poner la de Open Water
-          </a>
-        )}
+        {/* V55/V76: el itinerario (qué se hace cada día, le sale al
+            estudiante en el link al escoger la fecha) ya no se escribe a
+            mano -- sale solo de los pasos de arriba. */}
+        <div className="hint-text" style={{ margin: "4px 0 0" }}>
+          El itinerario le sale solo al estudiante según estos pasos: Lun/Mar/Mié Teoría 1/2/3, Jue Examen, Vie Práctica piscina, Sáb Caleta 1, Dom Caleta 2.
+        </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn btn-primary vj-btn" onClick={guardar}>
             Guardar

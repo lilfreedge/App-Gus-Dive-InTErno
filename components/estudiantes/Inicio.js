@@ -7,7 +7,7 @@ import { listoParaAlmacen, pagoInstructorPendiente, debe, pagoListo, rd, avance,
 import { nuevoId } from "@/lib/estudiantes/datos";
 import CompartirLink from "@/components/CompartirLink";
 import MenuMas from "@/components/MenuMas";
-import { sumarDias, fechaLarga } from "@/lib/viajes/modelo";
+import { sumarDias, fechaLarga, formatoCel } from "@/lib/viajes/modelo";
 import { urlPrincipal } from "@/lib/direccion";
 
 // Pantallas de Control Estudiantes: Inicio, la lista, Más y la Bitácora.
@@ -452,12 +452,27 @@ export function Lista({ db, p, yo, ops, ir, avisar }) {
     .sort((a, b) => a.inicio.localeCompare(b.inicio));
   const sinFecha = db.estudiantes.filter((e) => e.estado === "curso" && !e.fechaId);
   const espera = db.estudiantes.filter((e) => e.estado === "espera");
-  const esperaPorCurso = [...new Set(espera.map((e) => cursoDe(db, e)?.id || e.curso))].map((k) => ({
-    k,
-    c: db.cursos.find((c) => c.id === k) || null,
-    nombre: db.cursos.find((c) => c.id === k)?.nombre || k,
-    gente: espera.filter((e) => (cursoDe(db, e)?.id || e.curso) === k),
-  }));
+  // V76 (pedido explícito, con foto: "donde dice lista de espera poner
+  // 'Interesados' y que figuren los interesados a según el curso") -- esta
+  // sección se llama "Interesados" ahora; además de los estudiantes
+  // esperando cupo, también salen los Interesados (de la lista de
+  // Interesados, los que todavía no se resolvieron) agrupados por el curso
+  // que les interesa. Se agrupa por el NOMBRE del curso (lo único que
+  // comparten las dos listas: un estudiante en espera tiene cursoId, un
+  // interesado solo el nombre del curso como texto).
+  const nombreEsperaDe = (e) => cursoDe(db, e)?.nombre || e.curso;
+  const interesadosAbiertos = (db.interesados || []).filter((x) => x.curso && !["inscrito", "no"].includes(x.estado));
+  const nombresGrupo = [...new Set([...espera.map(nombreEsperaDe), ...interesadosAbiertos.map((x) => x.curso)])];
+  const esperaPorCurso = nombresGrupo.map((nombre) => {
+    const c = db.cursos.find((c) => c.nombre === nombre) || null;
+    return {
+      k: nombre,
+      c,
+      nombre,
+      gente: espera.filter((e) => nombreEsperaDe(e) === nombre),
+      interesados: interesadosAbiertos.filter((x) => x.curso === nombre),
+    };
+  });
   const porNombre = (a, b) => buzoDe(db, a).nombre.localeCompare(buzoDe(db, b).nombre);
   const n = (k) => `${k} estudiante${k === 1 ? "" : "s"}`;
   return (
@@ -530,22 +545,34 @@ export function Lista({ db, p, yo, ops, ir, avisar }) {
         </div>
       )}
 
-      <div className="section-title">Lista de espera</div>
+      <div className="section-title">Interesados</div>
       {esperaPorCurso.map((g) => {
         const k = `espera:${g.k}`;
+        const total = g.gente.length + g.interesados.length;
         return (
           <div key={k} className={`ce-abierto${abierto === k ? " sel" : ""}`}>
             <button type="button" className="ce-abierto-top" onClick={() => setAbierto(abierto === k ? null : k)}>
               <span>
                 <b>{g.nombre}</b>
               </span>
-              <span className="ce-abierto-n espera">{g.gente.length} esperando</span>
+              <span className="ce-abierto-n espera">{total} interesado{total === 1 ? "" : "s"}</span>
             </button>
             {abierto === k && (
               <div className="ce-abierto-cuerpo">
                 {g.gente.sort(porNombre).map((e) => (
                   <FilaEstudiante key={e.id} db={db} est={e} ir={ir} p={p} />
                 ))}
+                {g.interesados
+                  .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                  .map((x) => (
+                    <button key={x.id} className="ce-est" onClick={() => ir("interesados")}>
+                      <div className="ce-est-t">
+                        <b>{x.nombre}</b>
+                        <span className="ce-chip">Interesado</span>
+                      </div>
+                      <div className="ce-est-m">{[x.fuente, x.cel ? formatoCel(x.cel) : ""].filter(Boolean).join(" · ")}</div>
+                    </button>
+                  ))}
                 {p.cursos && g.c && !db.sinFechas && (
                   <button className="btn secondary vj-mini" style={{ marginTop: 8 }} onClick={() => setForm({ cursoId: g.c.id, inicio: "", cupo: "", instructor: "", nota: "" })}>
                     <IconPlus size={14} /> Crear un curso de {g.nombre}
@@ -556,7 +583,7 @@ export function Lista({ db, p, yo, ops, ir, avisar }) {
           </div>
         );
       })}
-      {!esperaPorCurso.length && <div className="card hint-text">Nadie en lista de espera.</div>}
+      {!esperaPorCurso.length && <div className="card hint-text">No hay interesados.</div>}
     </>
   );
 }
@@ -762,7 +789,9 @@ export function Mas({ yo, p, ir }) {
   // corregir"), y con la Base de datos de los cursos ("ponme en 'más' un
   // botón de base de datos").
   const opciones = [
-    { r: "basedatos", t: "Base de datos", sub: "Los cursos que damos y los instructores.", I: IconCatalog },
+    // V76 (pedido explícito, con foto: "Cambiar base de datos por 'catalogo
+    // de cursos'").
+    { r: "basedatos", t: "Catálogo de cursos", sub: "Los cursos que damos y los instructores.", I: IconCatalog },
     // V67 ("4"): Estadísticas; y la Bitácora con su permiso ("3").
     ...(p.estadisticas ? [{ r: "estadisticas", t: "Estadísticas", sub: "Estudiantes, cursos, cobros, interesados y certificaciones.", I: IconChart }] : []),
     ...(p.bitacora ? [{ r: "bitacora", t: "Bitácora", sub: "Todo lo que se ha hecho, con quién y cuándo.", I: IconHistory }] : []),

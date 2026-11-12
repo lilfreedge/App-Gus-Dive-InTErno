@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { Buscar, CampoCel, IconoWA, Modal } from "@/components/viajes/Piezas";
 import { IconPlus, IconEdit } from "@/components/icons";
-import { ESTADOS_INTERESADO, FUENTES, linkWhatsApp, hoyISO, fechaCorta, fechaDeIso, soloDigitos, fechaCursoCorta } from "@/lib/estudiantes/modelo";
+import { FUENTES, linkWhatsApp, hoyISO, fechaCorta, fechaDeIso, soloDigitos, fechaCursoCorta, fechasDe } from "@/lib/estudiantes/modelo";
 import FechaNacimiento from "@/components/FechaNacimiento";
 import { formatoCel } from "@/lib/viajes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
-import CompartirLink from "@/components/CompartirLink";
+import CompartirLink, { urlCompleta } from "@/components/CompartirLink";
+import { cursoDe } from "./Inicio";
 
 // Interesados (1-nov-2026: "Me interesa poder tener un listado de
 // interesados también"): los que preguntan por un curso y todavía no se
@@ -21,6 +22,9 @@ const VACIO = { nombre: "", cel: "", curso: "", cuando: "", fuente: "Instagram",
 export const TIPOS_SEG_INT = [
   { k: "escribi", t: "Le escribí", estado: "escribimos" },
   { k: "no_contesta", t: "No contesta", estado: "escribimos" },
+  // V76 (pedido explícito, con foto: botón "Enviar Link de curso a
+  // estudiante" -- se anota solo cuando se usa ese botón).
+  { k: "link_curso", t: "Le envié el link para inscribirse", estado: "va" },
   { k: "va", t: "Va a inscribirse", estado: "va" },
   { k: "otra_fecha", t: "Quiere otra fecha", estado: "escribimos" },
   { k: "no", t: "No le interesa", estado: "no" },
@@ -48,15 +52,21 @@ export function historiaInteresado(x) {
 const ultimo = (x) => [...(x.seguimiento || [])].sort((a, b) => String(b.en || "").localeCompare(String(a.en || "")))[0] || null;
 
 export function Interesados({ db, p, yo, ops, ir, avisar }) {
-  const [filtro, setFiltro] = useState("nuevo");
+  // V76 (maqueta V74 aprobada: "recuerda que vamos a reemplazar esta
+  // parte... aprobé maqueta y todo") -- se quita el filtro por estado
+  // (Nuevos/Le escribimos/etc.) y se filtra por curso en su lugar. Sin
+  // ningún curso tocado se ven todos los interesados, de cualquier
+  // estado; lo que pasó con cada uno se sigue viendo en su tarjeta.
+  const [filtroCurso, setFiltroCurso] = useState(null);
   const [q, setQ] = useState("");
   const [nuevo, setNuevo] = useState(null);
   const [abierto, setAbierto] = useState(null);
   const t = q.trim().toLowerCase();
   const td = soloDigitos(q);
   const hoy = hoyISO();
+  const cursosConInteresados = [...new Set(db.interesados.map((x) => x.curso).filter(Boolean))].map((c) => ({ c, n: db.interesados.filter((x) => x.curso === c).length }));
   const lista = db.interesados
-    .filter((x) => (t ? (x.nombre || "").toLowerCase().includes(t) || (td.length >= 4 && soloDigitos(x.cel).includes(td)) : x.estado === filtro))
+    .filter((x) => (t ? (x.nombre || "").toLowerCase().includes(t) || (td.length >= 4 && soloDigitos(x.cel).includes(td)) : filtroCurso ? x.curso === filtroCurso : true))
     .sort((a, b) => (a.recordar && a.recordar <= hoy ? -1 : 0) - (b.recordar && b.recordar <= hoy ? -1 : 0));
   const cursos = db.cursos.filter((c) => c.activo).map((c) => c.nombre);
 
@@ -65,7 +75,8 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
     const x = { ...nuevo, id: nuevoId(), nombre: nuevo.nombre.trim(), cel: soloDigitos(nuevo.cel), estado: "nuevo", via: "mano", creadoEn: new Date().toISOString() };
     ops.guardarInteresado(x, true, `Agregó un interesado: ${x.nombre}${x.curso ? ` (${x.curso})` : ""}`);
     setNuevo(null);
-    setFiltro("nuevo");
+    setFiltroCurso(null);
+    setQ("");
   }
 
   return (
@@ -102,9 +113,9 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
         </div>
       )}
       <div className="vj-filtros">
-        {ESTADOS_INTERESADO.map((e) => (
-          <button key={e.v} className={`vj-filtro ce-filtro${filtro === e.v && !t ? " sel" : ""}`} onClick={() => (setFiltro(e.v), setQ(""))}>
-            {e.t} <span>{db.interesados.filter((x) => x.estado === e.v).length}</span>
+        {cursosConInteresados.map(({ c, n }) => (
+          <button key={c} className={`vj-filtro ce-filtro${filtroCurso === c && !t ? " sel" : ""}`} onClick={() => (setFiltroCurso(filtroCurso === c ? null : c), setQ(""))}>
+            {c} <span>{n}</span>
           </button>
         ))}
       </div>
@@ -116,8 +127,15 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
             <div className="ce-est-t">
               <b>{x.nombre}</b>
               {x.curso && <span className="ce-chip curso">{x.curso}</span>}
-              {/* V60 ("164"): si ya es buzo o estudiante de Gus. */}
-              {x.buzoId && <span className="ce-chip">Ya es buzo de Gus</span>}
+              {/* V60 ("164"): si ya lo teníamos en el sistema (de Viajes y
+                  Buceos o de otro registro), por su cédula o pasaporte. V76
+                  (pedido explícito, con foto: "por que sale ese ya es buzo
+                  de gus? no hace sentido, porque ese estudiante aun no ha
+                  concluido ningun curso con nosotros") -- decía "Ya es
+                  buzo de Gus", pero solo significa que ya teníamos su
+                  perfil (no que haya completado un curso); se cambia el
+                  texto para que no confunda. */}
+              {x.buzoId && <span className="ce-chip">Ya lo teníamos registrado</span>}
             </div>
             {/* V62 ("245"): en la lista se ve lo último que pasó. V74
                 (pedido explícito, con foto: "Esto es un interesado, Quita
@@ -248,6 +266,26 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
     setTexto("");
   }
 
+  // V76 (pedido explícito, con foto: "abajo de inscribir pongamos algo
+  // como que 'Enviar Link de curso a estudiante'... que abra un mensaje
+  // automatico en whatsapp... y que cuando el estudiante se inscriba en
+  // el curso pues que se quite de interesados y figure en cursos") -- le
+  // manda el link de registro (ya con la fecha más próxima del curso
+  // escogida, si hay una abierta) por WhatsApp y lo anota en el
+  // seguimiento. Cuando se registre con ese mismo celular, el link ya
+  // sabe reconocerlo (V78) y, al inscribirse, pasa solo a Estudiantes.
+  function enviarLinkCurso() {
+    const curso = cursoDe(db, x);
+    const fecha = curso ? fechasDe(db, curso.id, { soloFuturas: true })[0] : null;
+    const link = urlCompleta(fecha ? `/estudiante?curso=${fecha.id}` : "/estudiante");
+    window.open(linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, aquí tienes el link para inscribirte en ${x.curso || "el curso"}: ${link}`), "_blank", "noopener");
+    ops.guardarInteresado(
+      { ...x, estado: cerradoYa ? x.estado : "va", seguimiento: [...(x.seguimiento || []), { id: nuevoId(), tipo: "link_curso", quien: yo?.corto || "", en: new Date().toISOString() }] },
+      false,
+      `Le envió el link de curso a un interesado: ${x.nombre}`
+    );
+  }
+
   return (
     <Modal titulo={x.nombre} sub={[x.curso || "Sin curso todavía", x.via === "link" ? "por el link" : "a mano", fechaDeIso(x.creadoEn), x.cel ? formatoCel(x.cel) : ""].filter(Boolean).join(" · ")} cerrar={cerrar}>
       {/* V76 (pedido explícito: "Boton de editar datos ponlo abajo a la
@@ -264,6 +302,9 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
           </button>
         </div>
       )}
+      {/* V76 (pedido explícito, con foto: "el boton de whatsapp vamos a
+          ponerlo mas pequeno. Sube un poco el boton de inscribir") --
+          Inscribir queda más grande y WhatsApp más chico. */}
       <div className="ce-int-acc">
         {p.estudiantes && !cerradoYa && (
           <button className="btn vj-btn ce-int-insc" onClick={() => (cerrar(), ir(`nuevo:${x.id}`))}>
@@ -271,12 +312,17 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
           </button>
         )}
         {x.cel && (
-          <a className="btn vj-btn ce-wa" href={linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, te escribimos de Gus Dive Center por el curso${x.curso ? ` de ${x.curso}` : ""}.`)} target="_blank" rel="noopener noreferrer">
+          <a className="btn vj-btn ce-wa ce-int-wa-chico" href={linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, te escribimos de Gus Dive Center por el curso${x.curso ? ` de ${x.curso}` : ""}.`)} target="_blank" rel="noopener noreferrer">
             <IconoWA on /> WhatsApp
           </a>
         )}
       </div>
-      {x.buzoId && <div className="hint-text" style={{ marginTop: 6 }}>Ya es buzo de Gus.</div>}
+      {p.interesados && !cerradoYa && x.cel && (
+        <button className="btn secondary vj-btn ce-int-link-curso" onClick={enviarLinkCurso}>
+          Enviar link de curso a estudiante
+        </button>
+      )}
+      {x.buzoId && <div className="hint-text" style={{ marginTop: 6 }}>Ya lo teníamos registrado en el sistema.</div>}
       {est && (
         <a className="vj-link" onClick={() => (cerrar(), ir(`estudiante:${est.id}`))}>
           Ver su ficha de estudiante ({est.curso}) ›

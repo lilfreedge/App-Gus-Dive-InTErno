@@ -3135,6 +3135,7 @@ html[data-theme="dark"] .ce-app { --ce-claro: #3a3010; --ce-texto: #f3d77a; }
 .ce-form label input, .ce-form label select { margin: 0; }
 .ce-form-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 @media (max-width: 520px) { .ce-form-fila { grid-template-columns: 1fr; } }
+.ce-pasos-grupo-t { font-size: 12px; font-weight: 700; color: #9aa7b1; text-transform: uppercase; letter-spacing: 0.03em; margin: 6px 0 -2px; }
 .ce-checks { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .ce-checks label { flex-direction: row; align-items: center; gap: 6px; font-weight: 600; color: var(--texto); font-size: 13.5px; }
 .ce-checks input { width: auto; margin: 0; }
@@ -3200,9 +3201,6 @@ html[data-theme="dark"] .ce-app { --ce-claro: #3a3010; --ce-texto: #f3d77a; }
 .ce-dir-nombre:hover { color: var(--ce); }
 .ce-dir-cursos { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 3px; }
 .ce-dir-curso { display: inline-flex; gap: 3px; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; }
-.ce-semana-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
-.ce-semana-form label { font-size: 12px; font-weight: 700; color: var(--texto-suave); margin: 0; }
-.ce-semana-form input { margin-top: 2px; }
 .ce-app .ce-mas-card .hub-link-icon { background: #f6ce46; color: #2b2200; }
 .ce-app .ce-mas-card:hover { border-color: #e2b82c; }
 .ce-app .vj-adm-item.fuerte { background: var(--ce-claro); }
@@ -3614,6 +3612,12 @@ html[data-theme="dark"] .vj-cal-curso.empieza { background: #8a6a00; color: #fff
    fuertes), sin tocar el .btn.secondary que se usa en el resto del
    app. */
 .ce-int-insc { background: var(--ce-claro) !important; border: 1.5px solid var(--ce) !important; color: var(--ce-texto) !important; font-weight: 700 !important; }
+/* V76 (pedido explícito: "el boton de whatsapp vamos a ponerlo mas
+   pequeno. Sube un poco el boton de inscribir") -- en la ficha, Inscribir
+   crece y WhatsApp se queda más chico (en la lista no cambia). */
+.ce-int-acc .ce-int-insc { flex: 2 1 180px; padding: 13px 16px; font-size: 15.5px; }
+.ce-int-acc .ce-int-wa-chico { flex: 1 1 110px; padding: 7px 10px; font-size: 12.5px; }
+.ce-int-link-curso { width: 100%; margin-top: 6px; }
 /* V76 (pedido explícito: "Boton de editar datos ponlo... mas discreto"
    -- link chiquito arriba a la derecha de la ficha, en vez de un botón
    más en la fila de acciones. */
