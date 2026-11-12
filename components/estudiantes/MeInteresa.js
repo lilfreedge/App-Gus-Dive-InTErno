@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck } from "@/components/icons";
 import { soloDigitos, formatoCedula, celValido } from "@/lib/viajes/modelo";
+import { FUENTES } from "@/lib/estudiantes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { NACIONALIDADES, Privacidad } from "./Publico";
 
@@ -24,7 +25,7 @@ export default function MeInteresa({ cursos, whatsapp }) {
   const [cursoFin, setCursoFin] = useState("");
   const [doc, setDoc] = useState("");
   const [conocido, setConocido] = useState(null); // { primer } si ya lo tenemos
-  const [f, setF] = useState({ nombre: "", cel: "", curso: cursos[0] || "", correo: "", web: "" });
+  const [f, setF] = useState({ nombre: "", cel: "", curso: cursos[0] || "", fuente: "", correo: "", web: "" });
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [nombreFin, setNombreFin] = useState("");
@@ -81,8 +82,14 @@ export default function MeInteresa({ cursos, whatsapp }) {
             </div>
             {/* V62 ("193"): como el final de los otros registros. */}
             <div className="pb-t">¡Listo{nombreFin ? `, ${nombreFin}` : ""}!</div>
+            {/* V74 (pedido explícito: "esta info esta mal... Es un registro
+                de interesado que se inscriben para cuando haya un curso a
+                futuro se contacta al cliente para ver si le interesa
+                participar") -- antes decía que le íbamos a escribir "para
+                darte toda la información", como si fuera inmediato; ahora
+                dice que lo contactamos cuando haya un curso. */}
             <div className="pb-h">
-              Ya tenemos tus datos{cursoFin ? ` para ${cursoFin}` : ""}. Te escribiremos por WhatsApp para darte toda la información. Si quieres, escríbenos tú ahora.
+              Quedaste anotado{cursoFin ? ` para ${cursoFin}` : ""}. Te contactaremos por WhatsApp cuando tengamos un curso disponible. Si quieres, escríbenos tú ahora.
             </div>
             {whatsapp && (
               <a className="pb-btn ce-pub-wa" href={`https://wa.me/${numeroWhatsApp(whatsapp)}?text=${encodeURIComponent(`Hola, soy ${nombreFin || ""}. Me interesa ${cursoFin ? `el curso ${cursoFin}` : "un curso"}.`)}`} target="_blank" rel="noopener noreferrer">
@@ -94,9 +101,10 @@ export default function MeInteresa({ cursos, whatsapp }) {
 
         {paso === "doc" && (
           <div className="pb-card">
-            {/* V62 ("244. D"). */}
-            <div className="pb-t">Información de cursos</div>
-            <div className="pb-h">Déjanos tus datos y te mandamos toda la información.</div>
+            {/* V62 ("244. D"). V74 (pedido explícito: quitar el texto de
+                abajo del título, y cambiar el título a "Registro de
+                interesado"). */}
+            <div className="pb-t">Registro de interesado</div>
             <div className="pb-seg">
               <button className={tipoDoc === "cedula" ? "sel" : ""} onClick={() => (setTipoDoc("cedula"), setDoc(""), setAvisoDni(false))}>
                 Cédula
@@ -160,8 +168,7 @@ export default function MeInteresa({ cursos, whatsapp }) {
               </>
             ) : (
               <>
-                <div className="pb-t">Información de cursos</div>
-                <div className="pb-h">Déjanos tus datos y te mandamos toda la información.</div>
+                <div className="pb-t">Registro de interesado</div>
                 <label className="ce-pub-l">Nombre completo</label>
                 <input className="pb-input" value={f.nombre} onChange={(e) => set("nombre", e.target.value)} placeholder="Nombre y apellido" />
                 <label className="ce-pub-l">Celular (WhatsApp)</label>
@@ -174,6 +181,18 @@ export default function MeInteresa({ cursos, whatsapp }) {
                 <option key={c}>{c}</option>
               ))}
               <option value="">No sé, quiero información</option>
+            </select>
+            {/* V74 (pedido explícito, con foto: "esto no esta apareciendo al
+                momento que el interesado va a llenar el form") -- el link
+                guardaba la fuente como "Link" para todos; ahora se le
+                pregunta a la persona, igual que cuando lo anota alguien del
+                equipo a mano. */}
+            <label className="ce-pub-l">¿Cómo te enteraste?</label>
+            <select className="pb-input" value={f.fuente} onChange={(e) => set("fuente", e.target.value)}>
+              <option value="">Escoge…</option>
+              {FUENTES.map((x) => (
+                <option key={x}>{x}</option>
+              ))}
             </select>
             <label className="ce-pub-l">Correo electrónico{conocido ? " (opcional)" : ""}</label>
             <input className="pb-input" type="email" value={f.correo} onChange={(e) => set("correo", e.target.value)} placeholder="tucorreo@ejemplo.com" />

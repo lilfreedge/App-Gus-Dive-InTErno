@@ -1,0 +1,73 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V74 · Interesados</title>
+<style>
+:root{--ce:#f6ce46;--ce-texto:#5c4700;--fondo:#f4f7f9;--tarjeta:#fff;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}
+.maq b{color:#ffd166}
+.wrap{max-width:640px;margin:0 auto;padding:18px}
+.etq{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin:18px 0 8px}
+.etq.a{color:#a33}.etq.d{color:#2c9e5b}
+.vj-filtros{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.vj-filtro{border:1px solid var(--borde);background:var(--tarjeta);border-radius:999px;padding:6px 11px;font-size:13px;font-weight:700;color:var(--suave);cursor:pointer;font-family:inherit}
+.vj-filtro span{background:#eef3f6;border-radius:999px;padding:0 6px;margin-left:3px;font-size:12px}
+.vj-filtro.sel{background:#06324f;color:#fff;border-color:#06324f}
+.vj-filtro.sel span{background:rgba(255,255,255,.2)}
+.buscar{border:1px solid var(--borde);border-radius:10px;padding:9px 12px;font-size:14px;width:100%;margin-bottom:10px;color:var(--suave)}
+.ce-est{display:block;width:100%;text-align:left;background:var(--tarjeta);border:1px solid var(--borde);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.ce-est-t{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.ce-est-t b{font-size:15px}
+.ce-est-m{font-size:12.5px;color:var(--suave);margin-top:2px}
+.ce-chip{display:inline-block;font-size:11.5px;font-weight:800;border-radius:999px;padding:3px 9px;white-space:nowrap;background:#fdf1cf;color:var(--ce-texto)}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-top:14px}
+.card{background:var(--tarjeta);border:1px solid var(--borde);border-radius:12px;padding:10px 12px;text-align:center;color:var(--suave);font-size:13px}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V74</b> · "Interesados": se quita la fila de Nuevos/Le escribimos/etc. y en su lugar salen los cursos, solo si tienen interesados. Toca un curso para ver cómo filtra. Nada de esto está programado, falta tu aprobación.
+</div>
+<div class="wrap">
+  <div class="etq a">Antes</div>
+  <div class="vj-filtros">
+    <button class="vj-filtro sel">Nuevos <span>2</span></button>
+    <button class="vj-filtro">Le escribimos <span>0</span></button>
+    <button class="vj-filtro">Van a inscribirse <span>0</span></button>
+    <button class="vj-filtro">Inscritos <span>1</span></button>
+    <button class="vj-filtro">No les interesó <span>0</span></button>
+  </div>
+
+  <div class="etq d">Después</div>
+  <div class="vj-filtros" id="chips"></div>
+  <input class="buscar" placeholder="Buscar por nombre o celular…" disabled>
+  <div id="lista"></div>
+
+  <div class="nota">
+    Sin ningún curso tocado se ven todos los interesados (de cualquier estado). Al tocar un curso, la lista se filtra solo a ese curso; lo que pasó con cada uno (nuevo, le escribiste, ya se inscribió…) se sigue viendo dentro de su tarjeta, igual que ahora — solo se quita la fila de arriba que filtraba por eso. Si un curso no tiene ningún interesado, no sale su chip (prueba: "Rescue Diver" no aparece porque no tiene a nadie).
+  </div>
+</div>
+<script>
+const DATA = [
+  { nombre: "ferwdsvggbdfew", curso: "Open Water Diver", linea: "Nuevo, nadie le ha escrito · Instagram · 8 nov" },
+  { nombre: "Felipe Torreira", curso: "Open Water Diver", linea: "Nuevo, nadie le ha escrito · por el link · 7 nov", chip: "Ya es buzo de Gus" },
+  { nombre: "Ana Pérez", curso: "Advanced Open Water", linea: "Le escribimos · hace 2 días" },
+];
+let sel = null;
+function render() {
+  const cursos = [...new Set(DATA.map(x => x.curso))].map(c => ({ c, n: DATA.filter(x => x.curso === c).length }));
+  document.getElementById("chips").innerHTML = cursos.map(({c, n}) =>
+    `<button class="vj-filtro${sel === c ? " sel" : ""}" data-c="${c}">${c} <span>${n}</span></button>`
+  ).join("");
+  document.querySelectorAll("#chips .vj-filtro").forEach(b => b.onclick = () => { sel = sel === b.dataset.c ? null : b.dataset.c; render(); });
+  const lista = sel ? DATA.filter(x => x.curso === sel) : DATA;
+  document.getElementById("lista").innerHTML = lista.map(x => `
+    <div class="ce-est">
+      <div class="ce-est-t"><b>${x.nombre}</b>
+        <span style="display:flex;gap:6px">
+          <span class="ce-chip">${x.curso}</span>
+          ${x.chip ? `<span class="ce-chip" style="background:#eef3f6;color:#5c6b78">${x.chip}</span>` : ""}
+        </span>
+      </div>
+      <div class="ce-est-m">${x.linea}</div>
+    </div>`).join("") || `<div class="card">No hay nadie aquí.</div>`;
+}
+render();
+</script>
+</body></html>

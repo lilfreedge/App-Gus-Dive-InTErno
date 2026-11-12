@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buzoAFila, filaABuzo, nuevoId } from "@/lib/viajes/datos";
-import { filaACurso, filaAEst } from "@/lib/estudiantes/datos";
-import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula, formatoCel, hoyISO, fechaLarga, celValido, celGuardar } from "@/lib/viajes/modelo";
+import { filaACurso, filaAEst, interesadoAFila } from "@/lib/estudiantes/datos";
+import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula, formatoCel, hoyISO, fechaLarga, fechaCorta, celValido, celGuardar } from "@/lib/viajes/modelo";
 import { pasosIniciales, pagado, debe, nombreEtapa, menorDe12, avance, faltaDe } from "@/lib/estudiantes/modelo";
 import { docValido, buscarPorDoc, celCoincide, logLink, edadHoy, tokenMenor, puedeCambiarArchivo, puedeCambiarCel, cambiarCelular } from "@/lib/estudiantes/servidor";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
@@ -124,6 +124,28 @@ export async function POST(request) {
     return NextResponse.json({ ok: true });
   }
 
+  // V76 (pedido explícito, con foto: "el sistema debe de reconocerlo y no
+  // pedirle nuevamente su info, lo que si debe de pedirle son las infos
+  // faltantes" + maqueta V78 "OK"): cuando no se encontró a la persona por
+  // su cédula (todavía no estaba en Buzos/Estudiantes), al escribir su
+  // celular en "Tus datos" se busca también en Interesados -- si hay uno
+  // abierto con ese número, se rellena el nombre solo y ese interesado
+  // queda marcado como resuelto cuando termine de registrarse.
+  if (body.accion === "interesado") {
+    const celBuscado = soloDigitos(body.cel || "");
+    if (celBuscado.length < 10) return NextResponse.json({ encontrado: false });
+    const { data: ifila } = await s
+      .from("est_interesados")
+      .select("*")
+      .eq("celular", celBuscado)
+      .neq("estado", "inscrito")
+      .order("creado_en", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!ifila) return NextResponse.json({ encontrado: false });
+    return NextResponse.json({ encontrado: true, interesadoId: ifila.id, nombre: ifila.nombre, curso: ifila.curso || "", cuando: fechaCorta(String(ifila.creado_en).slice(0, 10)) });
+  }
+
   if (body.accion !== "registrar") return NextResponse.json({ error: "Acción desconocida." }, { status: 400 });
 
   // ------------------------------------------------------------ registrar
@@ -234,7 +256,10 @@ export async function POST(request) {
   // Si ya tiene ese mismo curso abierto, no se repite.
   const { data: abiertos } = await s.from("est_estudiantes").select("*").eq("buzo_id", buzo.id).eq("curso_id", curso.id).not("estado", "in", "(entregada,avisado,cancelado)");
   const permisoMenor = body.menor ? { menor: true, buzoId: buzo.id, token: tokenMenor(buzo.id) } : {};
-  if (abiertos?.length) return NextResponse.json({ ok: true, ya: true, primer: primerNombre(buzo.nombre), estudianteId: abiertos[0].id, curso: curso.nombre, ...permisoMenor });
+  if (abiertos?.length) {
+    if (body.interesadoId) await s.from("est_interesados").update(interesadoAFila({ estado: "inscrito", estudianteId: abiertos[0].id })).eq("id", String(body.interesadoId)).eq("celular", cel);
+    return NextResponse.json({ ok: true, ya: true, primer: primerNombre(buzo.nombre), estudianteId: abiertos[0].id, curso: curso.nombre, ...permisoMenor });
+  }
 
   // V55: la fecha que escogió ("64", "71. B"). Si está llena o el curso no
   // tiene fecha, queda en lista de espera ("65").
@@ -274,6 +299,10 @@ export async function POST(request) {
   };
   const { error: eEst } = await s.from("est_estudiantes").insert(fila);
   if (eEst) return NextResponse.json({ error: "No se pudo registrar el curso. Intenta de nuevo." }, { status: 500 });
+  // Se resuelve el interesado reconocido (ver arriba, acción "interesado");
+  // el .eq("celular", cel) es por seguridad, para que solo se resuelva si
+  // de verdad es el mismo celular.
+  if (body.interesadoId) await s.from("est_interesados").update(interesadoAFila({ estado: "inscrito", estudianteId: fila.id })).eq("id", String(body.interesadoId)).eq("celular", cel);
   // V65 ("286"): "Agregar Nitrox" en Open Water (o "Agregar OXY" en BLS):
   // queda anotado también en ese curso, sin fecha (en lista de espera).
   let tambienNombre = null;

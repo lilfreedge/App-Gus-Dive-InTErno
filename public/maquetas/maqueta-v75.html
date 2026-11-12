@@ -1,0 +1,181 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V75 · Ficha de interesado</title>
+<style>
+:root{--ce:#8a6a00;--ce-claro:#fdf3cf;--ce-texto:#5c4700;--ce-barra:#f6ce46;--fondo:#f4f7f9;--tarjeta:#fff;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--rojo:#c0392b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:9}
+.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;max-width:620px;margin:16px auto 0;padding:0 16px;flex-wrap:wrap}
+.tab{border:1px solid var(--borde);background:var(--tarjeta);border-radius:10px 10px 0 0;padding:9px 14px;font-size:13px;font-weight:700;color:var(--suave);cursor:pointer;font-family:inherit}
+.tab.sel{background:var(--ce-barra);color:#2b2200;border-color:var(--ce-barra)}
+.panel{display:none;max-width:620px;margin:0 auto 40px;padding:0 16px}
+.panel.sel{display:block}
+.etq{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px;color:var(--suave)}
+.card{background:var(--tarjeta);border:1px solid var(--borde);border-radius:14px;padding:18px;box-shadow:0 6px 20px rgba(20,30,40,.06)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.head h2{margin:0;font-size:18px}
+.sub{color:var(--suave);font-size:13px;margin-top:3px}
+.x{width:26px;height:26px;border-radius:999px;border:none;background:var(--fondo);color:var(--suave);font-size:14px;cursor:pointer;flex-shrink:0}
+.editar-top{font-size:12.5px;font-weight:700;color:var(--suave);background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 2px;text-decoration:underline;text-decoration-color:var(--borde)}
+.acc{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn{border-radius:10px;padding:9px 14px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--borde);background:var(--tarjeta);color:var(--texto)}
+.btn-wa{background:#1f8f4e;border-color:#1f8f4e;color:#fff;display:inline-flex;align-items:center;gap:6px}
+.btn-insc-antes{background:#fff;border-color:var(--borde);color:var(--texto)}
+.btn-insc-chevere{background:var(--ce-barra);border-color:var(--ce-barra);color:#2b2200;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(246,206,70,.5)}
+.btn-editar-antes{background:#fff;border-color:var(--borde);color:var(--texto)}
+.flex1{flex:1}
+.sec-t{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--suave);margin:18px 0 8px}
+.hist{border-left:3px solid var(--ce);margin:4px 0 14px 4px;padding-left:12px}
+.hist-i{padding:6px 0}
+.hist-i b{display:block;font-size:14.5px}
+.hist-i span{display:block;font-size:13px;color:var(--suave)}
+.nuevo{background:var(--fondo);border-radius:12px;padding:14px}
+.nuevo .lbl{font-size:12.5px;color:var(--suave);margin-bottom:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:700;color:var(--suave);cursor:pointer;font-family:inherit}
+.chip.sel{background:var(--ce);border-color:var(--ce);color:#fff}
+.txt{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--borde);border-radius:10px;font:inherit;background:#fff}
+.fila-fecha{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.fila-fecha select{border:1px solid var(--borde);border-radius:8px;padding:7px 8px;font:inherit;background:#fff}
+.guardar{background:var(--ce);border-color:var(--ce);color:#fff;margin-top:10px}
+.abrir-nuevo{width:100%;text-align:left;background:#fff;border:1.5px dashed var(--ce);color:var(--ce-texto);border-radius:12px;padding:11px 14px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.borrar-disc{margin-top:16px;text-align:right}
+.borrar-disc a{color:var(--rojo);font-size:12.5px;font-weight:700;cursor:pointer}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-top:14px}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V75</b> · Ficha de un interesado: dos propuestas para que "Seguimiento" se vea menos reguero, el botón de Inscribir con el amarillo del app, y Editar datos más discreto. Toca las pestañas y prueba los botones (es de mentira, nada se guarda). Falta tu aprobación.
+</div>
+<div class="tabs">
+  <button class="tab sel" data-t="antes">Antes</button>
+  <button class="tab" data-t="a">Propuesta A · compacta</button>
+  <button class="tab" data-t="b">Propuesta B · con acordeón</button>
+</div>
+
+<div class="panel sel" id="p-antes">
+  <div class="etq">Cómo se ve ahora</div>
+  <div class="card">
+    <div class="head">
+      <div>
+        <h2>ferwdsvggbdfew</h2>
+        <div class="sub">Open Water Diver · por el link · 8 nov · 326-346-5342</div>
+      </div>
+      <button class="x">✕</button>
+    </div>
+    <div class="acc">
+      <button class="btn btn-wa">WhatsApp</button>
+      <button class="btn btn-insc-antes">Inscribir</button>
+      <button class="btn btn-editar-antes">Editar datos</button>
+    </div>
+    <div class="sec-t">Seguimiento</div>
+    <div class="hist">
+      <div class="hist-i"><b>Se anotó por el link</b><span>7 nov</span></div>
+    </div>
+    <div class="nuevo">
+      <div class="lbl">¿Qué pasó? (el estado se pone solo)</div>
+      <div class="chips">
+        <span class="chip">Le escribí</span><span class="chip">No contesta</span><span class="chip">Va a inscribirse</span><span class="chip">Quiere otra fecha</span><span class="chip">No le interesa</span>
+      </div>
+      <input class="txt" placeholder="Comentario (opcional): qué le dijiste o qué te dijo">
+      <div class="lbl" style="margin-top:10px">Escribirle de nuevo el</div>
+      <div class="fila-fecha">
+        <select><option>Día</option></select><select><option>Mes</option></select><select><option>Año</option></select>
+      </div>
+      <button class="btn guardar">Guardar</button>
+    </div>
+    <div class="borrar-disc"><a>Borrar este interesado…</a></div>
+  </div>
+</div>
+
+<div class="panel" id="p-a">
+  <div class="etq">Propuesta A · misma idea, más compacta</div>
+  <div class="card">
+    <div class="head">
+      <div>
+        <h2>ferwdsvggbdfew</h2>
+        <div class="sub">Open Water Diver · por el link · 8 nov · 326-346-5342</div>
+      </div>
+      <button class="x">✕</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:2px">
+      <button class="editar-top">✎ Editar datos</button>
+    </div>
+    <div class="acc">
+      <button class="btn btn-wa flex1">WhatsApp</button>
+      <button class="btn btn-insc-chevere flex1">Inscribir</button>
+    </div>
+    <div class="sec-t">Seguimiento</div>
+    <div class="hist">
+      <div class="hist-i"><b>Se anotó por el link</b><span>7 nov</span></div>
+    </div>
+    <div class="nuevo">
+      <div class="lbl">¿Qué pasó? (el estado se pone solo)</div>
+      <div class="chips">
+        <span class="chip">Le escribí</span><span class="chip">No contesta</span><span class="chip">Va a inscribirse</span><span class="chip">Quiere otra fecha</span><span class="chip">No le interesa</span>
+      </div>
+      <input class="txt" placeholder="Comentario (opcional): qué le dijiste o qué te dijo">
+      <div class="fila-fecha">
+        <span class="lbl" style="margin:0">Para cuándo:</span>
+        <select><option>Día</option></select><select><option>Mes</option></select><select><option>Año</option></select>
+        <button class="btn guardar" style="margin-top:0;margin-left:auto">Guardar</button>
+      </div>
+    </div>
+    <div class="borrar-disc"><a>Borrar este interesado…</a></div>
+  </div>
+  <div class="nota">Qué cambia: "Editar datos" pasa a un link chiquito arriba a la derecha, debajo de la X. WhatsApp e Inscribir quedan como los dos botones principales, del mismo tamaño — Inscribir con el amarillo del app. En "Seguimiento", el comentario y la fecha de "escribirle de nuevo" quedan en la misma fila que el botón Guardar, para que ocupe menos espacio. Todo lo demás se queda visible igual que ahora.</div>
+</div>
+
+<div class="panel" id="p-b">
+  <div class="etq">Propuesta B · el formulario de abajo se abre solo cuando lo necesitas</div>
+  <div class="card">
+    <div class="head">
+      <div>
+        <h2>ferwdsvggbdfew</h2>
+        <div class="sub">Open Water Diver · por el link · 8 nov · 326-346-5342</div>
+      </div>
+      <button class="x">✕</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:2px">
+      <button class="editar-top">✎ Editar datos</button>
+    </div>
+    <div class="acc">
+      <button class="btn btn-wa flex1">WhatsApp</button>
+      <button class="btn btn-insc-chevere flex1">Inscribir</button>
+    </div>
+    <div class="sec-t">Seguimiento</div>
+    <div class="hist">
+      <div class="hist-i"><b>Se anotó por el link</b><span>7 nov</span></div>
+    </div>
+    <button class="abrir-nuevo" id="abrirBtn">+ Anotar qué pasó</button>
+    <div class="nuevo" id="formNuevo" style="display:none;margin-top:10px">
+      <div class="lbl">¿Qué pasó? (el estado se pone solo)</div>
+      <div class="chips">
+        <span class="chip">Le escribí</span><span class="chip">No contesta</span><span class="chip">Va a inscribirse</span><span class="chip">Quiere otra fecha</span><span class="chip">No le interesa</span>
+      </div>
+      <input class="txt" placeholder="Comentario (opcional): qué le dijiste o qué te dijo">
+      <div class="fila-fecha">
+        <span class="lbl" style="margin:0">Para cuándo:</span>
+        <select><option>Día</option></select><select><option>Mes</option></select><select><option>Año</option></select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn guardar" style="margin-top:0">Guardar</button>
+        <button class="btn" style="margin-top:0;background:#fff" id="cancelarBtn">Cancelar</button>
+      </div>
+    </div>
+    <div class="borrar-disc"><a>Borrar este interesado…</a></div>
+  </div>
+  <div class="nota">Qué cambia (además de lo de arriba): la parte de "¿Qué pasó?" no se queda siempre abierta — aparece un botón "+ Anotar qué pasó", y el formulario (chips, comentario, fecha, Guardar) solo sale cuando lo tocas. Así la ficha se ve limpia de entrada y solo se "abre" cuando de verdad vas a anotar algo.</div>
+</div>
+
+<script>
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("sel"));
+  document.querySelectorAll(".panel").forEach(x => x.classList.remove("sel"));
+  t.classList.add("sel");
+  document.getElementById("p-" + t.dataset.t).classList.add("sel");
+});
+document.querySelectorAll(".chip").forEach(c => c.onclick = () => c.classList.toggle("sel"));
+const abrirBtn = document.getElementById("abrirBtn"), formNuevo = document.getElementById("formNuevo"), cancelarBtn = document.getElementById("cancelarBtn");
+if (abrirBtn) abrirBtn.onclick = () => { formNuevo.style.display = "block"; abrirBtn.style.display = "none"; };
+if (cancelarBtn) cancelarBtn.onclick = () => { formNuevo.style.display = "none"; abrirBtn.style.display = "block"; };
+</script>
+</body></html>

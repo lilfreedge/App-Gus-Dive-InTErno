@@ -1,0 +1,61 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V78 · El link de cursos reconoce al interesado</title>
+<style>
+:root{--ce:#8a6a00;--ce-claro:#fdf3cf;--ce-texto:#5c4700;--fondo:#f4f7f9;--tarjeta:#fff;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--verde:#1f8f4e}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:9}
+.maq b{color:#ffd166}
+.wrap{max-width:420px;margin:0 auto;padding:18px}
+.card{background:var(--tarjeta);border:1px solid var(--borde);border-radius:14px;padding:18px}
+.t{font-size:18px;font-weight:800;margin-bottom:4px}
+.h{color:var(--suave);font-size:13.5px;margin-bottom:12px}
+.l{display:block;font-size:12.5px;font-weight:700;color:var(--suave);margin:10px 0 4px}
+.input{width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--borde);border-radius:10px;font:inherit;background:#fff}
+.input.auto{border-color:var(--ce);background:var(--ce-claro)}
+.aviso{display:none;background:var(--ce-claro);border:1px solid #f1dd9a;border-radius:10px;padding:10px 12px;margin-top:8px;font-size:13px;color:var(--ce-texto)}
+.aviso.ver{display:block}
+.btn{width:100%;margin-top:14px;background:var(--ce);border:none;color:#fff;border-radius:10px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.prueba{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-bottom:14px}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-top:14px}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V78</b> · El link de cursos (/estudiante): cuando alguien ya estaba anotado como interesado, se le reconoce al escribir su celular y no se le pide el nombre de nuevo. Nada programado todavía.
+</div>
+<div class="wrap">
+  <div class="prueba">Para probar: escribe un celular que empiece en <b>809-555</b> (ej. 809-555-1234) y mira qué pasa. Cualquier otro número se ve como alguien nuevo de verdad.</div>
+  <div class="card">
+    <div class="t">Tus datos</div>
+    <div class="h" id="sub">Nombre completo y celular.</div>
+
+    <label class="l">Celular (WhatsApp)</label>
+    <input class="input" id="cel" placeholder="809-000-0000">
+
+    <div class="aviso" id="aviso">Ya te teníamos anotado como interesado en <b>Open Water Diver</b> (8 nov). Si ese curso no es el que quieres ahora, lo cambias más abajo.</div>
+
+    <label class="l">Nombre completo</label>
+    <input class="input" id="nombre" placeholder="Nombre y apellido">
+
+    <label class="l">Fecha de nacimiento</label>
+    <input class="input" placeholder="dd / mes / aaaa">
+    <label class="l">Correo</label>
+    <input class="input" placeholder="tucorreo@ejemplo.com">
+
+    <button class="btn">Seguir</button>
+  </div>
+  <div class="nota">
+    Qué pasa por dentro: en vez de buscar solo por cédula (que un interesado todavía no nos ha dado), al escribir el celular se busca también en Interesados. Si hay uno abierto con ese número, se rellena el nombre solo (se puede corregir si hace falta) y ese interesado queda marcado como resuelto cuando termine de registrarse -- no se queda una copia vieja dando vueltas en Interesados.
+  </div>
+</div>
+<script>
+document.getElementById("cel").addEventListener("input", (e) => {
+  const match = e.target.value.replace(/\D/g, "").startsWith("809555");
+  document.getElementById("aviso").classList.toggle("ver", match);
+  const nombre = document.getElementById("nombre");
+  if (match) {
+    nombre.value = "Felipe Torreira";
+    nombre.classList.add("auto");
+  } else {
+    if (nombre.classList.contains("auto")) { nombre.value = ""; nombre.classList.remove("auto"); }
+  }
+});
+</script>
+</body></html>

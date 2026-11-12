@@ -3597,8 +3597,9 @@ html[data-theme="dark"] .vj-cal-curso.empieza { background: #8a6a00; color: #fff
 
 /* V62 ("245"): Interesados con seguimiento. */
 .ce-int-ult { color: var(--texto); }
-.ce-int-acc { display: flex; gap: 6px; flex-wrap: wrap; }
-.ce-int-acc a.btn { text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.ce-int-acc { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.ce-int-acc .btn { flex: 1 1 140px; }
+.ce-int-acc a.btn { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .ce-int-hist { border-left: 3px solid var(--ce, #8a6a00); margin: 4px 0 12px 4px; padding-left: 12px; }
 .ce-int-h { padding: 6px 0; }
 .ce-int-h b { display: block; font-size: 14.5px; }
@@ -3606,6 +3607,37 @@ html[data-theme="dark"] .vj-cal-curso.empieza { background: #8a6a00; color: #fff
 .ce-int-h.fija b { color: var(--texto-suave); font-weight: 600; }
 .ce-int-nuevo { background: var(--superficie-suave); border-radius: 12px; padding: 12px; }
 .ce-int-txt { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--borde); border-radius: 10px; font: inherit; background: var(--tarjeta); color: var(--texto); }
+/* V75 (pedido explícito: "el boton de whatsapp e inscribir no parecen
+   botones. arregla") -- antes "Inscribir" era un .btn.secondary con
+   borde gris casi invisible, se perdía al lado de los chips. Ahora
+   lleva el amarillo del app (relleno claro, borde y letra más
+   fuertes), sin tocar el .btn.secondary que se usa en el resto del
+   app. */
+.ce-int-insc { background: var(--ce-claro) !important; border: 1.5px solid var(--ce) !important; color: var(--ce-texto) !important; font-weight: 700 !important; }
+/* V76 (pedido explícito: "Boton de editar datos ponlo... mas discreto"
+   -- link chiquito arriba a la derecha de la ficha, en vez de un botón
+   más en la fila de acciones. */
+.ce-int-editar-top { background: none; border: none; cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--texto-suave); display: inline-flex; align-items: center; gap: 4px; padding: 4px 2px; }
+.ce-int-editar-top:hover { color: var(--ce-texto); }
+/* V76 (propuesta D, aprobada: "Sobre maqueta 76, propuesta D") -- el
+   selector de "¿qué pasó?", el comentario y Guardar en una sola fila. */
+.ce-int-fila-rapida { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ce-int-fila-rapida .ce-int-txt { flex: 2 1 160px; width: auto; }
+.ce-int-sel { border: 1px solid var(--borde); border-radius: 10px; padding: 9px 10px; font: inherit; font-weight: 700; background: var(--tarjeta); color: var(--texto); flex: 1 1 140px; }
+.ce-int-guardar { margin-top: 0 !important; flex: 0 0 auto; }
+.ce-int-link-recordar { display: inline-block; margin-top: 8px; font-size: 12.5px; }
+
+/* V76 (maqueta V77, aprobada: "4. ok si") -- confirmar los datos de la
+   persona antes de inscribirla, con un botón para pedirle que los
+   confirme por WhatsApp. */
+.ce-confirma { border: 1.5px solid var(--ce); background: var(--ce-claro); border-radius: 12px; padding: 14px; margin-top: 10px; }
+.ce-confirma-t { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ce-texto); margin-bottom: 8px; }
+.ce-confirma-fila { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid #f1dd9a; font-size: 13.5px; }
+.ce-confirma-fila:last-of-type { border-bottom: none; }
+.ce-confirma-fila span:first-child { color: var(--ce-texto); font-weight: 600; }
+.ce-confirma-fila span:last-child { font-weight: 700; text-align: right; }
+.ce-confirma-falta { color: #b5451f !important; }
+.ce-confirma-wa { width: 100%; justify-content: center; margin-top: 10px; }
 
 /* V62 ("229"): registrar a un menor de edad en el link del estudiante. */
 .ce-pub-menor { margin-top: 16px; padding: 12px 14px; border: 1px dashed var(--borde); border-radius: 12px; background: var(--superficie-suave); }

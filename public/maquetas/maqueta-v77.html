@@ -1,0 +1,75 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V77 · Confirmar datos antes de inscribir</title>
+<style>
+:root{--ce:#8a6a00;--ce-claro:#fdf3cf;--ce-texto:#5c4700;--ce-barra:#f6ce46;--fondo:#f4f7f9;--tarjeta:#fff;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--verde:#1f8f4e}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:9}
+.maq b{color:#ffd166}
+.wrap{max-width:480px;margin:0 auto;padding:18px}
+.back{color:var(--suave);font-size:13px;font-weight:600;margin-bottom:10px;display:block}
+h1{font-size:19px;font-weight:800;margin:0 0 14px}
+.etapa{background:var(--tarjeta);border:1px solid var(--borde);border-radius:14px;padding:16px;margin-bottom:14px}
+h4{margin:0 0 10px;font-size:14.5px}
+.ck{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--fondo);border-radius:10px;padding:10px 12px}
+.ck b{display:block;font-size:14.5px}
+.ck span{display:block;font-size:12.5px;color:var(--suave);margin-top:1px}
+.btn-cambiar{border:1px solid var(--borde);background:#fff;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:700;color:var(--texto);cursor:pointer;font-family:inherit}
+
+.confirma{border:1.5px solid var(--ce);background:var(--ce-claro);border-radius:12px;padding:14px;margin-top:12px}
+.confirma-t{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--ce-texto);margin-bottom:8px}
+.confirma-fila{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #f1dd9a;font-size:13.5px}
+.confirma-fila:last-of-type{border-bottom:none}
+.confirma-fila span:first-child{color:var(--ce-texto);font-weight:600}
+.confirma-fila span:last-child{font-weight:700;text-align:right}
+.confirma-fila .falta{color:#b5451f}
+.btn-wa-confirmar{width:100%;margin-top:12px;background:var(--verde);border:none;color:#fff;border-radius:10px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
+.wa-preview{background:#fff;border:1px solid var(--borde);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:12.5px;color:var(--suave);display:none}
+.wa-preview.ver{display:block}
+.wa-preview b{color:var(--texto)}
+
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-top:14px}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V77</b> · Al tocar "Inscribir", después de identificar a la persona: un recuadro para confirmar sus datos y un botón para pedirle la confirmación por WhatsApp. Toca el botón verde para ver el mensaje que se manda. Nada programado todavía.
+</div>
+<div class="wrap">
+  <span class="back">← Interesados</span>
+  <h1>Nuevo estudiante</h1>
+
+  <div class="etapa">
+    <h4>1. La persona</h4>
+    <div class="ck">
+      <span>
+        <b>Felipe Torreira</b>
+        <span>001-1234567-8 · 809-555-1234</span>
+      </span>
+      <button class="btn-cambiar">Cambiar</button>
+    </div>
+
+    <div class="confirma">
+      <div class="confirma-t">Confirma antes de inscribir</div>
+      <div class="confirma-fila"><span>Nombre</span><span>Felipe Torreira</span></div>
+      <div class="confirma-fila"><span>Cédula</span><span>001-1234567-8</span></div>
+      <div class="confirma-fila"><span>Celular</span><span>809-555-1234</span></div>
+      <div class="confirma-fila"><span>Correo</span><span class="falta">Falta</span></div>
+      <div class="confirma-fila"><span>Curso</span><span>Open Water Diver</span></div>
+      <button class="btn-wa-confirmar" id="btnWa">Pedirle que confirme por WhatsApp</button>
+      <div class="wa-preview" id="preview">
+        Se abre WhatsApp con este mensaje ya escrito (lo puedes cambiar antes de mandarlo):<br><br>
+        <b>"Hola Felipe, para inscribirte en Open Water Diver te pido que me confirmes: tu nombre completo, tu cédula (o pasaporte) y tu correo. ¡Gracias!"</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="etapa">
+    <h4>2. El curso</h4>
+    <div class="hint" style="color:var(--suave);font-size:13px">(sigue igual que ahora: curso, fecha, instructor, precio)</div>
+  </div>
+
+  <div class="nota">
+    Cuando falta un dato (en este ejemplo, el correo), se marca en rojo para que lo notes antes de seguir. El botón de WhatsApp manda siempre el mismo tipo de mensaje (nombre, cédula/pasaporte y correo), ajustado con el nombre y curso de cada quien. Dime si el mensaje debe pedir algo más o menos.
+  </div>
+</div>
+<script>
+document.getElementById("btnWa").onclick = () => document.getElementById("preview").classList.toggle("ver");
+</script>
+</body></html>

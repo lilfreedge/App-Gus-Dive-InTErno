@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Buscar, CampoCel, IconoWA, Modal } from "@/components/viajes/Piezas";
-import { IconPlus } from "@/components/icons";
+import { IconPlus, IconEdit } from "@/components/icons";
 import { ESTADOS_INTERESADO, FUENTES, linkWhatsApp, hoyISO, fechaCorta, fechaDeIso, soloDigitos, fechaCursoCorta } from "@/lib/estudiantes/modelo";
 import FechaNacimiento from "@/components/FechaNacimiento";
 import { formatoCel } from "@/lib/viajes/modelo";
@@ -70,15 +70,22 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
 
   return (
     <>
-      <h1 className="page-title" style={{ marginBottom: 4 }}>
-        Interesados
-      </h1>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0" }}>
-        <button className="btn btn-primary vj-btn" onClick={() => setNuevo({ ...VACIO, curso: cursos[0] || "" })}>
-          <IconPlus size={16} /> Agregar interesado
-        </button>
-        {/* V62 ("249"): "Lo mismo para Me interesa". */}
-        <CompartirLink ruta="/me-interesa" etiqueta='Compartir link "Me interesa"' mensaje="Hola, aquí te dejo el link para que nos dejes tus datos y te mandemos la información de los cursos:" tituloQr="Información de cursos" avisar={avisar} />
+      {/* V76 (pedido explícito, con foto: "pon los botones en interesados
+          asi como estan en cursos") -- título y botones en la misma fila,
+          como en "Cursos abiertos". */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <h1 className="page-title" style={{ margin: 0 }}>
+          Interesados
+        </h1>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn btn-primary vj-btn" onClick={() => setNuevo({ ...VACIO, curso: cursos[0] || "" })}>
+            <IconPlus size={16} /> Agregar interesado
+          </button>
+          {/* V62 ("249"): "Lo mismo para Me interesa". V74 (pedido
+              explícito, con foto: cambiar el nombre del botón y el mensaje
+              de WhatsApp). */}
+          <CompartirLink ruta="/me-interesa" etiqueta="Compartir link de interesados" mensaje="Hola, aquí te dejo el link para que te anotes como interesado en nuestros cursos:" tituloQr="Registro de interesado" avisar={avisar} />
+        </div>
       </div>
       {nuevo && (
         <div className="ce-etapa">
@@ -112,22 +119,34 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
               {/* V60 ("164"): si ya es buzo o estudiante de Gus. */}
               {x.buzoId && <span className="ce-chip">Ya es buzo de Gus</span>}
             </div>
-            {/* V62 ("245"): en la lista se ve lo último que pasó. */}
-            <div className="ce-est-m ce-int-ult">
-              {u
-                ? [`Último: "${tipoSeg(u.tipo).t}"`, u.quien, cuandoFue(u.en)].filter(Boolean).join(" · ") + (u.texto ? ` · ${u.texto}` : "")
-                : x.estado === "nuevo"
-                  ? `Nuevo, nadie le ha escrito · ${x.via === "link" ? "por el link" : x.fuente || "a mano"} · ${fechaDeIso(x.creadoEn)}`
-                  : [x.fuente, x.via === "link" ? "por el link" : "", fechaDeIso(x.creadoEn)].filter(Boolean).join(" · ")}
-            </div>
+            {/* V62 ("245"): en la lista se ve lo último que pasó. V74
+                (pedido explícito, con foto: "Esto es un interesado, Quita
+                esto: Nuevo, nadie le ha escrito · por el link · 12 nov") --
+                para un interesado nuevo (sin seguimiento todavía) ya no se
+                muestra esta línea. Si ya tiene seguimiento, se sigue viendo
+                lo último que pasó, igual que antes. */}
+            {u && (
+              <div className="ce-est-m ce-int-ult">
+                {[`Último: "${tipoSeg(u.tipo).t}"`, u.quien, cuandoFue(u.en)].filter(Boolean).join(" · ") + (u.texto ? ` · ${u.texto}` : "")}
+              </div>
+            )}
             {x.recordar && !["inscrito", "no"].includes(x.estado) && (
               <div className={`ce-est-m${x.recordar <= hoy ? " ce-recordar" : ""}`}>{x.recordar <= hoy ? "Escribirle de nuevo hoy" : `Escribirle de nuevo el ${fechaCursoCorta(x.recordar)}`}</div>
             )}
+            {/* V75 (pedido explícito: "el boton de whatsapp e inscribir no
+                parecen botones. arregla, e intercambialos de lugar") --
+                Inscribir va primero ahora; los dos se ven más como botones
+                de verdad (más grandes, con relleno) en vez de chips. */}
             {!["inscrito", "no"].includes(x.estado) && (
               <div style={{ display: "flex", gap: 6, marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
+                {p.estudiantes && (
+                  <button className="btn vj-btn ce-int-insc" onClick={() => ir(`nuevo:${x.id}`)}>
+                    Inscribir
+                  </button>
+                )}
                 {x.cel && (
                   <button
-                    className="btn vj-mini ce-wa"
+                    className="btn vj-btn ce-wa"
                     onClick={() => {
                       window.open(linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, te escribimos de Gus Dive Center por el curso${x.curso ? ` de ${x.curso}` : ""}.`), "_blank", "noopener");
                       if (x.estado === "nuevo")
@@ -139,11 +158,6 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
                     }}
                   >
                     <IconoWA on /> WhatsApp
-                  </button>
-                )}
-                {p.estudiantes && (
-                  <button className="btn secondary vj-mini" onClick={() => ir(`nuevo:${x.id}`)}>
-                    Inscribir
                   </button>
                 )}
               </div>
@@ -190,18 +204,15 @@ function FormInteresado({ f, setF, cursos, sinRecordar }) {
           </select>
         </label>
       </div>
-      <div className="ce-form-fila">
+      {/* V74 (pedido explícito, con foto: "borrar seccion de 'cuando
+          quieres empezar'") -- se quita el campo; "Escribirle de nuevo el"
+          se queda, ahora solo. */}
+      {!sinRecordar && (
         <label>
-          ¿Cuándo quiere empezar?
-          <input value={f.cuando} onChange={(e) => set("cuando", e.target.value)} placeholder="Ej. en diciembre" />
+          Escribirle de nuevo el
+          <input type="date" value={f.recordar || ""} onChange={(e) => set("recordar", e.target.value)} />
         </label>
-        {!sinRecordar && (
-          <label>
-            Escribirle de nuevo el
-            <input type="date" value={f.recordar || ""} onChange={(e) => set("recordar", e.target.value)} />
-          </label>
-        )}
-      </div>
+      )}
       <label>
         Nota
         <input value={f.nota} onChange={(e) => set("nota", e.target.value)} />
@@ -217,8 +228,6 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
   const [f, setF] = useState(x);
   const [tipo, setTipo] = useState("");
   const [texto, setTexto] = useState("");
-  const [recordar, setRecordar] = useState(x.recordar || "");
-  const [llaveFecha, setLlaveFecha] = useState(0);
   // V57 -- "dame ese poder absoluto": el Titular puede borrar un interesado.
   const [borrando, setBorrando] = useState(false);
   const est = x.estudianteId ? db.estudiantes.find((e) => e.id === x.estudianteId) : null;
@@ -226,32 +235,45 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
   const cerradoYa = x.estado === "inscrito";
 
   function anotar() {
-    if (!tipo && !texto.trim() && recordar === (x.recordar || "")) return avisar("Escoge qué pasó o escribe algo.");
-    const entrada = tipo || texto.trim() ? { id: nuevoId(), tipo: tipo || "nota", texto: texto.trim(), quien: yo?.corto || "", en: new Date().toISOString() } : null;
-    const nuevoEstado = tipo ? tipoSeg(tipo).estado : x.estado === "nuevo" && entrada ? "escribimos" : x.estado;
-    const y = { ...x, seguimiento: entrada ? [...(x.seguimiento || []), entrada] : x.seguimiento || [], estado: cerradoYa ? x.estado : nuevoEstado, recordar: tipo === "no" ? "" : recordar };
-    ops.guardarInteresado(y, false, entrada ? `Seguimiento de un interesado: ${x.nombre} (${tipoSeg(entrada.tipo).t}${entrada.texto ? `: ${entrada.texto}` : ""})` : `Cambió cuándo escribirle a un interesado: ${x.nombre}`);
+    // V76 (pedido explícito, con foto: "quita la fecha") -- ya no se pone
+    // la fecha para recordar desde aquí (eso se quitó); si quiere
+    // recordatorio lo pone en "Editar datos". Si marca "No le interesa"
+    // se sigue quitando el recordatorio que tuviera puesto.
+    if (!tipo && !texto.trim()) return avisar("Escoge qué pasó o escribe algo.");
+    const entrada = { id: nuevoId(), tipo: tipo || "nota", texto: texto.trim(), quien: yo?.corto || "", en: new Date().toISOString() };
+    const nuevoEstado = tipo ? tipoSeg(tipo).estado : x.estado === "nuevo" ? "escribimos" : x.estado;
+    const y = { ...x, seguimiento: [...(x.seguimiento || []), entrada], estado: cerradoYa ? x.estado : nuevoEstado, recordar: tipo === "no" ? "" : x.recordar };
+    ops.guardarInteresado(y, false, `Seguimiento de un interesado: ${x.nombre} (${tipoSeg(entrada.tipo).t}${entrada.texto ? `: ${entrada.texto}` : ""})`);
     setTipo("");
     setTexto("");
   }
 
   return (
     <Modal titulo={x.nombre} sub={[x.curso || "Sin curso todavía", x.via === "link" ? "por el link" : "a mano", fechaDeIso(x.creadoEn), x.cel ? formatoCel(x.cel) : ""].filter(Boolean).join(" · ")} cerrar={cerrar}>
+      {/* V76 (pedido explícito: "Boton de editar datos ponlo abajo a la
+          derecha o arriba a la derecha y que sea mas discreto", "poner
+          boton de inscribir mas chevere, puede tener el amarillo del
+          app") -- Editar datos pasa a un link chiquito arriba a la
+          derecha; Inscribir y WhatsApp quedan como los dos botones
+          principales, del mismo tamaño, Inscribir con el amarillo del
+          app. */}
+      {p.interesados && (
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button className="ce-int-editar-top" onClick={() => (setF(x), setEditando((e) => !e))}>
+            <IconEdit size={13} /> {editando ? "Cerrar datos" : "Editar datos"}
+          </button>
+        </div>
+      )}
       <div className="ce-int-acc">
-        {x.cel && (
-          <a className="btn vj-mini ce-wa" href={linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, te escribimos de Gus Dive Center por el curso${x.curso ? ` de ${x.curso}` : ""}.`)} target="_blank" rel="noopener noreferrer">
-            <IconoWA on /> WhatsApp
-          </a>
-        )}
         {p.estudiantes && !cerradoYa && (
-          <button className="btn secondary vj-mini" onClick={() => (cerrar(), ir(`nuevo:${x.id}`))}>
+          <button className="btn vj-btn ce-int-insc" onClick={() => (cerrar(), ir(`nuevo:${x.id}`))}>
             Inscribir
           </button>
         )}
-        {p.interesados && (
-          <button className="btn secondary vj-mini" onClick={() => (setF(x), setEditando((e) => !e))}>
-            {editando ? "Cerrar datos" : "Editar datos"}
-          </button>
+        {x.cel && (
+          <a className="btn vj-btn ce-wa" href={linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, te escribimos de Gus Dive Center por el curso${x.curso ? ` de ${x.curso}` : ""}.`)} target="_blank" rel="noopener noreferrer">
+            <IconoWA on /> WhatsApp
+          </a>
         )}
       </div>
       {x.buzoId && <div className="hint-text" style={{ marginTop: 6 }}>Ya es buzo de Gus.</div>}
@@ -297,37 +319,28 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
         ))}
       </div>
 
+      {/* V76 (pedido explícito: "vamos a restructurar la forma de
+          seguimiento... se ve muy reguero", luego "Sobre maqueta 76,
+          propuesta D", y luego, con foto, "quita la fecha") -- "¿qué
+          pasó?" es un solo selector, el comentario y Guardar quedan en
+          la misma fila. La fecha para recordar se quitó de aquí (se
+          sigue pudiendo poner desde "Editar datos"). */}
       {p.interesados && !cerradoYa && (
         <div className="ce-int-nuevo">
-          <div className="hint-text" style={{ marginBottom: 6 }}>
-            ¿Qué pasó? (el estado se pone solo)
+          <div className="ce-int-fila-rapida">
+            <select className="ce-int-sel" value={tipo} onChange={(e) => setTipo(e.target.value)}>
+              <option value="">¿Qué pasó?…</option>
+              {TIPOS_SEG_INT.map((tp) => (
+                <option key={tp.k} value={tp.k}>
+                  {tp.t}
+                </option>
+              ))}
+            </select>
+            <input className="ce-int-txt" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Comentario (opcional)" />
+            <button className="btn btn-primary vj-btn ce-int-guardar" onClick={anotar}>
+              Guardar
+            </button>
           </div>
-          <div className="vj-filtros" style={{ marginBottom: 6 }}>
-            {TIPOS_SEG_INT.map((tp) => (
-              <button key={tp.k} className={`vj-filtro ce-filtro${tipo === tp.k ? " sel" : ""}`} onClick={() => setTipo(tipo === tp.k ? "" : tp.k)}>
-                {tp.t}
-              </button>
-            ))}
-          </div>
-          <input className="ce-int-txt" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Comentario (opcional): qué le dijiste o qué te dijo" />
-          {tipo !== "no" && (
-            <>
-              <label className="hint-text" style={{ display: "block", margin: "10px 0 4px" }}>
-                Escribirle de nuevo el
-              </label>
-              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <FechaNacimiento key={llaveFecha} value={recordar} onChange={setRecordar} futuro className="ce-int-fecha" />
-                {recordar && (
-                  <a className="vj-link" style={{ fontSize: 13 }} onClick={() => (setRecordar(""), setLlaveFecha((k) => k + 1))}>
-                    Quitar fecha
-                  </a>
-                )}
-              </div>
-            </>
-          )}
-          <button className="btn btn-primary vj-btn" style={{ marginTop: 12 }} onClick={anotar}>
-            Guardar
-          </button>
         </div>
       )}
 

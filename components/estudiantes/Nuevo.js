@@ -3,8 +3,8 @@
 import { useState } from "react";
 import FechaNacimiento from "@/components/FechaNacimiento";
 import { Atras, Buscar, CampoCel } from "@/components/viajes/Piezas";
-import { ESCUELAS, pasosIniciales, soloDigitos, hoyISO, fechasDe, textoCupo, fechaCursoCorta, quedan } from "@/lib/estudiantes/modelo";
-import { formatoCel, formatoCedula, celValido } from "@/lib/viajes/modelo";
+import { ESCUELAS, pasosIniciales, soloDigitos, hoyISO, fechasDe, textoCupo, fechaCursoCorta, quedan, linkWhatsApp } from "@/lib/estudiantes/modelo";
+import { formatoCel, formatoCedula, celValido, primerNombre } from "@/lib/viajes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
 
 // Registrar un estudiante a mano. La persona se busca en Buzos (los de
@@ -14,9 +14,18 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
   const interesado = interesadoId ? db.interesados.find((x) => x.id === interesadoId) : null;
   const cursos = db.cursos.filter((c) => c.activo);
   const cursoInt = interesado ? cursos.find((c) => c.nombre.toLowerCase() === String(interesado.curso || "").toLowerCase()) : null;
+  // V76 (pedido explícito: "tiene que halar su cedula cuando sea
+  // inscrito como estudiante", y "tienen que estar conectadas estas
+  // listas... las de interesados y estudiantes ya en cursos y demas") --
+  // antes, al inscribir desde Interesados, siempre arrancaba como
+  // "persona nueva" con la cédula en blanco, aunque esa persona ya
+  // estuviera en Buzos (porque ya es buzo, o porque ya hizo otro curso
+  // antes). Ahora, si su celular ya está en Buzos, se usa ese registro
+  // (con su cédula, correo, etc.) en vez de pedirla de nuevo.
+  const buzoDeInteresado = interesado?.cel ? db.buzos.find((b) => soloDigitos(b.cel) === soloDigitos(interesado.cel)) : null;
   const [q, setQ] = useState(interesado?.nombre || "");
-  const [buzo, setBuzo] = useState(null);
-  const [nueva, setNueva] = useState(interesado ? { nombre: interesado.nombre, doc: "", pasaporte: "", cel: interesado.cel ? formatoCel(interesado.cel) : "", correo: "", nac: "", direccion: "", emergencia: "" } : null);
+  const [buzo, setBuzo] = useState(buzoDeInteresado || null);
+  const [nueva, setNueva] = useState(!buzoDeInteresado && interesado ? { nombre: interesado.nombre, doc: "", pasaporte: "", cel: interesado.cel ? formatoCel(interesado.cel) : "", correo: "", nac: "", direccion: "", emergencia: "" } : null);
   const primero = cursoInt || cursos[0];
   const [f, setF] = useState({
     cursoId: primero?.id || "",
@@ -112,17 +121,55 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
       <div className="ce-etapa">
         <h4>1. La persona</h4>
         {buzo ? (
-          <div className="ce-ck">
-            <span>
-              <b>{buzo.nombre}</b>
-              <div className="hint-text" style={{ margin: 0 }}>
-                {[buzo.doc || buzo.pasaporte, buzo.cel ? formatoCel(buzo.cel) : ""].filter(Boolean).join(" · ")}
+          <>
+            <div className="ce-ck">
+              <span>
+                <b>{buzo.nombre}</b>
+                <div className="hint-text" style={{ margin: 0 }}>
+                  {[buzo.doc || buzo.pasaporte, buzo.cel ? formatoCel(buzo.cel) : ""].filter(Boolean).join(" · ")}
+                </div>
+              </span>
+              <button className="btn secondary vj-mini" onClick={() => setBuzo(null)}>
+                Cambiar
+              </button>
+            </div>
+            {/* V76 (pedido explícito: "Antes me confirme los datos del
+                cliente y que haya un boton con un mensaje predeterminado
+                para whatsapp" -- maqueta V77, "4. ok si"). */}
+            <div className="ce-confirma">
+              <div className="ce-confirma-t">Confirma antes de inscribir</div>
+              <div className="ce-confirma-fila">
+                <span>Nombre</span>
+                <span>{buzo.nombre}</span>
               </div>
-            </span>
-            <button className="btn secondary vj-mini" onClick={() => setBuzo(null)}>
-              Cambiar
-            </button>
-          </div>
+              <div className="ce-confirma-fila">
+                <span>{buzo.doc ? "Cédula" : "Documento"}</span>
+                <span className={buzo.doc || buzo.pasaporte ? "" : "ce-confirma-falta"}>{buzo.doc || buzo.pasaporte || "Falta"}</span>
+              </div>
+              <div className="ce-confirma-fila">
+                <span>Celular</span>
+                <span className={buzo.cel ? "" : "ce-confirma-falta"}>{buzo.cel ? formatoCel(buzo.cel) : "Falta"}</span>
+              </div>
+              <div className="ce-confirma-fila">
+                <span>Correo</span>
+                <span className={buzo.correo ? "" : "ce-confirma-falta"}>{buzo.correo || "Falta"}</span>
+              </div>
+              <div className="ce-confirma-fila">
+                <span>Curso</span>
+                <span>{curso?.nombre || ""}</span>
+              </div>
+              {celValido(buzo.cel) && (
+                <a
+                  className="btn vj-btn ce-wa ce-confirma-wa"
+                  href={linkWhatsApp(buzo.cel, `Hola ${primerNombre(buzo.nombre)}, para inscribirte en ${curso?.nombre || "el curso"} te pido que me confirmes: tu nombre completo, tu cédula (o pasaporte) y tu correo. ¡Gracias!`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Pedirle que confirme por WhatsApp
+                </a>
+              )}
+            </div>
+          </>
         ) : nueva ? (
           <div className="ce-form">
             <label>

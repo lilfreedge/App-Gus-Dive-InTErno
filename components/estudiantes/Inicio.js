@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Buscar } from "@/components/viajes/Piezas";
-import { IconHistory, IconUsers, IconPlus, IconCatalog, IconEdit, IconChart } from "@/components/icons";
+import { IconHistory, IconPlus, IconCatalog, IconEdit, IconChart } from "@/components/icons";
 import { listoParaAlmacen, pagoInstructorPendiente, debe, pagoListo, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, lunesProximos, ocupados, quedan } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
 import CompartirLink from "@/components/CompartirLink";
@@ -766,7 +766,10 @@ export function Mas({ yo, p, ir }) {
     // V67 ("4"): Estadísticas; y la Bitácora con su permiso ("3").
     ...(p.estadisticas ? [{ r: "estadisticas", t: "Estadísticas", sub: "Estudiantes, cursos, cobros, interesados y certificaciones.", I: IconChart }] : []),
     ...(p.bitacora ? [{ r: "bitacora", t: "Bitácora", sub: "Todo lo que se ha hecho, con quién y cuándo.", I: IconHistory }] : []),
-    ...(yo.esTitular ? [{ r: "administracion", t: "Administración", sub: "Qué puede hacer cada persona en Control Estudiantes.", I: IconUsers }] : []),
+    // V76 (pedido explícito, con foto: "Quitame administracion de mas y
+    // ponmelo en settings asi como lo tenemos en los otros apps") -- ya
+    // estaba en Settings (el engranaje); aquí era un duplicado. Como en
+    // App Interno y App Equipos de clientes, Administración vive solo ahí.
   ];
   return (
     <>

@@ -1,0 +1,182 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V76 · Seguimiento, otras dos ideas</title>
+<style>
+:root{--ce:#8a6a00;--ce-claro:#fdf3cf;--ce-texto:#5c4700;--ce-barra:#f6ce46;--fondo:#f4f7f9;--tarjeta:#fff;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--rojo:#c0392b;--verde:#1f8f4e}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:9}
+.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;max-width:620px;margin:16px auto 0;padding:0 16px;flex-wrap:wrap}
+.tab{border:1px solid var(--borde);background:var(--tarjeta);border-radius:10px 10px 0 0;padding:9px 14px;font-size:13px;font-weight:700;color:var(--suave);cursor:pointer;font-family:inherit}
+.tab.sel{background:var(--ce-barra);color:#2b2200;border-color:var(--ce-barra)}
+.panel{display:none;max-width:620px;margin:0 auto 40px;padding:0 16px}
+.panel.sel{display:block}
+.etq{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px;color:var(--suave)}
+.card{background:var(--tarjeta);border:1px solid var(--borde);border-radius:14px;padding:18px;box-shadow:0 6px 20px rgba(20,30,40,.06)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.head h2{margin:0;font-size:18px}
+.sub{color:var(--suave);font-size:13px;margin-top:3px}
+.x{width:26px;height:26px;border-radius:999px;border:none;background:var(--fondo);color:var(--suave);font-size:14px;cursor:pointer;flex-shrink:0}
+.editar-top{font-size:12.5px;font-weight:700;color:var(--suave);background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 2px;text-decoration:underline;text-decoration-color:var(--borde)}
+.acc{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn{border-radius:10px;padding:9px 14px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--borde);background:var(--tarjeta);color:var(--texto)}
+.btn-wa{background:var(--verde);border-color:var(--verde);color:#fff;display:inline-flex;align-items:center;gap:6px}
+.btn-insc{background:var(--ce-barra);border-color:var(--ce-barra);color:#2b2200;display:inline-flex;align-items:center;gap:6px}
+.flex1{flex:1}
+.sec-t{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--suave);margin:18px 0 8px}
+.hist{border-left:3px solid var(--ce);margin:4px 0 10px 4px;padding-left:12px}
+.hist-i{padding:6px 0}
+.hist-i b{display:block;font-size:14.5px}
+.hist-i span{display:block;font-size:13px;color:var(--suave)}
+.vermas{font-size:12.5px;font-weight:700;color:var(--suave);cursor:pointer;text-decoration:underline;text-decoration-color:var(--borde);margin:2px 0 12px 16px;display:inline-block}
+.borrar-disc{margin-top:16px;text-align:right}
+.borrar-disc a{color:var(--rojo);font-size:12.5px;font-weight:700;cursor:pointer}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-top:14px}
+
+/* --- Propuesta C: paso a paso --- */
+.opciones{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.opcion{border:1.5px solid var(--borde);background:#fff;border-radius:12px;padding:12px 10px;text-align:left;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:700;color:var(--texto);display:flex;align-items:center;gap:8px}
+.opcion:hover{border-color:var(--ce)}
+.opcion.sel{background:var(--ce-claro);border-color:var(--ce);color:var(--ce-texto)}
+.opcion i{width:9px;height:9px;border-radius:999px;background:var(--borde);flex-shrink:0}
+.opcion.sel i{background:var(--ce)}
+.paso2{display:none;margin-top:12px;background:var(--fondo);border-radius:12px;padding:12px}
+.paso2.abierto{display:block}
+.txt{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--borde);border-radius:10px;font:inherit;background:#fff}
+.toggle-fecha{font-size:12.5px;font-weight:700;color:var(--ce-texto);background:none;border:none;cursor:pointer;padding:0;margin-top:10px;text-decoration:underline}
+.fila-fecha{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.fila-fecha select{border:1px solid var(--borde);border-radius:8px;padding:7px 8px;font:inherit;background:#fff}
+.guardar{background:var(--ce);border-color:var(--ce);color:#fff;margin-top:12px}
+
+/* --- Propuesta D: todo en una fila --- */
+.fila-rapida{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--fondo);border-radius:12px;padding:10px}
+.fila-rapida select{border:1px solid var(--borde);border-radius:8px;padding:8px 9px;font:inherit;background:#fff;font-weight:700;color:var(--texto);flex-shrink:0}
+.fila-rapida input{flex:1;min-width:140px;box-sizing:border-box;padding:8px 10px;border:1px solid var(--borde);border-radius:8px;font:inherit;background:#fff}
+.fila-rapida .guardar{margin-top:0;padding:8px 14px}
+.link-recordar{font-size:12.5px;font-weight:700;color:var(--suave);text-decoration:underline;text-decoration-color:var(--borde);cursor:pointer;display:inline-block;margin-top:8px}
+.recordar-caja{display:none;margin-top:8px;gap:8px;align-items:center;flex-wrap:wrap}
+.recordar-caja.abierta{display:flex}
+.recordar-caja select{border:1px solid var(--borde);border-radius:8px;padding:7px 8px;font:inherit;background:#fff}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V76</b> · Dos ideas nuevas para "Seguimiento" (distintas a la V75). Toca las pestañas y prueba. Nada programado todavía.
+</div>
+<div class="tabs">
+  <button class="tab sel" data-t="antes">Antes</button>
+  <button class="tab" data-t="c">Propuesta C · paso a paso</button>
+  <button class="tab" data-t="d">Propuesta D · todo en una fila</button>
+</div>
+
+<div class="panel sel" id="p-antes">
+  <div class="etq">Cómo se ve ahora</div>
+  <div class="card">
+    <div class="head">
+      <div><h2>ferwdsvggbdfew</h2><div class="sub">Open Water Diver · por el link · 8 nov · 326-346-5342</div></div>
+      <button class="x">✕</button>
+    </div>
+    <div class="acc"><button class="btn btn-insc">Inscribir</button><button class="btn btn-wa">WhatsApp</button></div>
+    <div class="sec-t">Seguimiento</div>
+    <div class="hist"><div class="hist-i"><b>Se anotó por el link</b><span>7 nov</span></div></div>
+    <div style="background:var(--fondo);border-radius:12px;padding:14px">
+      <div style="font-size:12.5px;color:var(--suave);margin-bottom:6px">¿Qué pasó? (el estado se pone solo)</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <span style="border:1px solid var(--borde);background:#fff;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:700;color:var(--suave)">Le escribí</span>
+        <span style="border:1px solid var(--borde);background:#fff;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:700;color:var(--suave)">No contesta</span>
+        <span style="border:1px solid var(--borde);background:#fff;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:700;color:var(--suave)">Va a inscribirse</span>
+        <span style="border:1px solid var(--borde);background:#fff;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:700;color:var(--suave)">Quiere otra fecha</span>
+        <span style="border:1px solid var(--borde);background:#fff;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:700;color:var(--suave)">No le interesa</span>
+      </div>
+      <input class="txt" placeholder="Comentario (opcional): qué le dijiste o qué te dijo">
+      <div style="font-size:12.5px;color:var(--suave);margin:10px 0 4px">Escribirle de nuevo el</div>
+      <div class="fila-fecha"><select><option>Día</option></select><select><option>Mes</option></select><select><option>Año</option></select></div>
+      <button class="btn guardar" style="margin-top:12px">Guardar</button>
+    </div>
+    <div class="borrar-disc"><a>Borrar este interesado…</a></div>
+  </div>
+  <div class="nota">10 elementos a la vista de una vez (5 chips + comentario + 3 selects de fecha + botón): eso es lo que se siente "reguero". Las dos ideas de al lado reducen eso de verdad, no solo achican el espacio.</div>
+</div>
+
+<div class="panel" id="p-c">
+  <div class="etq">Propuesta C · se pregunta una cosa a la vez</div>
+  <div class="card">
+    <div class="head">
+      <div><h2>ferwdsvggbdfew</h2><div class="sub">Open Water Diver · por el link · 8 nov · 326-346-5342</div></div>
+      <button class="x">✕</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:2px"><button class="editar-top">✎ Editar datos</button></div>
+    <div class="acc"><button class="btn btn-insc flex1">Inscribir</button><button class="btn btn-wa flex1">WhatsApp</button></div>
+    <div class="sec-t">Seguimiento</div>
+    <div class="hist"><div class="hist-i"><b>Se anotó por el link</b><span>7 nov</span></div></div>
+    <div class="sec-t" style="margin-top:4px">¿Qué pasó?</div>
+    <div class="opciones" id="opcionesC">
+      <button class="opcion" data-v="escribi"><i></i>Le escribí</button>
+      <button class="opcion" data-v="no_contesta"><i></i>No contesta</button>
+      <button class="opcion" data-v="va"><i></i>Va a inscribirse</button>
+      <button class="opcion" data-v="otra_fecha"><i></i>Quiere otra fecha</button>
+      <button class="opcion" data-v="no" style="grid-column:1 / -1"><i></i>No le interesa</button>
+    </div>
+    <div class="paso2" id="paso2C">
+      <input class="txt" placeholder="Comentario (opcional): qué le dijiste o qué te dijo">
+      <button class="toggle-fecha" id="toggleFechaC">+ Recordarme escribirle de nuevo</button>
+      <div class="fila-fecha" id="fechaCajaC" style="display:none">
+        <select><option>Día</option></select><select><option>Mes</option></select><select><option>Año</option></select>
+      </div>
+      <div><button class="btn guardar">Guardar</button></div>
+    </div>
+    <div class="borrar-disc"><a>Borrar este interesado…</a></div>
+  </div>
+  <div class="nota">Qué cambia: en vez de 5 chips chiquitos + caja de texto + fecha, todo junto, primero solo ves las opciones de qué pasó (más grandes, más fáciles de tocar). En cuanto tocas una, ahí mismo aparece el comentario y el botón Guardar; la fecha para recordar queda escondida detrás de un link ("+ Recordarme…") porque no siempre hace falta ponerla.</div>
+</div>
+
+<div class="panel" id="p-d">
+  <div class="etq">Propuesta D · una sola fila para anotar rápido</div>
+  <div class="card">
+    <div class="head">
+      <div><h2>ferwdsvggbdfew</h2><div class="sub">Open Water Diver · por el link · 8 nov · 326-346-5342</div></div>
+      <button class="x">✕</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:2px"><button class="editar-top">✎ Editar datos</button></div>
+    <div class="acc"><button class="btn btn-insc flex1">Inscribir</button><button class="btn btn-wa flex1">WhatsApp</button></div>
+    <div class="sec-t">Seguimiento</div>
+    <div class="hist"><div class="hist-i"><b>Se anotó por el link</b><span>7 nov</span></div></div>
+    <div class="fila-rapida">
+      <select id="selD"><option value="">¿Qué pasó?…</option><option>Le escribí</option><option>No contesta</option><option>Va a inscribirse</option><option>Quiere otra fecha</option><option>No le interesa</option></select>
+      <input placeholder="Comentario (opcional)">
+      <button class="btn guardar">Guardar</button>
+    </div>
+    <a class="link-recordar" id="abrirRecordarD">+ Recordarme escribirle de nuevo</a>
+    <div class="recordar-caja" id="cajaRecordarD">
+      <select><option>Día</option></select><select><option>Mes</option></select><select><option>Año</option></select>
+      <a class="link-recordar" id="cerrarRecordarD">Quitar</a>
+    </div>
+    <div class="borrar-disc"><a>Borrar este interesado…</a></div>
+  </div>
+  <div class="nota">Qué cambia: los chips se cambian por un solo selector ("¿Qué pasó?…"), y el comentario y Guardar quedan en la misma fila — una sola línea para anotar algo rápido, en vez de un bloque grande. La fecha para recordar también queda detrás de un link aparte, solo para cuando hace falta.</div>
+</div>
+
+<script>
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("sel"));
+  document.querySelectorAll(".panel").forEach(x => x.classList.remove("sel"));
+  t.classList.add("sel");
+  document.getElementById("p-" + t.dataset.t).classList.add("sel");
+});
+// Propuesta C: elegir opción revela el paso 2.
+document.querySelectorAll("#opcionesC .opcion").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#opcionesC .opcion").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  document.getElementById("paso2C").classList.add("abierto");
+});
+document.getElementById("toggleFechaC").onclick = () => {
+  const c = document.getElementById("fechaCajaC");
+  c.style.display = c.style.display === "none" ? "flex" : "none";
+};
+// Propuesta D: link para abrir/cerrar la fecha de recordar.
+document.getElementById("abrirRecordarD").onclick = () => {
+  document.getElementById("cajaRecordarD").classList.add("abierta");
+  document.getElementById("abrirRecordarD").style.display = "none";
+};
+document.getElementById("cerrarRecordarD").onclick = () => {
+  document.getElementById("cajaRecordarD").classList.remove("abierta");
+  document.getElementById("abrirRecordarD").style.display = "inline-block";
+};
+</script>
+</body></html>

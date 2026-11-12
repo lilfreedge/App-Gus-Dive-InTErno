@@ -256,6 +256,11 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
   const [doc, setDoc] = useState("");
   const [cel, setCel] = useState("");
   const [buzo, setBuzo] = useState(null); // lo que devuelve "doc"
+  // V76 (pedido explícito: "el sistema debe de reconocerlo y no pedirle
+  // nuevamente su info" + maqueta V78 "OK"): si no lo encontramos por su
+  // cédula, al escribir su celular se busca si ya estaba anotado como
+  // interesado.
+  const [interesado, setInteresado] = useState(null);
   const [d, setD] = useState({ nombre: "", nac: "", correo: "", direccion: "", emergencia: "" });
   const [buceos, setBuceos] = useState("");
   const [cursoId, setCursoId] = useState(cursos[0]?.id || "");
@@ -321,12 +326,39 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
       const nac = tipoDoc === "pasaporte" ? (nacionalidad === "Otra" ? nacOtra.trim() : nacionalidad) : "";
       const r = menor
         ? await api({ accion: "registrar", tipoDoc, doc, cel, tutorNombre, menor: m, datos: {}, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, tambien: tambien[extra.cursoId || cursoId] || null, ...extra })
-        : await api({ accion: "registrar", tipoDoc, doc, cel, datos: { ...d, emergencia, ...(nac ? { nacionalidad: nac } : {}) }, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, tambien: tambien[extra.cursoId || cursoId] || null, ...extra });
+        : await api({ accion: "registrar", tipoDoc, doc, cel, datos: { ...d, emergencia, ...(nac ? { nacionalidad: nac } : {}) }, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, tambien: tambien[extra.cursoId || cursoId] || null, interesadoId: interesado?.interesadoId || null, ...extra });
       setRes(r);
       // V61 ("201"): si queda en lista de espera, va directo a "¡Listo!"; los
       // documentos son opcionales ("¿Quieres adelantar?").
       ir(r.espera && !r.ya ? "listo" : "docs");
     });
+  // V76 (maqueta V78 "OK"): mientras escribe su celular en "Tus datos" (solo
+  // cuando no lo encontramos por su cédula), se busca si ya estaba anotado
+  // como interesado -- si hay uno, se rellena el nombre solo (si todavía
+  // estaba en blanco) y se manda su id al registrar, para que quede resuelto.
+  useEffect(() => {
+    if (buzo || menor || paso !== "datos" || !celValido(cel)) {
+      setInteresado(null);
+      return;
+    }
+    let activo = true;
+    const t = setTimeout(() => {
+      api({ accion: "interesado", tipoDoc, doc, cel })
+        .then((r) => {
+          if (!activo) return;
+          if (r?.encontrado) {
+            setInteresado(r);
+            setD((x) => (x.nombre.trim() ? x : { ...x, nombre: r.nombre }));
+          } else setInteresado(null);
+        })
+        .catch(() => {});
+    }, 450);
+    return () => {
+      activo = false;
+      clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cel, buzo, menor, paso]);
   const cursoElegido = cursos.find((c) => c.id === cursoSel);
   const fijoCurso = fijoId ? cursos.find((c) => c.fechas.some((f) => f.id === fijoId)) || null : null;
   const fijoFecha = fijoCurso ? fijoCurso.fechas.find((f) => f.id === fijoId) : null;
@@ -570,10 +602,16 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
             {buzo && <div className="pb-h">Solo lo que nos falta de ti.</div>}
             {!buzo && (
               <>
-                <label className="ce-pub-l">Nombre completo</label>
-                <input className="pb-input" value={d.nombre} onChange={(e) => setD({ ...d, nombre: e.target.value })} placeholder="Nombre y apellido" />
                 <label className="ce-pub-l">Celular (WhatsApp)</label>
                 <CampoCel className="pb-input" value={cel} onChange={setCel} />
+                {interesado && (
+                  <div className="ce-pub-aviso" style={{ marginTop: 8 }}>
+                    Ya te teníamos anotado como interesado{interesado.curso ? ` en ${interesado.curso}` : ""}
+                    {interesado.cuando ? ` (${interesado.cuando})` : ""}. Si ese curso no es el que quieres ahora, lo cambias más abajo.
+                  </div>
+                )}
+                <label className="ce-pub-l">Nombre completo</label>
+                <input className="pb-input" value={d.nombre} onChange={(e) => setD({ ...d, nombre: e.target.value })} placeholder="Nombre y apellido" />
               </>
             )}
             {falta.nac && (

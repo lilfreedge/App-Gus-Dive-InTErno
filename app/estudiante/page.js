@@ -6,7 +6,12 @@ import EstudiantePublico from "@/components/estudiantes/Publico";
 import { fechasProximas } from "@/lib/estudiantes/fechas-servidor";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Registro de estudiante · Gus Dive Center" };
+// V76 (pedido explícito: "vamos con la opcion 2" -- que este link se
+// pueda "instalar" como una app aparte). El título cambió para que, al
+// agregarlo a la pantalla de inicio, el nombre tenga sentido tanto para
+// quien se está registrando como para quien ya está registrado y solo
+// vuelve a ver "Mis documentos".
+export const metadata = { title: "Mis Cursos · Gus Dive Center", manifest: "/estudiante-manifest.webmanifest" };
 
 // Control Estudiantes -- el link de registro (público, sin cuenta). Solo se
 // le manda al navegador la lista de cursos y cómo pagar.

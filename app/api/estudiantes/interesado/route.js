@@ -4,6 +4,7 @@ import { soloDigitos, primerNombre, celValido, celGuardar } from "@/lib/viajes/m
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 import { buscarPorDoc } from "@/lib/estudiantes/servidor";
 import { cedulaValida, MSG_CEDULA_MALA } from "@/lib/viajes/modelo";
+import { FUENTES } from "@/lib/estudiantes/modelo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -49,7 +50,12 @@ export async function POST(request) {
   if (!ya?.length && celValido(cel)) ({ data: ya } = await s.from("est_interesados").select("id").eq("celular", cel).in("estado", abiertos).limit(1));
   if (ya?.length) return NextResponse.json({ ok: true, ya: true, nombre: primerNombre(nombre) });
 
-  const fila = { nombre, celular: celValido(cel) ? cel : null, curso, fuente: "Link", via: "link" };
+  // V74 (pedido explícito: "esto no esta apareciendo al momento que el
+  // interesado va a llenar el form") -- antes siempre se guardaba "Link";
+  // ahora se le pregunta a la persona (¿Cómo te enteraste?) y se usa eso,
+  // si escogió algo de la lista. Si no, se queda "Link" como antes.
+  const fuente = FUENTES.includes(body.fuente) ? body.fuente : "Link";
+  const fila = { nombre, celular: celValido(cel) ? cel : null, curso, fuente, via: "link" };
   const nacionalidad = tipo === "pasaporte" ? String(body.nacionalidad || "").trim().slice(0, 60) : "";
   let { error } = await s.from("est_interesados").insert({ ...fila, buzo_id: persona?.id || null, documento: docG, correo: correo || null, ...(nacionalidad ? { nota: `Nacionalidad: ${nacionalidad}` } : {}) });
   // Sin la migration_86 todavía: se guarda sin esas columnas (el documento va en la nota).

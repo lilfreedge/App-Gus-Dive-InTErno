@@ -161,7 +161,22 @@ export function CampoCel({ value, onChange, className = "", placeholder = "809-0
     else onChange(`+${p.c}${num}`);
   }
   function cambiarNumero(t) {
-    if (!extranjero) return onChange(formatoCel(t));
+    // V74 (pedido explícito, con foto: "si pongo un numero de mas por
+    // error asume que ya es un numero de otro pais... el formato deberia
+    // estar bloqueado solo el de RD... en dado caso que vayan a poner
+    // numero fuera de RD, tienen que cambiarlo [el país]") -- antes, al
+    // escribir, formatoCel() decidía solo si el número ya no parecía de
+    // RD/EE.UU. (por ejemplo, 11 dígitos sin empezar en "1") y cambiaba el
+    // selector de país él mismo. Ahora, mientras el país escogido sea
+    // RD/EE.UU., el formato se queda así pase lo que pase con lo que se
+    // escriba (un dígito de más se recorta, no cambia de país); para un
+    // número de otro país hay que escoger el país arriba.
+    if (!extranjero) {
+      let d = soloDigitos(t);
+      if (d.length === 11 && d[0] === "1") d = d.slice(1);
+      d = d.slice(0, 10);
+      return onChange(d.length > 6 ? `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}` : d.length > 3 ? `${d.slice(0, 3)}-${d.slice(3)}` : d);
+    }
     if (pais.k === "otro") return onChange(`+${soloDigitos(t)}`);
     onChange(`+${pais.c}${soloDigitos(t)}`);
   }

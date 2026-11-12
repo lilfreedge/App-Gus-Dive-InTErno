@@ -390,13 +390,15 @@ export default function EstudiantesApp({ p, yo, personas }) {
   };
 
   // V55: Cursos al lado de Inicio ("pon cursos al lado de inicio").
+  // V74 (pedido explícito, con foto: "pon interesados entre inicio y
+  // cursos") -- Interesados se mueve de entre Calendario y Más a entre
+  // Inicio y Cursos.
   const links = [
     { r: "inicio", t: "Inicio" },
+    ...(p.interesados ? [{ r: "interesados", t: "Interesados" }] : []),
     { r: "cursos", t: "Cursos" },
     { r: "estudiantes", t: "Estudiantes" },
-    // V59 ("161"): Calendario entre Estudiantes e Interesados.
     { r: "calendario", t: "Calendario" },
-    ...(p.interesados ? [{ r: "interesados", t: "Interesados" }] : []),
     { r: "mas", t: "Más" },
   ];
   const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "estadisticas", "administracion", "basedatos", "notificaciones"].includes(ruta) ? "mas" : ruta.startsWith("curso:") ? "cursos" : ruta.split(":")[0];
