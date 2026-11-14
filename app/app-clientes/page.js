@@ -148,6 +148,12 @@ export default async function AppClientesPage() {
       ...o,
       hold_respondido: !!ultimo && !ultimo.activo && !!ultimo.fecha_resolucion ? ultimo.fecha_resolucion : null,
       falta_inspeccion: esServicioHidrostatica(o.que_se_hara) && !!o.fecha_retorno_tienda && !o.inspeccion_visual_realizada,
+      // V79 (pedido explícito, con foto: "cuando ya se le marque inspeccion
+      // visual a un tanque cuando figure otra vez en ordenes pendientes por
+      // trabajar que salga una nota azul que diga 'Le hace falta llenado'")
+      // -- ya volvió de la prueba y ya tiene la inspección visual; sigue en
+      // esta lista hasta que se le ponga la fecha de listo para entrega.
+      falta_llenado: esServicioHidrostatica(o.que_se_hara) && !!o.fecha_retorno_tienda && !!o.inspeccion_visual_realizada,
     };
   });
 
@@ -435,6 +441,7 @@ function ListaOrdenes({
                       lado de "En proceso" cuando ya volvió de la prueba
                       hidrostática pero todavía falta la inspección visual. */}
                   {o.falta_inspeccion && <span className="badge badge-rojo">Le hace falta inspección visual</span>}
+                  {o.falta_llenado && <span className="badge badge-azul">Le hace falta llenado</span>}
                 </span>
                 <span className="list-item-qty" style={{ textAlign: "right", flexShrink: 0 }}>
                   {/* V57: el nombre de la fecha sale una sola vez, arriba al lado del título

@@ -9,6 +9,7 @@ import CompartirLink from "@/components/CompartirLink";
 import MenuMas from "@/components/MenuMas";
 import { sumarDias, fechaLarga, formatoCel } from "@/lib/viajes/modelo";
 import { urlPrincipal } from "@/lib/direccion";
+import InteresadosCurso, { interesadosDeCurso } from "./InteresadosCurso";
 
 // Pantallas de Control Estudiantes: Inicio, la lista, Más y la Bitácora.
 
@@ -109,13 +110,17 @@ export function TarjetaCurso({ db, f, onClick, abierta }) {
 // V60 -- "170" y la nota del 2-nov ("si le doy click al curso... debería
 // abrirle el curso directo"): la página del curso, con sus datos, sus
 // estudiantes y la gente en lista de espera para ese curso.
-export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
+export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntrada = false }) {
   const [form, setForm] = useState(null);
   // V62 ("242. ok", maqueta V62): como la página de un buceo. Arriba la
   // fecha grande; una tarjeta con el cupo, quién pagó y quién debe; los
   // botones en una fila (Compartir link, Editar y ⋯) y las pestañas
   // Estudiantes, Lista de espera y Datos.
-  const [tab, setTab] = useState("estudiantes");
+  // V79 (maqueta V79, "1. B. Quitemos 'lista de espera'"): la pestaña "Lista
+  // de espera" pasa a ser "Interesados": los que ya llenaron sus datos y
+  // esperan cupo (lo que salía antes) y, debajo, los interesados de ese
+  // curso, con el botón para avisarles por correo.
+  const [tab, setTab] = useState(avisarDeEntrada ? "interesados" : "estudiantes");
   const f = (db.fechas || []).find((x) => x.id === fechaId);
   const atras = (
     <a className="back-link" onClick={() => ir("cursos")} style={{ cursor: "pointer" }}>
@@ -133,6 +138,7 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
   const porNombre = (a, b) => buzoDe(db, a).nombre.localeCompare(buzoDe(db, b).nombre);
   const gente = db.estudiantes.filter((e) => e.fechaId === f.id && e.estado !== "cancelado").sort(porNombre);
   const espera = db.estudiantes.filter((e) => e.estado === "espera" && cursoDe(db, e)?.id === f.cursoId).sort(porNombre);
+  const intsCurso = interesadosDeCurso(db, c?.nombre);
   const q = quedan(db, f);
   const hayCupo = q !== 0;
   const pagaron = gente.filter((e) => pagoListo(e)).length;
@@ -156,7 +162,7 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
   }
   const tabs = [
     { k: "estudiantes", t: "Estudiantes", n: gente.length },
-    { k: "espera", t: "Lista de espera", n: espera.length },
+    { k: "interesados", t: "Interesados", n: espera.length + intsCurso.length },
     { k: "datos", t: "Datos" },
   ];
   return (
@@ -200,8 +206,8 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
             </>
           )}
           <div>
-            <b>{espera.length}</b>
-            <span>en espera</span>
+            <b>{espera.length + intsCurso.length}</b>
+            <span>{espera.length + intsCurso.length === 1 ? "interesado" : "interesados"}</span>
           </div>
         </div>
       </div>
@@ -247,15 +253,16 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
             </div>
           ) : (
             <div className="card hint-text" style={{ margin: 0 }}>
-              Todavía no tiene estudiantes. Mándales el link de registro o pasa a alguien de la lista de espera.
+              Todavía no tiene estudiantes. Mándales el link de registro o avísales a los interesados.
             </div>
           )}
         </>
       )}
 
-      {tab === "espera" && (
+      {tab === "interesados" && (
         <>
-          {espera.length > 0 ? (
+          {espera.length > 0 && <div className="hint-text" style={{ marginTop: 0 }}>Ya llenaron sus datos y esperan un cupo:</div>}
+          {espera.length > 0 && (
             <div className="card vj-lista">
               {espera.map((e) => (
                 <div key={e.id} className="pg-fila-espera">
@@ -268,12 +275,9 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId }) {
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="card hint-text" style={{ margin: 0 }}>
-              Nadie está esperando un cupo de {c?.nombre || "este curso"}.
-            </div>
           )}
           {espera.length > 0 && !hayCupo && <div className="hint-text">Este curso está lleno.</div>}
+          {(intsCurso.length > 0 || !espera.length) && <InteresadosCurso db={db} p={p} yo={yo} ops={ops} ir={ir} avisar={avisar} f={f} c={c} elegirDeEntrada={avisarDeEntrada} />}
         </>
       )}
 
@@ -439,6 +443,13 @@ export function Inicio({ db, p, ir, avisar }) {
 export function Lista({ db, p, yo, ops, ir, avisar }) {
   const [abierto, setAbierto] = useState(null); // id de la fecha abierta, "sin" o "espera:<curso>"
   const [form, setForm] = useState(null); // crear o editar un curso (una fecha)
+  // V79 (maqueta V79, "1. B"): apenas se crea un curso que tiene
+  // interesados, pregunta si se les avisa por correo.
+  const [creado, setCreado] = useState(null);
+  const alCrear = (f, c) => {
+    const ints = interesadosDeCurso(db, c.nombre);
+    if (p.interesados && ints.length) setCreado({ fechaId: f.id, curso: c.nombre, inicio: f.inicio, n: ints.length, conCorreo: ints.filter((x) => x.correo).length });
+  };
   // V57 -- "123": solo los cursos abiertos (cada fecha es un curso), con
   // cuántos estudiantes tiene; "+ Crear curso"; la lista de espera por curso.
   // Ya no salen los botones de todo el catálogo (eso está en Más > Base de
@@ -493,7 +504,25 @@ export function Lista({ db, p, yo, ops, ir, avisar }) {
         </div>
       </div>
       {db.sinFechas && <div className="hint-text">Falta correr el SQL de la V55 en Supabase para poder crear cursos con fecha.</div>}
-      {form && !form.id && <FormCurso db={db} form={form} setForm={setForm} yo={yo} ops={ops} avisar={avisar} />}
+      {form && !form.id && <FormCurso db={db} form={form} setForm={setForm} yo={yo} ops={ops} avisar={avisar} alCrear={alCrear} />}
+      {creado && (
+        <div className="ce-avisar" style={{ marginTop: 10, border: "2px solid var(--ce)" }}>
+          <b>
+            Curso creado: {creado.curso}, {fechaLarga(creado.inicio)}
+          </b>
+          <div className="ce-avisar-h">
+            Hay {creado.n} interesado{creado.n === 1 ? "" : "s"} en este curso ({creado.conCorreo} con correo). ¿Les avisas ahora?
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button className="btn btn-primary vj-btn" onClick={() => ir(`curso:${creado.fechaId}:avisar`)}>
+              Ver y avisar
+            </button>
+            <button className="btn secondary vj-btn" onClick={() => setCreado(null)}>
+              Después
+            </button>
+          </div>
+        </div>
+      )}
 
       {abiertos.map((f) => {
         const c = db.cursos.find((x) => x.id === f.cursoId);
@@ -610,7 +639,7 @@ export function PorEtapa({ db, p, ir, etapa }) {
 }
 
 // V57 -- Crear o editar un curso (una fecha de un curso de la Base de datos).
-function FormCurso({ db, form, setForm, yo, ops, avisar }) {
+function FormCurso({ db, form, setForm, yo, ops, avisar, alCrear }) {
   const lunes = lunesProximos(26);
   const c = db.cursos.find((x) => x.id === form.cursoId);
   const enEspera = c ? db.estudiantes.filter((e) => e.estado === "espera" && e.cursoId === c.id).length : 0;
@@ -622,11 +651,12 @@ function FormCurso({ db, form, setForm, yo, ops, avisar }) {
     const f = { id: form.id || nuevoId(), cursoId: c.id, inicio: form.inicio, cupo: form.cupo === "" ? null : Number(form.cupo), instructor: form.instructor, nota: (form.nota || "").trim(), activo: true };
     const ok = await ops.guardarFecha(f, nueva, c);
     if (ok) setForm(null);
+    if (ok && nueva) alCrear?.(f, c);
   }
   return (
     <div className="ce-form ce-form-curso" style={{ marginTop: 10 }}>
       <b>{form.id ? "Editar este curso" : "Crear curso"}</b>
-      {!form.id && enEspera > 0 && <div className="tec-recordatorio">Hay {enEspera} en lista de espera de {c.nombre}. Cuando lo crees, pásalos desde su ficha.</div>}
+      {!form.id && enEspera > 0 && <div className="tec-recordatorio">Hay {enEspera} esperando un cupo de {c.nombre}. Cuando lo crees, pásalos desde su ficha.</div>}
       <div className="ce-form-fila">
         <label>
           Curso

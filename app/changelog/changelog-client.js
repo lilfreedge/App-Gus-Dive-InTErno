@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V79",
+    fecha: "13 de noviembre, 2026",
+    titulo: "Avisar por correo a todos los interesados de un curso, \"Abrió el link\" y \"Le hace falta llenado\"",
+    descripcion:
+      "Control Estudiantes: en la página de cada curso, la pestaña \"Lista de espera\" pasa a llamarse \"Interesados\": arriba los que ya llenaron sus datos y esperan cupo, y debajo los que dijeron que les interesa ese curso, con el botón \"Avisarles por correo\" (antes de enviar se ve la lista y se puede quitar a alguien; al que ya se le avisó de esa fecha no se le manda otra vez; al que no tiene correo le sale WhatsApp). Al crear un curso que tiene interesados, el app pregunta si se les avisa. El link que se le manda a un interesado (por correo o WhatsApp) lleva su marca: cuando lo abre, queda anotado en su seguimiento (\"Abrió el link de inscripción\") y en la lista sale \"Abrió el link\". En iPhone, \"Mis Cursos\" se agrega a la pantalla de inicio con su ícono y su nombre. App Equipos de clientes: en Inicio, una prueba hidrostática que ya tiene la inspección visual sale con el aviso azul \"Le hace falta llenado\" hasta que se le pone la fecha de listo.",
+  },
+  {
     version: "V78",
     fecha: "12 de noviembre, 2026",
     titulo: "Correo con el link del curso para los interesados",

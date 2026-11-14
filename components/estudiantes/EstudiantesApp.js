@@ -36,13 +36,14 @@ export function rutaDeUrl(path) {
   if (p[0] === "estudiantes" && p[1]) return `cursos:${p[1]}`;
   if (p[0] === "cursos" && p[1]) return `cursos:${p[1]}`;
   if (p[0] === "nuevo" && p[1]) return `nuevo:${p[1]}`;
-  if (p[0] === "curso" && p[1]) return `curso:${p[1]}`;
+  // V79: /curso/<id>/avisar abre la pestaña Interesados lista para avisar.
+  if (p[0] === "curso" && p[1]) return `curso:${p[1]}${p[2] ? `:${p[2]}` : ""}`;
   return p[0];
 }
 export function urlDeRuta(r) {
-  const [k, id] = r.split(":");
+  const [k, id, mas] = r.split(":");
   if (k === "inicio") return BASE;
-  return `${BASE}/${k}${id ? `/${id}` : ""}`;
+  return `${BASE}/${k}${id ? `/${id}` : ""}${id && mas ? `/${mas}` : ""}`;
 }
 
 function Topbar({ yo, links, activo, ir }) {
@@ -329,7 +330,19 @@ export default function EstudiantesApp({ p, yo, personas }) {
         fallo(e);
       }
     },
+    // V79: para la pestaña Interesados de un curso (el servidor anota el aviso).
+    async recargar() {
+      await recargar();
+    },
     async guardarInteresado(x, esNuevo, texto) {
+      // V79: el link público anota "abrió el link" directo en la base; para
+      // no pisarlo con lo que este navegador tenía cargado, esas entradas
+      // se traen antes de guardar.
+      if (!esNuevo && Array.isArray(x.seguimiento)) {
+        const { data: act } = await supabase.from("est_interesados").select("seguimiento").eq("id", x.id).maybeSingle();
+        const faltan = (Array.isArray(act?.seguimiento) ? act.seguimiento : []).filter((h) => h.tipo === "abrio_link" && !x.seguimiento.some((y) => y.id === h.id));
+        if (faltan.length) x = { ...x, seguimiento: [...x.seguimiento, ...faltan] };
+      }
       local((d) => ({ ...d, interesados: esNuevo ? [x, ...d.interesados] : d.interesados.map((y) => (y.id === x.id ? x : y)) }));
       // V62 ("245"): con el seguimiento. Si todavía no se corrió la
       // migration_88 (no existe la columna), se guarda lo demás y se avisa.
@@ -424,7 +437,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
     const id = ruta.split(":")[1];
     cuerpo = db.estudiantes.some((x) => x.id === id) ? <Ficha key={id} {...q} id={id} /> : <div className="hint-text">Ese estudiante no existe.</div>;
   } else if (ruta === "nuevo" || ruta.startsWith("nuevo:")) cuerpo = p.estudiantes ? <Nuevo {...q} interesadoId={ruta.split(":")[1] || null} /> : <Inicio {...q} />;
-  else if (ruta.startsWith("curso:")) cuerpo = <DetalleCurso {...q} fechaId={ruta.split(":")[1]} />;
+  else if (ruta.startsWith("curso:")) cuerpo = <DetalleCurso key={ruta} {...q} fechaId={ruta.split(":")[1]} avisarDeEntrada={ruta.split(":")[2] === "avisar"} />;
   else if (ruta === "calendario") cuerpo = <Calendario {...q} />;
   else if (ruta === "interesados") cuerpo = p.interesados ? <Interesados {...q} /> : <Inicio {...q} />;
   else if (ruta === "basedatos") cuerpo = <Cursos {...q} />;

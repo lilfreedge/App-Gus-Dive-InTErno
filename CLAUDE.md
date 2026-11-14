@@ -114,15 +114,25 @@ Los estudiantes y los buzos son la misma base de personas: la tabla `viajes_buzo
 - Interesados: chips por curso en vez del filtro por estado (maqueta V74); en la ficha, Inscribir más grande, WhatsApp más chico y "Enviar link de curso a estudiante" (WhatsApp, lo anota en el seguimiento como `link_curso`). El chip "Ya es buzo de Gus" quedó como "Ya lo teníamos registrado".
 - App Equipos de clientes: "Inspección visual realizada" es su propio paso después de "Fecha de retorno a tienda" (form-client.js; sin ella no se puede poner "listo" en una hidrostática); en Inicio, badge rojo "Le hace falta inspección visual" y los días se cuentan desde el retorno (`diasDesdeCampo="fecha_retorno_tienda"`).
 
-## V78 (12-nov, commit armado en su Mac; confirmar con `git fetch` que él le dio push)
+## V78 (12-nov, commit 2ad795e armado en su Mac; confirmar con `git fetch` que él le dio push)
 
 - "Me interesa": el correo es obligatorio (solo se puede dejar en blanco si ya teníamos el de esa persona: la acción "doc" devuelve `conCorreo`); la pantalla final dice que le llegará un correo con el link para inscribirse.
 - Ficha del interesado: "Enviar link de curso por correo" (pide confirmar; `lib/correo-interesado-curso.js`, `/api/estudiantes/interesado/correo-curso`, que recibe solo el id y arma el link con la primera fecha próxima con cupo). Lo manda una persona con el botón; NO sale solo al crear una fecha. No se pudo probar el envío real desde aquí (no hay llave de Resend): él lo iba a probar.
 - El correo del interesado se ve en la ficha y se edita en "Editar datos" / al agregar a mano (`interesadoAFila` ya guarda `correo`).
 - Se quitó el chip "Ya lo teníamos registrado" (él: "¿en qué me aporta?" → "sí, quítalo"). `buzoId` se sigue guardando.
 - Changelog del app al día (V69 a V78).
-- **Maqueta V79 (`public/maquetas/maqueta-v79.html`), sin programar, esperando sus 3 respuestas:** 1) avisar por correo a todos los interesados de un curso: pestaña "Interesados" en la página del curso, A (solo el botón) o B (además preguntar al crear el curso); 2) formato de los correos: A sencillo, B con logo y datos del curso, C tipo anuncio (o que mande el formato que ya usan; faltan dirección, horario e Instagram para el pie); 3) saber si abrió: A que el app anote cuando abre el link (recomendada, sin SQL: una entrada en `seguimiento`), B aperturas de Resend (él tiene que prenderlo en su cuenta y conectar el webhook), o las dos.
-- Otras preguntas abiertas: foto 7 (borró un estudiante y al registrarlo de nuevo "no lo reconoce"): falta que aclare qué vio; link general de registro de cursos: pidió propuesta, sin ejecutar; Caleta Nocturno en el itinerario.
+- Maqueta V79 contestada (13-nov): 1 B y "quitemos lista de espera"; 2 A (formato sencillo, el de hoy, sin cambios); 3 A. Foto 7: "no recuerdo, olvídalo" (cerrado).
+
+## V79 (13-nov, sin subir hasta que él diga)
+
+- Página del curso: la pestaña "Lista de espera" pasa a "Interesados" (`DetalleCurso` en Inicio.js): arriba los estudiantes en espera (con "Pasarlo a este curso"), debajo `components/estudiantes/InteresadosCurso.js` (los interesados de ese curso por nombre, sin inscrito/no) con "Avisarles por correo" → lista con marcas → `/api/estudiantes/interesado/correo-curso` con `{ ids, fechaId }` (un solo `resend.batch.send`, hasta 100; el servidor anota `link_curso` con `fechaId` en el seguimiento de cada uno, estado "va", y la bitácora). No se le manda dos veces la misma fecha a nadie; sin correo → WhatsApp. El contador de la tarjeta dice "interesados".
+- Al crear un curso con interesados (Lista → FormCurso `alCrear`), sale "Curso creado… ¿Les avisas ahora?" → `curso:<id>:avisar` (rutas de 3 pedazos en rutaDeUrl/urlDeRuta).
+- "Abrió el link" (3 A): todo link a un interesado lleva `?i=<id>` (`linkCursoPara` en Interesados.js y `linkDe` en el API). /estudiante lo manda desde el navegador (`accion: "abrio"` en /api/estudiantes/publico, prop `marcaInteresado`) y se anota `abrio_link` en `seguimiento` (una vez por envío). Chip azul "Abrió el link" (`abrioLink`) en Interesados y en la pestaña del curso. `guardarInteresado` trae antes los `abrio_link` de la base para no pisarlos. Sin SQL.
+- App Equipos de clientes, Inicio: badge azul "Le hace falta llenado" (`falta_llenado`: hidrostática con retorno y con inspección visual, todavía sin fecha de listo).
+- iPhone: `/estudiante` con `appleWebApp` + apple-touch-icon.
+- Changelog: V79.
+- **Maqueta V80 (`public/maquetas/maqueta-v80.html`), sin programar:** tarjeta "Ten tus cursos en tu celular" al final del registro y en "Mis documentos" (Android: botón Instalar; iPhone: 3 pasos). Él lo recordó: "la vaina flow app que la gente lo pueda tener en su cel". Preguntas: 1) ¿así, en esos dos lugares? 2) ¿también Buceos (perfil del buzo) y "Me interesa"?
+- Sigue abierto: link general de registro de cursos (propuesta, sin ejecutar); Caleta Nocturno en el itinerario.
 
 ## Pendiente
 

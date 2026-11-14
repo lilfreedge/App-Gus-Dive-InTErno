@@ -246,7 +246,13 @@ function Semana({ inicio, semana }) {
   );
 }
 
-export default function EstudiantePublico({ cursos, tienda, conFechas = false, fijo = "", noAbierto = false }) {
+export default function EstudiantePublico({ cursos, tienda, conFechas = false, fijo = "", noAbierto = false, marcaInteresado = "" }) {
+  // V79 (maqueta V79, "3. A"): si el link trae la marca de un interesado,
+  // avisa que lo abrió (queda en su seguimiento).
+  useEffect(() => {
+    if (!marcaInteresado) return;
+    fetch("/api/estudiantes/publico", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "abrio", i: marcaInteresado }) }).catch(() => {});
+  }, [marcaInteresado]);
   const [paso, setPaso] = useState("doc"); // doc | hola | cel | datos | curso | docs | listo | estado
   const [tipoDoc, setTipoDoc] = useState("cedula");
   const [avisoDni, setAvisoDni] = useState(false);

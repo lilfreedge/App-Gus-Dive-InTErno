@@ -30,7 +30,15 @@ export const TIPOS_SEG_INT = [
   { k: "otra_fecha", t: "Quiere otra fecha", estado: "escribimos" },
   { k: "no", t: "No le interesa", estado: "no" },
 ];
-const tipoSeg = (k) => TIPOS_SEG_INT.find((x) => x.k === k) || { k, t: k === "nota" ? "Nota" : k === "inscrito" ? "Se inscribió" : "Anotó" };
+const tipoSeg = (k) => TIPOS_SEG_INT.find((x) => x.k === k) || { k, t: k === "nota" ? "Nota" : k === "inscrito" ? "Se inscribió" : k === "abrio_link" ? "Abrió el link de inscripción" : "Anotó" };
+// V79 (maqueta V79, "3. A"): ¿abrió el último link de inscripción que se le mandó?
+export function abrioLink(x) {
+  const seg = x.seguimiento || [];
+  const mandado = seg.filter((h) => h.tipo === "link_curso").map((h) => String(h.en || "")).sort().pop() || "";
+  return seg.some((h) => h.tipo === "abrio_link" && String(h.en || "") >= mandado);
+}
+// El link de inscripción para un interesado: con la fecha (si hay) y su marca.
+export const linkCursoPara = (x, fechaId) => urlCompleta(`/estudiante?${fechaId ? `curso=${encodeURIComponent(fechaId)}&` : ""}i=${encodeURIComponent(x.id)}`);
 const cuandoFue = (iso) => {
   if (!iso) return "";
   // La hora guardada es UTC; aquí se pasa a la hora de RD (UTC-4).
@@ -129,6 +137,7 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
             <div className="ce-est-t">
               <b>{x.nombre}</b>
               {x.curso && <span className="ce-chip curso">{x.curso}</span>}
+              {abrioLink(x) && <span className="ce-chip azul">Abrió el link</span>}
               {/* V78 (pedido explícito: "por que debe de decir algo? en
                   que me aporta eso?" → "1. si", quitarlo): ya no sale el
                   chip de "Ya es buzo de Gus" / "Ya lo teníamos registrado".
@@ -282,10 +291,10 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
   function enviarLinkCurso() {
     const curso = cursoDe(db, x);
     const fecha = curso ? fechasDe(db, curso.id, { soloFuturas: true })[0] : null;
-    const link = urlCompleta(fecha ? `/estudiante?curso=${fecha.id}` : "/estudiante");
+    const link = linkCursoPara(x, fecha?.id);
     window.open(linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, aquí tienes el link para inscribirte en ${x.curso || "el curso"}: ${link}`), "_blank", "noopener");
     ops.guardarInteresado(
-      { ...x, estado: cerradoYa ? x.estado : "va", seguimiento: [...(x.seguimiento || []), { id: nuevoId(), tipo: "link_curso", texto: "Por WhatsApp", quien: yo?.corto || "", en: new Date().toISOString() }] },
+      { ...x, estado: cerradoYa ? x.estado : "va", seguimiento: [...(x.seguimiento || []), { id: nuevoId(), tipo: "link_curso", texto: "Por WhatsApp", quien: yo?.corto || "", en: new Date().toISOString(), ...(fecha ? { fechaId: fecha.id } : {}) }] },
       false,
       `Le envió el link de curso a un interesado: ${x.nombre}`
     );
@@ -305,7 +314,7 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "No se pudo mandar el correo.");
       ops.guardarInteresado(
-        { ...x, estado: cerradoYa ? x.estado : "va", seguimiento: [...(x.seguimiento || []), { id: nuevoId(), tipo: "link_curso", texto: "Por correo", quien: yo?.corto || "", en: new Date().toISOString() }] },
+        { ...x, estado: cerradoYa ? x.estado : "va", seguimiento: [...(x.seguimiento || []), { id: nuevoId(), tipo: "link_curso", texto: "Por correo", quien: yo?.corto || "", en: new Date().toISOString(), ...(j.fechaId ? { fechaId: j.fechaId } : {}) }] },
         false,
         `Le envió el link de curso por correo a un interesado: ${x.nombre}`
       );

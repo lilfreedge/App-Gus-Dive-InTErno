@@ -37,6 +37,22 @@ const resumen = (e) => ({
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const s = createServiceClient();
+  // V79 (maqueta V79, pregunta 3: "A"): el link que se le manda a un
+  // interesado lleva su marca (?i=<id>); cuando lo abre, queda anotado en su
+  // seguimiento. Lo llama la página desde el navegador (no al cargarse en el
+  // servidor), para que no cuenten las vistas previas de WhatsApp o del
+  // correo. Una sola vez por cada envío (si lo último ya es "abrió", no repite).
+  if (body.accion === "abrio") {
+    const id = String(body.i || "");
+    if (/^[0-9a-f-]{20,40}$/i.test(id)) {
+      const { data: x } = await s.from("est_interesados").select("id, estado, seguimiento").eq("id", id).maybeSingle();
+      const seg = Array.isArray(x?.seguimiento) ? x.seguimiento : [];
+      const ult = [...seg].sort((a, b) => String(a.en || "").localeCompare(String(b.en || ""))).pop();
+      if (x && !["inscrito", "no"].includes(x.estado) && ult?.tipo !== "abrio_link")
+        await s.from("est_interesados").update({ seguimiento: [...seg, { id: nuevoId(), tipo: "abrio_link", en: new Date().toISOString() }] }).eq("id", id);
+    }
+    return NextResponse.json({ ok: true });
+  }
   const tipo = body.tipoDoc === "pasaporte" ? "pasaporte" : "cedula";
   if (!docValido(tipo, body.doc)) return NextResponse.json({ error: tipo === "cedula" ? "La cédula tiene 11 números." : "Escribe tu pasaporte completo." }, { status: 400 });
   const b = await buscarPorDoc(s, tipo, body.doc);

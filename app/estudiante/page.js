@@ -11,7 +11,14 @@ export const dynamic = "force-dynamic";
 // agregarlo a la pantalla de inicio, el nombre tenga sentido tanto para
 // quien se está registrando como para quien ya está registrado y solo
 // vuelve a ver "Mis documentos".
-export const metadata = { title: "Mis Cursos · Gus Dive Center", manifest: "/estudiante-manifest.webmanifest" };
+// V79 (recordatorio: "que la gente lo pueda tener en su cel"): en iPhone,
+// al "Agregar a pantalla de inicio" sale con su ícono y su nombre.
+export const metadata = {
+  title: "Mis Cursos · Gus Dive Center",
+  manifest: "/estudiante-manifest.webmanifest",
+  icons: { apple: "/icono-app-192.png" },
+  appleWebApp: { capable: true, title: "Mis Cursos", statusBarStyle: "default" },
+};
 
 // Control Estudiantes -- el link de registro (público, sin cuenta). Solo se
 // le manda al navegador la lista de cursos y cómo pagar.
@@ -28,5 +35,7 @@ export default async function EstudiantePage({ searchParams }) {
   // pide escoger curso. Si esa fecha ya no está abierta, el link sigue normal.
   const pedida = typeof searchParams?.curso === "string" ? searchParams.curso : "";
   const fijo = conFechas && pedida && cursos.some((c) => c.fechas.some((f) => f.id === pedida)) ? pedida : "";
-  return <EstudiantePublico cursos={cursos} conFechas={conFechas} fijo={fijo} noAbierto={!!pedida && !fijo} tienda={{ whatsapp: TIENDA.whatsapp, titular: TITULAR_CURSOS || TIENDA.titular, rnc: RNC_CURSOS, cuentas: CUENTAS_CURSOS }} />;
+  // V79: la marca del interesado al que se le mandó este link (?i=<id>).
+  const marcaInteresado = typeof searchParams?.i === "string" ? searchParams.i : "";
+  return <EstudiantePublico cursos={cursos} conFechas={conFechas} fijo={fijo} noAbierto={!!pedida && !fijo} marcaInteresado={marcaInteresado} tienda={{ whatsapp: TIENDA.whatsapp, titular: TITULAR_CURSOS || TIENDA.titular, rnc: RNC_CURSOS, cuentas: CUENTAS_CURSOS }} />;
 }
