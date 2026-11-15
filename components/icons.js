@@ -512,3 +512,52 @@ export function IconChart(props) {
     </Base>
   );
 }
+
+// V84 -- App Gus Dive (la de los clientes): el menú de abajo y Contacto.
+export function IconHome(props) {
+  return (
+    <Base {...props}>
+      <path d="M3 11l9-7 9 7" />
+      <path d="M5 10v10h5v-6h4v6h5V10" />
+    </Base>
+  );
+}
+
+export function IconUser(props) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+    </Base>
+  );
+}
+
+export function IconMapPin(props) {
+  return (
+    <Base {...props}>
+      <path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </Base>
+  );
+}
+
+// V85 -- App Gus Dive, Contacto: Instagram y la página web.
+export function IconInstagram(props) {
+  return (
+    <Base {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" />
+    </Base>
+  );
+}
+
+export function IconGlobe(props) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z" />
+    </Base>
+  );
+}

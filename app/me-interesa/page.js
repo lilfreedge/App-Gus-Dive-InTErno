@@ -3,11 +3,13 @@ import MeInteresa from "@/components/estudiantes/MeInteresa";
 
 export const dynamic = "force-dynamic";
 // V81: se instala como "App Gus".
-export const metadata = { title: "Registro de interesado · Gus Dive Center", manifest: "/app-gus.webmanifest", icons: { apple: "/icono-app-192.png" }, appleWebApp: { capable: true, title: "App Gus", statusBarStyle: "default" } };
+export const metadata = { title: "Registro de interesado · Gus Dive Center", manifest: "/app-gus.webmanifest", icons: { apple: "/icono-app-192.png" }, appleWebApp: { capable: true, title: "Gus Dive", statusBarStyle: "default" } };
 
 // Control Estudiantes -- el link de interesados (para Instagram o la página
 // web). Cae en Interesados como "Nuevo".
-export default async function MeInteresaPage() {
+// V84: desde el app Gus Dive ("Avísame cuando haya fecha") llega con
+// ?curso=<nombre> y ese curso sale ya escogido.
+export default async function MeInteresaPage({ searchParams }) {
   const s = createServiceClient();
   // V74 (pedido explícito, con foto: "Borre OWD + nitrox y aun sigue
   // apareciendo en el form de interesados") -- faltaba este filtro. "OWD +
@@ -16,5 +18,7 @@ export default async function MeInteresaPage() {
   // (app/estudiante/page.js ya lo respeta); a este link ("Me interesa") se
   // le había quedado pendiente el mismo filtro.
   const { data } = await s.from("est_cursos").select("nombre").eq("activo", true).neq("en_link", false).order("orden").order("nombre");
-  return <MeInteresa cursos={(data || []).map((c) => c.nombre)} />;
+  const cursos = (data || []).map((c) => c.nombre);
+  const pedido = String(searchParams?.curso || "");
+  return <MeInteresa cursos={cursos} cursoInicial={cursos.includes(pedido) ? pedido : null} />;
 }

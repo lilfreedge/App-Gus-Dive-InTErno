@@ -5,10 +5,13 @@
 // la separa de la app del personal (app/manifest.js, "Gus Dive").
 // (El manifest viejo de "Mis Cursos", /estudiante-manifest.webmanifest, se
 // deja como estaba; ya no lo usa ninguna página.)
+// V83 (pedido explícito, con foto del ícono instalado: "quiero cambiar el
+// nombre... digo, Gus Dive") -- el nombre debajo del ícono pasa de "App Gus"
+// a "Gus Dive" (el mismo de la app del personal; el "id" las sigue separando).
 const MANIFEST = {
   id: "/gus",
-  name: "App Gus",
-  short_name: "App Gus",
+  name: "Gus Dive",
+  short_name: "Gus Dive",
   description: "Tus cursos y buceos con Gus Dive Center",
   start_url: "/gus",
   scope: "/",

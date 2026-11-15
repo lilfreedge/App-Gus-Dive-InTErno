@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Buscar } from "@/components/viajes/Piezas";
-import { IconHistory, IconPlus, IconCatalog, IconEdit, IconChart } from "@/components/icons";
-import { listoParaAlmacen, pagoInstructorPendiente, debe, pagoListo, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, ocupados, quedan } from "@/lib/estudiantes/modelo";
+import { Buscar, IconoWA } from "@/components/viajes/Piezas";
+import { IconHistory, IconPlus, IconCatalog, IconEdit, IconChart, IconLink } from "@/components/icons";
+import { listoParaAlmacen, pagoInstructorPendiente, debe, pagoListo, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, ocupados, quedan, linkWhatsApp } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
-import CompartirLink from "@/components/CompartirLink";
+import CompartirLink, { svgQr, urlCompleta, VentanaQr } from "@/components/CompartirLink";
 import MenuMas from "@/components/MenuMas";
 import { sumarDias, fechaLarga, formatoCel } from "@/lib/viajes/modelo";
 import { urlPrincipal } from "@/lib/direccion";
@@ -375,6 +375,37 @@ export function Inicio({ db, p, ir, avisar }) {
       <h1 className="page-title" style={{ marginBottom: 4 }}>
         Control Estudiantes
       </h1>
+      {/* V85 (maqueta V85, pregunta 2: "2, a") -- arriba de todo, los
+          interesados a los que les toca hoy (o ya se pasó) el "Próximo
+          seguimiento". Si no hay ninguno, no sale. */}
+      {p.interesados && intHoy.length > 0 && (
+        <div className="ce-hoy">
+          <div className="ce-hoy-t">Para escribir hoy ({intHoy.length})</div>
+          {[...intHoy]
+            .sort((a, b) => a.recordar.localeCompare(b.recordar))
+            .map((x) => {
+              const dias = Math.round((new Date(hoy + "T12:00:00") - new Date(x.recordar + "T12:00:00")) / 86400000);
+              return (
+                <div key={x.id} className="ce-hoy-fila">
+                  <button className="ce-hoy-nombre" onClick={() => ir(`interesados:${x.id}`)}>
+                    <b>{x.nombre}</b>
+                    <small>
+                      {[x.curso, dias <= 0 ? "le toca hoy" : dias === 1 ? "tocaba ayer" : `tocaba el ${fechaCursoCorta(x.recordar)}`].filter(Boolean).join(" · ")}
+                    </small>
+                  </button>
+                  {x.cel && (
+                    <a className="btn vj-btn ce-wa ce-hoy-wa" href={linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, te escribimos de Gus Dive Center por el curso${x.curso ? ` de ${x.curso}` : ""}.`)} target="_blank" rel="noopener noreferrer">
+                      <IconoWA on /> WhatsApp
+                    </a>
+                  )}
+                  <button className="btn secondary vj-btn ce-hoy-abrir" onClick={() => ir(`interesados:${x.id}`)}>
+                    Abrir
+                  </button>
+                </div>
+              );
+            })}
+        </div>
+      )}
       {/* V59 (nota 2-nov): sin "Nuevo estudiante" aquí; el link de registro pasó a Cursos.
           "158": arriba los próximos cursos; los cuadros van debajo, en "Seguimiento". */}
       {proximos.length > 0 && (
@@ -900,6 +931,8 @@ export function Mas({ yo, p, ir }) {
     // V76 (pedido explícito, con foto: "Cambiar base de datos por 'catalogo
     // de cursos'").
     { r: "basedatos", t: "Catálogo de cursos", sub: "Los cursos que damos y los instructores.", I: IconCatalog },
+    // V85 (maqueta V85, "1, a"): darle el app de los clientes a la gente.
+    { r: "appgus", t: "App Gus Dive (para los clientes)", sub: "El link, el código QR y mandarlo por WhatsApp.", I: IconLink },
     // V67 ("4"): Estadísticas; y la Bitácora con su permiso ("3").
     ...(p.estadisticas ? [{ r: "estadisticas", t: "Estadísticas", sub: "Estudiantes, cursos, cobros, interesados y certificaciones.", I: IconChart }] : []),
     ...(p.bitacora ? [{ r: "bitacora", t: "Bitácora", sub: "Todo lo que se ha hecho, con quién y cuándo.", I: IconHistory }] : []),
@@ -924,6 +957,54 @@ export function Mas({ yo, p, ir }) {
           </div>
         </button>
       ))}
+    </>
+  );
+}
+
+// V85 (maqueta V85, pregunta 1: "1, a") -- Más › App Gus Dive: el link del
+// app de los clientes (/gus), su código QR para que lo escaneen en la tienda,
+// "Copiar link", "Mandar por WhatsApp" (con el mensaje ya escrito) e
+// "Imprimir el QR".
+const MSG_APP_GUS = "Hola, descarga el app de Gus Dive para ver los próximos cursos y buceos, tus cursos y tus datos:";
+export function AppGusDive({ ir, avisar }) {
+  const [imprimir, setImprimir] = useState(false);
+  const url = urlCompleta("/gus");
+  function copiar() {
+    try {
+      navigator.clipboard
+        .writeText(url)
+        .then(() => avisar?.("Link copiado"))
+        .catch(() => avisar?.(url));
+    } catch {
+      avisar?.(url);
+    }
+  }
+  return (
+    <>
+      <a className="back-link" onClick={() => ir("mas")} style={{ cursor: "pointer" }}>
+        ← Más
+      </a>
+      <h1 className="page-title">App Gus Dive</h1>
+      <div className="hint-text" style={{ marginBottom: 12 }}>
+        La app de los clientes: los próximos cursos y buceos, sus cursos, sus buceos y sus datos. Se instala desde el link, sin App Store.
+      </div>
+      <div className="card ce-appgus">
+        <div className="ce-appgus-qr" dangerouslySetInnerHTML={{ __html: svgQr(url, 5) }} />
+        <div className="hint-text">Que lo escaneen con la cámara del celular</div>
+        <div className="ce-appgus-url">{url}</div>
+        <div className="ce-appgus-bot">
+          <button className="btn secondary vj-btn" onClick={copiar}>
+            Copiar link
+          </button>
+          <a className="btn vj-btn ce-wa" href={`https://wa.me/?text=${encodeURIComponent(`${MSG_APP_GUS} ${url}`)}`} target="_blank" rel="noopener noreferrer">
+            <IconoWA on /> Mandar por WhatsApp
+          </a>
+          <button className="btn secondary vj-btn" onClick={() => setImprimir(true)}>
+            Imprimir el QR
+          </button>
+        </div>
+      </div>
+      {imprimir && <VentanaQr url={url} titulo="Descarga el app de Gus Dive" onCerrar={() => setImprimir(false)} />}
     </>
   );
 }

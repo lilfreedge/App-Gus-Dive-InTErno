@@ -20,9 +20,9 @@ import InstalarApp from "@/components/InstalarApp";
 //   pantalla con nombre, celular, correo, curso y cómo se enteró. Al
 //   inscribirse por el link de cursos con el mismo celular, igual sale solo
 //   de Interesados (V78 del link de cursos).
-export default function MeInteresa({ cursos }) {
+export default function MeInteresa({ cursos, cursoInicial = null }) {
   const [paso, setPaso] = useState("datos"); // datos | listo
-  const [f, setF] = useState({ nombre: "", cel: "", curso: cursos[0] || "", fuente: "", correo: "", web: "" });
+  const [f, setF] = useState({ nombre: "", cel: "", curso: cursoInicial || cursos[0] || "", fuente: "", correo: "", web: "" });
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [nombreFin, setNombreFin] = useState("");
@@ -53,7 +53,7 @@ export default function MeInteresa({ cursos }) {
         <img src="/logo-gus-icon.png" alt="Gus Dive Center" style={{ height: 24 }} />
         {/* V54: logo de SNSI ("77. si"). */}
         <img src="/logo-snsi.png" alt="SNSI" className="ce-logo-snsi" />
-        <span>Gus Dive Center</span>
+        <span>Gus Dive</span>
       </div>
       <div className="pb-body">
         {paso === "listo" && (

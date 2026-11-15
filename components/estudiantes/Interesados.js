@@ -60,6 +60,12 @@ export function historiaInteresado(x) {
 }
 const ultimo = (x) => [...(x.seguimiento || [])].sort((a, b) => String(b.en || "").localeCompare(String(a.en || "")))[0] || null;
 
+const sumarDiasIso = (iso, n) => {
+  const [a, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(a, m - 1, d + n)).toISOString().slice(0, 10);
+};
+const sinProx = (t) => String(t || "").replace(/\s*·?\s*próximo seguimiento: [^·]*/i, "").trim();
+
 export function Interesados({ db, p, yo, ops, ir, avisar, abrirId = null }) {
   // V76 (maqueta V74 aprobada: "recuerda que vamos a reemplazar esta
   // parte... aprobé maqueta y todo") -- se quita el filtro por estado
@@ -154,7 +160,8 @@ export function Interesados({ db, p, yo, ops, ir, avisar, abrirId = null }) {
                 lo último que pasó, igual que antes. */}
             {u && (
               <div className="ce-est-m ce-int-ult">
-                {[`Último: "${tipoSeg(u.tipo).t}"`, u.quien, cuandoFue(u.en)].filter(Boolean).join(" · ") + (u.texto ? ` · ${u.texto}` : "")}
+                {/* V85: sin la fecha del próximo seguimiento (ya sale abajo en "Escribirle de nuevo"); en las entradas viejas venía dentro del comentario. */}
+                {[`Último: "${tipoSeg(u.tipo).t}"`, u.quien, cuandoFue(u.en)].filter(Boolean).join(" · ") + (sinProx(u.texto) ? ` · ${sinProx(u.texto)}` : "")}
               </div>
             )}
             {x.recordar && !["inscrito", "no"].includes(x.estado) && (
@@ -165,16 +172,22 @@ export function Interesados({ db, p, yo, ops, ir, avisar, abrirId = null }) {
                 Inscribir va primero ahora; los dos se ven más como botones
                 de verdad (más grandes, con relleno) en vez de chips. */}
             {!["inscrito", "no"].includes(x.estado) && (
-              <div style={{ display: "flex", gap: 6, marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
+              // V83 (pedido explícito: "el click no funciona bien dentro de
+              // cada botón de interesados... hay que darle como cerca del
+              // nombre"): esta fila ocupaba todo el ancho de la tarjeta y
+              // frenaba el toque, así que tocar a la derecha de los botones
+              // no abría la ficha. Ahora solo los dos botones lo frenan.
+              <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
                 {p.estudiantes && (
-                  <button className="btn vj-btn ce-int-insc" onClick={() => ir(`nuevo:${x.id}`)}>
+                  <button className="btn vj-btn ce-int-insc" onClick={(e) => (e.stopPropagation(), ir(`nuevo:${x.id}`))}>
                     Inscribir
                   </button>
                 )}
                 {x.cel && (
                   <button
                     className="btn vj-btn ce-wa"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       window.open(linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, te escribimos de Gus Dive Center por el curso${x.curso ? ` de ${x.curso}` : ""}.`), "_blank", "noopener");
                       if (x.estado === "nuevo")
                         ops.guardarInteresado(
@@ -262,6 +275,7 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
   const [tipo, setTipo] = useState("");
   const [texto, setTexto] = useState("");
   const [prox, setProx] = useState(""); // V80: fecha del próximo seguimiento
+  const [otraFecha, setOtraFecha] = useState(false); // V85: "Otra fecha…" abre el calendario
   // V57 -- "dame ese poder absoluto": el Titular puede borrar un interesado.
   const [borrando, setBorrando] = useState(false);
   const [eligiendo, setEligiendo] = useState(null); // V80: "inscribir" | "link"
@@ -281,11 +295,15 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
     // seguimiento otra vez aquí"): si se pone, queda como la fecha para
     // escribirle de nuevo (sale en la lista y en "Escribirle de nuevo hoy").
     const y = { ...x, seguimiento: [...(x.seguimiento || []), entrada], estado: cerradoYa ? x.estado : nuevoEstado, recordar: tipo === "no" ? "" : prox || x.recordar };
-    if (prox && tipo !== "no") entrada.texto = [entrada.texto, `próximo seguimiento: ${fechaCursoCorta(prox)}`].filter(Boolean).join(" · ");
-    ops.guardarInteresado(y, false, `Seguimiento de un interesado: ${x.nombre} (${tipoSeg(entrada.tipo).t}${entrada.texto ? `: ${entrada.texto}` : ""})`);
+    // V85 (maqueta V85: "en cualquier opción se quita la repetición"): la
+    // fecha va aparte en la entrada (prox), no dentro del comentario; así
+    // en la lista no sale dos veces (en "Último" y en "Escribirle de nuevo").
+    if (prox && tipo !== "no") entrada.prox = prox;
+    ops.guardarInteresado(y, false, `Seguimiento de un interesado: ${x.nombre} (${tipoSeg(entrada.tipo).t}${entrada.texto ? `: ${entrada.texto}` : ""}${entrada.prox ? ` · próximo seguimiento: ${fechaCursoCorta(entrada.prox)}` : ""})`);
     setTipo("");
     setTexto("");
     setProx("");
+    setOtraFecha(false);
   }
 
   // V80 (maqueta V81, pregunta 3: "ok") -- al tocar "Inscribir" o "Enviar
@@ -333,10 +351,19 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
       {/* V76 (pedido explícito, con foto: "el boton de whatsapp vamos a
           ponerlo mas pequeno. Sube un poco el boton de inscribir") --
           Inscribir queda más grande y WhatsApp más chico. */}
+      {/* V84 (notas del 15-nov, con foto: "aquí quiero que pongas el link de
+          enviar link de curso más atractivo, así como está el de
+          'inscribir', y ponlo encima" y "cambiar inscribir por 'inscribir
+          desde la tienda'"). */}
+      {p.interesados && !cerradoYa && (x.cel || x.correo) && (
+        <button className="btn vj-btn ce-int-insc ce-int-link-grande" onClick={() => setEligiendo(eligiendo === "link" ? null : "link")}>
+          Enviar link de curso
+        </button>
+      )}
       <div className="ce-int-acc">
         {p.estudiantes && !cerradoYa && (
           <button className="btn vj-btn ce-int-insc" onClick={() => setEligiendo(eligiendo === "inscribir" ? null : "inscribir")}>
-            Inscribir
+            Inscribir desde la tienda
           </button>
         )}
         {x.cel && (
@@ -345,11 +372,6 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
           </a>
         )}
       </div>
-      {p.interesados && !cerradoYa && (x.cel || x.correo) && (
-        <button className="btn secondary vj-btn ce-int-link-curso" onClick={() => setEligiendo(eligiendo === "link" ? null : "link")}>
-          Enviar link de curso
-        </button>
-      )}
       {eligiendo && (
         <ElegirCurso
           db={db}
@@ -400,6 +422,7 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
             <span>
               {[h.quien, cuandoFue(h.en)].filter(Boolean).join(" · ")}
               {h.texto ? ` · "${h.texto}"` : ""}
+              {h.prox ? ` · próximo seguimiento: ${fechaCursoCorta(h.prox)}` : ""}
             </span>
           </div>
         ))}
@@ -423,14 +446,33 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
               ))}
             </select>
             <input className="ce-int-txt" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Comentario (opcional)" />
-            <label className="ce-int-prox">
-              Próximo seguimiento
-              <input type="date" value={prox} min={hoyISO()} onChange={(e) => setProx(e.target.value)} />
-            </label>
-            <button className="btn btn-primary vj-btn ce-int-guardar" onClick={anotar}>
-              Guardar
+          </div>
+          {/* V85 (maqueta V85, pregunta 3: "sí"; nota del 15-nov: "la fecha se
+              ve rara, se ve como apretado") -- la fecha va en su propia
+              línea, con botones rápidos; "Otra fecha" abre el calendario. */}
+          <div className="ce-int-prox-t">Próximo seguimiento (opcional)</div>
+          <div className="ce-int-prox-chips">
+            {[
+              ["Mañana", 1],
+              ["En 3 días", 3],
+              ["En una semana", 7],
+            ].map(([t, n]) => {
+              const f = sumarDiasIso(hoyISO(), n);
+              return (
+                <button key={t} type="button" className={prox === f && !otraFecha ? "sel" : ""} onClick={() => (setOtraFecha(false), setProx(prox === f ? "" : f))}>
+                  {t}
+                </button>
+              );
+            })}
+            <button type="button" className={otraFecha ? "sel" : ""} onClick={() => (setOtraFecha(!otraFecha), setProx(""))}>
+              Otra fecha…
             </button>
           </div>
+          {otraFecha && <input className="ce-int-prox-fecha" type="date" value={prox} min={hoyISO()} onChange={(e) => setProx(e.target.value)} />}
+          {prox && <div className="ce-int-prox-v">Escribirle de nuevo el {fechaCursoCorta(prox)}</div>}
+          <button className="btn btn-primary vj-btn ce-int-guardar ce-int-guardar-ancho" onClick={anotar}>
+            Guardar
+          </button>
         </div>
       )}
 

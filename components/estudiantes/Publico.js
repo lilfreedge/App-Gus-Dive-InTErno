@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { soloDigitos, formatoCedula, rd, fechaCorta, fechaLarga, primerNombre, celValido } from "@/lib/viajes/modelo";
+import { soloDigitos, formatoCedula, rd, fechaCorta, fechaLarga, primerNombre, celValido, formatoCel } from "@/lib/viajes/modelo";
 import { semanaDe, menorDe12, edad as edadDe } from "@/lib/estudiantes/modelo";
 import FechaNacimiento from "@/components/FechaNacimiento";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
@@ -253,8 +253,22 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
   // avisa que lo abrió (queda en su seguimiento).
   useEffect(() => {
     if (!marcaInteresado) return;
-    fetch("/api/estudiantes/publico", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "abrio", i: marcaInteresado }) }).catch(() => {});
+    fetch("/api/estudiantes/publico", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "abrio", i: marcaInteresado }) })
+      .then((r) => r.json())
+      .then((j) => {
+        // V84 (notas del 15-nov): sus datos de interesado salen ya puestos
+        // en "Tus datos"; solo queda vacío lo que falta.
+        const x = j?.datos;
+        if (!x) return;
+        setPre(x);
+        const dg = soloDigitos(x.cel);
+        if (dg) setCel((c) => c || (dg.length === 10 ? formatoCel(dg) : `+${dg}`));
+        setD((v) => ({ ...v, nombre: v.nombre || x.nombre || "", correo: v.correo || x.correo || "" }));
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [marcaInteresado]);
+  const [pre, setPre] = useState(null); // V84: los datos del interesado que abrió su link
   const [paso, setPaso] = useState("doc"); // doc | hola | cel | datos | curso | docs | listo | estado
   const [tipoDoc, setTipoDoc] = useState("cedula");
   const [avisoDni, setAvisoDni] = useState(false);
@@ -350,7 +364,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
       const nac = tipoDoc === "pasaporte" ? (nacionalidad === "Otra" ? nacOtra.trim() : nacionalidad) : "";
       const r = menor
         ? await api({ accion: "registrar", tipoDoc, doc, cel, tutorNombre, menor: m, datos: {}, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, tambien: tambien[extra.cursoId || cursoId] || null, ...extra })
-        : await api({ accion: "registrar", tipoDoc, doc, cel, datos: { ...d, emergencia, ...(nac ? { nacionalidad: nac } : {}) }, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, tambien: tambien[extra.cursoId || cursoId] || null, interesadoId: interesado?.interesadoId || null, ...extra });
+        : await api({ accion: "registrar", tipoDoc, doc, cel, datos: { ...d, emergencia, ...(nac ? { nacionalidad: nac } : {}) }, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, tambien: tambien[extra.cursoId || cursoId] || null, interesadoId: interesado?.interesadoId || (pre ? marcaInteresado : null), ...extra });
       setRes(r);
       if (!menor) guardarPersona({ tipoDoc, doc, cel, primer: primerNombre(d.nombre) || buzo?.primer || "" });
       // V61 ("201"): si queda en lista de espera, va directo a "¡Listo!"; los
@@ -625,11 +639,12 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
           <div className="pb-card">
             <div className="pb-t">Tus datos</div>
             {buzo && <div className="pb-h">Solo lo que nos falta de ti.</div>}
+            {!buzo && pre && <div className="ce-pub-aviso" style={{ marginTop: 4 }}>Ya tenemos algunos de tus datos. Revisa que estén bien y completa lo que falta.</div>}
             {!buzo && (
               <>
                 <label className="ce-pub-l">Celular (WhatsApp)</label>
                 <CampoCel className="pb-input" value={cel} onChange={setCel} />
-                {interesado && (
+                {interesado && !pre && (
                   <div className="ce-pub-aviso" style={{ marginTop: 8 }}>
                     Ya te teníamos anotado como interesado{interesado.curso ? ` en ${interesado.curso}` : ""}
                     {interesado.cuando ? ` (${interesado.cuando})` : ""}. Si ese curso no es el que quieres ahora, lo cambias más abajo.

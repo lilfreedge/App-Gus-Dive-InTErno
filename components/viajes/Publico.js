@@ -679,7 +679,7 @@ export default function PublicoViaje({ v, tienda }) {
     <div className="pb">
       <div className="pb-head">
         <img src="/logo-gus-icon.png" alt="Gus Dive Center" style={{ height: 24 }} />
-        <span>Gus Dive Center</span>
+        <span>Gus Dive</span>
       </div>
       <div className="pb-hero">
         <div className="pb-kicker">INSCRIPCIÓN</div>

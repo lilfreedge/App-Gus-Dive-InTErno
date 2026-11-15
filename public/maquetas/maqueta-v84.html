@@ -1,0 +1,183 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V84 · Menú del app Gus Dive</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#06324f;--ce:#f6ce46;--ce-claro:#fdf1cf;--ce-texto:#5c4700;--azul:#4ebae8;--azul-claro:#e6f5fc}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:680px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.preg{background:#fff;border:2px solid #ffd166;border-radius:12px;padding:12px 14px;margin-top:14px}.preg>b{display:block;margin-bottom:6px}
+.opc label{display:flex;gap:10px;align-items:flex-start;padding:9px 0;cursor:pointer;border-bottom:1px solid var(--borde)}.opc label:last-child{border-bottom:0}
+.opc small{display:block;color:var(--suave)}
+/* teléfono */
+.tel{width:360px;max-width:100%;margin:0 auto;border:1px solid var(--borde);border-radius:30px;background:var(--fondo);overflow:hidden;box-shadow:0 6px 20px rgba(26,39,51,.1);height:700px;display:flex;flex-direction:column}
+.cab{display:flex;align-items:center;gap:10px;padding:14px 16px;background:#fff;border-bottom:1px solid var(--borde)}
+.cab img{height:24px}.cab .snsi{font-weight:900;font-style:italic;letter-spacing:-.5px}.cab b{color:var(--navy);font-size:15px}
+.pant{flex:1;overflow-y:auto;padding:14px 16px 18px}
+.barra{display:flex;background:#fff;border-top:1px solid var(--borde);padding:6px 4px 14px}
+.barra button{flex:1;border:0;background:none;font:inherit;font-size:10.5px;font-weight:700;color:#8796a3;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0}
+.barra button svg{width:22px;height:22px}
+.barra button.sel{color:var(--navy)}
+.t1{font-size:24px;font-weight:800;margin:0}.t1s{color:var(--suave);margin:0 0 6px}
+.sect{font-size:11.5px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px}
+.item{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--borde);border-radius:14px;padding:11px 12px;margin-bottom:8px;cursor:pointer}
+.fc{border-radius:11px;padding:5px 8px;text-align:center;line-height:1.05;flex-shrink:0;min-width:48px}
+.fc small{display:block;font-size:10px;font-weight:800;text-transform:uppercase}.fc b{font-size:19px}
+.fc.cur{background:var(--ce);color:#2b2200}.fc.buc{background:var(--azul);color:var(--navy)}
+.tx{flex:1;min-width:0}.tx b{display:block;font-size:15px}.tx small{color:var(--suave)}
+.mini{border:0;border-radius:999px;padding:7px 12px;font:inherit;font-weight:800;font-size:12.5px;cursor:pointer;flex-shrink:0}
+.mini.cur{background:var(--ce-claro);color:var(--ce-texto)}.mini.buc{background:var(--azul-claro);color:var(--navy)}
+.grande{display:block;width:100%;margin-top:14px;padding:13px;border-radius:13px;border:0;background:var(--navy);color:#fff;font:inherit;font-weight:800;font-size:15px;cursor:pointer}
+.link{display:block;text-align:center;margin-top:12px;color:var(--navy);font-weight:700;cursor:pointer}
+.curso{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px;margin-bottom:8px;cursor:pointer}
+.curso b{font-size:15px}.curso .niv{display:inline-block;font-size:11px;font-weight:800;background:var(--ce-claro);color:var(--ce-texto);border-radius:999px;padding:2px 8px;margin-left:6px}
+.curso .lin{display:flex;justify-content:space-between;color:var(--suave);font-size:13px;margin-top:4px}
+.volver{border:0;background:none;color:var(--navy);font:inherit;font-weight:700;padding:0;margin-bottom:8px;cursor:pointer}
+.info{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px}
+.info h4{margin:10px 0 2px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--suave)}.info h4:first-child{margin-top:0}
+.info p{margin:0}
+.cal{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:10px}
+.cal-t{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:6px}.cal-t span{color:var(--navy);cursor:pointer;padding:0 8px}
+.dias{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;gap:2px}
+.dias .h{font-size:10.5px;font-weight:800;color:var(--suave);padding:4px 0}
+.dias .d{padding:6px 0 8px;border-radius:9px;font-weight:600;cursor:pointer;position:relative}
+.dias .d.vacio{cursor:default}
+.dias .d.sel{background:var(--navy);color:#fff}
+.dias .pts{position:absolute;left:0;right:0;bottom:2px;display:flex;justify-content:center;gap:3px}
+.dias .pts i{width:6px;height:6px;border-radius:50%}
+.p-cur{background:#e0b424}.p-buc{background:var(--azul)}
+.ley{display:flex;gap:12px;font-size:12px;color:var(--suave);margin:8px 2px 0}.ley i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.ptabs{display:flex;gap:4px;margin:10px 0 8px}
+.ptabs button{flex:1;border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 4px;font:inherit;font-weight:700;font-size:12.5px;color:var(--suave);cursor:pointer}
+.ptabs button.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px;margin-bottom:8px}
+.fila{display:flex;justify-content:space-between;margin-top:6px}.fila span{color:var(--suave)}
+.idea{background:#fff;border:1.5px dashed #c9a227;border-radius:14px;padding:12px;margin-top:10px}
+.idea .et{font-size:11px;font-weight:800;color:#8a6d1d;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.cont{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--borde)}.cont:last-child{border-bottom:0}
+.cont i{width:30px;height:30px;border-radius:9px;background:var(--fondo);display:flex;align-items:center;justify-content:center;font-style:normal;flex-shrink:0}
+.precios .fila{border-bottom:1px solid var(--borde);padding:6px 0;margin:0}.precios .fila:last-child{border-bottom:0}
+.notif{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:10px 12px;display:flex;gap:10px;align-items:center}
+.notif img{width:34px;height:34px;border-radius:8px}
+.tarj{border-radius:14px;background:linear-gradient(135deg,#06324f,#1f6fa0);color:#fff;padding:14px;margin-top:6px}
+.tarj small{opacity:.8}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V84</b> · Un menú abajo en el app Gus Dive, como en cualquier app: Inicio, Cursos, Buceos, Calendario y Mi cuenta. Toca los botones de abajo del teléfono. Nada programado todavía.
+  <div class="tabs"><button class="sel" data-p="p1">1 · El menú</button><button data-p="p2">2 · ¿Qué más le ponemos?</button><button data-p="p3">Preguntas</button></div>
+</div>
+<div class="wrap">
+
+<div class="pest sel" id="p1">
+  <h2>1 · El menú de abajo</h2>
+  <p class="sub">"Entrar con mi cédula" pasa a "Mi cuenta". En Cursos se ve cada curso con su información y su precio, aunque todavía no tenga fecha. El calendario junta cursos (amarillo) y buceos (azul).</p>
+  <div class="tel">
+    <div class="cab"><img src="/icono-app-192.png" alt=""><span class="snsi">SNSI</span><b>Gus Dive Center</b></div>
+    <div class="pant" id="pant"></div>
+    <div class="barra" id="barra"></div>
+  </div>
+</div>
+
+<div class="pest" id="p2">
+  <h2>2 · Ideas para agregar</h2>
+  <p class="sub">Lo que se me ocurre que le sirve a un cliente. Escoge las que quieras (o ninguna) en la pestaña Preguntas.</p>
+
+  <div class="idea"><div class="et">a · Contacto (en Inicio, abajo)</div>
+    <div class="cont"><i><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#06324f" stroke-width="2"><path d="M4 20l1.5-4A8 8 0 1 1 9 19.5z"/></svg></i><div><b>Escríbenos por WhatsApp</b><br><small style="color:var(--suave)">Abre el WhatsApp de la tienda</small></div></div>
+    <div class="cont"><i><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#06324f" stroke-width="2"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></i><div><b>Cómo llegar</b><br><small style="color:var(--suave)">Abre el mapa con la dirección de la tienda</small></div></div>
+    <div class="cont"><i><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#06324f" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></i><div><b>Horario</b><br><small style="color:var(--suave)">Lunes a sábado… (tú me lo das)</small></div></div>
+    <div class="cont"><i><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#06324f" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></i><div><b>Instagram</b><br><small style="color:var(--suave)">Abre el Instagram de Gus</small></div></div>
+  </div>
+
+  <div class="idea"><div class="et">b · Alquiler de equipo (precios)</div>
+    <div class="precios">
+      <div class="fila"><span>Equipo completo</span><b>RD$ …</b></div>
+      <div class="fila"><span>Tanque</span><b>RD$ …</b></div>
+      <div class="fila"><span>BCD</span><b>RD$ …</b></div>
+      <div class="fila"><span>Regulador</span><b>RD$ …</b></div>
+    </div>
+    <div style="font-size:12px;color:var(--suave);margin-top:6px">Los mismos precios que ya están en Alquiler (por 3 días). Solo se ven; el alquiler se sigue haciendo en la tienda.</div>
+  </div>
+
+  <div class="idea"><div class="et">c · Avisos en el celular</div>
+    <div class="notif"><img src="/icono-app-192.png" alt=""><div><b>Gus Dive</b><br>Nuevo buceo: Bayahíbe, sábado 5 de diciembre. Quedan 12 cupos.</div></div>
+    <div style="font-size:12px;color:var(--suave);margin-top:8px">Cuando abren un curso o un buceo nuevo, le llega un aviso a quien tenga el app instalada (si dijo que sí a los avisos). En iPhone solo funciona con el app instalada.</div>
+  </div>
+
+  <div class="idea"><div class="et">d · Mi certificación (en Mi cuenta)</div>
+    <div class="tarj"><small>Certificación</small><div style="font-size:17px;font-weight:800">Open Water Diver · SNSI</div><small>Ana Pérez · No. 0000000</small></div>
+    <div style="font-size:12px;color:var(--suave);margin-top:6px">La foto de su tarjeta de buzo (la que ya suben en Mi perfil), siempre a mano para enseñarla en otro centro de buceo.</div>
+  </div>
+</div>
+
+<div class="pest" id="p3">
+  <h2>Preguntas</h2>
+  <div class="preg"><b>1. ¿Así el menú, abajo con esos 5 botones (Inicio, Cursos, Buceos, Calendario, Mi cuenta)?</b></div>
+  <div class="preg opc"><b>2. ¿Qué más le ponemos? Marca las que quieras (pestaña 2):</b>
+    <label><input type="checkbox"> <span><b>a · Contacto</b><small>WhatsApp, cómo llegar, horario e Instagram, en Inicio. Si sí, dime el horario y el Instagram.</small></span></label>
+    <label><input type="checkbox"> <span><b>b · Alquiler de equipo</b><small>Los precios de alquiler, solo para ver.</small></span></label>
+    <label><input type="checkbox"> <span><b>c · Avisos en el celular</b><small>Cuando abren un curso o un buceo nuevo.</small></span></label>
+    <label><input type="checkbox"> <span><b>d · Mi certificación</b><small>Su tarjeta de buzo en Mi cuenta.</small></span></label>
+  </div>
+</div>
+
+</div>
+<script>
+const $=id=>document.getElementById(id);
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("sel",x===b));document.querySelectorAll(".pest").forEach(p=>p.classList.toggle("sel",p.id===b.dataset.p));window.scrollTo(0,0)});
+const IC={
+ inicio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+ cursos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>',
+ buceos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/><path d="M2 18c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/><circle cx="12" cy="5" r="2"/></svg>',
+ calendario:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+ cuenta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>'};
+const MENU=[["inicio","Inicio"],["cursos","Cursos"],["buceos","Buceos"],["calendario","Calendario"],["cuenta","Mi cuenta"]];
+const CURSOS=[
+ {n:"Open Water Diver",niv:"Buceo básico",dur:"Una semana",fechas:[["lun","16","nov",7]],que:"Tu primer curso de buceo. Aprendes a bucear con un compañero, de forma segura, hasta 18 metros (60 pies).",apr:"El equipo, cómo entrar al agua, las señales bajo el agua, qué hacer en una emergencia y a cuidar el mar.",dura:"Una semana: tres días de teoría, un día de piscina, examen y cuatro buceos en el mar.",req:"Saber nadar y tener 10 años o más."},
+ {n:"Advanced OWD",niv:"Buceo avanzado",dur:"Más o menos una semana",fechas:[["lun","30","nov",5]],que:"Para buzos certificados que quieren ampliar sus habilidades y hacer buceos más exigentes. Te certifica hasta 39 metros (130 pies).",apr:"Buceo nocturno, buceo profundo, orientación con brújula, buceo con corriente y control avanzado de la flotabilidad.",dura:"Más o menos una semana: dos días de teoría, examen, cuatro buceos en el mar y un buceo nocturno.",req:"Open Water Diver, brújula, foco de buceo y equipo completo (propio o alquilado) con octopus."},
+ {n:"Rescue Diver",niv:"Buceo de rescate",dur:"Más o menos una semana",fechas:[],que:"Aprendes a prevenir, reconocer y responder a emergencias de buceo, y ganas confianza para cuidar a tus compañeros.",apr:"Autorrescate, atención de emergencias, respiración de rescate en el agua, cómo sacar a un buzo del agua y qué hacer en un accidente.",dura:"Más o menos una semana: teoría, piscina y dos buceos en el mar.",req:"Advanced Open Water, primeros auxilios (BLS) y proveedor de oxígeno (OXY)."},
+ {n:"Freediving",niv:"Apnea · nivel 1",dur:"Más o menos una semana",fechas:[],que:"Bucear a pulmón, sin tanque, de forma controlada y segura.",apr:"La seguridad, cómo responde tu cuerpo, la respiración, la relajación y la apnea.",dura:"Más o menos una semana: un día de teoría, una práctica en piscina y una en el mar.",req:"Careta, chapaletas y cinturón de pesas."}];
+const BUCEOS=[["sáb","16","nov","La Caleta","Quedan 13 cupos"],["sáb","5","dic","Bayahíbe","Quedan 12 cupos"],["sáb","12","dic","Isla Catalina","Quedan 8 cupos"]];
+let tab="inicio",cursoAbierto=null,dentro=false,sub="cursos",dia=16;
+const itemCur=(f,n)=>'<div class="item"><span class="fc cur"><small>'+f[0]+'</small><b>'+f[1]+'</b><small>'+f[2]+'</small></span><span class="tx"><b>'+n+'</b><small>Quedan '+f[3]+' cupos</small></span><button class="mini cur">Inscribirme</button></div>';
+const itemBuc=b=>'<div class="item"><span class="fc buc"><small>'+b[0]+'</small><b>'+b[1]+'</b><small>'+b[2]+'</small></span><span class="tx"><b>'+b[3]+'</b><small>'+b[4]+'</small></span><button class="mini buc">Inscribirme</button></div>';
+function pinta(){
+  let h="";
+  if(tab==="inicio"){
+    h='<p class="t1">Hola'+(dentro?", Ana":"")+'</p><p class="t1s">Cursos y buceos de Gus Dive Center</p><div class="sect">Próximos cursos</div>'+itemCur(CURSOS[0].fechas[0],CURSOS[0].n)+itemCur(CURSOS[1].fechas[0],CURSOS[1].n)+'<div class="sect">Próximos buceos</div>'+itemBuc(BUCEOS[0])+itemBuc(BUCEOS[1]);
+  }else if(tab==="cursos"){
+    if(cursoAbierto===null){
+      h='<p class="t1">Cursos</p><p class="t1s">Todos los cursos de Gus Dive Center</p>'+CURSOS.map((c,k)=>'<div class="curso" onclick="cursoAbierto='+k+';pinta()"><b>'+c.n+'</b><span class="niv">'+c.niv+'</span><div class="lin"><span>'+c.dur+'</span><b style="color:var(--texto);font-size:13px">RD$29,500</b></div><div class="lin"><span>'+(c.fechas.length?'Próximo: '+c.fechas[0][0]+' '+c.fechas[0][1]+' '+c.fechas[0][2]:'Sin fecha todavía')+'</span><span style="color:var(--navy);font-weight:700">Ver ›</span></div></div>').join("")+'<a class="link">¿No hay tu curso? Avísanos que te interesa</a>';
+    }else{
+      const c=CURSOS[cursoAbierto];
+      h='<button class="volver" onclick="cursoAbierto=null;pinta()">‹ Cursos</button><p class="t1" style="font-size:21px">'+c.n+'</p><p class="t1s">'+c.niv+' · RD$29,500 (ITBIS incluido)</p><div class="info"><h4>Qué es</h4><p>'+c.que+'</p><h4>Aprenderás</h4><p>'+c.apr+'</p><h4>Duración</h4><p>'+c.dura+'</p><h4>Requisitos</h4><p>'+c.req+'</p></div><div class="sect">Próximas fechas</div>'+(c.fechas.length?c.fechas.map(f=>itemCur(f,"Empieza el lunes "+f[1]+" "+f[2])).join(""):'<div class="card" style="color:var(--suave)">Todavía no hay fecha para este curso.</div><button class="grande">Avísame cuando haya fecha</button>');
+    }
+  }else if(tab==="buceos"){
+    h='<p class="t1">Buceos</p><p class="t1s">Los próximos buceos y salidas</p>'+BUCEOS.map(itemBuc).join("");
+  }else if(tab==="calendario"){
+    const ev={16:["cur","buc"],30:["cur"]};
+    let g='<div class="dias">'+["L","M","M","J","V","S","D"].map(x=>'<div class="h">'+x+'</div>').join("");
+    for(let k=0;k<6;k++)g+='<div class="d vacio"></div>';
+    for(let d=1;d<=30;d++)g+='<div class="d'+(d===dia?" sel":"")+'" onclick="dia='+d+';pinta()">'+d+(ev[d]?'<span class="pts">'+ev[d].map(t=>'<i class="p-'+t+'"></i>').join("")+'</span>':"")+'</div>';
+    g+='</div>';
+    let lista=dia===16?itemCur(CURSOS[0].fechas[0],"Open Water Diver")+itemBuc(BUCEOS[0]):dia===30?itemCur(CURSOS[1].fechas[0],"Advanced OWD"):'<div class="card" style="color:var(--suave)">Nada ese día.</div>';
+    h='<p class="t1">Calendario</p><div class="cal"><div class="cal-t"><span>‹</span>Noviembre 2026<span>›</span></div>'+g+'<div class="ley"><span><i class="p-cur"></i>Cursos</span><span><i class="p-buc"></i>Buceos</span></div></div><div class="sect">'+dia+' de noviembre</div>'+lista;
+  }else{
+    if(!dentro){
+      h='<p class="t1">Mi cuenta</p><p class="t1s">Entra con tu cédula para ver tus cursos, tus buceos y tus datos. Solo la pones una vez.</p><button class="grande" onclick="dentro=true;pinta()">Entrar con mi cédula</button>';
+    }else{
+      h='<p class="t1">Hola, Ana</p><div class="ptabs">'+[["cursos","Mis cursos"],["buceos","Mis buceos"],["perfil","Mi perfil"]].map(([k,t])=>'<button class="'+(sub===k?"sel":"")+'" onclick="sub=\''+k+'\';pinta()">'+t+'</button>').join("")+'</div>';
+      if(sub==="cursos")h+='<div class="card"><b>Open Water Diver</b><div style="color:var(--suave);font-size:13px">Empieza el lunes 16 nov</div><div style="font-size:13px;margin-top:6px">4 de 10 pasos listos</div></div>';
+      if(sub==="buceos")h+=itemBuc(BUCEOS[0]).replace('<button class="mini buc">Inscribirme</button>','<span style="font-size:12px;font-weight:800;color:#1b6b3c">Inscrita</span>');
+      if(sub==="perfil")h+='<div class="card"><div class="fila"><span>Nombre</span><b>Ana Pérez</b></div><div class="fila"><span>Correo</span><b>ana@ejemplo.com</b></div><div class="fila"><span>Tallas</span><b>M · 39</b></div></div>';
+      h+='<a class="link" onclick="dentro=false;pinta()">Salir</a>';
+    }
+  }
+  $("pant").innerHTML=h;$("pant").scrollTop=0;
+  $("barra").innerHTML=MENU.map(([k,t])=>'<button class="'+(tab===k?"sel":"")+'" onclick="tab=\''+k+'\';cursoAbierto=null;pinta()">'+IC[k]+t+'</button>').join("");
+}
+pinta();
+</script></body></html>

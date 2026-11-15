@@ -1,0 +1,137 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V83 · Instalar en iPhone</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#06324f;--ios:#1f6fd1;--ce:#f6ce46}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:680px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.preg{background:#fff;border:2px solid #ffd166;border-radius:12px;padding:12px 14px;margin-top:14px}.preg b{display:block;margin-bottom:4px}
+.tel{width:340px;max-width:100%;margin:0 auto;border:1px solid var(--borde);border-radius:28px;background:#9a9a9a;overflow:hidden;box-shadow:0 6px 20px rgba(26,39,51,.1);position:relative;min-height:640px;display:flex;flex-direction:column;justify-content:flex-end}
+.atras{position:absolute;inset:0;padding:22px 16px;opacity:.55}
+.ok{background:#fff;border-radius:16px;padding:16px;text-align:center}
+.ok i{display:block;width:46px;height:46px;border-radius:50%;background:#2c8a4b;margin:0 auto 8px}
+.inst{background:#eef5fb;border:1.5px solid var(--navy);border-radius:14px;padding:12px;display:flex;gap:12px;align-items:center;margin-top:12px}
+.inst img{width:44px;height:44px;border-radius:11px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.inst b{display:block;color:var(--navy);margin-bottom:6px}
+.inst .s{background:var(--navy);color:#fff;border:0;border-radius:10px;padding:6px 12px;font:inherit;font-weight:800}
+.hoja{position:relative;background:#fff;border-radius:20px 20px 0 0;padding:18px 16px 16px}
+.hoja h3{margin:0 0 4px;font-size:16px}
+.hoja .s2{color:var(--suave);font-size:12.5px;margin:0 0 10px}
+.pasos{list-style:none;margin:0;padding:0}
+.pasos li{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+.num{width:24px;height:24px;border-radius:50%;background:var(--ce);color:#2b2200;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.en{color:var(--suave);font-size:12px}
+.ic{display:inline-flex;vertical-align:-3px;margin:0 2px}
+.listo{display:block;width:100%;margin-top:12px;padding:12px;border-radius:12px;border:0;background:#8a6d1d;color:#fff;font:inherit;font-weight:800;font-size:15px;cursor:pointer}
+.tip{background:#f4f7f9;border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--suave);margin-top:4px}
+/* tutorial paso a paso */
+.dib{background:#eef1f4;border-radius:14px;height:190px;position:relative;overflow:hidden;margin:4px 0 12px;display:flex;align-items:flex-end;justify-content:center}
+.toque{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:3px solid #ff3b30;animation:lat 1.2s infinite;pointer-events:none}
+.obj{position:relative;display:inline-flex}
+@keyframes lat{0%{transform:scale(.8);opacity:1}100%{transform:scale(1.35);opacity:.2}}
+.sbar{position:absolute;left:10px;right:10px;bottom:12px;display:flex;gap:8px;align-items:center}
+.circ{width:42px;height:42px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.12);flex-shrink:0}
+.pill{flex:1;height:42px;border-radius:21px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.menu{position:absolute;right:12px;bottom:12px;width:200px;background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(0,0,0,.15);padding:6px 0;font-size:13px}
+.menu div{padding:8px 14px;display:flex;gap:8px;align-items:center}
+.redondos{position:absolute;left:10px;right:10px;bottom:16px;display:flex;justify-content:space-between}
+.redondos div{text-align:center;font-size:10.5px;width:64px}
+.redondos>div>span{position:relative;display:flex;width:48px;height:48px;border-radius:50%;background:#fff;margin:0 auto 4px;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.lista{position:absolute;left:12px;right:12px;bottom:12px;background:#fff;border-radius:14px;font-size:13px}
+.lista div{padding:9px 12px;border-bottom:1px solid #eef1f4;display:flex;gap:8px;align-items:center}.lista div:last-child{border-bottom:0}
+.cab{position:absolute;left:0;right:0;top:0;background:#fff;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;font-size:13px;border-bottom:1px solid #e3e6e9}
+.cab b{font-size:13px}
+.nuevo{position:absolute;left:14px;right:14px;top:62px;background:#fff;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center}
+.nuevo img{width:44px;height:44px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.home{position:absolute;inset:0;background:linear-gradient(#5b7fa8,#2f4f73);display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:18px 14px;align-content:start;color:#fff;font-size:10.5px;text-align:center}
+.home i{display:block;width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.25);margin:0 auto 4px}
+.home img{width:46px;height:46px;border-radius:12px;display:block;margin:0 auto 4px;background:#fff}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px}
+.puntos{display:flex;gap:5px}.puntos i{width:7px;height:7px;border-radius:50%;background:#d4dae0}.puntos i.sel{background:var(--navy)}
+.bn{border:1px solid var(--borde);background:#fff;border-radius:10px;padding:9px 14px;font:inherit;font-weight:800;cursor:pointer}
+.bn.pri{background:var(--navy);border-color:var(--navy);color:#fff}
+.bn:disabled{opacity:.35}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V83</b> · La hoja que sale al tocar "Instalar" en un iPhone. Hoy dice "Toca Compartir, abajo en Safari", pero en los iPhone nuevos (como el tuyo) Compartir está escondido detrás de los tres puntos. Dos formas de explicarlo. Nada programado todavía.
+  <div class="tabs"><button class="sel" data-p="pa">A · Todos los pasos juntos</button><button data-p="pb">B · Tutorial paso a paso</button><button data-p="pp">Pregunta</button></div>
+</div>
+<div class="wrap">
+
+<div class="pest sel" id="pa">
+  <h2>A · Todos los pasos en una lista</h2>
+  <p class="sub">Los mismos pasos de tus fotos, en orden. Sirve para iPhones nuevos y viejos: si su Safari ya enseña Compartir abajo, se salta el primer paso. Entre paréntesis, cómo dice el botón si el iPhone está en inglés.</p>
+  <div class="tel">
+    <div class="atras"><div class="ok"><i></i><b>¡Listo, Ana!</b><div style="color:#5c6b78;font-size:13px">Quedaste anotada para Open Water Diver.</div></div>
+      <div class="inst"><img src="/icono-app-192.png" alt=""><div><b>Instala el app de Gus Dive</b><button class="s">Instalar</button></div></div></div>
+    <div class="hoja">
+      <h3>Para instalarla en tu iPhone</h3>
+      <p class="s2">En Safari. Toma menos de un minuto.</p>
+      <ol class="pasos">
+        <li><span class="num">1</span><div>Toca los tres puntos <b>•••</b> abajo a la derecha.<div class="tip">Si abajo ya ves el botón Compartir <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1f6fd1" stroke-width="2"><path d="M12 3v12M8 7l4-4 4 4"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg></span>, tócalo y sigue en el paso 3.</div></div></li>
+        <li><span class="num">2</span><div>Toca <b>Compartir</b> <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1f6fd1" stroke-width="2"><path d="M12 3v12M8 7l4-4 4 4"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg></span> <span class="en">(Share)</span></div></li>
+        <li><span class="num">3</span><div>Toca <b>Ver más</b> <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a2733" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span> <span class="en">(View More)</span></div></li>
+        <li><span class="num">4</span><div>Toca <b>Agregar a pantalla de inicio</b> <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a2733" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></span> <span class="en">(Add to Home Screen)</span></div></li>
+        <li><span class="num">5</span><div>Arriba a la derecha, toca <b>Agregar</b> <span class="en">(Add)</span>. Ya sale Gus Dive en tu pantalla.</div></li>
+      </ol>
+      <button class="listo">Listo</button>
+    </div>
+  </div>
+</div>
+
+<div class="pest" id="pb">
+  <h2>B · Tutorial paso a paso, con dibujos</h2>
+  <p class="sub">Un paso a la vez, con un dibujo de la pantalla de Safari y un círculo rojo donde hay que tocar. Toca "Siguiente" para verlo.</p>
+  <div class="tel">
+    <div class="atras"><div class="ok"><i></i><b>¡Listo, Ana!</b><div style="color:#5c6b78;font-size:13px">Quedaste anotada para Open Water Diver.</div></div>
+      <div class="inst"><img src="/icono-app-192.png" alt=""><div><b>Instala el app de Gus Dive</b><button class="s">Instalar</button></div></div></div>
+    <div class="hoja">
+      <h3 id="bt">Paso 1 de 5</h3>
+      <div class="dib" id="bd"></div>
+      <div id="bx" style="min-height:58px"></div>
+      <div class="nav"><button class="bn" id="ba">Atrás</button><span class="puntos" id="bp"></span><button class="bn pri" id="bs">Siguiente</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="pest" id="pp">
+  <h2>Pregunta</h2>
+  <div class="preg"><b>1. ¿Cuál te gusta para la hoja de iPhone: A (todos los pasos juntos) o B (paso a paso con dibujos)?</b>Las dos tienen los mismos pasos de tus fotos y sirven para iPhones nuevos y viejos. En Android no cambia nada: ahí "Instalar" abre la ventanita del celular directo.</div>
+</div>
+
+</div>
+<script>
+const $=id=>document.getElementById(id);
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("sel",x===b));document.querySelectorAll(".pest").forEach(p=>p.classList.toggle("sel",p.id===b.dataset.p));window.scrollTo(0,0)});
+const SH='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1f6fd1" stroke-width="2"><path d="M12 3v12M8 7l4-4 4 4"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg>';
+const MAS='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a2733" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg>';
+const P=[
+ {d:'<div class="sbar"><span class="circ">‹</span><span class="pill">app-gus-dive…vercel.app</span><span class="circ obj">•••<span class="toque"></span></span></div>',
+  t:'Toca los tres puntos <b>•••</b> abajo a la derecha.<div class="tip">Si abajo ya ves el botón Compartir '+SH+', tócalo y sigue en el paso 3.</div>'},
+ {d:'<div class="menu"><div><span class="obj">'+SH+'<span class="toque"></span></span> Compartir</div><div>Agregar a favoritos</div><div>Nueva pestaña</div></div>',
+  t:'Toca <b>Compartir</b> <span class="en">(Share)</span>.'},
+ {d:'<div class="redondos"><div><span>⧉</span>Copiar</div><div><span>☆</span>Favoritos</div><div><span>◎</span>Lista de lectura</div><div><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a2733" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg><span class="toque"></span></span>Ver más</div></div>',
+  t:'Toca <b>Ver más</b> <span class="en">(View More)</span>.'},
+ {d:'<div class="lista"><div>Agregar a favoritos</div><div>Buscar en la página</div><div><span class="obj">'+MAS+'<span class="toque"></span></span> Agregar a pantalla de inicio</div></div>',
+  t:'Toca <b>Agregar a pantalla de inicio</b> <span class="en">(Add to Home Screen)</span>.'},
+ {d:'<div class="cab"><span style="color:#1f6fd1">Cancelar</span><b>Agregar a inicio</b><span class="obj" style="color:#1f6fd1;font-weight:700">Agregar<span class="toque" style="width:70px;height:40px;margin:-20px 0 0 -35px;border-radius:20px"></span></span></div><div class="nuevo"><img src="/icono-app-192.png" alt=""><b>Gus Dive</b></div>',
+  t:'Arriba a la derecha, toca <b>Agregar</b> <span class="en">(Add)</span>.'},
+];
+let i=0;
+function pinta(){
+  const fin=i===P.length;
+  $("bt").textContent=fin?"¡Listo!":"Paso "+(i+1)+" de "+P.length;
+  $("bd").innerHTML=fin?'<div class="home"><div><i></i>Fotos</div><div><i></i>Mapas</div><div><img src="/icono-app-192.png" alt="">Gus Dive</div><div><i></i>Notas</div><div><i></i>Reloj</div><div><i></i>Cámara</div><div><i></i>Música</div><div><i></i>Ajustes</div></div>':P[i].d;
+  $("bx").innerHTML=fin?"Ya tienes Gus Dive en tu pantalla de inicio. Ábrela desde ahí, como cualquier app.":P[i].t;
+  $("bp").innerHTML=P.map((_,k)=>'<i class="'+(k===i?"sel":"")+'"></i>').join("");
+  $("ba").disabled=i===0;
+  $("bs").textContent=fin?"Listo":"Siguiente";
+}
+$("ba").onclick=()=>{if(i>0){i--;pinta()}};
+$("bs").onclick=()=>{if(i<P.length)i++;else i=0;pinta()};
+pinta();
+</script></body></html>

@@ -1,5 +1,6 @@
 "use client";
 
+import LoadingLogo from "@/components/LoadingLogo";
 import FechaHoy from "@/components/FechaHoy";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -12,7 +13,7 @@ import NotificacionesPagina from "@/components/NotificacionesPagina";
 import { IconGear, IconLogout, IconShuffle, IconHistory, IconUsers } from "@/components/icons";
 import { cargarTodo, estAFila, buzoAFila, cursoAFila, interesadoAFila, fechaAFila, nuevoId } from "@/lib/estudiantes/datos";
 import { fechaCursoCorta } from "@/lib/estudiantes/modelo";
-import { Inicio, Lista, Mas, Bitacora, Directorio, DetalleCurso, PorEtapa } from "./Inicio";
+import { Inicio, Lista, Mas, Bitacora, Directorio, DetalleCurso, PorEtapa, AppGusDive } from "./Inicio";
 import { Ficha } from "./Ficha";
 import { Nuevo } from "./Nuevo";
 import { Cursos } from "./Cursos";
@@ -70,7 +71,11 @@ function Topbar({ yo, links, activo, ir }) {
               GUS (maqueta-v54b: "76. 1"). */}
           <div className="ce-logos">
             <a className="topbar-logo-link" href={BASE} onClick={(e) => (e.preventDefault(), ir("inicio"))} aria-label="Ir al inicio">
-              <Image src="/logo-gus-icon.png" alt="Gus Dive" width={64} height={22} className="topbar-logo" priority />
+              {/* V84 (pedido explícito, con la imagen: "usemos este logo para
+                  el app Control Estudiantes") -- el GUS rojo con franjas.
+                  V85: con las franjas transparentes ("así coincide con el
+                  amarillo del fondo"; "déjalo solo en Control Estudiantes"). */}
+              <Image src="/logo-gus-estudiantes-transparente.png" alt="Gus Dive" width={63} height={22} className="topbar-logo" priority />
             </a>
             <span className="ce-logos-sep" />
             <img src="/logo-snsi.png" alt="SNSI" className="ce-logo-snsi" />
@@ -293,6 +298,10 @@ export default function EstudiantesApp({ p, yo, personas }) {
           if (de.length) local((d) => ({ ...d, estudiantes: d.estudiantes.map((e) => (e.fechaId === f.id ? { ...e, fechaInicio: f.inicio } : e)) }));
         }
         await log(null, `${esNueva ? "Agregó una fecha" : "Cambió la fecha"}: ${c.nombre} · ${fechaCursoCorta(f.inicio)}${f.cupo ? ` · cupo ${f.cupo}` : ""}`);
+        // V84 (maqueta V84, idea c): aviso en el celular a los clientes que
+        // lo activaron en el app Gus Dive. El servidor decide si aplica
+        // (curso en el link, fecha próxima) y lo manda una sola vez.
+        if (esNueva) fetch("/api/app-gus/avisar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "curso", id: f.id }) }).catch(() => {});
         avisar(esNueva ? "Fecha agregada" : "Fecha guardada");
         return true;
       } catch (e) {
@@ -416,7 +425,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
     { r: "calendario", t: "Calendario" },
     { r: "mas", t: "Más" },
   ];
-  const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "estadisticas", "administracion", "basedatos", "notificaciones"].includes(ruta) ? "mas" : ruta.startsWith("curso:") ? "cursos" : ruta.split(":")[0];
+  const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "estadisticas", "administracion", "basedatos", "notificaciones", "appgus"].includes(ruta) ? "mas" : ruta.startsWith("curso:") ? "cursos" : ruta.split(":")[0];
   const q = { db, p, yo, ops, ir, avisar, personas };
 
   let cuerpo = null;
@@ -443,6 +452,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
   else if (ruta === "calendario") cuerpo = <Calendario {...q} />;
   else if (ruta === "interesados" || ruta.startsWith("interesados:")) cuerpo = p.interesados ? <Interesados key={ruta} {...q} abrirId={ruta.split(":")[1] || null} /> : <Inicio {...q} />;
   else if (ruta === "basedatos") cuerpo = <Cursos {...q} />;
+  else if (ruta === "appgus") cuerpo = <AppGusDive {...q} />;
   else if (ruta === "mas") cuerpo = <Mas {...q} />;
   else if (ruta === "bitacora") cuerpo = p.bitacora ? <Bitacora {...q} /> : <Inicio {...q} />;
   // V67 ("4"): Más › Estadísticas, con su permiso.
@@ -456,6 +466,13 @@ export default function EstudiantesApp({ p, yo, personas }) {
     );
   else if (ruta === "administracion") cuerpo = yo.esTitular ? <AdminEst {...q} /> : <Inicio {...q} />;
   else cuerpo = <Inicio {...q} />;
+
+  // V84 (pedido explícito: "recuerda poner el loading screen que te había
+  // pedido para el app control estudiantes"): el loading.js de la V69 solo
+  // salía mientras el servidor armaba la página; después, mientras se bajan
+  // los datos, se veía "Cargando…" en texto. Ahora sale la misma pantalla
+  // amarilla con el logo hasta que llegan los datos.
+  if (!db && !error) return <LoadingLogo fondo="#f6ce46" src="/logo-gus-estudiantes-transparente.png" />;
 
   return (
     <div className="ce-app">

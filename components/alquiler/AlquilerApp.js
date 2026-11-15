@@ -1,5 +1,6 @@
 "use client";
 
+import LoadingLogo from "@/components/LoadingLogo";
 import FechaHoy from "@/components/FechaHoy";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -414,15 +415,9 @@ export default function AlquilerApp({ p, yo }) {
       </div>
     );
   }
+  // V84: la pantalla de carga roja (la de la V69) hasta que llegan los datos.
   if (!db) {
-    return (
-      <div className="alq-app">
-        <Topbar yo={yo} links={[]} activo="" ir={ir} />
-        <div className="page" style={{ paddingTop: 30 }}>
-          <div className="hint-text">Cargando…</div>
-        </div>
-      </div>
-    );
+    return <LoadingLogo fondo="#cd392a" blanco />;
   }
 
   // "127": Inicio, Alquiler (con Nuevo alquiler adentro), Retornos, Equipos y Más.

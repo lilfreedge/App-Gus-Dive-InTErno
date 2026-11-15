@@ -3950,3 +3950,113 @@ html[data-theme="dark"] .vj-cal-curso.empieza { background: #8a6a00; color: #fff
   .reg-buscar input { flex-basis: 100% !important; }
   .reg-buscar select { flex: 1 1 100% !important; width: 100% !important; }
 }
+
+/* V83 -- tutorial para instalar Gus Dive en iPhone (maqueta V83, opción B). */
+.ag-tut-dib { background: #eef1f4; border-radius: 14px; height: 190px; position: relative; overflow: hidden; margin: 10px 0 12px; }
+.ag-tut-obj { position: relative; display: inline-flex; align-items: center; }
+.ag-tut-toque { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; border: 3px solid #ff3b30; animation: ag-tut-lat 1.2s infinite; pointer-events: none; }
+.ag-tut-toque.ancho { width: 74px; height: 40px; margin: -20px 0 0 -37px; border-radius: 20px; }
+@keyframes ag-tut-lat { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.35); opacity: 0.2; } }
+.ag-tut-barra { position: absolute; left: 10px; right: 10px; bottom: 12px; display: flex; gap: 8px; align-items: center; }
+.ag-tut-circ { width: 42px; height: 42px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); flex-shrink: 0; color: #1a2733; }
+.ag-tut-pill { flex: 1; height: 42px; border-radius: 21px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #5c6b78; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.ag-tut-menu { position: absolute; right: 12px; bottom: 12px; width: 200px; background: #fff; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); padding: 6px 0; font-size: 13px; color: #1a2733; }
+.ag-tut-menu div { padding: 8px 14px; display: flex; gap: 8px; align-items: center; }
+.ag-tut-redondos { position: absolute; left: 10px; right: 10px; bottom: 16px; display: flex; justify-content: space-between; }
+.ag-tut-redondos > div { text-align: center; font-size: 10.5px; width: 64px; color: #1a2733; }
+.ag-tut-redondos > div > span { position: relative; display: flex; width: 48px; height: 48px; border-radius: 50%; background: #fff; margin: 0 auto 4px; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.ag-tut-lista { position: absolute; left: 12px; right: 12px; bottom: 12px; background: #fff; border-radius: 14px; font-size: 13px; color: #1a2733; }
+.ag-tut-lista div { padding: 9px 12px; border-bottom: 1px solid #eef1f4; display: flex; gap: 8px; align-items: center; }
+.ag-tut-lista div:last-child { border-bottom: 0; }
+.ag-tut-cab { position: absolute; left: 0; right: 0; top: 0; background: #fff; display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; font-size: 13px; border-bottom: 1px solid #e3e6e9; color: #1f6fd1; }
+.ag-tut-cab b { font-size: 13px; color: #1a2733; }
+.ag-tut-nuevo { position: absolute; left: 14px; right: 14px; top: 62px; background: #fff; border-radius: 12px; padding: 10px; display: flex; gap: 10px; align-items: center; color: #1a2733; }
+.ag-tut-nuevo img { width: 44px; height: 44px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+.ag-tut-home { position: absolute; inset: 0; background: linear-gradient(#5b7fa8, #2f4f73); display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 18px 14px; align-content: start; color: #fff; font-size: 10.5px; text-align: center; }
+.ag-tut-home i { display: block; width: 46px; height: 46px; border-radius: 12px; background: rgba(255, 255, 255, 0.25); margin: 0 auto 4px; }
+.ag-tut-home img { width: 46px; height: 46px; border-radius: 12px; display: block; margin: 0 auto 4px; background: #fff; }
+.ag-tut-texto { min-height: 58px; font-size: 15px; color: #1a2733; }
+.ag-tut-texto svg { vertical-align: -3px; }
+.ag-tut-tip { background: #f4f7f9; border-radius: 10px; padding: 8px 10px; font-size: 13px; color: #5c6b78; margin-top: 6px; }
+.ag-tut-en { color: #5c6b78; font-size: 13px; }
+.ag-tut-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.ag-tut-puntos { display: flex; gap: 5px; }
+.ag-tut-puntos i { width: 7px; height: 7px; border-radius: 50%; background: #d4dae0; }
+.ag-tut-puntos i.sel { background: #06324f; }
+.ag-tut-bn { border: 1px solid #dfe6ea; background: #fff; border-radius: 10px; padding: 10px 16px; font: inherit; font-weight: 800; color: #1a2733; cursor: pointer; }
+.ag-tut-bn.pri { background: #06324f; border-color: #06324f; color: #fff; }
+.ag-tut-bn:disabled { opacity: 0.35; cursor: default; }
+
+/* V84 -- App Gus Dive: menú de abajo (maqueta V84), Cursos, Calendario,
+   Contacto, alquiler y avisos. */
+.ag-con-menu .pb-body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+.ag-menu { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; background: #fff; border-top: 1px solid #e3eaef; padding: 6px 4px calc(8px + env(safe-area-inset-bottom)); box-shadow: 0 -2px 10px rgba(26, 39, 51, 0.05); }
+.ag-menu button { flex: 1; border: 0; background: none; font: inherit; font-size: 11px; font-weight: 700; color: #8796a3; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ag-menu button.sel { color: #06324f; }
+@media (min-width: 640px) { .ag-menu { left: 50%; transform: translateX(-50%); max-width: 560px; border-radius: 16px 16px 0 0; border: 1px solid #e3eaef; } }
+.ag-titulo { font-size: 22px; font-weight: 800; color: #1a2733; margin: 4px 2px 2px; }
+.ag-volver { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; font: inherit; font-weight: 700; color: #06324f; padding: 2px 0; margin-bottom: 4px; cursor: pointer; }
+.ag-curso-cat { display: block; width: 100%; text-align: left; background: #fff; border: 1px solid #e3eaef; border-radius: 14px; padding: 12px; margin-bottom: 8px; font: inherit; color: #1a2733; cursor: pointer; }
+.ag-curso-cat-t { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ag-curso-cat-t b { font-size: 15.5px; }
+.ag-nivel { font-size: 11px; font-weight: 800; background: #fdf1cf; color: #5c4700; border-radius: 999px; padding: 2px 8px; }
+.ag-curso-cat-l { display: flex; justify-content: space-between; gap: 8px; color: #5c6b78; font-size: 13px; margin-top: 4px; }
+.ag-curso-cat-l b { color: #1a2733; }
+.ag-info h4 { margin: 12px 0 2px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #5c6b78; }
+.ag-info div:first-child h4 { margin-top: 0; }
+.ag-info p { margin: 0; color: #1a2733; }
+.ag-cal { padding: 10px; }
+.ag-cal-t { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.ag-cal-t b { text-transform: capitalize; }
+.ag-cal-t button { border: 0; background: none; font-size: 22px; font-weight: 700; color: #06324f; padding: 0 12px; cursor: pointer; }
+.ag-cal-t button:disabled { opacity: 0.25; cursor: default; }
+.ag-cal-dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.ag-cal-dias .h { font-size: 11px; font-weight: 800; color: #5c6b78; padding: 4px 0; }
+.ag-cal-dias .d { position: relative; border: 0; background: none; font: inherit; font-weight: 600; color: #1a2733; padding: 7px 0 10px; border-radius: 10px; cursor: pointer; }
+.ag-cal-dias .d.sel { background: #06324f; color: #fff; }
+.ag-cal-dias .pts { position: absolute; left: 0; right: 0; bottom: 3px; display: flex; justify-content: center; gap: 3px; }
+.ag-cal-dias .pts i, .ag-cal-ley i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
+.ag-cal-dias i.cur, .ag-cal-ley i.cur { background: #e0b424; }
+.ag-cal-dias i.buc, .ag-cal-ley i.buc { background: #4ebae8; }
+.ag-cal-ley { display: flex; gap: 14px; font-size: 12px; color: #5c6b78; margin: 8px 4px 0; }
+.ag-cal-ley i { margin-right: 4px; }
+.ag-avisos { display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; color: #06324f; }
+.ag-avisos b { display: block; color: #1a2733; }
+.ag .ag-avisos-si { width: auto; margin: 8px 0 0; padding: 9px 16px; font-size: 14px; }
+.ag-avisos-on { text-align: center; font-size: 13px; color: #5c6b78; margin-top: 14px; }
+.ag-avisos-on button { border: 0; background: none; font: inherit; font-weight: 700; color: #06324f; padding: 0; cursor: pointer; }
+.ag-contacto { padding: 4px 12px; }
+.ag-contacto > a, .ag-contacto > div { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #eef3f6; text-decoration: none; color: #1a2733; }
+.ag-contacto > :last-child { border-bottom: 0; }
+.ag-contacto i { width: 34px; height: 34px; border-radius: 10px; background: #eef5fb; color: #06324f; display: flex; align-items: center; justify-content: center; font-style: normal; font-weight: 800; flex-shrink: 0; }
+.ag-contacto span b { display: block; }
+.ag-contacto span small { color: #5c6b78; font-size: 13px; }
+.ag-sec-boton { display: flex; justify-content: space-between; width: calc(100% - 4px); border: 0; background: none; padding: 0; cursor: pointer; font-family: inherit; }
+.ag-precios { padding-top: 4px; }
+/* V84: "Enviar link de curso" grande, como Inscribir, y encima. */
+.ce-int-link-grande { display: block; width: 100% !important; padding: 13px 16px !important; font-size: 15.5px !important; margin: 4px 0 6px !important; }
+.ag-contacto .ag-horario { align-items: flex-start; }
+.ag-contacto .ag-horario small { display: block; }
+/* V85: Control Estudiantes › Más › App Gus Dive. */
+.ce-appgus { text-align: center; }
+.ce-appgus-qr { width: 220px; max-width: 70vw; margin: 4px auto 6px; }
+.ce-appgus-qr svg { width: 100%; height: auto; display: block; }
+.ce-appgus-url { background: var(--fondo, #f4f7f9); border-radius: 8px; padding: 8px 10px; font-size: 13px; color: var(--texto-suave); word-break: break-all; margin: 10px 0; }
+.ce-appgus-bot { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.ce-appgus-bot .btn { width: auto; margin: 0; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+/* V85: Inicio de Control Estudiantes, "Para escribir hoy". */
+.ce-hoy { background: #fff4f2; border: 1.5px solid #f2b8b0; border-radius: 14px; padding: 12px; margin: 10px 0 4px; }
+.ce-hoy-t { font-weight: 800; color: #a8291c; margin-bottom: 6px; }
+.ce-hoy-fila { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 10px; padding: 8px 10px; margin-top: 6px; }
+.ce-hoy-nombre { flex: 1; min-width: 0; text-align: left; border: 0; background: none; font: inherit; color: var(--texto); padding: 0; cursor: pointer; }
+.ce-hoy-nombre b, .ce-hoy-nombre small { display: block; }
+.ce-hoy-nombre small { color: var(--texto-suave); font-size: 12.5px; }
+.ce-hoy .ce-hoy-wa, .ce-hoy .ce-hoy-abrir { width: auto; margin: 0; padding: 7px 10px; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; flex-shrink: 0; }
+/* V85: "Próximo seguimiento" en su propia línea, con botones rápidos. */
+.ce-int-prox-t { font-size: 12px; font-weight: 800; color: var(--texto-suave); margin: 12px 0 6px; }
+.ce-int-prox-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.ce-int-prox-chips button { border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); border-radius: 999px; padding: 7px 12px; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.ce-int-prox-chips button.sel { background: var(--azul-texto, #06324f); border-color: var(--azul-texto, #06324f); color: #fff; }
+.ce-int-prox-fecha { display: block; margin-top: 8px; border: 1px solid var(--borde); border-radius: 10px; padding: 8px 10px; font: inherit; background: var(--tarjeta); color: var(--texto); }
+.ce-int-prox-v { font-size: 13px; color: var(--texto-suave); margin-top: 6px; }
+.ce-int-guardar-ancho { width: 100% !important; margin-top: 12px !important; }

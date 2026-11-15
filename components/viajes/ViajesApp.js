@@ -1,5 +1,6 @@
 "use client";
 
+import LoadingLogo from "@/components/LoadingLogo";
 import FechaHoy from "@/components/FechaHoy";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -193,6 +194,10 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
     recargar();
   };
   const local = (fn) => setDb((d) => fn(d));
+  // V84 (maqueta V84, idea c): aviso en el celular a los clientes del app
+  // Gus Dive cuando un buceo queda publicado (web + abierto). El servidor
+  // revisa si aplica y lo manda una sola vez por buceo.
+  const avisarClientes = (id) => fetch("/api/app-gus/avisar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "viaje", id }) }).catch(() => {});
 
   const ops = {
     async cambiarViaje(v, cambios, texto, antes, despues) {
@@ -201,6 +206,7 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
       try {
         await guardar(supabase.from("viajes").update(viajeAFila(nuevo)).eq("id", v.id));
         if (texto) await log(v.id, texto, antes, despues);
+        if (nuevo.web) avisarClientes(v.id);
       } catch (e) {
         fallo(e);
       }
@@ -258,6 +264,7 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
       try {
         await guardar(supabase.from("viajes").insert({ id: v.id, creado_por: yo.id, ...viajeAFila(v) }));
         await log(v.id, `Creó el ${palabraViaje(v)}: ${v.nombre} (${v.fecha})`);
+        if (v.web) avisarClientes(v.id);
       } catch (e) {
         fallo(e);
       }
@@ -420,6 +427,45 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
         fallo(e);
       }
     },
+    // V83 (pedido explícito: "permíteme borrarlos yo así como lo tenemos en
+    // otros apps") -- borrar un buzo desde su ficha, solo el Titular. Lo
+    // hace la función viajes_borrar_buzo de la base (migration_97.sql) en un
+    // solo paso: se van la persona y sus inscripciones en buceos (con sus
+    // pagos). No deja si es estudiante en Control Estudiantes o tiene
+    // alquileres (es la misma persona en esos apps).
+    async borrarBuzo(b) {
+      const suyas = db.inscripciones.filter((x) => x.buzoId === b.id);
+      try {
+        const { error: e } = await supabase.rpc("viajes_borrar_buzo", { p_buzo: b.id });
+        if (e) {
+          const m = String(e.message || "");
+          if (/es_estudiante/.test(m)) avisar("No se puede borrar: es estudiante en Control Estudiantes. Bórralo primero allá.");
+          else if (/tiene_alquileres/.test(m)) avisar("No se puede borrar: tiene alquileres. Bórralos primero en Alquiler.");
+          else if (/solo_titular/.test(m)) avisar("Solo el Titular puede borrar buzos.");
+          else if (e.code === "PGRST202" || /viajes_borrar_buzo/.test(m)) avisar("No se pudo borrar: falta correr en Supabase el SQL todo_v84_una_sola_vez.sql.");
+          else throw e;
+          return false;
+        }
+        local((d) => ({
+          ...d,
+          buzos: d.buzos.filter((x) => x.id !== b.id),
+          inscripciones: d.inscripciones
+            .filter((x) => x.buzoId !== b.id)
+            .map((x) => (x.pagadoPor === b.id || x.inscritoPor === b.id ? { ...x, pagadoPor: x.pagadoPor === b.id ? "" : x.pagadoPor, inscritoPor: x.inscritoPor === b.id ? "" : x.inscritoPor } : x)),
+        }));
+        await log(
+          null,
+          `Borró el buzo ${b.nombre}`,
+          [b.cel, suyas.length ? `${suyas.length} inscripci${suyas.length === 1 ? "ón" : "ones"} en buceos` : ""].filter(Boolean).join(" · ") || null,
+          "Borrado"
+        );
+        avisar("Buzo borrado");
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
     async guardarBuzo(b, cambios, texto) {
       local((d) => ({ ...d, buzos: d.buzos.map((x) => (x.id === b.id ? { ...x, ...cambios } : x)) }));
       try {
@@ -489,6 +535,10 @@ export default function ViajesApp({ p, yo, personas, calUrl, children }) {
     else if (ruta === "administracion" || ruta === "accesos") cuerpo = yo.esTitular ? <AccesosViajes {...q} /> : <Inicio {...q} />;
     else cuerpo = <Inicio {...q} />;
   }
+
+  // V84: lo mismo que en Control Estudiantes, la pantalla de carga (celeste,
+  // la de la V69) hasta que llegan los datos, en vez de "Cargando…".
+  if (!db && !error) return <LoadingLogo fondo="#4EBAE8" />;
 
   return (
     <div className="vj-app">

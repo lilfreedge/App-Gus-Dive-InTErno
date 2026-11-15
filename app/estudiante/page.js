@@ -18,7 +18,7 @@ export const metadata = {
   // V81: se instala como "App Gus" (una sola app para los clientes, maqueta V82).
   manifest: "/app-gus.webmanifest",
   icons: { apple: "/icono-app-192.png" },
-  appleWebApp: { capable: true, title: "App Gus", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Gus Dive", statusBarStyle: "default" },
 };
 
 // Control Estudiantes -- el link de registro (público, sin cuenta). Solo se

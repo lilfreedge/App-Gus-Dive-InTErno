@@ -82,7 +82,7 @@ export default function CompartirLink({ ruta, etiqueta = "Compartir link", mensa
   );
 }
 
-function VentanaQr({ url, titulo, onCerrar }) {
+export function VentanaQr({ url, titulo, onCerrar }) {
   const svg = svgQr(url);
   function imprimir() {
     const w = window.open("", "_blank");

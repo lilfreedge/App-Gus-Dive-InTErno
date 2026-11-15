@@ -45,11 +45,18 @@ export async function POST(request) {
   if (body.accion === "abrio") {
     const id = String(body.i || "");
     if (/^[0-9a-f-]{20,40}$/i.test(id)) {
-      const { data: x } = await s.from("est_interesados").select("id, estado, seguimiento").eq("id", id).maybeSingle();
+      const { data: x } = await s.from("est_interesados").select("*").eq("id", id).maybeSingle();
       const seg = Array.isArray(x?.seguimiento) ? x.seguimiento : [];
       const ult = [...seg].sort((a, b) => String(a.en || "").localeCompare(String(b.en || ""))).pop();
-      if (x && !["inscrito", "no"].includes(x.estado) && ult?.tipo !== "abrio_link")
+      const abierto = x && !["inscrito", "no"].includes(x.estado);
+      if (abierto && ult?.tipo !== "abrio_link")
         await s.from("est_interesados").update({ seguimiento: [...seg, { id: nuevoId(), tipo: "abrio_link", en: new Date().toISOString() }] }).eq("id", id);
+      // V84 (notas del 15-nov: "después que mando el link de registro al
+      // interesado, vuelve y le pide su nombre, número y correo. Esa info
+      // debería estar llenada... y que solo esté vacía la info que haga
+      // falta"): el link es solo de esa persona (lleva su id), así que se le
+      // devuelven sus datos para rellenar "Tus datos".
+      if (abierto) return NextResponse.json({ ok: true, datos: { nombre: x.nombre || "", cel: x.celular || "", correo: x.correo || "", curso: x.curso || "" } });
     }
     return NextResponse.json({ ok: true });
   }

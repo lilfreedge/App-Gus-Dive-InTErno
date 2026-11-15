@@ -205,9 +205,10 @@ export function Buzos({ db, ops, p, ir }) {
   );
 }
 
-export function FichaBuzo({ db, ops, id, p, ir, rol }) {
+export function FichaBuzo({ db, ops, id, p, ir, rol, yo: usuario }) {
   const yo = rol;
   const [editando, setEditando] = useState(false);
+  const [borrando, setBorrando] = useState(false);
   const b = db.buzos.find((x) => x.id === id);
   const mismos = db.buzos.filter((x) => x.id !== b.id && x.cel && x.cel === b.cel);
   const viajes = db.inscripciones
@@ -331,6 +332,36 @@ export function FichaBuzo({ db, ops, id, p, ir, rol }) {
           );
         })}
       </div>
+
+      {/* V83 (pedido explícito: "permíteme borrarlos yo así como lo tenemos
+          en otros apps") -- igual que "Borrar cliente" en Alquiler: solo el
+          Titular, abajo de todo, y pide confirmar. */}
+      {usuario?.esTitular && (
+        <div className="alq-acciones">
+          {borrando ? (
+            <div className="alq-confirmar">
+              ¿Borrar a {b.nombre}?
+              {(() => {
+                const n = db.inscripciones.filter((x) => x.buzoId === b.id).length;
+                return n ? ` También se borran sus ${n === 1 ? "inscripción" : `${n} inscripciones`} en buceos, con sus pagos.` : "";
+              })()}{" "}
+              Es la misma persona de Control Estudiantes y Alquiler: si es estudiante o tiene alquileres, no se va a poder.
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button className="btn secondary vj-mini" onClick={() => setBorrando(false)}>
+                  No
+                </button>
+                <button className="btn vj-mini vj-rojo" onClick={async () => (await ops.borrarBuzo(b)) && ir("buzos")}>
+                  Sí, borrar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button className="btn secondary vj-mini vj-rojo-txt" onClick={() => setBorrando(true)}>
+              Borrar buzo
+            </button>
+          )}
+        </div>
+      )}
     </>
   );
 }

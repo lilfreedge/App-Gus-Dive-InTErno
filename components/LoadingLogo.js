@@ -5,10 +5,11 @@
 // el logo en blanco (filtro) para que se vea sobre un fondo de color fuerte.
 // Sin props, sigue igual que siempre (navy, logo rojo y blanco): App Interno
 // y App Equipos de clientes.
-export default function LoadingLogo({ fondo, blanco }) {
+// V85: `src` para usar otro logo (Control Estudiantes usa el suyo).
+export default function LoadingLogo({ fondo, blanco, src = "/logo-gus-icon.png" }) {
   return (
     <div className="loading-logo-wrap" style={fondo ? { background: fondo } : undefined}>
-      <img src="/logo-gus-icon.png" alt="Cargando" className="loading-logo-icon" style={blanco ? { filter: "brightness(0) invert(1)" } : undefined} />
+      <img src={src} alt="Cargando" className="loading-logo-icon" style={blanco ? { filter: "brightness(0) invert(1)" } : undefined} />
     </div>
   );
 }
