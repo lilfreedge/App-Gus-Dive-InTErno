@@ -376,7 +376,8 @@ export function Calendario(props) {
   const recs = recordatoriosConFecha(db);
   const primero = new Date(mes.a, mes.m, 1);
   const inicio = new Date(primero);
-  inicio.setDate(1 - primero.getDay());
+  // V80 (notas del 13-nov: "Que la semana empiece lunes aquí y en app buceos").
+  inicio.setDate(1 - ((primero.getDay() + 6) % 7));
   const celdas = Array.from({ length: 42 }, (_, i) => {
     const d = new Date(inicio);
     d.setDate(inicio.getDate() + i);
@@ -400,7 +401,7 @@ export function Calendario(props) {
           </button>
         </div>
         <div className="vj-cal-grid">
-          {DIAS.map((d) => (
+          {[...DIAS.slice(1), DIAS[0]].map((d) => (
             <div key={d} className="vj-cal-dow">
               {d}
             </div>

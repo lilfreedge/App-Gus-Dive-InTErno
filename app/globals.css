@@ -3831,3 +3831,122 @@ html[data-theme="dark"] .vj-cal-curso.empieza { background: #8a6a00; color: #fff
 .ce-avisar-fila input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; margin: 0; }
 .ce-avisar-fila small { display: block; color: var(--texto-suave); font-size: 12.5px; overflow-wrap: anywhere; }
 .ce-avisar-der { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0; }
+
+/* V80: "Próximo seguimiento" en la fila rápida del seguimiento. */
+.ce-int-prox { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; font-weight: 700; color: var(--texto-suave); margin: 0; flex: 1 1 140px; }
+.ce-int-prox input { border: 1px solid var(--borde); border-radius: 10px; padding: 7px 9px; font: inherit; font-size: 14px; font-weight: 400; background: var(--tarjeta); color: var(--texto); margin: 0; width: 100%; }
+
+/* V80 (maqueta V81): escoger el curso antes de inscribir o mandar el link. */
+.ce-elegir { border: 2px solid var(--ce); border-radius: 12px; background: var(--tarjeta); padding: 12px 14px; margin-top: 10px; }
+.ce-elegir > b { display: block; }
+.ce-elegir-g { font-size: 11.5px; font-weight: 800; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.04em; margin: 10px 0 0; }
+.ce-elegir-op { display: flex !important; flex-direction: row !important; gap: 10px; align-items: center; padding: 9px 10px; border: 1px solid var(--borde); border-radius: 10px; margin: 6px 0 0 !important; cursor: pointer; font-weight: 400 !important; }
+.ce-elegir-op.sel { border-color: var(--ce-texto); background: var(--ce-claro); }
+.ce-elegir-op.off { opacity: 0.5; cursor: default; }
+.ce-elegir-op input { width: 18px; height: 18px; margin: 0; flex-shrink: 0; }
+.ce-elegir-op b { display: block; }
+.ce-elegir-op small { display: block; color: var(--texto-suave); }
+.ce-int-insc-mini { padding: 6px 12px !important; font-size: 13px !important; width: auto !important; margin: 0 !important; flex-shrink: 0; }
+.ce-int-fila-curso { cursor: pointer; }
+/* V80 (maqueta V81): calendario para el lunes en que empieza un curso. */
+.ce-campo-fecha { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 700; color: var(--texto-suave); position: relative; }
+.ce-fecha-val { display: flex; justify-content: space-between; align-items: center; width: 100%; border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; background: var(--tarjeta); color: var(--texto); font: inherit; font-size: 15px; font-weight: 400; cursor: pointer; text-align: left; margin: 0; }
+.ce-mcal { border: 2px solid var(--ce); border-radius: 12px; background: var(--tarjeta); padding: 10px; max-width: 340px; }
+.ce-mcal-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; color: var(--texto); }
+.ce-mcal-cab button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); cursor: pointer; padding: 0; margin: 0; font-size: 16px; line-height: 1; }
+.ce-mcal-g { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; }
+.ce-mcal-g span { font-size: 11px; font-weight: 800; color: var(--texto-suave); padding: 3px 0; }
+.ce-mcal-g button { border: 0; border-radius: 8px; padding: 7px 0; margin: 0; font: inherit; font-size: 13px; font-weight: 400; background: var(--superficie-suave); color: #b6c0c8; cursor: default; width: auto; }
+.ce-mcal-g button.fuera { visibility: hidden; }
+.ce-mcal-g button.lun { background: var(--ce-claro); color: var(--ce-texto); font-weight: 800; cursor: pointer; }
+.ce-mcal-g button.lun.sel { background: var(--ce-texto); color: #fff; }
+.ce-mcal-g button.ya { outline: 2px solid #1f8f4e; outline-offset: -2px; }
+
+/* V81 -- App Gus (maqueta V82): la app de los clientes, en navy (sirve para
+   cursos y buceos). */
+.ag .pb-btn { background: #06324f; color: #fff; }
+.ag .pb-btn.sec { background: #fff; color: #06324f; border: 1.5px solid #cfd8de; }
+.ag a.pb-btn, .ag-inst a.pb-btn { display: block; text-align: center; text-decoration: none; box-sizing: border-box; }
+.ag-hola { margin: 4px 2px 6px; }
+.ag-hola-t { font-size: 24px; font-weight: 800; color: #1a2733; }
+.ag-sec { font-size: 11.5px; font-weight: 800; color: #5c6b78; text-transform: uppercase; letter-spacing: 0.05em; margin: 16px 2px 6px; }
+.ag-item { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e3eaef; border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; text-decoration: none; color: #1a2733; }
+.ag-viejo { opacity: 0.75; }
+.ag-fc { border-radius: 10px; padding: 4px 6px; text-align: center; line-height: 1.05; flex-shrink: 0; min-width: 46px; }
+.ag-fc small { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.ag-fc b { font-size: 19px; }
+.ag-fc.cur { background: #f6ce46; color: #2b2200; }
+.ag-fc.buc { background: #4ebae8; color: #06324f; }
+.ag-fc.gris { background: #eef3f6; color: #5c6b78; }
+.ag-tx { flex: 1; min-width: 0; }
+.ag-tx b { display: block; font-size: 15px; }
+.ag-tx small { display: block; color: #5c6b78; font-size: 13px; }
+.ag-mini { border-radius: 999px; padding: 6px 10px; font-weight: 800; font-size: 12px; flex-shrink: 0; }
+.ag-mini.cur { background: #fdf1cf; color: #5c4700; }
+.ag-mini.buc { background: #e6f5fc; color: #06324f; }
+.ag-entrar { margin-top: 16px; }
+.ag-link { display: block; width: 100%; text-align: center; margin: 14px 0 0; color: #06324f; font-weight: 700; background: none; border: 0; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; }
+.ag-tabs { display: flex; gap: 6px; margin: 6px 0 4px; }
+.ag-tabs button { flex: 1; border: 1px solid #dfe6ea; background: #fff; border-radius: 999px; padding: 9px 4px; font: inherit; font-weight: 700; font-size: 13.5px; color: #5c6b78; cursor: pointer; }
+.ag-tabs button.sel { background: #06324f; border-color: #06324f; color: #fff; }
+.ag-curso b { font-size: 16px; }
+.ag-barra { height: 8px; border-radius: 99px; background: #e6ecf0; overflow: hidden; margin: 10px 0 3px; }
+.ag-barra i { display: block; height: 100%; background: #2c8a4b; }
+.ag-gris { color: #5c6b78; }
+.ag-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.ag-chip { font-size: 12px; font-weight: 800; border-radius: 999px; padding: 3px 9px; background: #e3f4ea; color: #1b6b3c; }
+.ag-chip.rojo { background: #fde8e6; color: #a8291c; }
+.ag-chip.gris { background: #eef3f6; color: #5c6b78; }
+.ag-dato { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #eef3f6; }
+.ag-dato:last-of-type { border-bottom: 0; }
+.ag-dato span { color: #5c6b78; }
+.ag-dato b { text-align: right; overflow-wrap: anywhere; }
+/* La tarjeta para instalar App Gus (sale también en los links de cursos,
+   interesados y buceos). */
+.ag-inst { display: flex; gap: 12px; align-items: center; background: #eef5fb; border: 1.5px solid #06324f; border-radius: 16px; padding: 12px 14px; }
+.ag-inst img { width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+.ag-inst b { display: block; font-size: 16px; color: #06324f; }
+.ag-inst-bot { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
+.ag-inst .ag-inst-si { width: auto; margin: 0; padding: 10px 18px; font-size: 15px; background: #06324f; color: #fff; border: 0; }
+.ag-inst-no { border: 0; background: none; font: inherit; font-weight: 700; color: #06324f; padding: 10px 8px; cursor: pointer; }
+.ag-velo { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+.ag-hoja { background: #fff; border-radius: 18px 18px 0 0; padding: 18px; width: 100%; max-width: 480px; }
+.ag-hoja b { font-size: 16px; }
+.ag-pasos { list-style: none; margin: 12px 0; padding: 0; }
+.ag-pasos li { display: flex; gap: 8px; align-items: center; margin: 9px 0; }
+.ag-pasos li span { width: 24px; height: 24px; border-radius: 50%; background: #f6ce46; color: #2b2200; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* V82 -- filas de órdenes del Inicio de App Equipos de clientes (pedido
+   explícito, con foto del celular: "se ve apretado, algunos nombres no se
+   leen bien"). Computadora: nombre | notas | fecha, como antes. Celular:
+   nombre y fecha arriba, las notas (En proceso, Hold, inspección,
+   llenado...) en su propia línea debajo. */
+.orden-fila { display: grid; grid-template-columns: minmax(0, 1fr) fit-content(48%) auto; align-items: center; gap: 8px; }
+.orden-fila-titulo { min-width: 0; overflow-wrap: break-word; }
+.orden-fila-notas { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
+.orden-fila-notas .badge { margin-left: 0; }
+.orden-fila-fecha { text-align: right; }
+@media (max-width: 640px) {
+  .orden-fila { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "t f" "n n"; align-items: start; row-gap: 6px; }
+  .orden-fila-titulo { grid-area: t; }
+  .orden-fila-fecha { grid-area: f; }
+  .orden-fila-notas { grid-area: n; justify-content: flex-start; }
+  .orden-fila-notas:empty { display: none; }
+  .section-title { gap: 12px; align-items: flex-end; }
+  .section-fecha { font-size: 11.5px; flex-shrink: 0; max-width: 42%; }
+}
+
+/* V82 -- Registro de Órdenes en el celular: el sello del estado baja
+   debajo del nombre (en la computadora sigue a la derecha). */
+.reg-sello-movil { display: none; }
+@media (max-width: 640px) {
+  .reg-sello-compu { display: none; }
+  .reg-sello-movil { display: block; margin-top: 4px; }
+  .reg-sello-movil .badge { margin-left: 0; }
+}
+.hist-filtros input, .hist-filtros select { min-width: 0; width: 100%; max-width: 100%; box-sizing: border-box; }
+@media (max-width: 420px) {
+  .reg-buscar { flex-wrap: wrap; }
+  .reg-buscar input { flex-basis: 100% !important; }
+  .reg-buscar select { flex: 1 1 100% !important; width: 100% !important; }
+}

@@ -1,11 +1,11 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import MeInteresa from "@/components/estudiantes/MeInteresa";
-import { TIENDA } from "@/lib/viajes/servidor";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Registro de interesado · Gus Dive Center" };
+// V81: se instala como "App Gus".
+export const metadata = { title: "Registro de interesado · Gus Dive Center", manifest: "/app-gus.webmanifest", icons: { apple: "/icono-app-192.png" }, appleWebApp: { capable: true, title: "App Gus", statusBarStyle: "default" } };
 
-// Control Estudiantes -- el link "Me interesa" (para Instagram o la página
+// Control Estudiantes -- el link de interesados (para Instagram o la página
 // web). Cae en Interesados como "Nuevo".
 export default async function MeInteresaPage() {
   const s = createServiceClient();
@@ -16,5 +16,5 @@ export default async function MeInteresaPage() {
   // (app/estudiante/page.js ya lo respeta); a este link ("Me interesa") se
   // le había quedado pendiente el mismo filtro.
   const { data } = await s.from("est_cursos").select("nombre").eq("activo", true).neq("en_link", false).order("orden").order("nombre");
-  return <MeInteresa cursos={(data || []).map((c) => c.nombre)} whatsapp={TIENDA.whatsapp} />;
+  return <MeInteresa cursos={(data || []).map((c) => c.nombre)} />;
 }

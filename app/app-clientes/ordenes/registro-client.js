@@ -219,7 +219,7 @@ export default function RegistroClient({
           ajuste secundario. El buscador sigue siendo lo principal (flex: 1);
           el de orden queda angosto y discreto al lado, con aria-label en
           vez de <label> visible. */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+      <div className="reg-buscar" style={{ display: "flex", gap: 8, marginBottom: 14 }}>
         <input
           type="text"
           placeholder="Buscar cliente o No. de orden..."
@@ -280,6 +280,14 @@ export default function RegistroClient({
                   <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
                   {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                 </span>
+                {/* V82 (pedido explícito: "en el celular se ve apretado...
+                    asegúrate de que se vea todo bien en el celular") -- en
+                    el celular el sello del estado baja debajo del nombre
+                    para que el nombre tenga espacio; en la computadora
+                    sigue a la derecha (ver .reg-sello-* en globals.css). */}
+                <div className="reg-sello-movil">
+                  <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
+                </div>
                 <div className="list-item-bottom">
                   {/* Folio quitado de aquí (pedido explícito, 27-sep-2026:
                       "borra el folio de aqui, ponlo invisible") -- en esta
@@ -318,8 +326,8 @@ export default function RegistroClient({
                         · {textoAvisado(avisos[o.id].created_at, avisos[o.id].medio)} ✓
                       </span>
                     ) : (
-                      <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
-                        <span style={{ color: "#b5691f", fontWeight: 700 }}>· Sin avisar</span>
+                      <span style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                        <span style={{ color: "#b5691f", fontWeight: 700, whiteSpace: "nowrap" }}>· Sin avisar</span>
                         {puedeAsignar && (
                           <BotonAvisarWhatsApp
                             estilo="link"
@@ -370,7 +378,7 @@ export default function RegistroClient({
                     <IconRefresh size={17} />
                   </Link>
                 )}
-                <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`} style={{ flexShrink: 0 }}>
+                <span className={`badge reg-sello-compu ${BADGE_ESTADO[o.estado] || ""}`} style={{ flexShrink: 0 }}>
                   {o.estado}
                 </span>
               </span>

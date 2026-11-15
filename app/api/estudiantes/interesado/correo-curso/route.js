@@ -69,11 +69,23 @@ export async function POST(request) {
   if (!id) return NextResponse.json({ error: "Falta el interesado." }, { status: 400 });
 
   const { data: x, error } = await supabase.from("est_interesados").select("id, nombre, curso, correo").eq("id", id).maybeSingle();
+  // El nombre del curso del correo: el de la fecha escogida, si hay.
+  let nombreCurso = x?.curso || "";
+  if (x && body.fechaId) {
+    const { data: fc } = await supabase.from("est_fechas").select("curso_id").eq("id", String(body.fechaId)).maybeSingle();
+    const { data: cs } = fc ? await supabase.from("est_cursos").select("nombre").eq("id", fc.curso_id).limit(1) : { data: null };
+    if (cs?.[0]?.nombre) nombreCurso = cs[0].nombre;
+  }
   if (error || !x) return NextResponse.json({ error: "No se encontró el interesado." }, { status: 404 });
   if (!x.correo) return NextResponse.json({ error: "Este interesado no dejó correo." }, { status: 400 });
 
   let fecha = null;
-  if (x.curso) {
+  // V80 (maqueta V81, "3. ok"): la fecha que se escogió en la ficha.
+  if (body.fechaId) {
+    const { data: f } = await supabase.from("est_fechas").select("id, activo").eq("id", String(body.fechaId)).maybeSingle();
+    if (!f || f.activo === false) return NextResponse.json({ error: "Ese curso ya no está." }, { status: 404 });
+    fecha = { id: f.id };
+  } else if (x.curso) {
     const { data: cursos } = await supabase.from("est_cursos").select("id").eq("nombre", x.curso).eq("activo", true).limit(1);
     const cursoId = cursos?.[0]?.id;
     if (cursoId) {
@@ -82,7 +94,7 @@ export async function POST(request) {
     }
   }
 
-  const ok = await mandarCorreoInteresadoCurso({ correo: x.correo, nombre: primerNombre(x.nombre), curso: x.curso || "buceo", link: linkDe(origen, fecha?.id, x.id) });
+  const ok = await mandarCorreoInteresadoCurso({ correo: x.correo, nombre: primerNombre(x.nombre), curso: nombreCurso || "buceo", link: linkDe(origen, fecha?.id, x.id) });
   if (!ok) return NextResponse.json({ error: "No se pudo mandar el correo." }, { status: 500 });
   return NextResponse.json({ ok: true, conFecha: !!fecha, fechaId: fecha?.id || null });
 }

@@ -12,6 +12,27 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V82",
+    fecha: "15 de noviembre, 2026",
+    titulo: "App Equipos de clientes se ve mejor en el celular",
+    descripcion:
+      "App Equipos de clientes en el celular: en Inicio, cada orden muestra arriba el número, el nombre y la fecha, y debajo, en su propia línea, las notas (En proceso, Hold respondido, Le hace falta inspección visual, Le hace falta llenado...). Así los nombres ya no quedan apretados ni encima de las notas. En Registro de Órdenes el estado baja debajo del nombre, y el buscador y \"Ordenar\" quedan uno debajo del otro en los celulares chiquitos. En Historial de órdenes, los filtros de fecha ya no se salen de la tarjeta. En la computadora todo se ve igual que antes.",
+  },
+  {
+    version: "V81",
+    fecha: "14 de noviembre, 2026",
+    titulo: "App Gus: una sola app para los clientes",
+    descripcion:
+      "Nueva \"App Gus\" para los clientes (estudiantes, buzos e interesados), en /gus. Sin entrar muestra los próximos cursos y los próximos buceos (los marcados para salir en la página web), cada uno con \"Inscribirme\", el botón \"Entrar con mi cédula\" y \"¿No hay tu curso? Avísanos que te interesa\". La persona pone su cédula (o pasaporte) y su celular una sola vez: queda guardado en su celular y de ahí en adelante la app la saluda \"Hola, Ana\" y le muestra Mis cursos (avance, si debe, si le falta algún documento y \"Ver mis documentos\"), Mis buceos (los próximos, con su pago, y los anteriores) y Mi perfil; \"Salir\" lo borra de ese celular. La cédula y el celular también salen puestos en el link de cursos y en el link de cada buceo. Al final del registro de cursos, de interesados y de buceos (y en Mis documentos y Mi perfil) sale la tarjeta \"Instala App Gus\": en Android abre la ventanita para instalarla; en iPhone, los 3 pasos de Safari. Instalada, abre en pantalla completa con su ícono, como cualquier app. Control Estudiantes: en el itinerario, Caleta Nocturno sale el martes de la semana siguiente (para los cursos que lo llevan; se actualiza al guardar el curso en Catálogo de cursos).",
+  },
+  {
+    version: "V80",
+    fecha: "14 de noviembre, 2026",
+    titulo: "Link de interesados sin cédula, escoger el curso al inscribir o mandar el link, y calendarios",
+    descripcion:
+      "Control Estudiantes: el link de interesados ya no pide cédula ni pasaporte: en una sola pantalla pide nombre, celular, correo, el curso que le interesa y cómo se enteró; al final dice \"Quedaste anotado para (curso). Te contactaremos cuando tengamos un curso disponible.\" Al agregar un interesado a mano ya no sale \"Escribirle de nuevo el\"; esa fecha ahora se pone en el seguimiento, como \"Próximo seguimiento\", junto a qué pasó y el comentario. Crear curso: sin \"(siempre lunes)\" y la fecha con el día completo (\"lunes 16 nov 2026\"). Calendario de Control Estudiantes y de Buceos: la semana empieza el lunes. Ficha del interesado: al tocar \"Inscribir\" o \"Enviar link de curso\" primero se escoge el curso abierto (los del curso que le interesa primero); de ahí se inscribe en esa fecha, o se le manda el link de esa fecha por WhatsApp o por correo, y queda en el seguimiento. Si no hay ningún curso abierto, lo dice y lleva a crear uno. En Cursos › Interesados cada interesado tiene su botón \"Inscribir\" y al tocar el nombre se abre su ficha. Crear o editar un curso: la fecha se escoge en un calendario donde solo se tocan los lunes (en verde, los lunes que ya tienen ese mismo curso).",
+  },
+  {
     version: "V79",
     fecha: "13 de noviembre, 2026",
     titulo: "Avisar por correo a todos los interesados de un curso, \"Abrió el link\" y \"Le hace falta llenado\"",
@@ -23,21 +44,21 @@ const ENTRADAS = [
     fecha: "12 de noviembre, 2026",
     titulo: "Correo con el link del curso para los interesados",
     descripcion:
-      "Control Estudiantes: en el link \"Me interesa\" el correo ahora es obligatorio (solo se puede dejar en blanco si ya teníamos el de esa persona) y la pantalla final dice que le llegará un correo con el link para inscribirse. En la ficha de cada interesado hay un botón nuevo, \"Enviar link de curso por correo\": pide confirmar y le manda un correo con el botón \"Inscribirme\", que lo lleva directo a la primera fecha próxima del curso que tenga cupo; queda anotado en el seguimiento. El correo del interesado se ve en su ficha y se puede poner o corregir en \"Editar datos\" y al agregarlo a mano. Ya no sale el aviso \"Ya lo teníamos registrado\".",
+      "Control Estudiantes: en el link de interesados el correo ahora es obligatorio (solo se puede dejar en blanco si ya teníamos el de esa persona) y la pantalla final dice que le llegará un correo con el link para inscribirse. En la ficha de cada interesado hay un botón nuevo, \"Enviar link de curso por correo\": pide confirmar y le manda un correo con el botón \"Inscribirme\", que lo lleva directo a la primera fecha próxima del curso que tenga cupo; queda anotado en el seguimiento. El correo del interesado se ve en su ficha y se puede poner o corregir en \"Editar datos\" y al agregarlo a mano. Ya no sale el aviso \"Ya lo teníamos registrado\".",
   },
   {
     version: "V77",
     fecha: "12 de noviembre, 2026",
     titulo: "Interesados por curso, Caleta Nocturno, itinerario automático e inspección visual aparte",
     descripcion:
-      "Control Estudiantes: Interesados se filtra por curso (un botón por cada curso que tiene interesados) en vez de por estado; en la ficha, Inscribir más grande, WhatsApp más chico y \"Enviar link de curso a estudiante\", que manda el link de inscripción por WhatsApp y lo anota en el seguimiento. En Cursos, \"Lista de espera\" pasa a llamarse \"Interesados\" y junta a los interesados de cada curso. \"Base de datos\" pasa a llamarse \"Catálogo de cursos\": paso nuevo \"Caleta Nocturno\", el precio se escribe con comas y dice \"Precio con ITBIS incluidos\", los pasos salen en dos grupos y el itinerario ya no se escribe a mano (sale de los pasos marcados). Link \"Me interesa\": saludo más corto, sin botón de WhatsApp al final y lista nueva de \"¿Cómo te enteraste de nosotros?\". App Equipos de clientes: en \"Actualizar estado de orden\" de una prueba hidrostática, \"Inspección visual realizada\" es su propio paso, después de \"Fecha de retorno a tienda\", y sin marcarla no se puede poner la fecha de listo; en Inicio, esas órdenes salen con el aviso rojo \"Le hace falta inspección visual\" y sus días se cuentan desde que volvieron de la prueba.",
+      "Control Estudiantes: Interesados se filtra por curso (un botón por cada curso que tiene interesados) en vez de por estado; en la ficha, Inscribir más grande, WhatsApp más chico y \"Enviar link de curso a estudiante\", que manda el link de inscripción por WhatsApp y lo anota en el seguimiento. En Cursos, \"Lista de espera\" pasa a llamarse \"Interesados\" y junta a los interesados de cada curso. \"Base de datos\" pasa a llamarse \"Catálogo de cursos\": paso nuevo \"Caleta Nocturno\", el precio se escribe con comas y dice \"Precio con ITBIS incluidos\", los pasos salen en dos grupos y el itinerario ya no se escribe a mano (sale de los pasos marcados). Link de interesados: saludo más corto, sin botón de WhatsApp al final y lista nueva de \"¿Cómo te enteraste de nosotros?\". App Equipos de clientes: en \"Actualizar estado de orden\" de una prueba hidrostática, \"Inspección visual realizada\" es su propio paso, después de \"Fecha de retorno a tienda\", y sin marcarla no se puede poner la fecha de listo; en Inicio, esas órdenes salen con el aviso rojo \"Le hace falta inspección visual\" y sus días se cuentan desde que volvieron de la prueba.",
   },
   {
     version: "V74 a V76",
     fecha: "12 de noviembre, 2026",
     titulo: "Interesados conectado con Buzos y Estudiantes, seguimiento más sencillo y el link del estudiante como app",
     descripcion:
-      "Control Estudiantes: el link \"Me interesa\" se llama \"Registro de interesado\", pregunta cómo se enteró y su mensaje final ya no promete información inmediata. Interesados pasó al menú entre Inicio y Cursos, con el encabezado igual al de Cursos. El seguimiento de cada interesado se anota en una sola fila (qué pasó, comentario y Guardar) y \"Editar datos\" quedó arriba, discreto. Al inscribir a alguien que ya está en Buzos se usan sus datos, y antes de guardar se confirman (lo que falta sale en rojo) con un botón de WhatsApp para pedírselos. El link de cursos reconoce a un interesado por su celular y, al registrarse, sale solo de Interesados. El link del estudiante se puede instalar como su propia app. Celular: un número de más ya no cambia el país solo.",
+      "Control Estudiantes: el link de interesados se llama \"Registro de interesado\", pregunta cómo se enteró y su mensaje final ya no promete información inmediata. Interesados pasó al menú entre Inicio y Cursos, con el encabezado igual al de Cursos. El seguimiento de cada interesado se anota en una sola fila (qué pasó, comentario y Guardar) y \"Editar datos\" quedó arriba, discreto. Al inscribir a alguien que ya está en Buzos se usan sus datos, y antes de guardar se confirman (lo que falta sale en rojo) con un botón de WhatsApp para pedírselos. El link de cursos reconoce a un interesado por su celular y, al registrarse, sale solo de Interesados. El link del estudiante se puede instalar como su propia app. Celular: un número de más ya no cambia el país solo.",
   },
   {
     version: "V71 a V73",

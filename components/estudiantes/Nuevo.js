@@ -10,9 +10,11 @@ import { nuevoId } from "@/lib/estudiantes/datos";
 // Registrar un estudiante a mano. La persona se busca en Buzos (los de
 // Buceos) o se crea nueva, y queda en los dos apps ("53. si y viceversa").
 // Desde Interesados, llega con su nombre, celular y curso ya puestos.
-export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
+export function Nuevo({ db, p, ops, ir, avisar, interesadoId, fechaId }) {
   const interesado = interesadoId ? db.interesados.find((x) => x.id === interesadoId) : null;
   const cursos = db.cursos.filter((c) => c.activo);
+  // V80 (maqueta V81, "3. ok"): la fecha que se escogió antes de inscribir.
+  const fechaPre = fechaId ? (db.fechas || []).find((x) => x.id === fechaId && x.activo) : null;
   const cursoInt = interesado ? cursos.find((c) => c.nombre.toLowerCase() === String(interesado.curso || "").toLowerCase()) : null;
   // V76 (pedido explícito: "tiene que halar su cedula cuando sea
   // inscrito como estudiante", y "tienen que estar conectadas estas
@@ -26,14 +28,14 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId }) {
   const [q, setQ] = useState(interesado?.nombre || "");
   const [buzo, setBuzo] = useState(buzoDeInteresado || null);
   const [nueva, setNueva] = useState(!buzoDeInteresado && interesado ? { nombre: interesado.nombre, doc: "", pasaporte: "", cel: interesado.cel ? formatoCel(interesado.cel) : "", correo: "", nac: "", direccion: "", emergencia: "" } : null);
-  const primero = cursoInt || cursos[0];
+  const primero = (fechaPre && cursos.find((c) => c.id === fechaPre.cursoId)) || cursoInt || cursos[0];
   const [f, setF] = useState({
     cursoId: primero?.id || "",
     escuela: primero?.escuelas?.[0] || "",
     instructor: "",
     fechaInicio: hoyISO(),
     // V55: la fecha sale de las fechas del curso ("64"); si no hay, lista de espera.
-    cual: "",
+    cual: fechaPre?.id || "",
     buceosPrevios: "",
     precio: primero?.precio == null ? "" : String(primero.precio),
   });

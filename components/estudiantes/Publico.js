@@ -8,6 +8,8 @@ import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck, IconLock, IconCamera } from "@/components/icons";
 import { subirArchivo } from "@/lib/estudiantes/subir";
+import { leerPersona, guardarPersona } from "@/lib/app-gus";
+import InstalarApp from "@/components/InstalarApp";
 
 // Control Estudiantes -- el link de registro del estudiante (público, sin
 // cuenta). Reemplaza el formulario de Google. Opción D de la maqueta:
@@ -246,7 +248,7 @@ function Semana({ inicio, semana }) {
   );
 }
 
-export default function EstudiantePublico({ cursos, tienda, conFechas = false, fijo = "", noAbierto = false, marcaInteresado = "" }) {
+export default function EstudiantePublico({ cursos, tienda, conFechas = false, fijo = "", noAbierto = false, marcaInteresado = "", mis = false }) {
   // V79 (maqueta V79, "3. A"): si el link trae la marca de un interesado,
   // avisa que lo abrió (queda en su seguimiento).
   useEffect(() => {
@@ -320,11 +322,27 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
       setBuzo(r.encontrado ? r : null);
       ir(menor ? "tutor" : r.encontrado ? "hola" : "datos");
     });
-  const verEstado = () =>
+  const verEstado = (p) =>
     correr(async () => {
-      setEstado(await api({ accion: "estado", tipoDoc, doc, cel }));
+      const q = p || { tipoDoc, doc, cel };
+      const r = await api({ accion: "estado", ...q });
+      setEstado(r);
+      // V81 (App Gus: "poner su cédula una vez y que quede guardado"): ya
+      // confirmó cédula y celular; queda guardado en su celular.
+      guardarPersona({ ...q, primer: r.primer });
       ir("estado");
     });
+  // V81: si ya entró antes en este celular (App Gus), la cédula y el celular
+  // salen puestos; desde App Gus ("Ver mis documentos", ?mis=1) entra solo.
+  useEffect(() => {
+    const g = leerPersona();
+    if (!g) return;
+    setTipoDoc(g.tipoDoc);
+    setDoc(g.doc);
+    setCel(g.cel);
+    if (mis) verEstado({ tipoDoc: g.tipoDoc, doc: g.doc, cel: g.cel });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const registrar = (extra = {}) =>
     correr(async () => {
       // V59: el contacto de emergencia se guarda como "Nombre · 809-000-0000".
@@ -334,6 +352,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
         ? await api({ accion: "registrar", tipoDoc, doc, cel, tutorNombre, menor: m, datos: {}, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, tambien: tambien[extra.cursoId || cursoId] || null, ...extra })
         : await api({ accion: "registrar", tipoDoc, doc, cel, datos: { ...d, emergencia, ...(nac ? { nacionalidad: nac } : {}) }, buceos, cursoId: extra.cursoId || cursoId, fechaInicio, tambien: tambien[extra.cursoId || cursoId] || null, interesadoId: interesado?.interesadoId || null, ...extra });
       setRes(r);
+      if (!menor) guardarPersona({ tipoDoc, doc, cel, primer: primerNombre(d.nombre) || buzo?.primer || "" });
       // V61 ("201"): si queda en lista de espera, va directo a "¡Listo!"; los
       // documentos son opcionales ("¿Quieres adelantar?").
       ir(r.espera && !r.ya ? "listo" : "docs");
@@ -957,6 +976,8 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
         )}
 
         {paso === "estado" && estado && <MisDocumentos estado={estado} setEstado={setEstado} id={id} tipoDoc={tipoDoc} doc={doc} cel={cel} setCel={setCel} tienda={tienda} wa={wa} ir={ir} />}
+        {/* V81 (maqueta V81/V82): la tarjeta para instalar App Gus. */}
+        {((paso === "listo" && res) || (paso === "estado" && estado)) && <InstalarApp style={{ marginTop: 12 }} />}
       </div>
     </div>
   );

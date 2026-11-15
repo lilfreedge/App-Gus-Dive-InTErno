@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { Buscar } from "@/components/viajes/Piezas";
 import { IconHistory, IconPlus, IconCatalog, IconEdit, IconChart } from "@/components/icons";
-import { listoParaAlmacen, pagoInstructorPendiente, debe, pagoListo, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, lunesProximos, ocupados, quedan } from "@/lib/estudiantes/modelo";
+import { listoParaAlmacen, pagoInstructorPendiente, debe, pagoListo, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, ocupados, quedan } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
 import CompartirLink from "@/components/CompartirLink";
 import MenuMas from "@/components/MenuMas";
 import { sumarDias, fechaLarga, formatoCel } from "@/lib/viajes/modelo";
 import { urlPrincipal } from "@/lib/direccion";
 import InteresadosCurso, { interesadosDeCurso } from "./InteresadosCurso";
+import { ElegirCurso } from "./Interesados";
 
 // Pantallas de Control Estudiantes: Inicio, la lista, Más y la Bitácora.
 
@@ -446,6 +447,7 @@ export function Lista({ db, p, yo, ops, ir, avisar }) {
   // V79 (maqueta V79, "1. B"): apenas se crea un curso que tiene
   // interesados, pregunta si se les avisa por correo.
   const [creado, setCreado] = useState(null);
+  const [inscribiendo, setInscribiendo] = useState(null); // V80: id del interesado que se va a inscribir
   const alCrear = (f, c) => {
     const ints = interesadosDeCurso(db, c.nombre);
     if (p.interesados && ints.length) setCreado({ fechaId: f.id, curso: c.nombre, inicio: f.inicio, n: ints.length, conCorreo: ints.filter((x) => x.correo).length });
@@ -594,13 +596,25 @@ export function Lista({ db, p, yo, ops, ir, avisar }) {
                 {g.interesados
                   .sort((a, b) => a.nombre.localeCompare(b.nombre))
                   .map((x) => (
-                    <button key={x.id} className="ce-est" onClick={() => ir("interesados")}>
-                      <div className="ce-est-t">
-                        <b>{x.nombre}</b>
-                        <span className="ce-chip">Interesado</span>
+                    // V80 (maqueta V81, "5. ok"): botón "Inscribir" en cada
+                    // interesado (escoge el curso abierto y sigue a la
+                    // inscripción); tocar el nombre abre su ficha.
+                    <div key={x.id}>
+                      <div className="ce-est ce-int-fila-curso" role="button" tabIndex={0} onClick={() => ir(`interesados:${x.id}`)}>
+                        <div className="ce-est-t">
+                          <b>{x.nombre}</b>
+                          {p.estudiantes ? (
+                            <button className="btn vj-btn ce-int-insc ce-int-insc-mini" onClick={(e) => (e.stopPropagation(), setInscribiendo(inscribiendo === x.id ? null : x.id))}>
+                              Inscribir
+                            </button>
+                          ) : (
+                            <span className="ce-chip">Interesado</span>
+                          )}
+                        </div>
+                        <div className="ce-est-m">{[x.fuente, x.cel ? formatoCel(x.cel) : ""].filter(Boolean).join(" · ")}</div>
                       </div>
-                      <div className="ce-est-m">{[x.fuente, x.cel ? formatoCel(x.cel) : ""].filter(Boolean).join(" · ")}</div>
-                    </button>
+                      {inscribiendo === x.id && <ElegirCurso db={db} x={x} modo="inscribir" ir={ir} cerrar={() => setInscribiendo(null)} alInscribir={(f) => ir(`nuevo:${x.id}:${f.id}`)} alMandar={async () => {}} avisar={avisar} />}
+                    </div>
                   ))}
                 {p.cursos && g.c && !db.sinFechas && (
                   <button className="btn secondary vj-mini" style={{ marginTop: 8 }} onClick={() => setForm({ cursoId: g.c.id, inicio: "", cupo: "", instructor: "", nota: "" })}>
@@ -638,9 +652,75 @@ export function PorEtapa({ db, p, ir, etapa }) {
   );
 }
 
+// V80 (maqueta V81, "4"): escoger el lunes en que empieza un curso.
+const MESES_CAL = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const isoCal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+export function CalendarioLunes({ valor, onChange, marcados = [] }) {
+  const hoy = hoyISO();
+  const [abierto, setAbierto] = useState(!valor);
+  const [mes, setMes] = useState(() => {
+    const [a, m] = (valor || hoy).split("-").map(Number);
+    return { a, m: m - 1 };
+  });
+  const primero = new Date(mes.a, mes.m, 1);
+  const inicio = new Date(primero);
+  inicio.setDate(1 - ((primero.getDay() + 6) % 7));
+  const celdas = Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(inicio);
+    d.setDate(inicio.getDate() + i);
+    return d;
+  });
+  const cambiar = (n) => setMes(({ a, m }) => ({ a: m + n < 0 ? a - 1 : m + n > 11 ? a + 1 : a, m: (m + n + 12) % 12 }));
+  return (
+    <>
+      <button type="button" className="ce-fecha-val" onClick={() => setAbierto((x) => !x)}>
+        <span>{valor ? `lunes ${fechaCorta(valor)} ${valor.slice(0, 4)}` : "Escoge el lunes…"}</span>
+        <span aria-hidden="true">▾</span>
+      </button>
+      {abierto && (
+        <div className="ce-mcal">
+          <div className="ce-mcal-cab">
+            <button type="button" onClick={() => cambiar(-1)} aria-label="Mes anterior">
+              ‹
+            </button>
+            <b>
+              {MESES_CAL[mes.m][0].toUpperCase() + MESES_CAL[mes.m].slice(1)} {mes.a}
+            </b>
+            <button type="button" onClick={() => cambiar(1)} aria-label="Mes siguiente">
+              ›
+            </button>
+          </div>
+          <div className="ce-mcal-g">
+            {["lun", "mar", "mié", "jue", "vie", "sáb", "dom"].map((d) => (
+              <span key={d}>{d}</span>
+            ))}
+            {celdas.map((d) => {
+              const k = isoCal(d);
+              const fuera = d.getMonth() !== mes.m;
+              const lun = d.getDay() === 1 && (k >= hoy || k === valor);
+              return (
+                <button
+                  type="button"
+                  key={k}
+                  disabled={!lun}
+                  className={`${fuera ? "fuera " : ""}${lun ? "lun " : ""}${k === valor ? "sel " : ""}${marcados.includes(k) ? "ya" : ""}`}
+                  title={marcados.includes(k) ? "Ya hay un curso igual ese lunes" : undefined}
+                  onClick={() => (onChange(k), setAbierto(false))}
+                >
+                  {d.getDate()}
+                </button>
+              );
+            })}
+          </div>
+          {marcados.length > 0 && <div className="hint-text" style={{ margin: "6px 0 0" }}>En verde: ya hay un curso igual ese lunes.</div>}
+        </div>
+      )}
+    </>
+  );
+}
+
 // V57 -- Crear o editar un curso (una fecha de un curso de la Base de datos).
 function FormCurso({ db, form, setForm, yo, ops, avisar, alCrear }) {
-  const lunes = lunesProximos(26);
   const c = db.cursos.find((x) => x.id === form.cursoId);
   const enEspera = c ? db.estudiantes.filter((e) => e.estado === "espera" && e.cursoId === c.id).length : 0;
   async function guardar() {
@@ -671,17 +751,15 @@ function FormCurso({ db, form, setForm, yo, ops, avisar, alCrear }) {
               ))}
           </select>
         </label>
-        <label>
-          Empieza el (siempre lunes)
-          <select value={form.inicio} onChange={(e) => setForm({ ...form, inicio: e.target.value })}>
-            <option value="">Escoge…</option>
-            {[...new Set([...(form.id ? [form.inicio] : []), ...lunes])].map((l) => (
-              <option key={l} value={l}>
-                {fechaCursoCorta(l)} {l.slice(0, 4)}
-              </option>
-            ))}
-          </select>
-        </label>
+        {/* V80 (notas del 13-nov: 'Quita el "siempre lunes". y escribe el
+            formato de la fecha completo "lunes"', y "Aquí para coger la
+            fecha que me aparezca tipo calendario" → maqueta V81, "4. El
+            calendario me gusta"): un calendario donde solo se tocan los
+            lunes; en verde los que ya tienen ese mismo curso abierto. */}
+        <div className="ce-campo-fecha">
+          <span>Empieza el</span>
+          <CalendarioLunes valor={form.inicio} onChange={(v) => setForm({ ...form, inicio: v })} marcados={c ? (db.fechas || []).filter((x) => x.activo && x.cursoId === c.id && x.id !== form.id).map((x) => x.inicio) : []} />
+        </div>
       </div>
       <div className="ce-form-fila">
         <label>

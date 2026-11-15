@@ -15,9 +15,10 @@ export const dynamic = "force-dynamic";
 // al "Agregar a pantalla de inicio" sale con su ícono y su nombre.
 export const metadata = {
   title: "Mis Cursos · Gus Dive Center",
-  manifest: "/estudiante-manifest.webmanifest",
+  // V81: se instala como "App Gus" (una sola app para los clientes, maqueta V82).
+  manifest: "/app-gus.webmanifest",
   icons: { apple: "/icono-app-192.png" },
-  appleWebApp: { capable: true, title: "Mis Cursos", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "App Gus", statusBarStyle: "default" },
 };
 
 // Control Estudiantes -- el link de registro (público, sin cuenta). Solo se
@@ -37,5 +38,7 @@ export default async function EstudiantePage({ searchParams }) {
   const fijo = conFechas && pedida && cursos.some((c) => c.fechas.some((f) => f.id === pedida)) ? pedida : "";
   // V79: la marca del interesado al que se le mandó este link (?i=<id>).
   const marcaInteresado = typeof searchParams?.i === "string" ? searchParams.i : "";
-  return <EstudiantePublico cursos={cursos} conFechas={conFechas} fijo={fijo} noAbierto={!!pedida && !fijo} marcaInteresado={marcaInteresado} tienda={{ whatsapp: TIENDA.whatsapp, titular: TITULAR_CURSOS || TIENDA.titular, rnc: RNC_CURSOS, cuentas: CUENTAS_CURSOS }} />;
+  // V81: desde App Gus ("Ver mis documentos"), entra directo a Mis documentos.
+  const mis = searchParams?.mis === "1";
+  return <EstudiantePublico cursos={cursos} conFechas={conFechas} fijo={fijo} noAbierto={!!pedida && !fijo} marcaInteresado={marcaInteresado} mis={mis} tienda={{ whatsapp: TIENDA.whatsapp, titular: TITULAR_CURSOS || TIENDA.titular, rnc: RNC_CURSOS, cuentas: CUENTAS_CURSOS }} />;
 }

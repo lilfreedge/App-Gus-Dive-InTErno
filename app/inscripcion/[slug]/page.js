@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }) {
   const s = createServiceClient();
   const { data } = await s.from("viajes").select("nombre").eq("slug", params.slug).maybeSingle();
-  return { title: data ? `Inscripción · ${data.nombre} · Gus Dive Center` : "Gus Dive Center" };
+  // V81: se instala como "App Gus".
+  return { title: data ? `Inscripción · ${data.nombre} · Gus Dive Center` : "Gus Dive Center", manifest: "/app-gus.webmanifest", icons: { apple: "/icono-app-192.png" }, appleWebApp: { capable: true, title: "App Gus", statusBarStyle: "default" } };
 }
 
 // V42 -- Link de inscripción de un viaje (público, sin cuenta). Solo se le

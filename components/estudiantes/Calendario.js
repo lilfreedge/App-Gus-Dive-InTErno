@@ -9,7 +9,8 @@ import { hoyISO } from "@/lib/estudiantes/modelo";
 // Buceos, con los cursos (amarillo, de lunes a domingo) y los buceos (azul).
 // Es el mismo calendario: en Buceos también salen los cursos.
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+// V80 (notas del 13-nov: "Que la semana empiece lunes aquí y en app buceos").
+const DIAS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
 const isoDe = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 export function Calendario({ db, ir }) {
@@ -19,7 +20,7 @@ export function Calendario({ db, ir }) {
   });
   const primero = new Date(mes.a, mes.m, 1);
   const inicio = new Date(primero);
-  inicio.setDate(1 - primero.getDay());
+  inicio.setDate(1 - ((primero.getDay() + 6) % 7));
   const celdas = Array.from({ length: 42 }, (_, i) => {
     const d = new Date(inicio);
     d.setDate(inicio.getDate() + i);

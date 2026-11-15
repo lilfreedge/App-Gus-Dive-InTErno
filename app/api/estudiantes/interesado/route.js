@@ -1,80 +1,52 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { soloDigitos, primerNombre, celValido, celGuardar } from "@/lib/viajes/modelo";
+import { primerNombre, celValido, celGuardar } from "@/lib/viajes/modelo";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
-import { buscarPorDoc } from "@/lib/estudiantes/servidor";
-import { cedulaValida, MSG_CEDULA_MALA } from "@/lib/viajes/modelo";
 import { FUENTES } from "@/lib/estudiantes/modelo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// Control Estudiantes -- el link "Me interesa" (para Instagram o la página
-// web). V60 ("164"): primero la cédula o el pasaporte. Si ya es buzo o
-// estudiante de Gus, lo saluda por su nombre y no le pide los datos otra vez;
-// el interés queda ligado a esa persona. Pide el correo; ya no pide "cuándo".
-//   accion "doc"    -> ¿ya lo tenemos? (solo devuelve el primer nombre)
-//   accion "enviar" -> lo anota en Interesados como "Nuevo"
-const tipoDe = (doc) => (/^\d{11}$/.test(soloDigitos(doc)) && !/[a-z]/i.test(doc) ? "cedula" : "pasaporte");
-
+// Control Estudiantes -- el link de interesados ("Registro de interesado",
+// para Instagram o la página web). Lo anota en Interesados como "Nuevo".
+// V80 (notas del 13-nov: "No pedir cédula al interesado. Ya no me interesa
+// que esté vinculado para cuando se inscriban en registro de estudiante. Que
+// pida el contacto") -- antes (V60) pedía la cédula o el pasaporte y lo ligaba
+// con su perfil de buzo; ya no. Pide nombre, celular y correo (el correo es
+// obligatorio desde la V78: ahí le llega el link del curso).
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   // Trampa para robots: un campo escondido que una persona nunca llena.
   if (body.web) return NextResponse.json({ ok: true });
   const s = createServiceClient();
-  const doc = String(body.doc || "").trim();
-  // V62: el link dice si es cédula u otro documento (como el registro de estudiantes).
-  const tipo = body.tipoDoc === "pasaporte" ? "pasaporte" : body.tipoDoc === "cedula" ? "cedula" : tipoDe(doc);
-  if (tipo === "cedula" ? soloDigitos(doc).length !== 11 : String(doc).replace(/[\s-]/g, "").length < 6)
-    return NextResponse.json({ error: tipo === "cedula" ? "La cédula tiene 11 números." : "Escribe tu pasaporte completo." }, { status: 400 });
-  const b = await buscarPorDoc(s, tipo, doc);
-  // V68 ("13. B").
-  if (tipo === "cedula" && !b && !cedulaValida(doc)) return NextResponse.json({ error: MSG_CEDULA_MALA }, { status: 400 });
-  const persona = b && !b.staff ? b : null;
 
-  // V78: "conCorreo" le dice al link si ya tenemos su correo (si no, se lo pide obligatorio).
-  if (body.accion === "doc") return NextResponse.json({ encontrado: !!persona, primer: persona ? primerNombre(persona.nombre) : "", conCorreo: !!(persona && persona.correo) });
-
-  const nombre = persona ? persona.nombre : String(body.nombre || "").trim().slice(0, 120);
-  const cel = persona ? celGuardar(persona.cel) : celGuardar(body.cel);
+  const nombre = String(body.nombre || "").trim().slice(0, 120);
+  const cel = celGuardar(body.cel);
   const correo = String(body.correo || "").trim().slice(0, 120);
   if (!nombre) return NextResponse.json({ error: "Escribe tu nombre." }, { status: 400 });
-  if (!persona && !celValido(body.cel)) return NextResponse.json({ error: "Escribe tu celular completo." }, { status: 400 });
-  if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return NextResponse.json({ error: "Revisa tu correo." }, { status: 400 });
-  // V77: si ya lo teníamos y no escribió correo, se usa el que ya estaba en
-  // su perfil, para poder mandarle el link del curso por correo. V78 (pedido
-  // explícito: "que no deje registrarse si no pone correo"): sin correo (ni
-  // escrito ni en su perfil) no se anota.
-  const correoFinal = correo || (persona?.correo ? String(persona.correo).trim() : "");
-  if (!correoFinal) return NextResponse.json({ error: "Escribe tu correo." }, { status: 400 });
+  if (!celValido(body.cel)) return NextResponse.json({ error: "Escribe tu celular completo." }, { status: 400 });
+  if (!correo) return NextResponse.json({ error: "Escribe tu correo." }, { status: 400 });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return NextResponse.json({ error: "Revisa tu correo." }, { status: 400 });
   const curso = String(body.curso || "").slice(0, 80) || null;
 
-  // Si ya dejó sus datos hace poco (misma persona, documento o celular), no se repite.
+  // Si ya dejó sus datos hace poco (mismo celular, todavía abierto), no se repite.
   const abiertos = ["nuevo", "escribimos", "va"];
-  const docG = tipo === "cedula" ? soloDigitos(doc) : String(doc || "").replace(/\s/g, "").toUpperCase();
-  let { data: ya, error: eYa } = await s.from("est_interesados").select("id").eq("documento", docG).in("estado", abiertos).limit(1);
-  if (eYa) ya = null; // sin la migration_86 todavía
-  if (!ya?.length && celValido(cel)) ({ data: ya } = await s.from("est_interesados").select("id").eq("celular", cel).in("estado", abiertos).limit(1));
+  const { data: ya } = await s.from("est_interesados").select("id").eq("celular", cel).in("estado", abiertos).limit(1);
   if (ya?.length) {
     // V78: si el registro que ya tenía no traía correo, se le pone el de ahora.
-    await s.from("est_interesados").update({ correo: correoFinal }).eq("id", ya[0].id).is("correo", null);
-    return NextResponse.json({ ok: true, ya: true, nombre: primerNombre(nombre), conCorreo: true });
+    await s.from("est_interesados").update({ correo }).eq("id", ya[0].id).is("correo", null);
+    return NextResponse.json({ ok: true, ya: true, nombre: primerNombre(nombre) });
   }
 
-  // V74 (pedido explícito: "esto no esta apareciendo al momento que el
-  // interesado va a llenar el form") -- antes siempre se guardaba "Link";
-  // ahora se le pregunta a la persona (¿Cómo te enteraste?) y se usa eso,
-  // si escogió algo de la lista. Si no, se queda "Link" como antes.
+  // V74: la fuente es la que escogió la persona (¿Cómo te enteraste?); si no
+  // escogió nada, se queda "Link".
   const fuente = FUENTES.includes(body.fuente) ? body.fuente : "Link";
-  const fila = { nombre, celular: celValido(cel) ? cel : null, curso, fuente, via: "link" };
-  const nacionalidad = tipo === "pasaporte" ? String(body.nacionalidad || "").trim().slice(0, 60) : "";
-  let { error } = await s.from("est_interesados").insert({ ...fila, buzo_id: persona?.id || null, documento: docG, correo: correoFinal || null, ...(nacionalidad ? { nota: `Nacionalidad: ${nacionalidad}` } : {}) });
-  // Sin la migration_86 todavía: se guarda sin esas columnas (el documento va en la nota).
-  if (error && /buzo_id|documento|correo|column/i.test(error.message || "")) ({ error } = await s.from("est_interesados").insert({ ...fila, nota: `Documento: ${docG}${correo ? ` · ${correo}` : ""}` }));
+  const fila = { nombre, celular: cel, curso, fuente, via: "link" };
+  let { error } = await s.from("est_interesados").insert({ ...fila, correo });
+  // Sin la migration_86 todavía (no existe la columna del correo): va en la nota.
+  if (error && /correo|column/i.test(error.message || "")) ({ error } = await s.from("est_interesados").insert({ ...fila, nota: correo }));
   if (error) return NextResponse.json({ error: "No se pudo enviar. Intenta de nuevo." }, { status: 500 });
-  // Si ya es buzo y no teníamos su correo, se llena (nunca se cambia lo que ya estaba).
-  if (persona && correo && !persona.correo) await s.from("viajes_buzos").update({ correo }).eq("id", persona.id);
-  await s.from("est_bitacora").insert({ nombre: "Link", texto: `Dejó sus datos en "Me interesa": ${nombre}${curso ? ` (${curso})` : ""}${persona ? " · ya es buzo de Gus" : ""}` });
+  await s.from("est_bitacora").insert({ nombre: "Link", texto: `Dejó sus datos en el link de interesados: ${nombre}${curso ? ` (${curso})` : ""}` });
   await avisarEquipoEst(s, { permiso: "interesados", titulo: "Interesado nuevo", texto: `${nombre}${curso ? ` · ${curso}` : ""}`, url: "/control-estudiantes/interesados" });
-  return NextResponse.json({ ok: true, nombre: primerNombre(nombre), conCorreo: !!correoFinal });
+  return NextResponse.json({ ok: true, nombre: primerNombre(nombre) });
 }

@@ -35,7 +35,9 @@ export function rutaDeUrl(path) {
   // V55: los filtros pasaron a Cursos; los enlaces viejos siguen sirviendo.
   if (p[0] === "estudiantes" && p[1]) return `cursos:${p[1]}`;
   if (p[0] === "cursos" && p[1]) return `cursos:${p[1]}`;
-  if (p[0] === "nuevo" && p[1]) return `nuevo:${p[1]}`;
+  if (p[0] === "nuevo" && p[1]) return `nuevo:${p[1]}${p[2] ? `:${p[2]}` : ""}`;
+  // V80: /interesados/<id> abre la ficha de ese interesado.
+  if (p[0] === "interesados" && p[1]) return `interesados:${p[1]}`;
   // V79: /curso/<id>/avisar abre la pestaña Interesados lista para avisar.
   if (p[0] === "curso" && p[1]) return `curso:${p[1]}${p[2] ? `:${p[2]}` : ""}`;
   return p[0];
@@ -436,10 +438,10 @@ export default function EstudiantesApp({ p, yo, personas }) {
   else if (ruta.startsWith("estudiante:")) {
     const id = ruta.split(":")[1];
     cuerpo = db.estudiantes.some((x) => x.id === id) ? <Ficha key={id} {...q} id={id} /> : <div className="hint-text">Ese estudiante no existe.</div>;
-  } else if (ruta === "nuevo" || ruta.startsWith("nuevo:")) cuerpo = p.estudiantes ? <Nuevo {...q} interesadoId={ruta.split(":")[1] || null} /> : <Inicio {...q} />;
+  } else if (ruta === "nuevo" || ruta.startsWith("nuevo:")) cuerpo = p.estudiantes ? <Nuevo key={ruta} {...q} interesadoId={ruta.split(":")[1] || null} fechaId={ruta.split(":")[2] || null} /> : <Inicio {...q} />;
   else if (ruta.startsWith("curso:")) cuerpo = <DetalleCurso key={ruta} {...q} fechaId={ruta.split(":")[1]} avisarDeEntrada={ruta.split(":")[2] === "avisar"} />;
   else if (ruta === "calendario") cuerpo = <Calendario {...q} />;
-  else if (ruta === "interesados") cuerpo = p.interesados ? <Interesados {...q} /> : <Inicio {...q} />;
+  else if (ruta === "interesados" || ruta.startsWith("interesados:")) cuerpo = p.interesados ? <Interesados key={ruta} {...q} abrirId={ruta.split(":")[1] || null} /> : <Inicio {...q} />;
   else if (ruta === "basedatos") cuerpo = <Cursos {...q} />;
   else if (ruta === "mas") cuerpo = <Mas {...q} />;
   else if (ruta === "bitacora") cuerpo = p.bitacora ? <Bitacora {...q} /> : <Inicio {...q} />;
@@ -449,7 +451,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
     cuerpo = (
       <>
         <h1 className="page-title">Notificaciones</h1>
-        <NotificacionesPagina app="estudiantes" explicacion="Te llega aquí cuando alguien se registra por el link, sube un comprobante de pago o deja sus datos en Me interesa (según lo que puedes hacer en Control Estudiantes)." sinCelular />
+        <NotificacionesPagina app="estudiantes" explicacion="Te llega aquí cuando alguien se registra por el link, sube un comprobante de pago o deja sus datos en el link de interesados (según lo que puedes hacer en Control Estudiantes)." sinCelular />
       </>
     );
   else if (ruta === "administracion") cuerpo = yo.esTitular ? <AdminEst {...q} /> : <Inicio {...q} />;

@@ -68,7 +68,8 @@ export default function HistorialClient({ ordenes, clientes }) {
 
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="section-title" style={{ marginTop: 0 }}>Filtros</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 14px" }}>
+        {/* V82: minmax(0, 1fr) para que en el celular las fechas no se salgan de la tarjeta. */}
+        <div className="hist-filtros" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: "0 14px" }}>
           <div>
             <label htmlFor="f_tipo" style={{ marginTop: 0 }}>Tipo de equipo</label>
             <select id="f_tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>

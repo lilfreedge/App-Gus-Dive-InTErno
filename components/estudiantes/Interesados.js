@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Buscar, CampoCel, IconoWA, Modal } from "@/components/viajes/Piezas";
 import { IconPlus, IconEdit } from "@/components/icons";
-import { FUENTES, linkWhatsApp, hoyISO, fechaCorta, fechaDeIso, soloDigitos, fechaCursoCorta, fechasDe } from "@/lib/estudiantes/modelo";
+import { FUENTES, linkWhatsApp, hoyISO, fechaCorta, fechaDeIso, soloDigitos, fechaCursoCorta, fechasDe, quedan } from "@/lib/estudiantes/modelo";
 import FechaNacimiento from "@/components/FechaNacimiento";
 import { formatoCel } from "@/lib/viajes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
@@ -60,7 +60,7 @@ export function historiaInteresado(x) {
 }
 const ultimo = (x) => [...(x.seguimiento || [])].sort((a, b) => String(b.en || "").localeCompare(String(a.en || "")))[0] || null;
 
-export function Interesados({ db, p, yo, ops, ir, avisar }) {
+export function Interesados({ db, p, yo, ops, ir, avisar, abrirId = null }) {
   // V76 (maqueta V74 aprobada: "recuerda que vamos a reemplazar esta
   // parte... aprobé maqueta y todo") -- se quita el filtro por estado
   // (Nuevos/Le escribimos/etc.) y se filtra por curso en su lugar. Sin
@@ -69,7 +69,7 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
   const [filtroCurso, setFiltroCurso] = useState(null);
   const [q, setQ] = useState("");
   const [nuevo, setNuevo] = useState(null);
-  const [abierto, setAbierto] = useState(null);
+  const [abierto, setAbierto] = useState(() => (abrirId ? db.interesados.find((x) => x.id === abrirId) || null : null));
   const t = q.trim().toLowerCase();
   const td = soloDigitos(q);
   const hoy = hoyISO();
@@ -111,7 +111,10 @@ export function Interesados({ db, p, yo, ops, ir, avisar }) {
       {nuevo && (
         <div className="ce-etapa">
           <h4>Nuevo interesado</h4>
-          <FormInteresado f={nuevo} setF={setNuevo} cursos={cursos} />
+          {/* V80 (notas del 13-nov, con foto: "Quitar Escribirle de nuevo
+              el"): al agregar ya no se pone la fecha; se pone en el
+              seguimiento ("Próximo seguimiento"). */}
+          <FormInteresado f={nuevo} setF={setNuevo} cursos={cursos} sinRecordar />
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
             <button className="btn btn-primary vj-btn" onClick={guardarNuevo}>
               Guardar
@@ -258,10 +261,10 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
   const [f, setF] = useState(x);
   const [tipo, setTipo] = useState("");
   const [texto, setTexto] = useState("");
+  const [prox, setProx] = useState(""); // V80: fecha del próximo seguimiento
   // V57 -- "dame ese poder absoluto": el Titular puede borrar un interesado.
   const [borrando, setBorrando] = useState(false);
-  const [confirmaCorreo, setConfirmaCorreo] = useState(false);
-  const [mandandoCorreo, setMandandoCorreo] = useState(false);
+  const [eligiendo, setEligiendo] = useState(null); // V80: "inscribir" | "link"
   const est = x.estudianteId ? db.estudiantes.find((e) => e.id === x.estudianteId) : null;
   const historia = historiaInteresado(x);
   const cerradoYa = x.estado === "inscrito";
@@ -271,59 +274,44 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
     // la fecha para recordar desde aquí (eso se quitó); si quiere
     // recordatorio lo pone en "Editar datos". Si marca "No le interesa"
     // se sigue quitando el recordatorio que tuviera puesto.
-    if (!tipo && !texto.trim()) return avisar("Escoge qué pasó o escribe algo.");
+    if (!tipo && !texto.trim() && !prox) return avisar("Escoge qué pasó o escribe algo.");
     const entrada = { id: nuevoId(), tipo: tipo || "nota", texto: texto.trim(), quien: yo?.corto || "", en: new Date().toISOString() };
     const nuevoEstado = tipo ? tipoSeg(tipo).estado : x.estado === "nuevo" ? "escribimos" : x.estado;
-    const y = { ...x, seguimiento: [...(x.seguimiento || []), entrada], estado: cerradoYa ? x.estado : nuevoEstado, recordar: tipo === "no" ? "" : x.recordar };
+    // V80 (notas del 13-nov, con foto: "Ponme las fechas de próximo
+    // seguimiento otra vez aquí"): si se pone, queda como la fecha para
+    // escribirle de nuevo (sale en la lista y en "Escribirle de nuevo hoy").
+    const y = { ...x, seguimiento: [...(x.seguimiento || []), entrada], estado: cerradoYa ? x.estado : nuevoEstado, recordar: tipo === "no" ? "" : prox || x.recordar };
+    if (prox && tipo !== "no") entrada.texto = [entrada.texto, `próximo seguimiento: ${fechaCursoCorta(prox)}`].filter(Boolean).join(" · ");
     ops.guardarInteresado(y, false, `Seguimiento de un interesado: ${x.nombre} (${tipoSeg(entrada.tipo).t}${entrada.texto ? `: ${entrada.texto}` : ""})`);
     setTipo("");
     setTexto("");
+    setProx("");
   }
 
-  // V76 (pedido explícito, con foto: "abajo de inscribir pongamos algo
-  // como que 'Enviar Link de curso a estudiante'... que abra un mensaje
-  // automatico en whatsapp... y que cuando el estudiante se inscriba en
-  // el curso pues que se quite de interesados y figure en cursos") -- le
-  // manda el link de registro (ya con la fecha más próxima del curso
-  // escogida, si hay una abierta) por WhatsApp y lo anota en el
-  // seguimiento. Cuando se registre con ese mismo celular, el link ya
-  // sabe reconocerlo (V78) y, al inscribirse, pasa solo a Estudiantes.
-  function enviarLinkCurso() {
-    const curso = cursoDe(db, x);
-    const fecha = curso ? fechasDe(db, curso.id, { soloFuturas: true })[0] : null;
-    const link = linkCursoPara(x, fecha?.id);
-    window.open(linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, aquí tienes el link para inscribirte en ${x.curso || "el curso"}: ${link}`), "_blank", "noopener");
-    ops.guardarInteresado(
-      { ...x, estado: cerradoYa ? x.estado : "va", seguimiento: [...(x.seguimiento || []), { id: nuevoId(), tipo: "link_curso", texto: "Por WhatsApp", quien: yo?.corto || "", en: new Date().toISOString(), ...(fecha ? { fechaId: fecha.id } : {}) }] },
-      false,
-      `Le envió el link de curso a un interesado: ${x.nombre}`
-    );
-  }
-
-  // V77 (pedido explícito, con foto de la pantalla final de "Me interesa":
-  // "pon que le va a llegar por correo cuando haya un curso. Y al momento
-  // que le llegue ese correo que le llegue el URL directo para inscribirse
-  // en el curso") -- lo mismo que el botón de arriba, pero por correo. El
-  // correo sale del servidor (/api/estudiantes/interesado/correo-curso),
-  // que arma el link con la fecha próxima del curso. Pide confirmar antes,
-  // porque el correo sale de una vez (WhatsApp todavía deja revisar).
-  async function enviarCorreoCurso() {
-    setMandandoCorreo(true);
-    try {
-      const r = await fetch("/api/estudiantes/interesado/correo-curso", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: x.id }) });
+  // V80 (maqueta V81, pregunta 3: "ok") -- al tocar "Inscribir" o "Enviar
+  // link de curso" primero se escoge el curso abierto (ElegirCurso, abajo):
+  // de ahí se inscribe en esa fecha, o se le manda el link de esa fecha por
+  // WhatsApp o por correo. Reemplaza los dos botones de la V77/V78 ("Enviar
+  // link de curso a estudiante" y "Enviar link de curso por correo"). El
+  // link lleva la fecha y la marca del interesado ("Abrió el link", V79);
+  // al inscribirse con el mismo celular sale solo de Interesados (V78).
+  async function mandarLink(fecha, por) {
+    const cuando = `lunes ${fechaCorta(fecha.inicio)}`;
+    const nombreCurso = db.cursos.find((c) => c.id === fecha.cursoId)?.nombre || x.curso || "el curso";
+    if (por === "whatsapp") {
+      window.open(linkWhatsApp(x.cel, `Hola ${x.nombre.split(" ")[0]}, aquí tienes el link para inscribirte en ${nombreCurso}, que empieza el ${cuando}: ${linkCursoPara(x, fecha.id)}`), "_blank", "noopener");
+    } else {
+      const r = await fetch("/api/estudiantes/interesado/correo-curso", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: x.id, fechaId: fecha.id }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "No se pudo mandar el correo.");
-      ops.guardarInteresado(
-        { ...x, estado: cerradoYa ? x.estado : "va", seguimiento: [...(x.seguimiento || []), { id: nuevoId(), tipo: "link_curso", texto: "Por correo", quien: yo?.corto || "", en: new Date().toISOString(), ...(j.fechaId ? { fechaId: j.fechaId } : {}) }] },
-        false,
-        `Le envió el link de curso por correo a un interesado: ${x.nombre}`
-      );
       avisar(`Correo enviado a ${x.correo}`);
-      setConfirmaCorreo(false);
-    } catch (e) {
-      avisar(e.message || "No se pudo mandar el correo.");
     }
-    setMandandoCorreo(false);
+    ops.guardarInteresado(
+      { ...x, estado: cerradoYa ? x.estado : "va", seguimiento: [...(x.seguimiento || []), { id: nuevoId(), tipo: "link_curso", texto: `${nombreCurso} · ${cuando} · por ${por === "whatsapp" ? "WhatsApp" : "correo"}`, quien: yo?.corto || "", en: new Date().toISOString(), fechaId: fecha.id }] },
+      false,
+      `Le envió el link de curso a un interesado: ${x.nombre} (${nombreCurso} · ${cuando})`
+    );
+    setEligiendo(null);
   }
 
   return (
@@ -347,7 +335,7 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
           Inscribir queda más grande y WhatsApp más chico. */}
       <div className="ce-int-acc">
         {p.estudiantes && !cerradoYa && (
-          <button className="btn vj-btn ce-int-insc" onClick={() => (cerrar(), ir(`nuevo:${x.id}`))}>
+          <button className="btn vj-btn ce-int-insc" onClick={() => setEligiendo(eligiendo === "inscribir" ? null : "inscribir")}>
             Inscribir
           </button>
         )}
@@ -357,28 +345,22 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
           </a>
         )}
       </div>
-      {p.interesados && !cerradoYa && x.cel && (
-        <button className="btn secondary vj-btn ce-int-link-curso" onClick={enviarLinkCurso}>
-          Enviar link de curso a estudiante
+      {p.interesados && !cerradoYa && (x.cel || x.correo) && (
+        <button className="btn secondary vj-btn ce-int-link-curso" onClick={() => setEligiendo(eligiendo === "link" ? null : "link")}>
+          Enviar link de curso
         </button>
       )}
-      {p.interesados && !cerradoYa && x.correo && !confirmaCorreo && (
-        <button className="btn secondary vj-btn ce-int-link-curso" onClick={() => setConfirmaCorreo(true)}>
-          Enviar link de curso por correo
-        </button>
-      )}
-      {confirmaCorreo && (
-        <div className="ce-etapa" style={{ marginTop: 6 }}>
-          <b>¿Mandarle el link de inscripción a {x.correo}?</b>
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button className="btn btn-primary vj-btn" disabled={mandandoCorreo} onClick={enviarCorreoCurso}>
-              {mandandoCorreo ? "Enviando…" : "Sí, enviar"}
-            </button>
-            <button className="btn secondary vj-btn" disabled={mandandoCorreo} onClick={() => setConfirmaCorreo(false)}>
-              No
-            </button>
-          </div>
-        </div>
+      {eligiendo && (
+        <ElegirCurso
+          db={db}
+          x={x}
+          modo={eligiendo}
+          ir={ir}
+          cerrar={() => setEligiendo(null)}
+          alInscribir={(fecha) => (cerrar(), ir(`nuevo:${x.id}:${fecha.id}`))}
+          alMandar={mandarLink}
+          avisar={avisar}
+        />
       )}
       {est && (
         <a className="vj-link" onClick={() => (cerrar(), ir(`estudiante:${est.id}`))}>
@@ -441,6 +423,10 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
               ))}
             </select>
             <input className="ce-int-txt" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Comentario (opcional)" />
+            <label className="ce-int-prox">
+              Próximo seguimiento
+              <input type="date" value={prox} min={hoyISO()} onChange={(e) => setProx(e.target.value)} />
+            </label>
             <button className="btn btn-primary vj-btn ce-int-guardar" onClick={anotar}>
               Guardar
             </button>
@@ -471,5 +457,97 @@ function DetalleInteresado({ x, db, p, yo, ops, ir, cursos, cerrar, avisar }) {
         </div>
       )}
     </Modal>
+  );
+}
+
+// V80 (maqueta V81, preguntas 3 y 5: "ok") -- escoger un curso abierto antes
+// de inscribir o de mandar el link. Primero las fechas del curso que le
+// interesa, después las de los otros cursos. Sin ningún curso abierto, lo
+// dice y lleva a crear uno.
+export function ElegirCurso({ db, x, modo, ir, cerrar, alInscribir, alMandar, avisar }) {
+  const [elegida, setElegida] = useState(null);
+  const [mandando, setMandando] = useState("");
+  const suyo = cursoDe(db, x);
+  const abiertos = db.cursos
+    .filter((c) => c.activo)
+    .flatMap((c) => fechasDe(db, c.id, { soloFuturas: true }).map((f) => ({ f, c, q: quedan(db, f) })));
+  const deSuyo = abiertos.filter((o) => suyo && o.c.id === suyo.id);
+  const otros = abiertos.filter((o) => !suyo || o.c.id !== suyo.id).sort((a, b) => a.f.inicio.localeCompare(b.f.inicio));
+  const link = modo === "link";
+  const sel = abiertos.find((o) => o.f.id === elegida);
+  const fila = (o, conNombre) => {
+    const llena = o.q === 0;
+    const off = link && llena;
+    return (
+      <label key={o.f.id} className={`ce-elegir-op${elegida === o.f.id ? " sel" : ""}${off ? " off" : ""}`}>
+        <input type="radio" name={`elegir-${x.id}`} disabled={off} checked={elegida === o.f.id} onChange={() => setElegida(o.f.id)} />
+        <span>
+          <b>
+            {conNombre ? `${o.c.nombre} · ` : ""}lunes {fechaCorta(o.f.inicio)} {o.f.inicio.slice(0, 4)}
+          </b>
+          <small>{llena ? (link ? "Llena" : "Llena · quedaría en espera") : o.q == null ? "Sin límite de cupo" : `Quedan ${o.q} ${o.q === 1 ? "cupo" : "cupos"}`}</small>
+        </span>
+      </label>
+    );
+  };
+  async function mandar(por) {
+    setMandando(por);
+    try {
+      await alMandar(sel.f, por);
+    } catch (e) {
+      avisar(e.message || "No se pudo mandar.");
+    }
+    setMandando("");
+  }
+  if (!abiertos.length)
+    return (
+      <div className="ce-elegir">
+        <b>No hay ningún curso abierto{suyo ? ` de ${suyo.nombre}` : ""}.</b>
+        <div className="hint-text" style={{ margin: "4px 0 10px" }}>
+          Cuando abras uno, aquí te sale para {link ? "mandarle el link" : "inscribirlo"}.
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn btn-primary vj-btn" onClick={() => ir("cursos")}>
+            Crear curso
+          </button>
+          <button className="btn secondary vj-btn" onClick={cerrar}>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    );
+  return (
+    <div className="ce-elegir">
+      <b>{link ? "¿Qué curso le mandas?" : "¿En qué curso lo inscribes?"}</b>
+      {suyo && <div className="ce-elegir-g">{suyo.nombre}</div>}
+      {suyo && !deSuyo.length && <div className="hint-text" style={{ margin: "4px 0 0" }}>No hay ningún curso abierto de {suyo.nombre}.</div>}
+      {deSuyo.map((o) => fila(o, false))}
+      {otros.length > 0 && <div className="ce-elegir-g">{suyo ? "Otros cursos abiertos" : "Cursos abiertos"}</div>}
+      {otros.map((o) => fila(o, true))}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+        {link ? (
+          <>
+            {x.cel && (
+              <button className="btn vj-btn ce-wa" disabled={!sel || !!mandando} onClick={() => mandar("whatsapp")}>
+                <IconoWA on /> Por WhatsApp
+              </button>
+            )}
+            {x.correo && (
+              <button className="btn btn-primary vj-btn" disabled={!sel || !!mandando} onClick={() => mandar("correo")}>
+                {mandando === "correo" ? "Enviando…" : "Por correo"}
+              </button>
+            )}
+          </>
+        ) : (
+          <button className="btn btn-primary vj-btn" disabled={!sel} onClick={() => alInscribir(sel.f)}>
+            Seguir con la inscripción
+          </button>
+        )}
+        <button className="btn secondary vj-btn" onClick={cerrar}>
+          Cancelar
+        </button>
+      </div>
+      {link && !x.correo && <div className="hint-text">No tiene correo: ponlo en "Editar datos" para poder mandárselo por ahí.</div>}
+    </div>
   );
 }

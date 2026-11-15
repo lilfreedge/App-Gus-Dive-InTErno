@@ -140,11 +140,14 @@ function formatoPrecioInput(v) {
 // examen, viernes+practica piscina, Sabado caleta 1, domingo caleta 2. Si
 // se te ocurre alguna manera de mezclarlos avisame") -- se quita el
 // itinerario escrito a mano y sale solo de los pasos marcados arriba,
-// siguiendo ese mismo orden. "Caleta Nocturno" (agregada en esta misma
-// tanda) no tiene día fijo, así que no entra en este cálculo.
-const DIA_PASO = ["teoria1", "teoria2", "teoria3", null, "piscina", "caleta1", "caleta2"]; // null = jueves (examen)
+// siguiendo ese mismo orden. "Caleta Nocturno" va el martes de la semana
+// siguiente (ver abajo).
+// V81 (respuesta: "caleta nocturno normalmente lo hacemos un martes, el
+// martes de la semana siguiente cuando empieza"): el lugar 9 es ese martes
+// (el lunes de la semana siguiente, lugar 8, va vacío).
+const DIA_PASO = ["teoria1", "teoria2", "teoria3", null, "piscina", "caleta1", "caleta2", "", "caletaNocturna"]; // null = jueves (examen)
 function semanaDePasos(pasos, llevaExamen) {
-  return DIA_PASO.map((k) => (k === null ? (llevaExamen ? "Examen" : "") : pasos.includes(k) ? nombrePaso(k) : ""));
+  return DIA_PASO.map((k) => (k === null ? (llevaExamen ? "Examen" : "") : k && pasos.includes(k) ? nombrePaso(k) : ""));
 }
 
 // V76 (pedido explícito: "quiero poner esta parte mas organizada") -- los
@@ -219,7 +222,7 @@ function EditarCurso({ c, ops, yo, cerrar }) {
             estudiante en el link al escoger la fecha) ya no se escribe a
             mano -- sale solo de los pasos de arriba. */}
         <div className="hint-text" style={{ margin: "4px 0 0" }}>
-          El itinerario le sale solo al estudiante según estos pasos: Lun/Mar/Mié Teoría 1/2/3, Jue Examen, Vie Práctica piscina, Sáb Caleta 1, Dom Caleta 2.
+          El itinerario le sale solo al estudiante según estos pasos: Lun/Mar/Mié Teoría 1/2/3, Jue Examen, Vie Práctica piscina, Sáb Caleta 1, Dom Caleta 2, y el martes de la semana siguiente Caleta Nocturno.
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn btn-primary vj-btn" onClick={guardar}>

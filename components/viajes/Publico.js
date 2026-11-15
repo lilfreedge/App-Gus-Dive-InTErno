@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PREGUNTAS, fechaLarga, rd, soloDigitos, celValido, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos, palabraViaje, tallasPara, partesSalida, linkGoogleCalendar, TALLAS } from "@/lib/viajes/modelo";
 import { subirArchivo } from "@/lib/estudiantes/subir";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "./Piezas";
 import { IconCheck, IconClip, IconCalendar, IconLock, IconChat, IconAlert, IconCamera } from "@/components/icons";
 import { urlPrincipal } from "@/lib/direccion";
+import { leerPersona, guardarPersona } from "@/lib/app-gus";
+import InstalarApp from "@/components/InstalarApp";
 
 // V42 -- Lo que ve el buzo en el link de inscripción (maqueta-viajes-v2).
 // Se identifica con su cédula o pasaporte; el celular queda para escribirle.
@@ -502,6 +504,15 @@ export default function PublicoViaje({ v, tienda }) {
   // V64 ("275", "276"): "Mi perfil" del buzo (se entra con su celular).
   const [perfilCel, setPerfilCel] = useState("");
   const [perfil, setPerfil] = useState(null);
+  // V81 (App Gus: "poner su cédula una vez y que quede guardado"): si ya
+  // entró antes en este celular, la cédula y el celular salen puestos.
+  useEffect(() => {
+    const g = leerPersona();
+    if (!g) return;
+    setTipoDoc(g.tipoDoc);
+    setDoc(g.doc);
+    setPerfilCel(g.cel);
+  }, []);
   // Viajes en pesos: solo la cuenta en pesos. En dólares: las dos.
   const cuentas = (tienda?.cuentas || []).filter((c) => v.moneda === "USD" || c.moneda === "DOP");
   const copiar = (t) => {
@@ -564,6 +575,7 @@ export default function PublicoViaje({ v, tienda }) {
     correr(async () => {
       const j = await api({ accion: "perfil", slug: v.slug, tipoDoc, doc, cel: perfilCel });
       setPerfil(j);
+      guardarPersona({ tipoDoc, doc, cel: perfilCel, primer: j.primer });
       ir("perfil");
     });
   const buscarDoc = () =>
@@ -1174,6 +1186,8 @@ export default function PublicoViaje({ v, tienda }) {
                 </button>
               </div>
             )}
+            {/* V81 (maqueta V81/V82): la tarjeta para instalar App Gus. */}
+            {((paso === "fin" && resultado) || (paso === "perfil" && perfil)) && <InstalarApp style={{ marginTop: 12 }} />}
           </>
         )}
       </div>
