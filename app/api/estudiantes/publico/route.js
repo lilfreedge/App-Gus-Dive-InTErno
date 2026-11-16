@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { limpiarTallas } from "@/lib/tallas";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buzoAFila, filaABuzo, nuevoId } from "@/lib/viajes/datos";
 import { filaACurso, filaAEst, interesadoAFila } from "@/lib/estudiantes/datos";
@@ -8,6 +9,10 @@ import { docValido, buscarPorDoc, celCoincide, logLink, edadHoy, tokenMenor, pue
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 import { cedulaValida, MSG_CEDULA_MALA } from "@/lib/viajes/modelo";
 import { mandarListaEspera } from "@/lib/correo-lista-espera";
+
+// Un celular de 10 dígitos puede estar guardado con el "1" de EE.UU. delante
+// (11 dígitos) si lo escribió así quien llenó el interesado; se busca con las dos formas.
+const celesDe = (c) => (String(c || "").length === 10 ? [String(c), "1" + c] : [String(c || "")]);
 const TIENDA_WA = process.env.VIAJES_WHATSAPP_TIENDA || "8095660818";
 
 export const dynamic = "force-dynamic";
@@ -117,7 +122,7 @@ export async function POST(request) {
       primer: primerNombre(b.nombre),
       estudios,
       falta: { foto: !b.foto, cedula: !b.docFoto },
-      datos: { nombre: b.nombre, cel: celOculto(b.cel), correo: b.correo || "", direccion: b.direccion || "", emergencia: b.emergencia || "", nac: b.nac || "" },
+      datos: { nombre: b.nombre, cel: celOculto(b.cel), correo: b.correo || "", direccion: b.direccion || "", emergencia: b.emergencia || "", nac: b.nac || "", tallas: { calzado: b.tallas?.calzado || "", camisa: b.tallas?.camisa || "", peso_lbs: b.tallas?.peso_lbs || "" } },
       foto: { hay: !!b.foto, puede: foto.puede, desde: foto.desdeCuando || null },
       menores,
       // V64 ("279"): si ya puede cambiar su celular (una vez al mes).
@@ -148,6 +153,12 @@ export async function POST(request) {
     if ("direccion" in n) cambios.direccion = String(n.direccion || "").trim().slice(0, 200);
     if ("emergencia" in n) cambios.emergencia = String(n.emergencia || "").trim().slice(0, 200);
     if (cambios.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cambios.correo)) return NextResponse.json({ error: "Ese correo no se ve bien." }, { status: 400 });
+    // V93 (maqueta v93, aprobada): tallas y peso. Se guardan junto a BCD, wetsuit y chapaletas.
+    if (n.tallas && typeof n.tallas === "object") {
+      const t = limpiarTallas(n.tallas);
+      if (t.error) return NextResponse.json({ error: t.error }, { status: 400 });
+      cambios.tallas = { ...(b.tallas || {}), ...t.valor };
+    }
     if (!Object.keys(cambios).length) return NextResponse.json({ ok: true });
     const { error } = await s.from("viajes_buzos").update(buzoAFila(cambios)).eq("id", b.id);
     if (error) return NextResponse.json({ error: "No se pudo guardar. Intenta de nuevo." }, { status: 500 });
@@ -168,7 +179,7 @@ export async function POST(request) {
     const { data: ifila } = await s
       .from("est_interesados")
       .select("*")
-      .eq("celular", celBuscado)
+      .in("celular", celesDe(celBuscado))
       .neq("estado", "inscrito")
       .order("creado_en", { ascending: false })
       .limit(1)
@@ -288,7 +299,7 @@ export async function POST(request) {
   const { data: abiertos } = await s.from("est_estudiantes").select("*").eq("buzo_id", buzo.id).eq("curso_id", curso.id).not("estado", "in", "(entregada,avisado,cancelado)");
   const permisoMenor = body.menor ? { menor: true, buzoId: buzo.id, token: tokenMenor(buzo.id) } : {};
   if (abiertos?.length) {
-    if (body.interesadoId) await s.from("est_interesados").update(interesadoAFila({ estado: "inscrito", estudianteId: abiertos[0].id })).eq("id", String(body.interesadoId)).eq("celular", cel);
+    if (body.interesadoId) await s.from("est_interesados").update(interesadoAFila({ estado: "inscrito", estudianteId: abiertos[0].id })).eq("id", String(body.interesadoId)).in("celular", celesDe(cel));
     return NextResponse.json({ ok: true, ya: true, primer: primerNombre(buzo.nombre), estudianteId: abiertos[0].id, curso: curso.nombre, ...permisoMenor });
   }
 
@@ -331,9 +342,10 @@ export async function POST(request) {
   const { error: eEst } = await s.from("est_estudiantes").insert(fila);
   if (eEst) return NextResponse.json({ error: "No se pudo registrar el curso. Intenta de nuevo." }, { status: 500 });
   // Se resuelve el interesado reconocido (ver arriba, acción "interesado");
-  // el .eq("celular", cel) es por seguridad, para que solo se resuelva si
-  // de verdad es el mismo celular.
-  if (body.interesadoId) await s.from("est_interesados").update(interesadoAFila({ estado: "inscrito", estudianteId: fila.id })).eq("id", String(body.interesadoId)).eq("celular", cel);
+  // el celular (con o sin el 1 de EE.UU.) es por seguridad, para que solo se
+  // resuelva si de verdad es el mismo celular. Antes, si el interesado tenía
+  // el 1 guardado, no coincidía y se quedaba como "nuevo" en la lista.
+  if (body.interesadoId) await s.from("est_interesados").update(interesadoAFila({ estado: "inscrito", estudianteId: fila.id })).eq("id", String(body.interesadoId)).in("celular", celesDe(cel));
   // V65 ("286"): "Agregar Nitrox" en Open Water (o "Agregar OXY" en BLS):
   // queda anotado también en ese curso, sin fecha (en lista de espera).
   let tambienNombre = null;

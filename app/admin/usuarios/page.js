@@ -33,6 +33,8 @@ export default async function UsuariosPage() {
     supabase.from("roles_app").select("id, nombre").eq("app", "clientes").order("nombre"),
   ]);
   const perfiles = (perfilesTodos || []).filter((p) => !p.eliminado_en);
+  // V88: consulta aparte, para que la pantalla siga abriendo sin migration_100.sql.
+  const { data: configPres } = await supabase.from("app_config").select("presupuesto_correos").maybeSingle();
 
   return (
     <div>
@@ -86,6 +88,15 @@ export default async function UsuariosPage() {
             correosIniciales={config?.nuevas_cuentas_correos || []}
             campo="nuevas_cuentas_correos"
             nota="A estos correos les llega el aviso cada vez que alguien crea una cuenta, para que la apruebes en Usuarios nuevos."
+          />
+
+          {/* V88 (maqueta V88, aprobada): el correo que pide el presupuesto de cada fecha nueva. */}
+          <div style={{ borderTop: "1px solid var(--borde)", margin: "22px 0 14px" }} />
+          <div style={{ fontWeight: 700, fontSize: 14.5, color: "var(--azul-texto)", marginBottom: 4 }}>Presupuesto de cursos</div>
+          <CorreosAlmacen
+            correosIniciales={configPres?.presupuesto_correos || []}
+            campo="presupuesto_correos"
+            nota="Cada vez que se abre una fecha de curso, a estos correos les llega la solicitud de presupuesto (con los nombres de los inscritos y las gorras de OWD). Se pueden poner varios."
           />
         </SeccionColapsable>
 

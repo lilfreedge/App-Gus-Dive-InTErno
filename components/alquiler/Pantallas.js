@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { Buscar, CampoCel } from "@/components/viajes/Piezas";
-import { IconPlus, IconHistory, IconEdit, IconReport, IconChart, IconCatalog } from "@/components/icons";
+import { IconPlus, IconHistory, IconEdit, IconReport, IconChart, IconCatalog, IconMail } from "@/components/icons";
 import { soloDigitos, formatoCedula, formatoCel } from "@/lib/viajes/modelo";
+import { resumenSemana, semanaAnterior } from "@/lib/alquiler/semana";
+import { textoCalzado, tallasDe, faltanTallas } from "@/lib/tallas";
 import {
   TIPOS,
   tipoDe,
@@ -59,7 +61,6 @@ function FilaAlquiler({ db, a, ir }) {
         No. {a.numero} · {a.items.map((x) => x.codigo).join(", ")} · {a.dias === 6 ? "Doble" : "Normal"} · {rd(totalDe(a))}
         {String(a.factura || "").trim() ? ` · Factura ${a.factura}` : ""}
       </span>
-      {a.estudiante && <span className="alq-estudiante">Estudiante {a.estudiante}</span>}
       {sinFactura(a) && !a.estudiante && <span className="alq-falta">Falta el número de factura</span>}
       {faltaFacturaMora(a) && <span className="alq-falta">Falta la factura de la mora</span>}
       {faltaFacturaCargos(a) && <span className="alq-falta">Falta la factura de los cargos</span>}
@@ -250,7 +251,10 @@ export function Detalle({ db, p, ops, ir, avisar, id }) {
           administrador). Queda en la bitácora. */}
       <div className="section-title">Número de factura</div>
       <CampoFactura valor={a.factura} puedeCambiar={p.admin} placeholder="El de tu sistema de facturación" onGuardar={(v) => (ops.cambiarAlquiler(a, { factura: v }, "Número de factura", a.factura || "—", v || "—"), avisar("Guardado"))} />
-      {a.estudiante && <div className="hint-text">Estudiante {a.estudiante}: el equipo va incluido en el curso.</div>}
+      {/* V92 (maqueta v94, aprobada): la nota sale solo en la ficha, y solo para OWD. */}
+      {a.estudiante === "OWD" && (
+        <div style={{ background: "#e8f1fb", color: "#1d4466", fontWeight: 800, borderRadius: 10, padding: "8px 12px", margin: "8px 0" }}>Incluido en el curso · no paga</div>
+      )}
 
       {/* V61 (nota del 2-nov): la factura de la mora, para ponerla después de cobrarla. */}
       {moraTotal(a, hoy) > 0 && (
@@ -620,19 +624,11 @@ export function Nuevo({ db, ops, ir, avisar }) {
         {/* V61 (nota del 2-nov): "una opción de poder poner algo como 'Estudiante
             OWD' para cuando alquilemos equipo a un estudiante (en los cursos tenemos
             los equipos incluidos durante el curso)". */}
+        {/* V92 (maqueta v94, aprobada): solo Open Water Diver incluye equipo. */}
         <label className="alq-ck" style={{ marginTop: 12 }}>
-          <input type="checkbox" checked={!!estudiante} onChange={(e) => setEstudiante(e.target.checked ? "OWD" : "")} />
-          Es un estudiante: el equipo va incluido en su curso
+          <input type="checkbox" checked={estudiante === "OWD"} onChange={(e) => setEstudiante(e.target.checked ? "OWD" : "")} />
+          Es estudiante de Open Water Diver: el equipo va incluido en su curso
         </label>
-        {estudiante && (
-          <div className="alq-seg" style={{ marginTop: 6 }}>
-            {["OWD", "Advanced", "Rescue", "Otro curso"].map((c) => (
-              <button key={c} type="button" className={estudiante === c ? "sel" : ""} onClick={() => setEstudiante(c)}>
-                Estudiante {c}
-              </button>
-            ))}
-          </div>
-        )}
 
         <div className="alq-fila2">
           <div>
@@ -1041,6 +1037,11 @@ export function FichaCliente({ db, p, ops, ir, id }) {
               <span>Correo</span>
               <b>{b.correo || "—"}</b>
             </div>
+            {/* V93 (maqueta v93, aprobada): calzado, camisa y peso para reservar el equipo. */}
+            <div className="vj-dato">
+              <span>Calzado · camisa · peso</span>
+              <b>{faltanTallas(b).length ? <span style={{ background: "#fff3dc", color: "#9a5b0e", borderRadius: 999, padding: "2px 8px", fontWeight: 800 }}>Falta llenar: {faltanTallas(b).join(", ")}</span> : `${textoCalzado(tallasDe(b).calzado)} · ${tallasDe(b).camisa} · ${tallasDe(b).peso} lbs`}</b>
+            </div>
             <div className="vj-dato">
               <span>Alquileres</span>
               <b>
@@ -1053,6 +1054,10 @@ export function FichaCliente({ db, p, ops, ir, id }) {
               </button>
               <button className="btn btn-primary vj-mini" onClick={() => ir("nuevo")}>
                 <IconPlus size={14} /> Nuevo alquiler
+              </button>
+              {/* V90 (maqueta v91, "5"): botón de ADM Cloud sin funcionar, solo para ver cómo quedará. */}
+              <button className="btn secondary vj-mini" disabled title="Próximamente: facturar en ADM Cloud" style={{ opacity: 0.55, cursor: "not-allowed" }}>
+                Facturar en ADM · Próximamente
               </button>
             </div>
           </>
@@ -1204,13 +1209,17 @@ export function Mas({ ir }) {
     { r: "precios", t: "Precios", sub: "El precio de alquiler de cada tipo de equipo y los cargos por problemas (tanque vacío, manómetro ahogado…).", I: IconCatalog },
     { r: "estadisticas", t: "Estadísticas", sub: "Cuánto se alquila, qué se alquila más y cuánto entra.", I: IconChart },
     { r: "reporte", t: "Reporte", sub: "Los alquileres de unas fechas, con totales, para imprimir.", I: IconReport },
+    // V91 (maqueta v91 "6", aprobada): lo de la semana; sale también por correo cada lunes.
+    { r: "semana", t: "Reporte semanal", sub: "Lo de la semana: alquileres, devoluciones, lo que sigue afuera y lo atrasado.", I: IconReport },
     { r: "bitacora", t: "Bitácora", sub: "Todo lo que se hace en Alquiler: quién y cuándo.", I: IconHistory },
+    // V89 (maqueta V90, aprobada): Correos automáticos también en Alquiler.
+    { r: "correos", href: "/correos-automaticos", t: "Correos automáticos", sub: "Los reportes que llegan solos por correo.", I: IconMail },
   ];
   return (
     <>
       <h1 className="page-title">Más</h1>
       {opciones.map((o) => (
-        <button key={o.r} type="button" className="card hub-link-card vj-mas-card alq-mas-card" onClick={() => ir(o.r)}>
+        <button key={o.r} type="button" className="card hub-link-card vj-mas-card alq-mas-card" onClick={() => (o.href ? (window.location.href = o.href) : ir(o.r))}>
           <div className="hub-link-card-inner">
             <div className="hub-link-icon">
               <o.I size={20} />
@@ -1475,6 +1484,129 @@ export function Estadisticas({ db, ir }) {
           <div className="hint-text">Todavía no hay alquileres.</div>
         )}
       </div>
+    </>
+  );
+}
+
+// ----------------------------------------------------------- Reporte semanal
+// V91 (maqueta v91 "6", aprobada): lo de la semana (lunes a domingo): los que
+// salieron, lo que regresó, lo que sigue afuera y lo atrasado. Lo mismo sale por
+// correo cada lunes en los reportes automáticos (Correos automáticos).
+export function ReporteSemana({ db, ir }) {
+  const [rango, setRango] = useState(() => semanaAnterior());
+  const r = resumenSemana(db.alquileres, { desde: rango.desde, hasta: rango.hasta });
+  const cliente = (a) => nombreDe(db, a);
+  const equipos = (a) => a.items.map((x) => x.codigo).join(", ");
+  return (
+    <>
+      <a className="back-link no-print" onClick={() => ir("mas")} style={{ cursor: "pointer" }}>
+        ← Más
+      </a>
+      <h1 className="page-title">Reporte semanal</h1>
+      <div className="alq-fila2 no-print" style={{ maxWidth: 420 }}>
+        <label className="alq-l" style={{ margin: 0 }}>
+          Desde
+          <input type="date" className="ce-input" value={rango.desde} onChange={(e) => setRango({ ...rango, desde: e.target.value })} />
+        </label>
+        <label className="alq-l" style={{ margin: 0 }}>
+          Hasta
+          <input type="date" className="ce-input" value={rango.hasta} onChange={(e) => setRango({ ...rango, hasta: e.target.value })} />
+        </label>
+      </div>
+      <div className="hint-text no-print" style={{ marginTop: 6 }}>
+        Por defecto es la semana pasada (lunes a domingo). Así sale también el correo de cada lunes.
+      </div>
+      <div className="alq-reporte card">
+        <div className="alq-reporte-t">
+          <b>Alquiler · Gus Dive Center</b>
+          <span>
+            Del {fechaLarga(rango.desde)} al {fechaLarga(rango.hasta)}
+          </span>
+        </div>
+        <div className="alq-reporte-res">
+          <span>
+            <b>{r.entregados.length}</b> alquileres · {rd(r.total)}
+          </span>
+          <span>
+            <b>{r.devueltos.length}</b> equipos devueltos
+          </span>
+          <span>
+            Mora cobrada: <b>{rd(r.mora)}</b>
+          </span>
+          <span>
+            <b>{r.pendientes.length}</b> afuera hoy
+          </span>
+          {r.atrasados.length > 0 && <span className="alq-falta">{r.atrasados.length} atrasados</span>}
+          {r.incluidos > 0 && <span>Incluidos en cursos (sin cobro): <b>{r.incluidos}</b></span>}
+        </div>
+        <div className="section-title" style={{ marginTop: 12 }}>
+          Alquileres de la semana
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table className="reporte-preview-tabla alq-tabla">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Equipos</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {r.entregados.map((a) => (
+                <tr key={a.id}>
+                  <td style={{ whiteSpace: "nowrap" }}>{fechaCorta(a.fecha)}</td>
+                  <td>{cliente(a)}</td>
+                  <td>{equipos(a)}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{rd(totalDe(a))}</td>
+                </tr>
+              ))}
+              {!r.entregados.length && (
+                <tr>
+                  <td colSpan={4} className="hint-text">
+                    No hubo alquileres esta semana.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="section-title" style={{ marginTop: 12 }}>
+          Atrasados
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table className="reporte-preview-tabla alq-tabla">
+            <thead>
+              <tr>
+                <th>Desde</th>
+                <th>Cliente</th>
+                <th>Equipo</th>
+                <th>Debía devolver</th>
+              </tr>
+            </thead>
+            <tbody>
+              {r.atrasados.map(({ a, x }) => (
+                <tr key={`${a.id}-${x.id}`}>
+                  <td style={{ whiteSpace: "nowrap" }}>{fechaCorta(a.fecha)}</td>
+                  <td>{cliente(a)}</td>
+                  <td>{x.codigo}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{fechaCorta(a.devolver)}</td>
+                </tr>
+              ))}
+              {!r.atrasados.length && (
+                <tr>
+                  <td colSpan={4} className="hint-text">
+                    Nada atrasado.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <button className="btn btn-primary vj-btn no-print" onClick={() => window.print()}>
+        Imprimir o guardar en PDF
+      </button>
     </>
   );
 }

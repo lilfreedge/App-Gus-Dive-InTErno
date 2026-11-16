@@ -1,0 +1,54 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V89 · Mensaje de cursos</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#06324f}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6}.maq b{color:#ffd166}
+.wrap{max-width:900px;margin:0 auto;padding:18px 16px 40px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:760px){.wrap{grid-template-columns:1fr}}
+h2{font-size:15px;margin:4px 0 4px}.sub{color:var(--suave);font-size:12.5px;margin:0 0 10px}
+.pan{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin-bottom:12px}
+.ti{font-size:20px;font-weight:800;margin:0 0 10px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:12px;margin-bottom:10px}
+.card h4{margin:0 0 6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--suave)}
+textarea{width:100%;border:1px solid var(--borde);border-radius:10px;padding:9px 10px;font:inherit;min-height:60px;resize:vertical}
+.fila{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.btn{border:0;border-radius:10px;padding:9px 13px;font:inherit;font-weight:800;background:var(--navy);color:#fff}
+.btn.sec{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+.gris{color:var(--suave);font-size:12.5px;margin-top:6px}
+.msg{color:var(--suave);font-size:13px;margin:0 0 12px;line-height:1.4}
+.curso{display:block;background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px;margin-bottom:8px}
+.curso b{font-size:15.5px;display:block}.curso small{color:var(--suave);display:block;margin-top:4px}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+</style></head><body>
+<div class="maq"><b>Maqueta V89</b> · El mensaje de arriba de la lista de cursos se puede cambiar o quitar desde Más › Catálogo de cursos. Nada programado. Los nombres de los cursos no se tocan.</div>
+<div class="wrap">
+<div>
+  <h2>Más › Catálogo de cursos</h2>
+  <p class="sub">Lo que ves al entrar a la pantalla del catálogo.</p>
+  <div class="pan">
+    <div class="ti">Catálogo de cursos</div>
+    <div class="card">
+      <h4>Mensaje de la lista de cursos (app de clientes)</h4>
+      <textarea>Todos los cursos de Gus Dive</textarea>
+      <div class="gris">Sale arriba de la lista Cursos en la app de clientes. Si lo quitas, la lista sale sin mensaje.</div>
+      <div class="fila"><button class="btn">Guardar</button><button class="btn sec">Quitar mensaje</button></div>
+    </div>
+    <div class="card"><h4>Cursos</h4><p class="gris" style="margin:0">Los cursos siguen igual: nombre, precio y fechas.</p></div>
+  </div>
+</div>
+<div>
+  <h2>Cómo sale en la app</h2>
+  <p class="sub">Con mensaje (arriba) y sin mensaje (abajo).</p>
+  <div class="pan">
+    <div class="msg">Todos los cursos de Gus Dive</div>
+    <div class="curso"><b>Instructor Course</b><small>Sin fecha todavía</small></div>
+    <div class="curso"><b>Nitrox</b><small>Sin fecha todavía</small></div>
+  </div>
+  <div class="pan">
+    <div class="curso"><b>Instructor Course</b><small>Sin fecha todavía</small></div>
+    <div class="curso"><b>Nitrox</b><small>Sin fecha todavía</small></div>
+  </div>
+  <div class="nota">Asumo que el mensaje que quieres cambiar es "Todos los cursos de Gus Dive". Si es otro texto, dime cuál.</div>
+</div>
+</div>
+</body></html>

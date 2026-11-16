@@ -285,6 +285,49 @@ export default function EstudiantesApp({ p, yo, personas }) {
         return false;
       }
     },
+    // V88 (maqueta V88, aprobada): el correo de presupuesto de cada fecha sale
+    // solo, una vez, al crearla. El servidor lo manda y lo anota aquí.
+    // V91 (maqueta v92, aprobada): "otro" manda el correo otra vez y reinicia
+    // "realizado" y "entregado" (queda anotado en la bitácora).
+    async pedirPresupuesto(fechaId, otro = false) {
+      try {
+        const r = await fetch("/api/estudiantes/presupuesto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "pedir", fechaId, otro }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || j.error) throw new Error(j.error || "No se pudo mandar el correo del presupuesto.");
+        if (j.en) local((d) => ({ ...d, fechas: (d.fechas || []).map((x) => (x.id === fechaId ? { ...x, presupuestoPedidoEn: j.en, ...(otro ? { presupuestoRealizadoEn: null, presupuestoEntregadoEn: null, presupuestoEntregadoInfo: null } : {}) } : x)) }));
+        if (otro) await log(null, "Pidió otro presupuesto");
+        return true;
+      } catch (e) {
+        await log(null, `Presupuesto: ${e.message}`);
+        return false;
+      }
+    },
+    // V91: el QR de 15 minutos para que el instructor confirme que recibió el presupuesto.
+    async pedirQrEntrega(fechaId) {
+      try {
+        const r = await fetch("/api/estudiantes/presupuesto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "qr", fechaId }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || j.error) throw new Error(j.error || "No se pudo preparar el QR.");
+        return { url: j.url, expiraEn: j.expiraEn };
+      } catch (e) {
+        fallo(e);
+        return null;
+      }
+    },
+    // V88: se marca a mano cuando ya llegó el presupuesto de la fecha.
+    async marcarPresupuesto(f, nombreCurso) {
+      try {
+        const r = await fetch("/api/estudiantes/presupuesto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "realizado", fechaId: f.id }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || j.error) throw new Error(j.error || "No se pudo marcar.");
+        local((d) => ({ ...d, fechas: (d.fechas || []).map((x) => (x.id === f.id ? { ...x, presupuestoRealizadoEn: j.en } : x)) }));
+        await log(null, `Presupuesto realizado: ${nombreCurso || "curso"} · ${fechaCursoCorta(f.inicio)}`);
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
     // V55: las fechas de cada curso ("64", "72. sí" cupo).
     async guardarFecha(f, esNueva, c) {
       try {

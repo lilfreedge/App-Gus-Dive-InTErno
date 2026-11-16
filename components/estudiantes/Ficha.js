@@ -476,6 +476,12 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
               </button>
               {/* V64 ("282"): en vez de "Subir comprobante", el No. de factura. */}
               <CampoFacturaEst est={est} cambiar={cambiar} puede={p.pagos || p.estudiantes} />
+              {/* V90 (maqueta v91, "5"): botón de ADM Cloud sin funcionar, solo para ver cómo quedará. */}
+              {yo?.esTitular && (
+                <button type="button" className="btn secondary vj-mini" disabled title="Próximamente: facturar en ADM Cloud" style={{ opacity: 0.55, cursor: "not-allowed" }}>
+                  Facturar en ADM · Próximamente
+                </button>
+              )}
             </div>
           ))}
       </div>

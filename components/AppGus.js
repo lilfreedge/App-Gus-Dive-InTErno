@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { textoCalzado } from "@/lib/tallas";
 import { useRouter } from "next/navigation";
 import { CampoCel, IconoWA } from "@/components/viajes/Piezas";
 import { soloDigitos, formatoCedula, celValido, rd, fechaObj, fechaCorta } from "@/lib/viajes/modelo";
@@ -290,7 +291,7 @@ const NITROX_BENEFICIOS = [
 ];
 
 // ------------------------------------------------------------ cursos
-function Cursos({ catalogo, cursos }) {
+function Cursos({ catalogo, cursos, mensaje = "" }) {
   const [abierto, setAbierto] = useState(null);
   const c = abierto ? catalogo.find((x) => x.id === abierto) : null;
   if (c) {
@@ -380,9 +381,11 @@ function Cursos({ catalogo, cursos }) {
   return (
     <>
       <div className="ag-titulo">Cursos</div>
-      <div className="pb-h" style={{ margin: "0 0 10px" }}>
-        Todos los cursos de Gus Dive
-      </div>
+      {mensaje ? (
+        <div className="pb-h" style={{ margin: "0 0 10px" }}>
+          {mensaje}
+        </div>
+      ) : null}
       {catalogo.map((x) => {
         const prox = cursos.find((f) => f.cursoId === x.id);
         return (
@@ -407,7 +410,7 @@ function Cursos({ catalogo, cursos }) {
 }
 
 // ------------------------------------------------------------ app
-export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], whatsapp = "" }) {
+export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], whatsapp = "", mensaje = "" }) {
   const [tab, setTabEstado] = useState("inicio");
   const [listo, setListo] = useState(false); // ya leyó lo guardado en el celular
   const [persona, setPersona] = useState(null);
@@ -684,7 +687,7 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
         )}
 
         {/* ---------- Cursos ---------- */}
-        {tab === "cursos" && <Cursos catalogo={catalogo} cursos={cursos} />}
+        {tab === "cursos" && <Cursos catalogo={catalogo} cursos={cursos} mensaje={mensaje} />}
 
         {/* ---------- Buceos ---------- */}
         {tab === "buceos" && (
@@ -820,6 +823,10 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
                     ["Correo", yo.perfil.correo || "—"],
                     ["Dirección", yo.perfil.direccion || "—"],
                     ["Emergencia", yo.perfil.emergencia || "—"],
+                    // V93 (maqueta v93, aprobada): tallas y peso para reservar el equipo.
+                    ["Calzado", yo.perfil.tallas?.calzado ? textoCalzado(yo.perfil.tallas.calzado) : "Sin llenar"],
+                    ["Camisa", yo.perfil.tallas?.camisa || "Sin llenar"],
+                    ["Peso", yo.perfil.tallas?.peso_lbs ? `${yo.perfil.tallas.peso_lbs} lbs` : "Sin llenar"],
                     ["Tallas", [yo.perfil.tallas?.bcd && `BCD ${yo.perfil.tallas.bcd}`, yo.perfil.tallas?.wetsuit && `Wetsuit ${yo.perfil.tallas.wetsuit}`, yo.perfil.tallas?.chapaletas && `Chapaletas ${yo.perfil.tallas.chapaletas}`].filter(Boolean).join(" · ") || "—"],
                   ].map(([k, v]) => (
                     <div key={k} className="ag-dato">

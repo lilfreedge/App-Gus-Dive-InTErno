@@ -79,8 +79,10 @@ export function Interesados({ db, p, yo, ops, ir, avisar, abrirId = null }) {
   const t = q.trim().toLowerCase();
   const td = soloDigitos(q);
   const hoy = hoyISO();
-  const cursosConInteresados = [...new Set(db.interesados.map((x) => x.curso).filter(Boolean))].map((c) => ({ c, n: db.interesados.filter((x) => x.curso === c).length }));
-  const lista = db.interesados
+  // Quien ya se inscribió (estado "inscrito") ya está en Estudiantes y sale de esta lista.
+  const enLista = db.interesados.filter((x) => x.estado !== "inscrito");
+  const cursosConInteresados = [...new Set(enLista.map((x) => x.curso).filter(Boolean))].map((c) => ({ c, n: enLista.filter((x) => x.curso === c).length }));
+  const lista = enLista
     .filter((x) => (t ? (x.nombre || "").toLowerCase().includes(t) || (td.length >= 4 && soloDigitos(x.cel).includes(td)) : filtroCurso ? x.curso === filtroCurso : true))
     .sort((a, b) => (a.recordar && a.recordar <= hoy ? -1 : 0) - (b.recordar && b.recordar <= hoy ? -1 : 0));
   const cursos = db.cursos.filter((c) => c.activo).map((c) => c.nombre);

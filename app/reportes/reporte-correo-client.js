@@ -15,6 +15,8 @@ const DETALLES_OPCIONES = [
   { clave: "llenados", etiqueta: "Llenados" },
   { clave: "inspecciones", etiqueta: "Inspecciones" },
   { clave: "mantenimientos", etiqueta: "Mantenimientos" },
+  // V91 (maqueta v91 "6", aprobada): alquileres y retornos de la semana.
+  { clave: "alquileres", etiqueta: "Alquileres y retornos (Alquiler)" },
 ];
 
 const DETALLES_DEFAULT = {
@@ -22,6 +24,7 @@ const DETALLES_DEFAULT = {
   llenados: true,
   inspecciones: true,
   mantenimientos: true,
+  alquileres: true,
 };
 
 function idAleatorio() {

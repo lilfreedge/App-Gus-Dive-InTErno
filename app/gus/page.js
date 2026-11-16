@@ -26,6 +26,8 @@ export const metadata = {
 export default async function AppGusPage() {
   const s = createServiceClient();
   const { data: cs } = await s.from("est_cursos").select("*").eq("activo", true).order("orden").order("nombre");
+  // V88 (maqueta V89, aprobada): el mensaje de arriba de la lista de cursos (vacío = sin mensaje).
+  const { data: cfg } = await s.from("app_config").select("catalogo_mensaje").maybeSingle();
   const cursosLink = (cs || []).filter((c) => c.en_link !== false);
   const { conFechas, porCurso } = await fechasProximas(s, cursosLink.map((c) => c.id));
   const cursos = conFechas
@@ -59,5 +61,5 @@ export default async function AppGusPage() {
   // Si falta la tabla de precios (migration_83), no sale la sección.
   const { data: pr } = await s.from("alq_precios_tipo").select("tipo, precio");
   const alquiler = TIPOS.map((t) => ({ t: t.uno, precio: (pr || []).find((r) => r.tipo === t.p)?.precio })).filter((x) => x.precio != null && Number(x.precio) > 0).map((x) => ({ t: x.t, precio: Number(x.precio) }));
-  return <AppGus cursos={cursos} catalogo={catalogo} buceos={buceos} alquiler={alquiler} whatsapp={TIENDA.whatsapp} />;
+  return <AppGus cursos={cursos} catalogo={catalogo} buceos={buceos} alquiler={alquiler} whatsapp={TIENDA.whatsapp} mensaje={cfg?.catalogo_mensaje ?? "Todos los cursos de Gus Dive"} />;
 }

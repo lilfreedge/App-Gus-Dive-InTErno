@@ -1,0 +1,62 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V94 · Dónde va la nota del equipo incluido</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#06324f;--verde:#1f8f4e}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:680px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin:10px 0}
+.card h4{margin:0 0 8px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--suave)}
+.fila{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #eef2f5;flex-wrap:wrap}.fila:last-child{border-bottom:0}
+.gris{color:var(--suave);font-size:13px}
+.incl{background:#e8f1fb;color:#1d4466;font-weight:800;border-radius:999px;padding:4px 10px;font-size:12px}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.marca{border:2px dashed #f6ce46;border-radius:12px;padding:10px;background:#fffbea;margin-top:8px}
+.resal{background:#f6ce46;color:#2b2200;font-weight:700;border-radius:8px;padding:6px 10px;display:inline-block}
+</style></head><body>
+<div class="maq"><b>Maqueta V94</b> · Dónde va la nota "Incluido en el curso" (solo para Open Water Diver). Nada programado todavía.
+  <div class="tabs"><button class="sel" data-p="p1">A · En la ficha del alquiler</button><button data-p="p2">B · En el curso OWD</button><button data-p="p3">C · Solo en el curso</button></div>
+</div>
+<div class="wrap">
+
+<div class="pest sel" id="p1">
+  <h2>A · Ficha del alquiler de un estudiante OWD</h2>
+  <p class="sub">La nota sale solo en alquileres marcados como estudiante de Open Water Diver. En la lista de alquileres no sale.</p>
+  <div class="card">
+    <h4>Alquiler · Ana Ejemplo</h4>
+    <div class="fila"><span>Regulador RE-12 · RD$0</span><span class="incl">Incluido en el curso</span></div>
+    <div class="marca"><span class="resal">No paga por curso Open Water Diver</span><div class="gris" style="margin-top:6px">Solo aparece si el curso es OWD. Otros cursos no muestran esta nota.</div></div>
+    <div class="fila"><span>Saldo</span><b style="color:var(--verde)">RD$0 · sin deuda</b></div>
+  </div>
+  <div class="nota">Lo más directo: quien ve el alquiler entiende en el momento que no se cobra.</div>
+</div>
+
+<div class="pest" id="p2">
+  <h2>B · En el curso Open Water Diver</h2>
+  <p class="sub">La nota vive en el curso, en el paso "Equipo de alquiler entregado". Alquiler solo muestra la etiqueta.</p>
+  <div class="card">
+    <h4>Open Water Diver · 28 nov · Ana Ejemplo</h4>
+    <div class="fila"><span>Equipo de alquiler entregado</span><span class="incl">Listo</span></div>
+    <div class="marca"><span class="resal">Equipo de alquiler incluido en este curso. No paga.</span></div>
+  </div>
+  <div class="nota">En Alquiler queda solo la etiqueta "Incluido en el curso", sin texto de más.</div>
+</div>
+
+<div class="pest" id="p3">
+  <h2>C · Solo en la página del curso OWD</h2>
+  <p class="sub">Un aviso arriba de la página del curso, sin tocar Alquiler.</p>
+  <div class="card">
+    <div class="marca"><span class="resal">Los estudiantes de este curso no pagan el equipo de alquiler. Se maneja en el curso.</span></div>
+  </div>
+  <div class="nota">Es lo más sencillo, pero no sale en Alquiler: quien esté en Alquiler no ve la razón.</div>
+</div>
+
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('sel',x===b));document.querySelectorAll('.pest').forEach(p=>p.classList.toggle('sel',p.id===b.dataset.p));}));
+</script>
+</body></html>

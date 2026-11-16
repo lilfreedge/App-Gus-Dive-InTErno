@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { textoCalzado, tallasDe, faltanTallas } from "@/lib/tallas";
 import { fechaLarga, formatoCel, formatoCedula, rd, soloDigitos, estadoViaje, ESTADOS_VIAJE, nuevoIdLocal, TALLAS } from "@/lib/viajes/modelo";
 import { Chip, Atras, CampoCel, Buscar } from "./Piezas";
 
@@ -116,7 +117,8 @@ function FormBuzo({ b, p, guardar, cancelar, nuevo }) {
               agencia: f.agencia,
               nivel: f.nivel,
               cert: f.cert,
-              tallas: { bcd: f.bcd, wetsuit: f.wetsuit, chapaletas: f.chapaletas },
+              // V91: se conserva lo de calzado, camisa y peso (no está en este formulario).
+              tallas: { ...(b.tallas || {}), bcd: f.bcd, wetsuit: f.wetsuit, chapaletas: f.chapaletas },
               emergencia: f.emergencia,
               ...(p.pagos ? { abono: Number(f.abono) || 0 } : {}),
               staff: f.staff,
@@ -287,6 +289,11 @@ export function FichaBuzo({ db, ops, id, p, ir, rol, yo: usuario }) {
               BCD {t.bcd || "—"} · wetsuit {t.wetsuit || t.bcd || "—"} · chapaletas {t.chapaletas || "—"}
             </b>
           </div>
+          {/* V93 (maqueta v93, aprobada): calzado, camisa y peso del cliente. */}
+          <div className="vj-dato">
+              <span>Calzado · camisa · peso</span>
+              <b>{faltanTallas(b).length ? <span style={{ background: "#fff3dc", color: "#9a5b0e", borderRadius: 999, padding: "2px 8px", fontWeight: 800 }}>Falta llenar: {faltanTallas(b).join(", ")}</span> : `${textoCalzado(tallasDe(b).calzado)} · ${tallasDe(b).camisa} · ${tallasDe(b).peso} lbs`}</b>
+            </div>
           {b.emergencia && (
             <div className="vj-dato">
               <span>Emergencia</span>

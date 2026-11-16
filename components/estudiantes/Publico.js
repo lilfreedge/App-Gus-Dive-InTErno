@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CALZADO_EU, textoCalzado, CAMISA, PESO_MIN, PESO_MAX } from "@/lib/tallas";
 import { soloDigitos, formatoCedula, rd, fechaCorta, fechaLarga, primerNombre, celValido, formatoCel } from "@/lib/viajes/modelo";
 import { semanaDe, menorDe12, edad as edadDe } from "@/lib/estudiantes/modelo";
 import FechaNacimiento from "@/components/FechaNacimiento";
@@ -1036,17 +1037,27 @@ function MisDocumentos({ estado, setEstado, id, tipoDoc, doc, cel, setCel, tiend
       setMsjCel(e.message);
     }
   }
-  const [d, setD] = useState({ correo: estado.datos?.correo || "", direccion: estado.datos?.direccion || "", emergencia: estado.datos?.emergencia || "" });
+  // V93 (maqueta v93, aprobada): tallas y peso, editables en cualquier momento.
+  const tallasIni = estado.datos?.tallas || {};
+  const [d, setD] = useState({
+    correo: estado.datos?.correo || "",
+    direccion: estado.datos?.direccion || "",
+    emergencia: estado.datos?.emergencia || "",
+    calzado: tallasIni.calzado ? String(tallasIni.calzado) : "",
+    camisa: tallasIni.camisa || "",
+    peso: tallasIni.peso_lbs ? String(tallasIni.peso_lbs) : "",
+  });
   const [guardando, setGuardando] = useState(false);
   const [msj, setMsj] = useState("");
   const [firmando, setFirmando] = useState(null);
-  const cambio = estado.datos && (d.correo !== (estado.datos.correo || "") || d.direccion !== (estado.datos.direccion || "") || d.emergencia !== (estado.datos.emergencia || ""));
+  const cambio = estado.datos && (d.correo !== (estado.datos.correo || "") || d.direccion !== (estado.datos.direccion || "") || d.emergencia !== (estado.datos.emergencia || "") || d.calzado !== (tallasIni.calzado ? String(tallasIni.calzado) : "") || d.camisa !== (tallasIni.camisa || "") || d.peso !== (tallasIni.peso_lbs ? String(tallasIni.peso_lbs) : ""));
   async function guardar() {
     setGuardando(true);
     setMsj("");
     try {
-      await api({ accion: "datos", tipoDoc, doc, cel, datos: d });
-      setEstado({ ...estado, datos: { ...estado.datos, ...d } });
+      const tallas = { calzado: d.calzado, camisa: d.camisa, peso_lbs: d.peso };
+      await api({ accion: "datos", tipoDoc, doc, cel, datos: { correo: d.correo, direccion: d.direccion, emergencia: d.emergencia, tallas } });
+      setEstado({ ...estado, datos: { ...estado.datos, correo: d.correo, direccion: d.direccion, emergencia: d.emergencia, tallas } });
       setMsj("Guardado.");
     } catch (e) {
       setMsj(e.message);
@@ -1106,6 +1117,32 @@ function MisDocumentos({ estado, setEstado, id, tipoDoc, doc, cel, setCel, tiend
           <input className="pb-input" value={d.direccion} onChange={(e) => setD({ ...d, direccion: e.target.value })} placeholder="Calle, número, sector" />
           <label className="ce-pub-l">Contacto de emergencia</label>
           <input className="pb-input" value={d.emergencia} onChange={(e) => setD({ ...d, emergencia: e.target.value })} placeholder="Nombre · celular" />
+          <div className="ce-mis-t" style={{ marginTop: 14 }}>
+            Mis tallas y peso
+          </div>
+          <div className="pb-h" style={{ fontSize: 12.5 }}>
+            Necesitamos esta info para reservarte tu equipo
+          </div>
+          <label className="ce-pub-l">Talla de calzado</label>
+          <select className="pb-input" value={d.calzado} onChange={(e) => setD({ ...d, calzado: e.target.value })}>
+            <option value="">Escoge</option>
+            {CALZADO_EU.map((eu) => (
+              <option key={eu} value={eu}>
+                {textoCalzado(eu)}
+              </option>
+            ))}
+          </select>
+          <label className="ce-pub-l">Talla de camisa</label>
+          <select className="pb-input" value={d.camisa} onChange={(e) => setD({ ...d, camisa: e.target.value })}>
+            <option value="">Escoge</option>
+            {CAMISA.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <label className="ce-pub-l">Peso (lbs)</label>
+          <input className="pb-input" type="number" inputMode="numeric" min={PESO_MIN} max={PESO_MAX} value={d.peso} onChange={(e) => setD({ ...d, peso: e.target.value })} placeholder="Ej. 165" />
           {cambio && (
             <button className="pb-btn" disabled={guardando} onClick={guardar}>
               {guardando ? "Guardando…" : "Guardar mis datos"}

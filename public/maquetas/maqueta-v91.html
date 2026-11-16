@@ -1,0 +1,157 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V91 · Proceso del curso, QR y equipo incluido</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#06324f;--verde:#1f8f4e;--verdec:#e3f4ea;--ambar:#fdf3cf;--ambart:#5c4700;--rojo:#c0392b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:680px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin:10px 0}
+.card h4{margin:0 0 8px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--suave)}
+.paso{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #eef2f5;flex-wrap:wrap}
+.paso:last-child{border-bottom:0}.paso b{display:block}.paso small{color:var(--suave)}
+.hecho{background:var(--verdec);color:#1b6b3c;font-weight:800;border-radius:999px;padding:5px 11px;font-size:12.5px}
+.pend{background:var(--ambar);color:var(--ambart);font-weight:800;border-radius:999px;padding:5px 11px;font-size:12.5px}
+.btn{border:0;border-radius:10px;padding:9px 13px;font:inherit;font-weight:800;background:var(--navy);color:#fff;cursor:pointer}
+.btn.sec{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+.btn.off{background:#e9edf1;color:#8a97a3;cursor:not-allowed}
+.gris{color:var(--suave);font-size:13px}
+.mail{background:#fff;border:1px solid var(--borde);border-radius:12px;overflow:hidden;font-size:14px}
+.mail .gus{background:#f6ce46;color:#2b2200;padding:12px 16px}.mail .gus small{display:block;font-size:11px;font-weight:700;letter-spacing:.1em}.mail .gus b{font-size:16px}
+.mail .cu{padding:14px 16px;line-height:1.5}.mail ul,.mail ol{margin:0 0 10px;padding-left:20px}.mail .lab{font-weight:800;color:var(--navy);margin-top:6px}
+.qr{width:160px;height:160px;margin:10px auto;border:2px solid var(--navy);border-radius:12px;display:grid;grid-template-columns:repeat(9,1fr);gap:2px;padding:10px;background:#fff}
+.qr i{background:var(--navy);border-radius:2px}.qr i.v{background:transparent}
+.cel{max-width:300px;margin:0 auto;border:1px solid var(--borde);border-radius:26px;background:#fff;padding:16px;text-align:center}
+.alq{border:1.5px solid var(--navy);border-radius:14px;background:#fff;padding:14px;margin:10px 0}
+.alq .t{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.incl{background:#e8f1fb;color:#1d4466;font-weight:800;border-radius:999px;padding:4px 10px;font-size:12px}
+.deuda{color:var(--verde);font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}th,td{padding:7px 6px;border-bottom:1px solid #eef2f5;text-align:left}th{color:var(--suave);font-size:11.5px;text-transform:uppercase}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V91</b> · Ejemplos con nombres inventados. Nada programado todavía. Pestañas: el proceso, lo que se manda, el QR del instructor, el equipo incluido en Alquiler, el botón de ADM y el reporte semanal.
+  <div class="tabs"><button class="sel" data-p="p1">1 · Proceso</button><button data-p="p2">2 · Qué se manda</button><button data-p="p3">3 · QR del instructor</button><button data-p="p4">4 · Alquiler incluido</button><button data-p="p5">5 · Botón ADM</button><button data-p="p6">6 · Reporte semanal</button></div>
+</div>
+<div class="wrap">
+
+<div class="pest sel" id="p1">
+  <h2>1 · Proceso del curso: Open Water Diver, 28 nov</h2>
+  <p class="sub">Toca los botones para ver cómo cambia cada paso.</p>
+  <div class="card">
+    <h4>Proceso del curso</h4>
+    <div class="paso"><div><b>1. Pedir presupuesto</b><small id="s1t">Se manda el correo a Dinorah</small></div><div id="s1a"><button class="btn" onclick="s1()">Mandar correo</button></div></div>
+    <div class="paso"><div><b>2. Presupuesto listo</b><small>Dinorah lo termina y lo manda a la tienda · se marca a mano</small></div><div id="s2a"><span class="pend">Pendiente</span></div></div>
+    <div class="paso"><div><b>3. Entregado al instructor</b><small>El instructor escanea un QR para confirmar</small></div><div id="s3a"><span class="pend">Pendiente</span></div></div>
+    <div class="paso"><div><b>4. Equipo de alquiler entregado</b><small>Incluido en el precio del curso · sin cobro</small></div><div id="s4a"><span class="pend">Pendiente</span></div></div>
+    <div class="paso"><div><b>5. Gorras (OWD)</b><small>Se marcan en la ficha de cada estudiante</small></div><span class="pend">3 de 5</span></div>
+  </div>
+  <div class="nota">Al marcar el paso 4 en el proceso del curso, el equipo aparece en Alquiler (pestaña 4).</div>
+</div>
+
+<div class="pest" id="p2">
+  <h2>2 · Lo que recibe Dinorah</h2>
+  <p class="sub">Así se ve el correo que sale al tocar "Mandar correo".</p>
+  <div class="mail">
+    <div class="gus"><small>GUS DIVE CENTER</small><b>Presupuesto y gorras · Open Water Diver, 28 nov</b></div>
+    <div class="cu">
+      <p>Hola Dinorah,</p>
+      <p>Ya hay fecha para el curso de <b>Open Water Diver</b> el <b>28 de noviembre</b>. Necesitamos que nos mandes a la tienda el presupuesto de:</p>
+      <ul><li>Yolas (lanchas)</li><li>Pizza para los días de teoría</li><li>Entradas al Parque Nacional La Caleta</li><li>Parqueo del instructor en el parque, los días de buceo</li></ul>
+      <p class="lab">Gorras: 5</p>
+      <p class="lab">Inscritos (5)</p>
+      <ol><li>Ana Ejemplo</li><li>Carlos Demo</li><li>Marta Demo</li><li>Luis Ejemplo</li><li>Sofía Demo</li></ol>
+      <p>Gracias,<br>Gus Dive Center</p>
+    </div>
+  </div>
+  <div class="nota">Los nombres salen de la lista de inscritos y de espera al momento de mandarlo. Si alguien se inscribe después, no sale en este correo (pregunta 3).</div>
+</div>
+
+<div class="pest" id="p3">
+  <h2>3 · Confirmar que el instructor recibió el presupuesto</h2>
+  <p class="sub">En la tienda se muestra el QR. El instructor lo escanea con su celular y confirma.</p>
+  <div class="card" style="text-align:center">
+    <h4>En la tienda</h4>
+    <div class="qr" aria-label="QR de ejemplo">
+      <i></i><i></i><i></i><i class="v"></i><i></i><i></i><i></i><i class="v"></i><i></i>
+      <i class="v"></i><i></i><i class="v"></i><i></i><i class="v"></i><i></i><i></i><i></i>
+      <i></i><i></i><i class="v"></i><i></i><i></i><i class="v"></i><i></i><i></i><i class="v"></i>
+      <i></i><i class="v"></i><i></i><i></i><i class="v"></i><i></i><i></i><i class="v"></i><i></i>
+      <i class="v"></i><i></i><i></i><i class="v"></i><i></i><i class="v"></i><i></i><i class="v"></i><i></i>
+      <i></i><i></i><i class="v"></i><i></i><i></i><i></i><i class="v"></i><i></i><i></i>
+      <i></i><i></i><i></i><i class="v"></i><i></i><i></i><i></i><i class="v"></i><i></i>
+      <i class="v"></i><i></i><i class="v"></i><i></i><i class="v"></i><i></i><i></i><i></i><i class="v"></i>
+      <i></i><i></i><i></i><i class="v"></i><i></i><i></i><i class="v"></i><i></i><i></i>
+    </div>
+    <div class="gris">QR de ejemplo. Cada fecha tiene el suyo.</div>
+  </div>
+  <div class="cel">
+    <div class="gris" style="margin-bottom:8px">En el celular del instructor</div>
+    <b>Confirmar presupuesto</b>
+    <p class="gris" style="margin:8px 0">Open Water Diver · 28 nov<br>Presupuesto y gorras entregados por la tienda.</p>
+    <button class="btn" onclick="conf()">Confirmo que lo recibí</button>
+    <div id="conf" class="gris" style="margin-top:8px"></div>
+  </div>
+  <div class="nota">Queda anotado quién confirmó, la fecha y la hora. Una vez confirmado, el QR muestra que el presupuesto ya se recibió.</div>
+</div>
+
+<div class="pest" id="p4">
+  <h2>4 · Equipo de alquiler incluido en el curso</h2>
+  <p class="sub">En Alquiler sale el equipo del curso, pero con precio cero. No aparece como deuda.</p>
+  <div class="alq">
+    <div class="t"><b>Ana Ejemplo · Open Water Diver 28 nov</b><span class="incl">Incluido en el curso</span></div>
+    <table style="margin-top:8px">
+      <tr><th>Equipo</th><th>Entregado</th><th>Devuelto</th><th>Cobro</th></tr>
+      <tr><td>Regulador RE-12</td><td>28 nov</td><td>pendiente</td><td>RD$0</td></tr>
+      <tr><td>Chaleco CH-04</td><td>28 nov</td><td>pendiente</td><td>RD$0</td></tr>
+    </table>
+    <p class="gris" style="margin:8px 0 0">Saldo: <span class="deuda">RD$0 · sin deuda</span></p>
+  </div>
+  <div class="card">
+    <h4>Qué se queda igual y qué cambia</h4>
+    <p class="gris" style="margin:0">Sí se guarda dónde está cada equipo y cuándo se devuelve. No se cuenta como alquiler cobrado ni como deuda. Si se pierde o se daña, se puede cobrar aparte (pendiente de decidir).</p>
+  </div>
+  <div class="nota">Al tocar "Entregado" en el proceso del curso, el equipo sale aquí solo.</div>
+</div>
+
+<div class="pest" id="p5">
+  <h2>5 · Botón de ADM Cloud (sin funcionar)</h2>
+  <p class="sub">Solo para ver cómo quedaría. No manda nada a ADM.</p>
+  <div class="card">
+    <h4>Ficha del cliente · Alquiler</h4>
+    <div class="paso"><div><b>Ana Ejemplo</b><small>Saldo: RD$0</small></div><button class="btn off" disabled>Facturar en ADM · Próximamente</button></div>
+  </div>
+  <div class="card">
+    <h4>Ficha del estudiante · Control Estudiantes</h4>
+    <div class="paso"><div><b>Carlos Demo</b><small>Open Water Diver · pagado</small></div><button class="btn off" disabled>Facturar en ADM · Próximamente</button></div>
+  </div>
+  <div class="nota">Cuando se defina cómo se conecta, el botón se prende y sale con el cliente ya abierto.</div>
+</div>
+
+<div class="pest" id="p6">
+  <h2>6 · Reporte semanal de Alquiler</h2>
+  <p class="sub">Cada lunes, los alquileres y retornos de la semana anterior.</p>
+  <div class="card">
+    <h4>Semana del 9 al 15 nov</h4>
+    <table>
+      <tr><th>Concepto</th><th>Cantidad</th></tr>
+      <tr><td>Alquileres entregados</td><td>12</td></tr>
+      <tr><td>Retornos recibidos</td><td>9</td></tr>
+      <tr><td>Pendientes de retorno</td><td>3</td></tr>
+      <tr><td>Retornos atrasados</td><td>1</td></tr>
+      <tr><td>Equipo incluido en cursos (sin cobro)</td><td>6</td></tr>
+    </table>
+  </div>
+  <div class="nota">¿Por correo cada lunes, en pantalla, o las dos cosas? Lo decides tú.</div>
+</div>
+
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('sel',x===b));document.querySelectorAll('.pest').forEach(p=>p.classList.toggle('sel',p.id===b.dataset.p));}));
+function s1(){document.getElementById('s1t').textContent='Mandado el 16 nov a Dinorah';document.getElementById('s1a').innerHTML='<span class="hecho">Listo · 16 nov</span>';}
+function conf(){document.getElementById('conf').textContent='Confirmado. Anotado con tu nombre y la hora.';}
+</script>
+</body></html>

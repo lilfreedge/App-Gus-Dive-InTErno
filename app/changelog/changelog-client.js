@@ -12,6 +12,34 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V93",
+    fecha: "16 de noviembre, 2026",
+    titulo: "Tallas de calzado y camisa y peso en libras del cliente",
+    descripcion:
+      "App Gus Dive, Mis datos: el cliente puede poner en cualquier momento su talla de calzado (en EU y en US juntas, por ejemplo \"EU 40 · US 8\"), su talla de camisa (de XXS a XXL) y su peso en libras (lbs). Sale el texto \"Necesitamos esta info para reservarte tu equipo\" y, igual que la foto y el documento, no se pide de una vez: se puede cambiar cuando quiera. Control Estudiantes y Alquiler: en la ficha del cliente sale la fila \"Calzado · camisa · peso\"; si falta algo, sale en naranja \"Falta llenar: …\" con lo que hace falta. Viajes › Buceadores: la misma fila en la ficha, y al guardar el formulario ya no se borran esos datos. No necesita SQL: se guardan en la misma columna de tallas que BCD, wetsuit y chapaletas. Pendiente: la tabla de tallas de calzado EU y US es general y hay que confirmarla con la tienda.",
+  },
+  {
+    version: "V92",
+    fecha: "16 de noviembre, 2026",
+    titulo: "Otro presupuesto, QR del instructor, reporte semanal de Alquiler y nota de equipo incluido",
+    descripcion:
+      "Control Estudiantes, página de cada curso, tarjeta Presupuesto: \"Pedir otro presupuesto\" (en letra chica, con confirmación) manda otra vez el correo a Dinorah con la lista actual y vuelve a marcar el presupuesto como pendiente. Después de marcarlo como realizado sale \"Entregar al instructor (QR)\": un QR que vence a los 15 minutos. El instructor lo escanea con su celular y confirma que recibió el presupuesto; no pide nombre ni número (solo queda el modelo del celular, el navegador y la hora). Editar curso: el interruptor \"Entregar el presupuesto al instructor con QR\" lo prende o lo apaga por curso. Alquiler: Más › Reporte semanal, con los alquileres de la semana (lunes a domingo), los equipos devueltos, la mora, lo que sigue afuera y lo atrasado. El mismo reporte sale por correo cada lunes en Correos automáticos (sección Alquileres y retornos). Alquiler: en la ficha de un alquiler de estudiante de Open Water Diver sale \"Incluido en el curso · no paga\"; la opción de estudiante ahora es solo para OWD. Necesita migration_101.sql (confirmación del QR); sin ella el QR funciona, pero no se puede anotar la confirmación.",
+  },
+  {
+    version: "V91",
+    fecha: "16 de noviembre, 2026",
+    titulo: "Botón de Facturar en ADM Cloud (todavía sin función)",
+    descripcion:
+      "Alquiler, ficha del cliente: junto a \"Editar datos\" y \"Nuevo alquiler\" sale el botón \"Facturar en ADM · Próximamente\". Control Estudiantes, ficha del estudiante (Titular): junto a \"+ Registrar pago\", el mismo botón. Los dos están apagados y todavía no hacen nada ni mandan datos a ADM; sirven para ver cómo quedará cuando se conecte.",
+  },
+  {
+    version: "V88",
+    fecha: "16 de noviembre, 2026",
+    titulo: "Presupuesto por fecha de curso, gorras de OWD y mensaje de la lista de cursos en el app de clientes",
+    descripcion:
+      "Control Estudiantes, página de cada curso: nueva tarjeta \"Presupuesto\". En la página de cada curso, el botón \"Mandar correo de presupuesto\" manda un correo a Dinorah (y a quien esté en Administración › Correos automáticos › Presupuesto de cursos), con el formato de Gus y el logo de SNSI: el curso, la fecha, los rubros del presupuesto (yolas, pizza en los días de teoría, entradas al Parque Nacional La Caleta y parqueo del instructor), los nombres de los inscritos y de la lista de espera, y las gorras de OWD. La tarjeta dice \"Pedido el …\"; cuando llega el presupuesto se marca a mano con \"Marcar como realizado\" (\"Realizado el …\"). En los cursos de Open Water Diver sale \"Gorras: N de M entregadas\" (cuenta el paso Gorra Gus de cada ficha). Más › Catálogo de cursos: el mensaje de arriba de la lista de cursos en el app de clientes se puede cambiar o quitar (Titular). App Gus Dive: ese mensaje sale de la base; si está vacío, la lista sale sin mensaje. Interesados: quien ya se inscribió sale de la lista general, y si su celular se guardó con el 1 de EE.UU., el registro igual lo encuentra y lo marca como inscrito. Necesita migration_100.sql (presupuesto por fecha, correos del presupuesto y mensaje del catálogo). Pendiente: el interruptor de la gorra con su fecha en la ficha, el celular propio del menor y la regla de un celular por persona.",
+  },
+  {
     version: "V87",
     fecha: "15 de noviembre, 2026",
     titulo: "Link de curso del interesado con sus datos; Nitrox y duración por días en el app Gus Dive",

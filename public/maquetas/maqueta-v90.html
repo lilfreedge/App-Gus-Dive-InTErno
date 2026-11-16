@@ -1,0 +1,96 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V90 · Presupuesto y Más</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#06324f;--verde:#1f8f4e;--verdec:#e3f4ea;--ambar:#fdf3cf;--ambart:#5c4700}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:680px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin:10px 0}
+.card h4{margin:0 0 8px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--suave)}
+.paso{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eef2f5;flex-wrap:wrap}
+.paso:last-child{border-bottom:0}
+.paso b{display:block}.paso small{color:var(--suave)}
+.hecho{background:var(--verdec);color:#1b6b3c;font-weight:800;border-radius:999px;padding:5px 11px;font-size:12.5px}
+.pend{background:var(--ambar);color:var(--ambart);font-weight:800;border-radius:999px;padding:5px 11px;font-size:12.5px}
+.btn{border:0;border-radius:10px;padding:9px 13px;font:inherit;font-weight:800;background:var(--navy);color:#fff;cursor:pointer}
+.btn.sec{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+.gris{color:var(--suave);font-size:13px}
+.mas{background:#fff;border:1px solid var(--borde);border-radius:14px;overflow:hidden;margin:10px 0 18px}
+.mas .cab{padding:10px 14px;background:#f7f9fb;font-weight:800;border-bottom:1px solid var(--borde);display:flex;justify-content:space-between}
+.mas .it{display:flex;gap:10px;align-items:center;padding:11px 14px;border-bottom:1px solid #eef2f5}
+.mas .it:last-child{border-bottom:0}
+.mas .it b{display:block}.mas .it small{color:var(--suave)}
+.mas .it.sel{background:#fff8dd}
+.tag{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;background:#fff1b8;color:#5c4700;margin-left:6px}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V90</b> · Dos cosas: (1) el botón del presupuesto en el proceso del curso, (2) los correos automáticos dentro de Más. Nada programado todavía.
+  <div class="tabs"><button class="sel" data-p="p1">1 · Proceso del curso</button><button data-p="p2">2 · Más en cada app</button></div>
+</div>
+<div class="wrap">
+
+<div class="pest sel" id="p1">
+  <h2>1 · Proceso del curso: Open Water Diver, 28 nov</h2>
+  <p class="sub">Toca el botón y se ve marcado como listo. Haz clic en el botón para ver cómo cambia.</p>
+  <div class="card">
+    <h4>Proceso del curso</h4>
+    <div class="paso" id="pres">
+      <div><b>Presupuesto</b><small id="presTxt">Todavía no se ha mandado a Dinorah</small></div>
+      <div id="presAcc"><button class="btn" onclick="mandar()">Mandar correo de presupuesto</button></div>
+    </div>
+    <div class="paso">
+      <div><b>Presupuesto recibido</b><small>Cuando Dinorah lo manda a la tienda</small></div>
+      <div id="recAcc"><span class="pend">Pendiente</span></div>
+    </div>
+    <div class="paso">
+      <div><b>Gorras (OWD)</b><small>Se marcan en la ficha de cada estudiante</small></div>
+      <span class="pend">3 de 5 entregadas</span>
+    </div>
+  </div>
+  <div class="nota">Así queda el paso en listo: "Presupuesto" marcado con su fecha, como las demás etapas del curso.</div>
+</div>
+
+<div class="pest" id="p2">
+  <h2>2 · Correos automáticos dentro de Más</h2>
+  <p class="sub">Se abre desde Más de cada app donde aplica. Solo el Titular la cambia.</p>
+
+  <div class="mas">
+    <div class="cab"><span>Más · Control Estudiantes</span><span class="gris">Titular</span></div>
+    <div class="it"><div style="flex:1"><b>Catálogo de cursos</b><small>Los cursos que damos y los instructores.</small></div></div>
+    <div class="it sel"><div style="flex:1"><b>Correos automáticos<span class="tag">nuevo</span></b><small>Quién recibe el presupuesto de cada curso.</small></div></div>
+    <div class="it"><div style="flex:1"><b>Estadísticas</b><small>Estudiantes, cursos, cobros e interesados.</small></div></div>
+  </div>
+
+  <div class="mas">
+    <div class="cab"><span>Más · App Interno</span><span class="gris">Titular</span></div>
+    <div class="it"><div style="flex:1"><b>Reportes</b><small>Reporte general y de reguladores.</small></div></div>
+    <div class="it sel"><div style="flex:1"><b>Correos automáticos<span class="tag">nuevo</span></b><small>Reportes del lunes y avisos del almacén.</small></div></div>
+  </div>
+
+  <div class="mas">
+    <div class="cab"><span>Más · App Equipos de clientes</span><span class="gris">Titular</span></div>
+    <div class="it"><div style="flex:1"><b>Reportes</b><small>Reporte de reguladores.</small></div></div>
+    <div class="it"><div style="flex:1"><b>Correos automáticos</b><small>Hoy no tiene correos automáticos. ¿Aplica?</small></div></div>
+  </div>
+
+  <div class="nota">En Administración la entrada sigue igual, pero ahora también sale en Más de cada app donde aplica.</div>
+</div>
+
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('sel',x===b));document.querySelectorAll('.pest').forEach(p=>p.classList.toggle('sel',p.id===b.dataset.p));}));
+function mandar(){
+  document.getElementById('presTxt').textContent='Mandado el 16 nov a Dinorah';
+  document.getElementById('presAcc').innerHTML='<span class="hecho">Hecho · 16 nov</span>';
+  document.getElementById('recAcc').innerHTML='<button class="btn sec" onclick="recibido()">Marcar como realizado</button>';
+}
+function recibido(){
+  document.getElementById('recAcc').innerHTML='<span class="hecho">Hecho · 20 nov</span>';
+}
+</script>
+</body></html>

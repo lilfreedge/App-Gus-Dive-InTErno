@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Buscar, IconoWA } from "@/components/viajes/Piezas";
-import { IconHistory, IconPlus, IconCatalog, IconEdit, IconChart, IconLink, IconUsers } from "@/components/icons";
+import { IconHistory, IconPlus, IconCatalog, IconEdit, IconChart, IconLink, IconUsers, IconMail } from "@/components/icons";
 import { listoParaAlmacen, pagoInstructorPendiente, debe, pagoListo, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, ocupados, quedan, linkWhatsApp } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
 import CompartirLink, { svgQr, urlCompleta, VentanaQr } from "@/components/CompartirLink";
@@ -11,6 +11,7 @@ import { sumarDias, fechaLarga, formatoCel } from "@/lib/viajes/modelo";
 import { urlPrincipal } from "@/lib/direccion";
 import InteresadosCurso, { interesadosDeCurso } from "./InteresadosCurso";
 import { ElegirCurso } from "./Interesados";
+import QrEntrega from "./QrEntrega";
 
 // Pantallas de Control Estudiantes: Inicio, la lista, Más y la Bitácora.
 
@@ -122,6 +123,9 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
   // esperan cupo (lo que salía antes) y, debajo, los interesados de ese
   // curso, con el botón para avisarles por correo.
   const [tab, setTab] = useState(avisarDeEntrada ? "interesados" : "estudiantes");
+  // V91 (maqueta v92, aprobada): "Pedir otro presupuesto" y el QR del instructor.
+  const [otro, setOtro] = useState(false);
+  const [qr, setQr] = useState(false);
   const f = (db.fechas || []).find((x) => x.id === fechaId);
   const atras = (
     <a className="back-link" onClick={() => ir("cursos")} style={{ cursor: "pointer" }}>
@@ -144,6 +148,9 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
   const hayCupo = q !== 0;
   const pagaron = gente.filter((e) => pagoListo(e)).length;
   const deben = gente.filter((e) => debe(e) > 0).length;
+  // V88 (maqueta V88, aprobada): gorras de OWD = las marcadas como entregadas en la ficha.
+  const esOWD = /^open water diver$/i.test(String(c?.nombre || "").trim());
+  const gorrasListas = gente.filter((e) => e.pasos?.gorra === "listo").length;
   const [, m, d] = f.inicio.split("-").map(Number);
   const fin = sumarDias(f.inicio, 6);
   const pasar = (e) =>
@@ -181,6 +188,76 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
             {[f.instructor || "Instructor por definir", `del ${fechaCursoCorta(f.inicio)} al ${fechaCursoCorta(fin)}`].join(" · ")}
           </div>
         </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: 12 }}>
+        <div className="pg-res-top">
+          <b>Presupuesto</b>
+          {f.presupuestoRealizadoEn ? (
+            <span>Realizado el {fechaCursoCorta(String(f.presupuestoRealizadoEn).slice(0, 10))}</span>
+          ) : f.presupuestoPedidoEn ? (
+            <span>Pedido el {fechaCursoCorta(String(f.presupuestoPedidoEn).slice(0, 10))}</span>
+          ) : (
+            <span>Sin pedir</span>
+          )}
+        </div>
+        {!f.presupuestoPedidoEn && (
+          <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => ops.pedirPresupuesto(f.id)}>
+            Mandar correo de presupuesto
+          </button>
+        )}
+        {f.presupuestoPedidoEn && !f.presupuestoRealizadoEn && (
+          <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => ops.marcarPresupuesto(f, c?.nombre)}>
+            Marcar como realizado
+          </button>
+        )}
+        {/* V91 (maqueta v92, aprobada): el QR que confirma que el instructor recibió el presupuesto. */}
+        {f.presupuestoRealizadoEn && c?.info?.qr_instructor !== false && (
+          f.presupuestoEntregadoEn ? (
+            <div className="hint-text" style={{ marginTop: 8 }}>
+              Entregado al instructor el {fechaCursoCorta(String(f.presupuestoEntregadoEn).slice(0, 10))}
+            </div>
+          ) : (
+            <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => setQr(true)}>
+              Entregar al instructor (QR)
+            </button>
+          )
+        )}
+        {/* V91 (maqueta v92, aprobada): "Pedir otro presupuesto", en letra chica y con confirmación. */}
+        {f.presupuestoPedidoEn && !otro && (
+          <div style={{ marginTop: 10 }}>
+            <button type="button" onClick={() => setOtro(true)} style={{ background: "none", border: 0, padding: 0, color: "#5c6b78", textDecoration: "underline", cursor: "pointer", fontSize: 12.5 }}>
+              Pedir otro presupuesto
+            </button>
+          </div>
+        )}
+        {otro && (
+          <div style={{ marginTop: 10, border: "1px solid #dfe6ea", borderRadius: 10, padding: 10 }}>
+            <div className="hint-text">
+              Se manda otra vez el correo a Dinorah con la lista actual de inscritos y de espera. Se vuelven a marcar como realizado y entregado.
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+              <button
+                className="btn btn-primary vj-mini"
+                onClick={async () => {
+                  const ok = await ops.pedirPresupuesto(f.id, true);
+                  if (ok !== false) setOtro(false);
+                }}
+              >
+                Mandar otro correo
+              </button>
+              <button className="btn secondary vj-mini" onClick={() => setOtro(false)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+        {esOWD && (
+          <div className="hint-text" style={{ marginTop: 8 }}>
+            Gorras: {gorrasListas} de {gente.length} entregadas
+          </div>
+        )}
+        {qr && <QrEntrega fechaId={f.id} curso={c?.nombre} fecha={`${fechaCursoCorta(f.inicio)}`} ops={ops} onCerrar={() => setQr(false)} />}
       </div>
 
       <div className="card pg-res">
@@ -938,6 +1015,8 @@ export function Mas({ yo, p, ir }) {
     // V67 ("4"): Estadísticas; y la Bitácora con su permiso ("3").
     ...(p.estadisticas ? [{ r: "estadisticas", t: "Estadísticas", sub: "Estudiantes, cursos, cobros, interesados y certificaciones.", I: IconChart }] : []),
     ...(p.bitacora ? [{ r: "bitacora", t: "Bitácora", sub: "Todo lo que se ha hecho, con quién y cuándo.", I: IconHistory }] : []),
+    // V89 (maqueta V90, aprobada): Correos automáticos también aquí (presupuesto de cursos).
+    ...(yo?.esTitular ? [{ r: "correos", href: "/correos-automaticos", t: "Correos automáticos", sub: "Quién recibe el presupuesto de cada curso y los avisos.", I: IconMail }] : []),
     // V76 (pedido explícito, con foto: "Quitame administracion de mas y
     // ponmelo en settings asi como lo tenemos en los otros apps") -- ya
     // estaba en Settings (el engranaje); aquí era un duplicado. Como en
@@ -947,7 +1026,7 @@ export function Mas({ yo, p, ir }) {
     <>
       <h1 className="page-title">Más</h1>
       {opciones.map((o) => (
-        <button key={o.r} type="button" className="card hub-link-card vj-mas-card ce-mas-card" onClick={() => ir(o.r)}>
+        <button key={o.r} type="button" className="card hub-link-card vj-mas-card ce-mas-card" onClick={() => (o.href ? (window.location.href = o.href) : ir(o.r))}>
           <div className="hub-link-card-inner">
             <div className="hub-link-icon">
               <o.I size={20} />

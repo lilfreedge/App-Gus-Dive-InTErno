@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconEdit, IconPlus } from "@/components/icons";
 import { PASOS, ESCUELAS, rd, nombrePaso } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
+import { createClient } from "@/lib/supabase/client";
 
 // Base de datos (Más › Base de datos, V55: "ponme en 'más' un botón de base
 // de datos, donde figuren base de datos de los cursos que damos, para poder
@@ -33,6 +34,7 @@ export function Cursos({ db, p, yo, ops, ir }) {
       </div>
       {seccion === "cursos" && (
       <>
+      <MensajeCatalogo puede={!!yo?.esTitular} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <div className="hint-text" style={{ margin: 0 }}>Los cursos que damos. {yo?.esTitular ? "Solo tú puedes borrar." : ""}</div>
         {p.cursos && !edit && (
@@ -196,6 +198,12 @@ function EditarCurso({ c, ops, yo, cerrar }) {
             </div>
           </>
         )}
+        {/* V91 (maqueta v92, aprobada): el paso "Entregado al instructor" con QR; se puede apagar aquí. */}
+        <div className="ce-checks">
+          <label>
+            <input type="checkbox" checked={f.info?.qr_instructor !== false} onChange={(e) => set("info", { ...(f.info || {}), qr_instructor: e.target.checked })} /> Entregar el presupuesto al instructor con QR (el QR vence a los 15 minutos)
+          </label>
+        </div>
         <div className="hint-text" style={{ margin: 0 }}>
           Pasos que lleva (los demás le salen al estudiante como N/A)
         </div>
@@ -255,6 +263,71 @@ function EditarCurso({ c, ops, yo, cerrar }) {
         )}
         <div className="hint-text">Los pasos cambian también para los estudiantes que ya están en curso. El precio nuevo sale en los estudiantes nuevos.</div>
       </div>
+    </div>
+  );
+}
+
+// V88 (maqueta V89, aprobada 16-nov-2026): el mensaje de arriba de la lista de
+// cursos en el app de clientes ("Todos los cursos de Gus Dive"). Se puede
+// cambiar o quitar (vacío = sin mensaje). Solo el Titular lo guarda.
+function MensajeCatalogo({ puede }) {
+  const [texto, setTexto] = useState("");
+  const [cargado, setCargado] = useState(false);
+  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    let vivo = true;
+    createClient()
+      .from("app_config")
+      .select("catalogo_mensaje")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!vivo) return;
+        setTexto(data?.catalogo_mensaje ?? "Todos los cursos de Gus Dive");
+        setCargado(true);
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+  async function guardar(valor) {
+    setMsg("");
+    const { error } = await createClient().from("app_config").update({ catalogo_mensaje: valor }).eq("id", true);
+    if (error) return setMsg("No se pudo guardar. Solo el Titular lo puede cambiar.");
+    setTexto(valor);
+    setMsg(valor ? "Guardado." : "Mensaje quitado.");
+  }
+  if (!cargado) return null;
+  return (
+    <div className="card" style={{ marginBottom: 12 }}>
+      <div style={{ fontWeight: 700, marginBottom: 6 }}>Mensaje de la lista de cursos (app de clientes)</div>
+      {puede ? (
+        <>
+          <textarea
+            rows={2}
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            style={{ width: "100%", border: "1px solid #dfe6ea", borderRadius: 10, padding: 9, font: "inherit" }}
+          />
+          <div className="hint-text" style={{ marginTop: 4 }}>
+            Sale arriba de Cursos en la app de clientes. Si lo quitas, la lista sale sin mensaje.
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+            <button className="btn btn-primary vj-btn" onClick={() => guardar(texto.trim())}>
+              Guardar
+            </button>
+            <button className="btn vj-btn" onClick={() => guardar("")}>
+              Quitar mensaje
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="hint-text">{texto || "Sin mensaje."}</div>
+      )}
+      {msg && (
+        <div className="hint-text" style={{ marginTop: 6 }}>
+          {msg}
+        </div>
+      )}
     </div>
   );
 }

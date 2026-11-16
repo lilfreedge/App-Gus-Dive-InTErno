@@ -1,0 +1,102 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V93 · Tallas y peso del cliente</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#06324f;--verde:#1f8f4e;--verdec:#e3f4ea;--ambar:#fdf3cf;--ambart:#5c4700;--amarillo:#f6ce46}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:460px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.carnet{background:var(--amarillo);color:#2b2200;border-radius:14px;padding:14px;display:flex;gap:12px;align-items:center}
+.foto{width:56px;height:56px;border-radius:50%;background:#fff;display:grid;place-items:center;font-weight:800;color:var(--navy)}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin:10px 0}
+.card h4{margin:0 0 4px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--suave)}
+.gris{color:var(--suave);font-size:13px}
+.campo{display:flex;flex-direction:column;gap:4px;margin-top:10px;font-weight:700;font-size:13px}
+.campo input,.campo select{border:1px solid var(--borde);border-radius:10px;padding:9px 10px;font:inherit;font-weight:500;background:#fff}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:800;background:var(--navy);color:#fff;cursor:pointer;width:100%;margin-top:12px}
+.pend{background:var(--ambar);color:var(--ambart);font-weight:800;border-radius:999px;padding:4px 10px;font-size:12px}
+.hecho{background:var(--verdec);color:#1b6b3c;font-weight:800;border-radius:999px;padding:4px 10px;font-size:12px}
+.fila{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #eef2f5;font-size:13.5px}.fila:last-child{border-bottom:0}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V93</b> · Tallas y peso del cliente. Nada programado todavía.
+  <div class="tabs"><button class="sel" data-p="p1">1 · Lo que llena el cliente</button><button data-p="p2">2 · Lo que ve el staff</button><button data-p="p3">3 · Opciones de cada dato</button></div>
+</div>
+<div class="wrap">
+
+<div class="pest sel" id="p1">
+  <h2>1 · Mis datos (App Gus Dive)</h2>
+  <p class="sub">Igual que la foto y la cédula: lo cambia cuando quiera, desde Mi cuenta.</p>
+  <div class="carnet"><div class="foto">AE</div><div><b>Ana Ejemplo</b><div>Nivel Open Water · No. 0000</div></div></div>
+  <div class="card">
+    <h4>Mis datos</h4>
+    <div class="fila"><span>Celular</span><b>809-000-0000</b></div>
+    <div class="fila"><span>Correo</span><b>ana@ejemplo.com</b></div>
+    <div class="fila"><span>Dirección</span><b>Calle Demo 1</b></div>
+    <div class="fila"><span>Emergencia</span><b>Contacto Demo</b></div>
+  </div>
+  <div class="card">
+    <h4>Mis tallas y peso</h4>
+    <div class="gris">Necesitamos esta info para reservarte tu equipo</div>
+    <div class="dos">
+      <label class="campo">Talla de calzado<select><option>Escoge</option><option selected>EU 40 · US 9</option><option>EU 41 · US 10</option><option>EU 42 · US 11</option></select></label>
+      <label class="campo">Talla de camisa<select><option>Escoge</option><option>XXS</option><option>XS</option><option>S</option><option selected>M</option><option>L</option><option>XL</option><option>XXL</option></select></label>
+    </div>
+    <label class="campo">Peso (lbs)<input type="number" value="165" min="50" max="500"></label>
+    <button class="btn">Guardar mis tallas</button>
+    <div class="gris" style="margin-top:8px">Última vez que lo cambiaste: 16 nov, 10:42 a. m.</div>
+  </div>
+  <div class="nota">Esta tarjeta sale junto a Mis datos y Mis documentos, en Mi cuenta. No aparece en la pantalla de inicio.</div>
+</div>
+
+<div class="pest" id="p2">
+  <h2>2 · Ficha del cliente (staff)</h2>
+  <p class="sub">Lo que ve el staff en la ficha de Alquiler o de Buceos, para armar el equipo.</p>
+  <div class="card">
+    <h4>Ana Ejemplo</h4>
+    <div class="fila"><span>Talla de calzado</span><b>EU 40 · US 9</b></div>
+    <div class="fila"><span>Talla de camisa</span><b>M</b></div>
+    <div class="fila"><span>Peso</span><b>165 lbs</b></div>
+    <div class="fila"><span>Estado</span><span class="hecho">Completo</span></div>
+  </div>
+  <div class="card">
+    <h4>Carlos Demo</h4>
+    <div class="fila"><span>Talla de calzado</span><span class="pend">Sin llenar</span></div>
+    <div class="fila"><span>Talla de camisa</span><span class="pend">Sin llenar</span></div>
+    <div class="fila"><span>Peso</span><span class="pend">Sin llenar</span></div>
+    <div class="fila"><span>Estado</span><span class="pend">Falta llenar</span></div>
+  </div>
+  <div class="nota">Si faltan datos, sale el aviso "Falta llenar" para que el staff le pida al cliente antes del curso o del buceo.</div>
+</div>
+
+<div class="pest" id="p3">
+  <h2>3 · Opciones de cada dato</h2>
+  <p class="sub">Propuesta. Dime cuál quieres o cámbialo.</p>
+  <div class="card">
+    <h4>Talla de calzado</h4>
+    <div class="fila"><span><b>A</b> · EU y US juntos (EU 40 · US 9)</span><span class="hecho">Propuesta</span></div>
+    <div class="fila"><span><b>B</b> · solo EU</span><span></span></div>
+    <div class="gris" style="margin-top:6px">Se escoge de la lista. Se muestra la talla EU y su equivalente US, para que cualquiera lo entienda.</div>
+  </div>
+  <div class="card">
+    <h4>Talla de camisa</h4>
+    <div class="fila"><span><b>A</b> · XXS, XS, S, M, L, XL, XXL</span><span class="hecho">Propuesta</span></div>
+    <div class="fila"><span><b>B</b> · número de pecho (cm)</span><span></span></div>
+  </div>
+  <div class="card">
+    <h4>Peso</h4>
+    <div class="fila"><span><b>A</b> · en lbs, número</span><span class="hecho">Propuesta</span></div>
+    <div class="fila"><span><b>B</b> · en lbs, con un rango (ej. 150–160)</span><span></span></div>
+  </div>
+</div>
+
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('sel',x===b));document.querySelectorAll('.pest').forEach(p=>p.classList.toggle('sel',p.id===b.dataset.p));}));
+</script>
+</body></html>

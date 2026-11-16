@@ -1,0 +1,164 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V92 · QR, nota de equipo y presupuesto</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#06324f;--verde:#1f8f4e;--verdec:#e3f4ea;--ambar:#fdf3cf;--ambart:#5c4700}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:680px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin:10px 0}
+.card h4{margin:0 0 8px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--suave)}
+.fila{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eef2f5;flex-wrap:wrap}
+.fila:last-child{border-bottom:0}.fila small{color:var(--suave);display:block}
+.sw{position:relative;width:46px;height:26px;background:#cdd6dd;border-radius:999px;cursor:pointer;flex-shrink:0;border:0;padding:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left .15s}
+.sw.on{background:var(--verde)}.sw.on::after{left:23px}
+.btn{border:0;border-radius:10px;padding:9px 13px;font:inherit;font-weight:800;background:var(--navy);color:#fff;cursor:pointer}
+.btn.sec{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+.gris{color:var(--suave);font-size:13px}
+.pend{background:var(--ambar);color:var(--ambart);font-weight:800;border-radius:999px;padding:5px 11px;font-size:12.5px}
+.qr{width:150px;height:150px;margin:8px auto;border:2px solid var(--navy);border-radius:12px;display:grid;grid-template-columns:repeat(9,1fr);gap:2px;padding:10px;background:#fff}
+.qr i{background:var(--navy);border-radius:2px}.qr i.v{background:transparent}
+.cuenta{font-size:26px;font-weight:800;color:var(--navy);text-align:center;margin:4px 0}
+.opc{border:1.5px solid var(--borde);border-radius:12px;padding:12px;background:#fff;margin:8px 0}
+.opc.elegida{border-color:var(--navy);box-shadow:0 0 0 2px #cfe1f1 inset}
+.opc b{display:block;margin-bottom:4px}.opc .ej{background:#f6ce46;color:#2b2200;border-radius:8px;padding:8px 10px;font-weight:700;margin-top:6px}
+.enlace{background:none;border:0;padding:4px 0;color:var(--suave);font:inherit;font-size:12.5px;text-decoration:underline;cursor:pointer}
+.caja{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:12px;margin-top:8px}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.cel{max-width:300px;margin:0 auto;border:1px solid var(--borde);border-radius:26px;background:#fff;padding:16px;text-align:center}
+.alq{border:1.5px solid var(--navy);border-radius:14px;background:#fff;padding:12px;margin:10px 0}
+.incl{background:#e8f1fb;color:#1d4466;font-weight:800;border-radius:999px;padding:4px 10px;font-size:12px}
+.dlg{border:1px solid var(--borde);border-radius:12px;background:#fff;padding:14px}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V92</b> · Nada programado todavía. Cada pestaña es una de tus respuestas.
+  <div class="tabs"><button class="sel" data-p="p1">1 · QR que expira</button><button data-p="p2">2 · Nota de equipo</button><button data-p="p3">3 · Otro presupuesto</button><button data-p="p4">4 · Confirmar sin nombre</button><button data-p="p5">5 · Equipo perdido</button></div>
+</div>
+<div class="wrap">
+
+<div class="pest sel" id="p1">
+  <h2>1 · Editar curso: pasos del proceso</h2>
+  <p class="sub">Así se ve la parte de Editar curso (Open Water Diver). Cada paso se puede prender o apagar.</p>
+  <div class="card">
+    <h4>Pasos del proceso</h4>
+    <div class="fila"><div><b>Presupuesto</b><small>Siempre va</small></div><span class="gris">Siempre</span></div>
+    <div class="fila"><div><b>Presupuesto listo</b><small>Se marca a mano</small></div><button class="sw on" aria-label="Prender o apagar" onclick="this.classList.toggle('on')"></button></div>
+    <div class="fila"><div><b>Entregado al instructor (QR)</b><small>El QR vence cada 15 minutos</small></div><button class="sw on" id="swqr" aria-label="Prender o apagar" onclick="this.classList.toggle('on')"></button></div>
+    <div class="fila"><div><b>Equipo de alquiler entregado</b><small>Sale en Alquiler como incluido, sin cobro</small></div><button class="sw on" aria-label="Prender o apagar" onclick="this.classList.toggle('on')"></button></div>
+  </div>
+  <div class="card">
+    <h4>Cómo se ve el QR en la tienda</h4>
+    <div class="qr" aria-label="QR de ejemplo">
+      <i></i><i></i><i></i><i class="v"></i><i></i><i></i><i></i><i class="v"></i><i></i>
+      <i class="v"></i><i></i><i class="v"></i><i></i><i class="v"></i><i></i><i></i><i></i>
+      <i></i><i></i><i class="v"></i><i></i><i></i><i class="v"></i><i></i><i></i><i class="v"></i>
+      <i></i><i class="v"></i><i></i><i></i><i class="v"></i><i></i><i></i><i class="v"></i><i></i>
+      <i class="v"></i><i></i><i></i><i class="v"></i><i></i><i class="v"></i><i></i><i class="v"></i><i></i>
+      <i></i><i></i><i class="v"></i><i></i><i></i><i></i><i class="v"></i><i></i><i></i>
+      <i></i><i></i><i></i><i class="v"></i><i></i><i></i><i></i><i class="v"></i><i></i>
+      <i class="v"></i><i></i><i class="v"></i><i></i><i class="v"></i><i></i><i></i><i></i><i class="v"></i>
+      <i></i><i></i><i></i><i class="v"></i><i></i><i></i><i class="v"></i><i></i><i></i>
+    </div>
+    <div class="gris" style="text-align:center">QR de ejemplo (dibujo, no es un código real).</div>
+    <div class="cuenta" id="cuenta">15:00</div>
+    <div class="gris" style="text-align:center">Vence a las <span id="hora">--:--</span></div>
+    <div style="text-align:center;margin-top:8px"><button class="btn sec" onclick="nuevoQr()">Generar QR nuevo</button></div>
+  </div>
+  <div class="nota">Si apagas el paso, el curso ya no pide QR y el instructor no tiene que confirmar nada. Los cursos que ya tienen el paso confirmado no cambian.</div>
+</div>
+
+<div class="pest" id="p2">
+  <h2>2 · Nota en el equipo incluido</h2>
+  <p class="sub">En Alquiler, el equipo de un estudiante del curso sale con una nota que dice que no paga. Elige el texto.</p>
+  <div class="alq">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>Ana Ejemplo · Open Water Diver</b><span class="incl">Incluido en el curso</span></div>
+    <div class="gris" style="margin-top:6px">Regulador RE-12 · entregado 28 nov · RD$0</div>
+    <div class="gris" style="margin-top:6px">Saldo: <b style="color:var(--verde)">RD$0 · sin deuda</b></div>
+  </div>
+  <div class="opc elegida"><b>Opción A</b><div class="gris">Corta y clara</div><div class="ej">Incluido en el curso · no paga</div></div>
+  <div class="opc"><b>Opción B</b><div class="gris">Con el nombre del curso (la que escribiste)</div><div class="ej">No paga por curso Open Water Diver</div></div>
+  <div class="opc"><b>Opción C</b><div class="gris">Más explicada</div><div class="ej">Equipo del curso Open Water Diver. No se cobra al estudiante.</div></div>
+  <div class="nota">Tu frase "no para por curso Open Water Diver" la leí como "no paga por curso Open Water Diver" (opción B). Si quieres otra, dímela.</div>
+</div>
+
+<div class="pest" id="p3">
+  <h2>3 · Pedir otro presupuesto</h2>
+  <p class="sub">Sale en la tarjeta del presupuesto, en letra chica, porque no pasa seguido.</p>
+  <div class="card">
+    <h4>Presupuesto · Open Water Diver, 28 nov</h4>
+    <div class="fila"><div><b>Pedido el 16 nov</b><small>Dinorah lo tiene desde el 16 nov</small></div><span class="pend">Pendiente</span></div>
+    <div class="fila"><div><b>Presupuesto listo</b><small>Se marca a mano</small></div><button class="btn sec">Marcar como listo</button></div>
+    <div style="margin-top:8px"><button class="enlace" onclick="otro()">Pedir otro presupuesto</button></div>
+    <div id="otro" class="gris" style="margin-top:6px"></div>
+  </div>
+  <div class="dlg" style="margin-top:10px">
+    <b>Confirmar</b>
+    <p class="gris" style="margin:6px 0">Se manda otra vez el correo a Dinorah con la lista actual de inscritos y de espera. El presupuesto anterior queda guardado en el historial.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Mandar otro correo</button><button class="btn sec">Cancelar</button></div>
+  </div>
+  <div class="nota">El enlace es chico y gris a propósito: el botón principal sigue siendo "Mandar correo de presupuesto" cuando todavía no se ha pedido.</div>
+</div>
+
+<div class="pest" id="p4">
+  <h2>4 · Confirmar el QR sin nombre</h2>
+  <p class="sub">Lo que la página del QR puede saber al escanearla con el celular del instructor.</p>
+  <div class="cel">
+    <div class="gris" style="margin-bottom:8px">En el celular del instructor</div>
+    <b>Confirmar presupuesto</b>
+    <p class="gris" style="margin:8px 0">Open Water Diver · 28 nov</p>
+    <div class="caja" style="text-align:left;font-size:13px">
+      <div>Celular: <b>iPhone</b> (Safari)</div>
+      <div>Hora: <b>16 nov, 10:42 a. m.</b></div>
+      <div>Quién: <b>no tiene cuenta en la app</b></div>
+    </div>
+    <button class="btn" style="margin-top:10px" onclick="confirmado()">Confirmo que lo recibí</button>
+    <div id="conf" class="gris" style="margin-top:8px"></div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h4>Qué se puede saber y qué no</h4>
+    <p class="gris" style="margin:0">Una página web no puede leer el número del celular ni el nombre del aparato. Sí puede anotar el modelo y el navegador, la hora y, si el instructor tiene sesión en la app, quién es. La ubicación exacta necesita que él la permita, así que no la propongo.</p>
+  </div>
+  <div class="opc"><b>Opción A (sin cuenta)</b><div class="gris">Solo modelo, navegador y hora. Un toque y listo.</div></div>
+  <div class="opc"><b>Opción B (con cuenta)</b><div class="gris">Si el instructor entra a la app con su cuenta, queda su nombre sin escribir nada. Si no tiene cuenta, queda como A.</div></div>
+  <div class="nota">Se recomienda B, siempre que el instructor tenga cuenta en la app.</div>
+</div>
+
+<div class="pest" id="p5">
+  <h2>5 · Equipo perdido o dañado</h2>
+  <p class="sub">Cuando se reporta un equipo incluido. Se decide caso por caso.</p>
+  <div class="card">
+    <h4>Reportar equipo</h4>
+    <div class="fila"><div><b>Equipo</b><small>Regulador RE-12 · Ana Ejemplo</small></div><span class="gris">Open Water Diver</span></div>
+    <div class="fila"><div><b>Qué pasó</b><small>Perdido o dañado</small></div><span class="gris">Dañado</span></div>
+    <div class="fila"><div><b>¿Se cobra al estudiante?</b><small>Lo decide el Titular en cada caso</small></div>
+      <div style="display:flex;gap:6px"><button class="btn sec" onclick="cobro(this,'No')">No</button><button class="btn sec" onclick="cobro(this,'Sí')">Sí</button></div>
+    </div>
+    <div id="cobro" class="gris" style="margin-top:8px"></div>
+  </div>
+  <div class="nota">Si se cobra, el saldo sale en Alquiler como deuda normal. Si no, queda anotado el motivo y el saldo sigue en RD$0.</div>
+</div>
+
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('sel',x===b));document.querySelectorAll('.pest').forEach(p=>p.classList.toggle('sel',p.id===b.dataset.p));}));
+let fin=null;
+function nuevoQr(){fin=Date.now()+15*60*1000;tick();}
+function tick(){
+  if(!fin){return;}
+  const ms=fin-Date.now();
+  if(ms<=0){document.getElementById('cuenta').textContent='Venció';document.getElementById('hora').textContent='ya no sirve';return;}
+  const m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000);
+  document.getElementById('cuenta').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  const d=new Date(fin);document.getElementById('hora').textContent=d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  setTimeout(tick,1000);
+}
+nuevoQr();
+function otro(){document.getElementById('otro').textContent='Se abre la confirmación de abajo.';}
+function confirmado(){document.getElementById('conf').textContent='Confirmado. Quedó anotado el modelo del celular, el navegador y la hora.';}
+function cobro(el,v){document.getElementById('cobro').textContent='Marcado: se cobra '+(v==='Sí'?'al estudiante':'a nadie')+'. Queda anotado el motivo.';}
+</script>
+</body></html>
