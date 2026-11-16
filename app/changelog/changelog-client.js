@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V87",
+    fecha: "15 de noviembre, 2026",
+    titulo: "Link de curso del interesado con sus datos; Nitrox y duración por días en el app Gus Dive",
+    descripcion:
+      "Link de curso que la tienda le manda a un interesado: \"Tus datos\" sale con su nombre, su celular y su correo ya puestos también cuando el correo entrega el link cambiado (con \"&amp;\" en vez de \"&\", que hacía que se perdiera la marca de la persona) y cuando ese interesado ya estaba marcado como inscrito o como \"No\"; en esos dos casos salía en blanco. Además, esos datos ahora llegan puestos con la página misma (antes la página los pedía aparte al abrir y, si ese pedido fallaba, el formulario salía vacío). App Gus Dive, Cursos › Open Water Diver: antes de las fechas sale la tarjeta \"Hazlo con Nitrox\", con qué es, sus beneficios (más tiempo en el fondo, menos espera entre buceos, más buceos en un día y que sirve en todas partes), el precio del curso Nitrox del Catálogo y el botón \"Ver el curso de Nitrox\"; solo sale en Open Water Diver. App Gus Dive, Cursos: en la información de cada curso, la Duración sale día por día (Lunes: Teoría 1, Martes: Teoría 2...), según los pasos del curso en el Catálogo; si el curso no tiene itinerario, queda el texto de antes. Los títulos \"Qué es\", \"Aprenderás\", \"Duración\" y \"Requisitos\" van en negrita. Registro de estudiante, Documentos: al tocar \"Tu foto para la certificación\" el celular ya no abre la cámara directo; deja escoger una foto que ya esté en el celular, tomar una nueva o escoger un archivo (igual en la foto de un menor y en \"Cambiar mi foto\" de Mis documentos).",
+  },
+  {
     version: "V86",
     fecha: "15 de noviembre, 2026",
     titulo: "App Gus Dive: Mi cuenta con la foto, los documentos y los pagos del cliente",

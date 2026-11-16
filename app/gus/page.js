@@ -40,6 +40,10 @@ export default async function AppGusPage() {
     grupo: c.grupo || "",
     precio: c.precio == null ? null : Number(c.precio),
     info: c.info && typeof c.info === "object" ? c.info : null,
+    // V87 ("en duración cámbialo y ponlo por días, lunes martes miércoles"):
+    // lo que se hace cada día (7 textos de lunes a domingo; puede seguir a la
+    // semana siguiente). Sale de los pasos del curso, en el Catálogo.
+    semana: Array.isArray(c.semana) ? c.semana : null,
   }));
   const { data: vs } = await s.from("viajes").select("*").eq("web", true).gte("fecha", hoyISO()).order("fecha");
   const viajes = (vs || []).map(filaAViaje).filter((v) => ["abierto", "cerrado_insc"].includes(estadoViaje(v)));

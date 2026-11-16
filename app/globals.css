@@ -4002,7 +4002,8 @@ html[data-theme="dark"] .vj-cal-curso.empieza { background: #8a6a00; color: #fff
 .ag-nivel { font-size: 11px; font-weight: 800; background: #fdf1cf; color: #5c4700; border-radius: 999px; padding: 2px 8px; }
 .ag-curso-cat-l { display: flex; justify-content: space-between; gap: 8px; color: #5c6b78; font-size: 13px; margin-top: 4px; }
 .ag-curso-cat-l b { color: #1a2733; }
-.ag-info h4 { margin: 12px 0 2px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #5c6b78; }
+/* V87 ("qué es, aprenderás, duración y requisitos ponlo en negrita"): antes iban en gris y finitos. */
+.ag-info h4 { margin: 14px 0 3px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #1a2733; }
 .ag-info div:first-child h4 { margin-top: 0; }
 .ag-info p { margin: 0; color: #1a2733; }
 .ag-cal { padding: 10px; }
@@ -4101,3 +4102,22 @@ div.ce-cuadro { cursor: default; }
 .ag-visor img { max-width: 100%; max-height: 68vh; border-radius: 12px; background: #fff; }
 .ag-visor .pb-btn { width: auto; padding: 12px 22px; margin: 0; background: #fff; color: #06324f; }
 .ag-visor-x { border: 1.5px solid rgba(255, 255, 255, 0.6); background: none; color: #fff; border-radius: 999px; padding: 9px 22px; font: inherit; font-weight: 700; cursor: pointer; width: auto; margin: 0; }
+
+/* V87 -- app Gus Dive, detalle del curso: la duración día por día. */
+.ag-dias div { display: flex; gap: 10px; padding: 5px 0; border-bottom: 1px solid #eef3f6; }
+.ag-dias div:last-child { border-bottom: 0; }
+.ag-dias span:first-child { width: 96px; flex-shrink: 0; font-weight: 700; color: #1a2733; }
+.ag-dias span:last-child { color: #1a2733; }
+
+/* V87 -- app Gus Dive, Open Water Diver: la tarjeta de Nitrox con sus beneficios (maqueta V87, "1. a"). */
+.ag-nx { border: 1.5px solid #1f8f4e; background: #fff; border-radius: 16px; padding: 14px; margin-top: 12px; }
+.ag-nx-et { display: inline-block; background: #1f8f4e; color: #fff; font-weight: 800; font-size: 11px; border-radius: 999px; padding: 3px 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+.ag-nx-t { display: block; font-size: 17px; margin: 8px 0 4px; color: #1a2733; }
+.ag-nx p { margin: 0 0 8px; color: #1a2733; }
+.ag-nx ul { list-style: none; margin: 0 0 12px; padding: 0; }
+.ag-nx li { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; color: #1a2733; }
+.ag-nx li svg { color: #1f8f4e; flex-shrink: 0; margin-top: 3px; }
+.ag-nx-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ag-nx-precio { font-weight: 800; font-size: 16px; color: #1b6b3c; white-space: nowrap; }
+.ag-nx-btn { border: 0; border-radius: 12px; padding: 11px 14px; font: inherit; font-weight: 800; background: #1f8f4e; color: #fff; cursor: pointer; width: auto; margin: 0; }
+.ag-nx small { display: block; margin-top: 10px; color: #5c6b78; font-size: 12.5px; }

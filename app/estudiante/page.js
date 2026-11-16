@@ -34,11 +34,31 @@ export default async function EstudiantePage({ searchParams }) {
   // V54: las cuentas de los cursos, no las de los buceos (nota 1-nov).
   // V66 ("313. ok", maqueta V66): el link de cada curso (?curso=<fecha>) no
   // pide escoger curso. Si esa fecha ya no está abierta, el link sigue normal.
-  const pedida = typeof searchParams?.curso === "string" ? searchParams.curso : "";
+  // V87 (16-nov, con foto: el link que la tienda mandó por correo a un
+  // interesado abrió "Tus datos" en blanco): algunos correos entregan el link
+  // con "&amp;" en vez de "&", y entonces la marca llega como "amp;i" y se
+  // perdía. Se aceptan las dos formas.
+  const param = (k) => {
+    const v = searchParams?.[k] ?? searchParams?.[`amp;${k}`];
+    return typeof v === "string" ? v : "";
+  };
+  const pedida = param("curso");
   const fijo = conFechas && pedida && cursos.some((c) => c.fechas.some((f) => f.id === pedida)) ? pedida : "";
   // V79: la marca del interesado al que se le mandó este link (?i=<id>).
-  const marcaInteresado = typeof searchParams?.i === "string" ? searchParams.i : "";
+  const marcaInteresado = param("i");
+  // V87 (16-nov: él probó su link -- en la computadora "Tus datos" salía
+  // lleno, pero en un celular salió en blanco): los datos del interesado ya
+  // no dependen de un pedido aparte que hace la página al abrir (si ese
+  // pedido fallaba o tardaba, el formulario salía vacío). Ahora vienen
+  // puestos desde el servidor con la página misma.
+  let preInicial = null;
+  if (/^[0-9a-f-]{20,40}$/i.test(marcaInteresado)) {
+    try {
+      const { data: x } = await s.from("est_interesados").select("*").eq("id", marcaInteresado).maybeSingle();
+      if (x) preInicial = { nombre: x.nombre || "", cel: x.celular || "", correo: x.correo || "", curso: x.curso || "" };
+    } catch {}
+  }
   // V81: desde App Gus ("Ver mis documentos"), entra directo a Mis documentos.
   const mis = searchParams?.mis === "1";
-  return <EstudiantePublico cursos={cursos} conFechas={conFechas} fijo={fijo} noAbierto={!!pedida && !fijo} marcaInteresado={marcaInteresado} mis={mis} tienda={{ whatsapp: TIENDA.whatsapp, titular: TITULAR_CURSOS || TIENDA.titular, rnc: RNC_CURSOS, cuentas: CUENTAS_CURSOS }} />;
+  return <EstudiantePublico cursos={cursos} conFechas={conFechas} fijo={fijo} noAbierto={!!pedida && !fijo} marcaInteresado={marcaInteresado} preInicial={preInicial} mis={mis} tienda={{ whatsapp: TIENDA.whatsapp, titular: TITULAR_CURSOS || TIENDA.titular, rnc: RNC_CURSOS, cuentas: CUENTAS_CURSOS }} />;
 }

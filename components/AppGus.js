@@ -6,7 +6,7 @@ import { CampoCel, IconoWA } from "@/components/viajes/Piezas";
 import { soloDigitos, formatoCedula, celValido, rd, fechaObj, fechaCorta } from "@/lib/viajes/modelo";
 import { leerPersona, guardarPersona, olvidarPersona, enApp } from "@/lib/app-gus";
 import InstalarApp from "@/components/InstalarApp";
-import { IconHome, IconEstudiantes, IconDivingMask, IconCalendar, IconUser, IconMapPin, IconBell, IconArrowLeft, IconInstagram, IconGlobe } from "@/components/icons";
+import { IconHome, IconEstudiantes, IconDivingMask, IconCalendar, IconUser, IconMapPin, IconBell, IconArrowLeft, IconInstagram, IconGlobe, IconCheck } from "@/components/icons";
 
 // V81 -- "App Gus" (maqueta V82 aprobada: "1. app gus", "2. ok"; y "¿hay
 // manera de que la gente pueda poner su cédula una vez y que quede guardado
@@ -38,6 +38,7 @@ import { IconHome, IconEstudiantes, IconDivingMask, IconCalendar, IconUser, Icon
 // corto que da /api/app-gus/archivo (cédula + celular, igual que al entrar).
 const DIA3 = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 const DIA_LARGO = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+const DIA_NOMBRE = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]; // V87: el itinerario empieza el lunes
 const MES3 = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const MES_LARGO = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 const MENU = [
@@ -273,6 +274,21 @@ function Calendario({ cursos, buceos }) {
   );
 }
 
+// V87 (maqueta V87: "1. a", "2. hace falta más info para poder llamar más la
+// atención del cliente, cuenta los beneficios", "3. no, solo en owd") -- la
+// tarjeta de Nitrox dentro de Open Water Diver, antes de las fechas. Es la
+// misma pareja que "Agregar Nitrox" del registro (Open Water → Nitrox). El
+// precio y el botón salen del curso Nitrox del Catálogo; si no está en el
+// link, la tarjeta no sale.
+const ES_OWD = /^open water diver$/i;
+const ES_NITROX = /^nitrox$/i;
+const NITROX_BENEFICIOS = [
+  ["Más tiempo en el fondo.", "Al respirar menos nitrógeno, puedes quedarte más tiempo a la misma profundidad."],
+  ["Menos espera entre buceos.", "Sales con menos nitrógeno en el cuerpo, así que el descanso en la superficie puede ser más corto."],
+  ["Más buceos en un mismo día.", "Ideal para viajes y fines de semana de buceo."],
+  ["Te sirve en todas partes.", "La mayoría de los centros de buceo ofrecen Nitrox."],
+];
+
 // ------------------------------------------------------------ cursos
 function Cursos({ catalogo, cursos }) {
   const [abierto, setAbierto] = useState(null);
@@ -280,6 +296,11 @@ function Cursos({ catalogo, cursos }) {
   if (c) {
     const fechas = cursos.filter((f) => f.cursoId === c.id);
     const info = c.info || {};
+    // V87 ("en duración cámbialo y ponlo por días, lunes martes miércoles
+    // etc"): la duración sale día por día, del itinerario del curso. Si el
+    // curso no tiene itinerario, queda el texto de antes.
+    const nitrox = ES_OWD.test(String(c.nombre || "").trim()) ? catalogo.find((x) => ES_NITROX.test(String(x.nombre || "").trim())) || null : null;
+    const dias = (Array.isArray(c.semana) ? c.semana : []).map((t, i) => ({ dia: `${DIA_NOMBRE[i % 7]}${i >= 7 ? " siguiente" : ""}`, texto: String(t || "").trim() })).filter((x) => x.texto);
     return (
       <>
         <button className="ag-volver" onClick={() => setAbierto(null)}>
@@ -289,21 +310,56 @@ function Cursos({ catalogo, cursos }) {
         <div className="pb-h" style={{ margin: "0 0 10px" }}>
           {[info.nivel, c.precio ? `${rd(c.precio)} (ITBIS incluido)` : ""].filter(Boolean).join(" · ")}
         </div>
-        {(info.que || info.aprenderas || info.duracion || info.requisitos) && (
+        {(info.que || info.aprenderas || info.duracion || info.requisitos || dias.length > 0) && (
           <div className="pb-card ag-info">
             {[
               ["Qué es", info.que],
               ["Aprenderás", info.aprenderas],
-              ["Duración", info.duracion],
+              ["Duración", dias.length ? "dias" : info.duracion],
               ["Requisitos", info.requisitos],
             ]
               .filter(([, v]) => v)
               .map(([k, v]) => (
                 <div key={k}>
                   <h4>{k}</h4>
-                  <p>{v}</p>
+                  {v === "dias" ? (
+                    <div className="ag-dias">
+                      {dias.map((d) => (
+                        <div key={d.dia}>
+                          <span>{d.dia}</span>
+                          <span>{d.texto}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>{v}</p>
+                  )}
                 </div>
               ))}
+          </div>
+        )}
+        {nitrox && (
+          <div className="ag-nx">
+            <span className="ag-nx-et">Hazlo con Nitrox</span>
+            <b className="ag-nx-t">Agrégale Nitrox a tu Open Water</b>
+            <p>Nitrox es aire enriquecido: lleva más oxígeno y menos nitrógeno que el aire normal.</p>
+            <ul>
+              {NITROX_BENEFICIOS.map(([t, x]) => (
+                <li key={t}>
+                  <IconCheck size={16} />
+                  <span>
+                    <b>{t}</b> {x}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="ag-nx-fila">
+              {nitrox.precio ? <span className="ag-nx-precio">+{rd(nitrox.precio)}</span> : <span />}
+              <button className="ag-nx-btn" onClick={() => (setAbierto(nitrox.id), window.scrollTo(0, 0))}>
+                Ver el curso de Nitrox
+              </button>
+            </div>
+            <small>Al inscribirte en Open Water, marca "Agregar Nitrox".</small>
           </div>
         )}
         <div className="ag-sec">Próximas fechas</div>

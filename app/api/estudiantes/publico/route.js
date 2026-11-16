@@ -56,7 +56,12 @@ export async function POST(request) {
       // debería estar llenada... y que solo esté vacía la info que haga
       // falta"): el link es solo de esa persona (lleva su id), así que se le
       // devuelven sus datos para rellenar "Tus datos".
-      if (abierto) return NextResponse.json({ ok: true, datos: { nombre: x.nombre || "", cel: x.celular || "", correo: x.correo || "", curso: x.curso || "" } });
+      // V87 (16-nov: "no debe de pedirle nombre, número ni mail otra vez"):
+      // antes solo se devolvían si el interesado seguía abierto; si ya estaba
+      // marcado como inscrito o "No" (por ejemplo, alguien que se registró,
+      // se borró y volvió a abrir su correo), "Tus datos" salía en blanco.
+      // El link es de esa persona, así que sus datos van siempre.
+      if (x) return NextResponse.json({ ok: true, datos: { nombre: x.nombre || "", cel: x.celular || "", correo: x.correo || "", curso: x.curso || "" } });
     }
     return NextResponse.json({ ok: true });
   }

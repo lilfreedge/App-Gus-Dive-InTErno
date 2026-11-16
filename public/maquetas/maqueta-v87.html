@@ -1,0 +1,125 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V87 · Promover el Nitrox</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#06324f;--ce:#f6ce46;--nx:#1f8f4e;--nxc:#e3f4ea}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:680px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.preg{background:#fff;border:2px solid #ffd166;border-radius:12px;padding:12px 14px;margin-top:12px}.preg b{display:block;margin-bottom:4px}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:12px}
+.tel{width:360px;max-width:100%;margin:0 auto;border:1px solid var(--borde);border-radius:30px;background:var(--fondo);overflow:hidden;box-shadow:0 6px 20px rgba(26,39,51,.1);height:700px;display:flex;flex-direction:column}
+.cab{display:flex;align-items:center;gap:10px;padding:14px 16px;background:#fff;border-bottom:1px solid var(--borde)}
+.cab img{height:24px}.cab b{color:var(--navy);font-size:15px}
+.pant{flex:1;overflow-y:auto;padding:14px 16px 18px}
+.barra{display:flex;background:#fff;border-top:1px solid var(--borde);padding:8px 4px 14px;font-size:10.5px;font-weight:700;color:#8796a3;text-align:center}
+.barra span{flex:1}.barra span.sel{color:var(--navy)}
+.volver{color:var(--navy);font-weight:700;font-size:13.5px}
+.tit{font-size:22px;font-weight:800;margin:6px 0 0}.gris{color:var(--suave)}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px;margin:10px 0 8px}
+.card h4{margin:10px 0 2px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}.card h4:first-child{margin-top:0}
+.card p{margin:0}
+.sect{font-size:11.5px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 6px}
+.item{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--borde);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.fecha{width:46px;border-radius:10px;background:var(--ce);color:#2b2200;text-align:center;font-weight:800;font-size:10px;padding:4px 0;flex-shrink:0;line-height:1.15}.fecha b{display:block;font-size:17px}
+.fecha.azul{background:#4ebae8;color:#06324f}
+.item .tx{flex:1}.item .tx b{display:block}.item .tx small{color:var(--suave)}
+.pill{background:#fdf3cf;color:#5c4700;font-weight:800;border-radius:999px;padding:6px 12px;font-size:12.5px}
+/* Nitrox */
+.nx{border:1.5px solid var(--nx);background:#fff;border-radius:14px;padding:12px;margin:10px 0 8px}
+.nx .et{display:inline-block;background:var(--nx);color:#fff;font-weight:800;font-size:11px;border-radius:999px;padding:2px 9px;letter-spacing:.03em}
+.nx b.t{display:block;font-size:16px;margin:6px 0 2px}
+.nx p{margin:0 0 8px;color:var(--texto)}
+.nx .fila{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.nx .precio{font-weight:800;color:var(--nx)}
+.btn{border:0;border-radius:10px;padding:9px 12px;font:inherit;font-weight:800;background:var(--nx);color:#fff;cursor:pointer}
+.tira{display:flex;align-items:center;gap:8px;background:var(--nxc);color:#1b6b3c;border-radius:12px;padding:10px 12px;margin:10px 0 8px;font-weight:700}
+.tira span{flex:1}
+.banner{background:linear-gradient(135deg,#1f8f4e,#2fb36a);color:#fff;border-radius:16px;padding:14px;margin:6px 0 4px}
+.banner b{display:block;font-size:17px}.banner small{display:block;opacity:.95;margin:2px 0 10px}
+.banner .btn{background:#fff;color:#1b6b3c}
+.cat{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px;margin-bottom:8px}
+.cat .t{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.cat .t b{font-size:15.5px}
+.niv{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;background:#eef3f6;color:var(--suave)}
+.tag{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;background:var(--nxc);color:#1b6b3c}
+.cat .l{display:flex;justify-content:space-between;color:var(--suave);font-size:13px;margin-top:4px}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.seg button{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 13px;font:inherit;font-weight:700;font-size:13px;color:var(--suave);cursor:pointer}
+.seg button.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V87</b> · Cómo promover el Nitrox en el app Gus Dive. Tres lugares donde puede salir; puedes escoger más de uno. Nada programado todavía. Los textos y el precio son de ejemplo.
+  <div class="tabs"><button class="sel" data-p="p1">1 · Dentro del curso</button><button data-p="p2">2 · En Inicio</button><button data-p="p3">3 · En la lista de cursos</button><button data-p="p4">Preguntas</button></div>
+</div>
+<div class="wrap">
+
+<div class="pest sel" id="p1">
+  <h2>1 · Dentro de Open Water Diver (la pantalla de tu foto)</h2>
+  <p class="sub">Debajo de la información del curso y antes de las fechas. Dos formas:</p>
+  <div class="seg" id="seg"><button class="sel" data-o="a">A · Tarjeta con explicación</button><button data-o="b">B · Una línea corta</button></div>
+  <div class="tel">
+    <div class="cab"><img src="/icono-app-192.png" alt=""><b>Gus Dive</b></div>
+    <div class="pant" id="pant1"></div>
+    <div class="barra"><span>Inicio</span><span class="sel">Cursos</span><span>Buceos</span><span>Calendario</span><span>Mi cuenta</span></div>
+  </div>
+  <div class="nota"><b>Lo que ya existe:</b> cuando la persona se inscribe en Open Water, el registro ya le ofrece la casilla "Agregar Nitrox (+precio)". Esto es para que se entere <b>antes</b> de inscribirse.</div>
+</div>
+
+<div class="pest" id="p2">
+  <h2>2 · Un anuncio en Inicio</h2>
+  <p class="sub">Lo ve todo el que abre el app, aunque no entre a ningún curso. Al tocarlo abre el curso de Nitrox.</p>
+  <div class="tel">
+    <div class="cab"><img src="/icono-app-192.png" alt=""><b>Gus Dive</b></div>
+    <div class="pant">
+      <div class="tit">Hola</div><div class="gris">Cursos y buceos de Gus Dive</div>
+      <div class="banner"><b>Bucea con Nitrox</b><small>Más tiempo en el fondo en cada buceo. Agrégalo a tu Open Water o tómalo aparte.</small><button class="btn">Ver el curso</button></div>
+      <div class="sect">Próximos cursos</div>
+      <div class="item"><div class="fecha">LUN<b>16</b>NOV</div><div class="tx"><b>Open Water Diver</b><small>Quedan 7 cupos</small></div><span class="pill">Inscribirme</span></div>
+      <div class="sect">Próximos buceos</div>
+      <div class="item"><div class="fecha azul">SÁB<b>21</b>NOV</div><div class="tx"><b>La Caleta</b><small>Quedan 4 cupos</small></div><span class="pill">Inscribirme</span></div>
+    </div>
+    <div class="barra"><span class="sel">Inicio</span><span>Cursos</span><span>Buceos</span><span>Calendario</span><span>Mi cuenta</span></div>
+  </div>
+</div>
+
+<div class="pest" id="p3">
+  <h2>3 · Una etiqueta en la lista de cursos</h2>
+  <p class="sub">Discreto: una etiqueta verde en los cursos a los que se les puede agregar Nitrox.</p>
+  <div class="tel">
+    <div class="cab"><img src="/icono-app-192.png" alt=""><b>Gus Dive</b></div>
+    <div class="pant">
+      <div class="tit">Cursos</div><div class="gris" style="margin-bottom:10px">Todos los cursos de Gus Dive</div>
+      <div class="cat"><div class="t"><b>Open Water Diver</b><span class="niv">Buceo básico</span><span class="tag">+ Nitrox</span></div><div class="l"><span>Próximo: lun 16 nov</span><span><b>RD$29,500</b> ›</span></div></div>
+      <div class="cat"><div class="t"><b>Advanced Open Water</b><span class="niv">Avanzado</span></div><div class="l"><span>Sin fecha todavía</span><span><b>RD$00,000</b> ›</span></div></div>
+      <div class="cat"><div class="t"><b>Nitrox</b><span class="niv">Especialidad</span></div><div class="l"><span>Sin fecha todavía</span><span><b>RD$0,000</b> ›</span></div></div>
+    </div>
+    <div class="barra"><span>Inicio</span><span class="sel">Cursos</span><span>Buceos</span><span>Calendario</span><span>Mi cuenta</span></div>
+  </div>
+</div>
+
+<div class="pest" id="p4">
+  <h2>Preguntas</h2>
+  <div class="preg"><b>1. ¿Dónde quieres que salga el Nitrox?</b>Puedes escoger más de uno: 1 (dentro del curso; dime si A o B), 2 (anuncio en Inicio), 3 (etiqueta en la lista). Mi recomendación: 1 A y 2.</div>
+  <div class="preg"><b>2. ¿Qué texto pongo?</b>Puedo usar el "Qué es" que ya tiene el curso Nitrox en el Catálogo de cursos, o me das tú una frase corta para vender el Nitrox.</div>
+  <div class="preg"><b>3. ¿En cuáles cursos sale?</b>Hoy "Agregar Nitrox" solo está en Open Water Diver. ¿También en otros (Advanced, por ejemplo)?</div>
+</div>
+
+</div>
+<script>
+const $=id=>document.getElementById(id);
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("sel",x===b));document.querySelectorAll(".pest").forEach(p=>p.classList.toggle("sel",p.id===b.dataset.p));window.scrollTo(0,0)});
+let op="a";
+function pinta(){
+  let h='<div class="volver">← Cursos</div><div class="tit">Open Water Diver</div><div class="gris">Buceo básico · RD$29,500 (ITBIS incluido)</div>';
+  h+='<div class="card"><h4>Qué es</h4><p>Tu primer curso de buceo. Aprendes a bucear con un compañero, de forma segura.</p><h4>Duración</h4><p>Lunes a domingo (día por día).</p></div>';
+  if(op==="a")h+='<div class="nx"><span class="et">HAZLO CON NITROX</span><b class="t">Agrégale Nitrox a tu curso</b><p>Nitrox es aire con más oxígeno. Te deja estar más tiempo en el fondo en cada buceo. Lo puedes agregar al inscribirte.</p><div class="fila"><span class="precio">+RD$0,000</span><button class="btn">Ver el curso de Nitrox</button></div></div>';
+  else h+='<div class="tira"><span>¿Lo quieres con Nitrox? +RD$0,000</span><b>Ver ›</b></div>';
+  h+='<div class="sect">Próximas fechas</div><div class="item"><div class="fecha">LUN<b>16</b>NOV</div><div class="tx"><b>Empieza el lunes 16 nov</b><small>Quedan 7 cupos</small></div><span class="pill">Inscribirme</span></div>';
+  $("pant1").innerHTML=h;
+}
+document.querySelectorAll("#seg button").forEach(b=>b.onclick=()=>{op=b.dataset.o;document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("sel",x===b));pinta()});
+pinta();
+</script></body></html>

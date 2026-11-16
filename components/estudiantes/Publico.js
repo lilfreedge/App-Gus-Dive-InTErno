@@ -25,6 +25,11 @@ async function api(cuerpo) {
 // V54: subirArchivo vive en lib/estudiantes/subir.js (achica las fotos
 // grandes y las sube directo al almacenamiento; antes salía "Failed to fetch").
 
+// V87 (15-nov, con foto de Documentos: "aquí permite que se pueda subir una
+// foto desde el celular, no que abra la cámara directo"): la foto para la
+// certificación ya no lleva capture="user" (en iPhone abría la cámara de
+// frente sin dar a escoger). Ahora el celular pregunta: fototeca, tomar foto
+// o escoger archivo. La cédula ya funcionaba así.
 function Subir({ id, que, titulo, sub, accept = "image/*", capture, estudianteId, listo, alSubir }) {
   const [estado, setEstado] = useState(listo ? "ok" : null);
   async function elegir(e) {
@@ -248,7 +253,13 @@ function Semana({ inicio, semana }) {
   );
 }
 
-export default function EstudiantePublico({ cursos, tienda, conFechas = false, fijo = "", noAbierto = false, marcaInteresado = "", mis = false }) {
+// V87: el celular del interesado, como lo espera el campo ("809-000-0000" o "+34…").
+const celDePre = (x) => {
+  const dg = soloDigitos(x?.cel || "");
+  return dg ? (dg.length === 10 ? formatoCel(dg) : `+${dg}`) : "";
+};
+
+export default function EstudiantePublico({ cursos, tienda, conFechas = false, fijo = "", noAbierto = false, marcaInteresado = "", preInicial = null, mis = false }) {
   // V79 (maqueta V79, "3. A"): si el link trae la marca de un interesado,
   // avisa que lo abrió (queda en su seguimiento).
   useEffect(() => {
@@ -258,17 +269,19 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
       .then((j) => {
         // V84 (notas del 15-nov): sus datos de interesado salen ya puestos
         // en "Tus datos"; solo queda vacío lo que falta.
+        // V87: ya vienen puestos con la página (preInicial); esto queda de
+        // respaldo, por si la página se abrió sin ellos.
         const x = j?.datos;
         if (!x) return;
         setPre(x);
-        const dg = soloDigitos(x.cel);
-        if (dg) setCel((c) => c || (dg.length === 10 ? formatoCel(dg) : `+${dg}`));
+        const c0 = celDePre(x);
+        if (c0) setCel((c) => c || c0);
         setD((v) => ({ ...v, nombre: v.nombre || x.nombre || "", correo: v.correo || x.correo || "" }));
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [marcaInteresado]);
-  const [pre, setPre] = useState(null); // V84: los datos del interesado que abrió su link
+  const [pre, setPre] = useState(preInicial); // V84: los datos del interesado que abrió su link (V87: llegan con la página)
   const [paso, setPaso] = useState("doc"); // doc | hola | cel | datos | curso | docs | listo | estado
   const [tipoDoc, setTipoDoc] = useState("cedula");
   const [avisoDni, setAvisoDni] = useState(false);
@@ -276,14 +289,14 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
   const [nacionalidad, setNacionalidad] = useState("");
   const [nacOtra, setNacOtra] = useState("");
   const [doc, setDoc] = useState("");
-  const [cel, setCel] = useState("");
+  const [cel, setCel] = useState(() => celDePre(preInicial));
   const [buzo, setBuzo] = useState(null); // lo que devuelve "doc"
   // V76 (pedido explícito: "el sistema debe de reconocerlo y no pedirle
   // nuevamente su info" + maqueta V78 "OK"): si no lo encontramos por su
   // cédula, al escribir su celular se busca si ya estaba anotado como
   // interesado.
   const [interesado, setInteresado] = useState(null);
-  const [d, setD] = useState({ nombre: "", nac: "", correo: "", direccion: "", emergencia: "" });
+  const [d, setD] = useState({ nombre: preInicial?.nombre || "", nac: "", correo: preInicial?.correo || "", direccion: "", emergencia: "" });
   const [buceos, setBuceos] = useState("");
   const [cursoId, setCursoId] = useState(cursos[0]?.id || "");
   const [fechaInicio, setFechaInicio] = useState("");
@@ -893,14 +906,14 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
               <>
                 {/* V62 ("229"): las fotos son del menor y firma el adulto. */}
                 {/* V68 ("16"): sin "Con esto no tienen que traer copias a la tienda"; el texto nuevo de la foto. */}
-                <Subir id={id} que="foto" titulo={`La foto de ${res.primer} para la certificación`} sub="Sale en su carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol." capture="user" alSubir={() => setSubidos((x) => ({ ...x, foto: true }))} />
+                <Subir id={id} que="foto" titulo={`La foto de ${res.primer} para la certificación`} sub="Sale en su carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol." alSubir={() => setSubidos((x) => ({ ...x, foto: true }))} />
                 <Subir id={id} que="cedula" titulo="Su acta de nacimiento o su pasaporte" sub="Una foto o un escaneo donde se lea bien." accept="image/*,application/pdf,.heic,.heif" alSubir={() => setSubidos((x) => ({ ...x, cedula: true }))} />
               </>
             ) : (
               <>
                 {/* V68 ("16"): sin "Con esto no tienes que traer copias a la tienda"; el texto nuevo de la foto. */}
                 <div className="pb-h">Si ahora no puedes, lo haces después entrando otra vez con tu cédula.</div>
-                <Subir id={id} que="foto" titulo="Tu foto para la certificación" sub="Sale en tu carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol." capture="user" listo={buzo && !falta.foto} alSubir={() => setSubidos((x) => ({ ...x, foto: true }))} />
+                <Subir id={id} que="foto" titulo="Tu foto para la certificación" sub="Sale en tu carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol." listo={buzo && !falta.foto} alSubir={() => setSubidos((x) => ({ ...x, foto: true }))} />
                 <SubirCedula id={id} tipoDoc={tipoDoc} listo={buzo && !falta.cedula} alSubir={() => setSubidos((x) => ({ ...x, cedula: true }))} />
               </>
             )}
@@ -1192,7 +1205,7 @@ function MisDocumentos({ estado, setEstado, id, tipoDoc, doc, cel, setCel, tiend
           </span>
         </div>
       ) : (
-        <Subir id={id} que="foto" titulo={estado.foto?.hay ? "Cambiar mi foto para la certificación" : "Tu foto para la certificación"} sub="Sale en tu carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol." capture="user" listo={false} />
+        <Subir id={id} que="foto" titulo={estado.foto?.hay ? "Cambiar mi foto para la certificación" : "Tu foto para la certificación"} sub="Sale en tu carnet de buzo. De frente, con buena luz, idealmente con fondo blanco y sin lentes de sol." listo={false} />
       )}
       <SubirCedula id={id} tipoDoc={tipoDoc} listo={!estado.falta?.cedula} />
       <div className="pb-h" style={{ fontSize: 12.5 }}>
