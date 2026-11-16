@@ -13,7 +13,7 @@ import NotificacionesPagina from "@/components/NotificacionesPagina";
 import { IconGear, IconLogout, IconShuffle, IconHistory, IconUsers } from "@/components/icons";
 import { cargarTodo, estAFila, buzoAFila, cursoAFila, interesadoAFila, fechaAFila, nuevoId } from "@/lib/estudiantes/datos";
 import { fechaCursoCorta } from "@/lib/estudiantes/modelo";
-import { Inicio, Lista, Mas, Bitacora, Directorio, DetalleCurso, PorEtapa, AppGusDive } from "./Inicio";
+import { Inicio, Lista, Mas, Bitacora, Directorio, DetalleCurso, PorEtapa, AppGusDive, UsoAppGus } from "./Inicio";
 import { Ficha } from "./Ficha";
 import { Nuevo } from "./Nuevo";
 import { Cursos } from "./Cursos";
@@ -425,7 +425,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
     { r: "calendario", t: "Calendario" },
     { r: "mas", t: "Más" },
   ];
-  const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "estadisticas", "administracion", "basedatos", "notificaciones", "appgus"].includes(ruta) ? "mas" : ruta.startsWith("curso:") ? "cursos" : ruta.split(":")[0];
+  const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "estadisticas", "administracion", "basedatos", "notificaciones", "appgus", "usoapp"].includes(ruta) ? "mas" : ruta.startsWith("curso:") ? "cursos" : ruta.split(":")[0];
   const q = { db, p, yo, ops, ir, avisar, personas };
 
   let cuerpo = null;
@@ -453,6 +453,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
   else if (ruta === "interesados" || ruta.startsWith("interesados:")) cuerpo = p.interesados ? <Interesados key={ruta} {...q} abrirId={ruta.split(":")[1] || null} /> : <Inicio {...q} />;
   else if (ruta === "basedatos") cuerpo = <Cursos {...q} />;
   else if (ruta === "appgus") cuerpo = <AppGusDive {...q} />;
+  else if (ruta === "usoapp") cuerpo = yo.esTitular ? <UsoAppGus {...q} /> : <Inicio {...q} />;
   else if (ruta === "mas") cuerpo = <Mas {...q} />;
   else if (ruta === "bitacora") cuerpo = p.bitacora ? <Bitacora {...q} /> : <Inicio {...q} />;
   // V67 ("4"): Más › Estadísticas, con su permiso.

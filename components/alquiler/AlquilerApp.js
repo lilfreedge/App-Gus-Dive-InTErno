@@ -52,7 +52,11 @@ function Topbar({ yo, links, activo, ir }) {
       <div className="topbar-inner">
         <div>
           <a className="topbar-logo-link" href={BASE} onClick={(e) => (e.preventDefault(), ir("inicio"))} aria-label="Ir al inicio">
-            <Image src="/logo-gus-icon.png" alt="Gus Dive" width={64} height={22} className="topbar-logo" priority />
+            {/* V85 (nota del 15-nov, con la foto de la prueba: "utilicemos
+                este logo para el app de alquiler") -- el GUS con las franjas
+                transparentes, en blanco (el filtro de .alq-topbar): las
+                franjas toman el rojo del fondo. */}
+            <Image src="/logo-gus-franjas.png" alt="Gus Dive" width={63} height={22} className="topbar-logo" priority />
           </a>
           <div className="topbar-sub">
             Hola, {yo.corto}
@@ -417,7 +421,7 @@ export default function AlquilerApp({ p, yo }) {
   }
   // V84: la pantalla de carga roja (la de la V69) hasta que llegan los datos.
   if (!db) {
-    return <LoadingLogo fondo="#cd392a" blanco />;
+    return <LoadingLogo fondo="#cd392a" blanco src="/logo-gus-franjas.png" />;
   }
 
   // "127": Inicio, Alquiler (con Nuevo alquiler adentro), Retornos, Equipos y Más.

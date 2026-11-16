@@ -1,0 +1,98 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V86 · Mi cuenta con foto</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#06324f;--ce:#f6ce46;--azul:#4ebae8}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:680px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.preg{background:#fff;border:2px solid #ffd166;border-radius:12px;padding:12px 14px;margin-top:12px}.preg b{display:block;margin-bottom:4px}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:12px}
+.tel{width:360px;max-width:100%;margin:0 auto;border:1px solid var(--borde);border-radius:30px;background:var(--fondo);overflow:hidden;box-shadow:0 6px 20px rgba(26,39,51,.1);height:720px;display:flex;flex-direction:column}
+.cab{display:flex;align-items:center;gap:10px;padding:14px 16px;background:#fff;border-bottom:1px solid var(--borde)}
+.cab img{height:24px}.cab b{color:var(--navy);font-size:15px}
+.pant{flex:1;overflow-y:auto;padding:14px 16px 18px}
+.barra{display:flex;background:#fff;border-top:1px solid var(--borde);padding:8px 4px 14px;font-size:10.5px;font-weight:700;color:#8796a3;text-align:center}
+.barra span{flex:1}.barra span.sel{color:var(--navy)}
+.carnet{border-radius:18px;background:linear-gradient(135deg,#06324f,#1f6fa0);color:#fff;padding:16px;display:flex;gap:14px;align-items:center}
+.foto{width:72px;height:72px;border-radius:50%;background:#dfe9f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:3px solid rgba(255,255,255,.8);overflow:hidden}
+.foto svg{width:54px;height:54px}
+.carnet b{display:block;font-size:19px}.carnet small{opacity:.85;display:block}
+.ptabs{display:flex;gap:4px;margin:12px 0 8px}
+.ptabs button{flex:1;border:1px solid var(--borde);background:#fff;border-radius:999px;padding:8px 4px;font:inherit;font-weight:700;font-size:12.5px;color:var(--suave);cursor:pointer}
+.ptabs button.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px;margin-bottom:8px}
+.fila{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #eef3f6}.fila:last-child{border-bottom:0}
+.fila span{color:var(--suave)}.fila b{text-align:right}
+.sect{font-size:11.5px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 6px}
+.doc{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #eef3f6}.doc:last-child{border-bottom:0}
+.mini{width:46px;height:46px;border-radius:10px;background:#dfe9f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.mini.ced{border-radius:6px;width:58px;height:38px;background:repeating-linear-gradient(0deg,#cfd9e0 0 4px,#e9eff3 4px 8px)}
+.doc .tx{flex:1}.doc .tx b{display:block}.doc .tx small{color:var(--suave)}
+.lk{border:0;background:none;color:var(--navy);font:inherit;font-weight:700;cursor:pointer;padding:4px}
+.chip{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;background:#e3f4ea;color:#1b6b3c}
+.btn{display:block;width:100%;margin-top:10px;padding:11px;border-radius:12px;border:1.5px solid #cfd8de;background:#fff;color:var(--navy);font:inherit;font-weight:800;cursor:pointer}
+.link{display:block;text-align:center;margin-top:12px;color:var(--navy);font-weight:700}
+.velo{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff;z-index:3}
+.velo.on{display:flex}
+.grande{width:220px;height:220px;border-radius:16px;background:#dfe9f0;display:flex;align-items:center;justify-content:center}
+.grande svg{width:170px;height:170px}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.seg button{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 13px;font:inherit;font-weight:700;font-size:13px;color:var(--suave);cursor:pointer}
+.seg button.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+</style></head><body>
+<div class="maq">
+  <b>Maqueta V86</b> · "Mi cuenta" del app Gus Dive, ya con la cédula puesta: que el cliente vea su foto y sus datos. Toca las pestañas y "Ver". Nada programado todavía.
+  <div class="tabs"><button class="sel" data-p="p1">1 · Mi cuenta con su foto</button><button data-p="p2">Preguntas</button></div>
+</div>
+<div class="wrap">
+
+<div class="pest sel" id="p1">
+  <h2>1 · Mi cuenta, después de entrar</h2>
+  <p class="sub">Arriba, una tarjeta con su foto, su nombre y su certificación. En "Mi perfil": todos sus datos y sus documentos. La foto de la cédula es lo único con dos opciones:</p>
+  <div class="seg" id="seg"><button class="sel" data-o="a">A · La cédula solo dice "Subida"</button><button data-o="b">B · También puede ver su cédula</button></div>
+  <div class="tel" style="position:relative">
+    <div class="cab"><img src="/icono-app-192.png" alt=""><b>Gus Dive</b></div>
+    <div class="pant" id="pant"></div>
+    <div class="barra"><span>Inicio</span><span>Cursos</span><span>Buceos</span><span>Calendario</span><span class="sel">Mi cuenta</span></div>
+    <div class="velo" id="velo" onclick="this.classList.remove('on')"><div class="grande" id="grande"></div><div id="velot"></div><small>Toca para cerrar</small></div>
+  </div>
+  <div class="nota"><b>Cómo entra el cliente:</b> igual que hoy. Pone su cédula y su celular una sola vez y queda guardado en ese celular; de ahí en adelante la app abre directo en su cuenta. Si es alguien nuevo que nunca se ha inscrito, primero se inscribe en un curso o un buceo (ahí sube su foto).</div>
+</div>
+
+<div class="pest" id="p2">
+  <h2>Preguntas</h2>
+  <div class="preg"><b>1. ¿Así Mi cuenta, con la tarjeta de arriba (foto, nombre y certificación)?</b></div>
+  <div class="preg"><b>2. La foto de la cédula: ¿A o B?</b>Recomiendo la A. Para entrar solo hace falta saber la cédula y el celular de alguien; con la B, quien sepa esos dos datos de otra persona podría ver la imagen de su cédula. Su foto y su certificación sí se pueden enseñar sin problema.</div>
+  <div class="preg"><b>3. ¿Algo más que quieras que el cliente vea ahí?</b>Por ejemplo: cuánto debe de su curso (ya sale en Mis cursos), sus pagos, o su firma.</div>
+</div>
+
+</div>
+<script>
+const $=id=>document.getElementById(id);
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("sel",x===b));document.querySelectorAll(".pest").forEach(p=>p.classList.toggle("sel",p.id===b.dataset.p));window.scrollTo(0,0)});
+const PERSONA='<svg viewBox="0 0 24 24" fill="#8fa3b3"><circle cx="12" cy="8.5" r="4.5"/><path d="M3 22c1-5.5 4.6-8 9-8s8 2.5 9 8z"/></svg>';
+let sub="perfil",op="a";
+function ver(t){$("grande").innerHTML=PERSONA;$("velot").textContent=t;$("velo").classList.add("on")}
+function pinta(){
+  let h='<div class="carnet"><div class="foto" onclick="ver(\'Tu foto\')">'+PERSONA+'</div><div><b>Ana Pérez</b><small>Open Water Diver · SNSI</small><small>No. 0000000</small></div></div>';
+  h+='<div class="ptabs">'+[["cursos","Mis cursos"],["buceos","Mis buceos"],["perfil","Mi perfil"]].map(([k,t])=>'<button class="'+(sub===k?"sel":"")+'" onclick="sub=\''+k+'\';pinta()">'+t+'</button>').join("")+'</div>';
+  if(sub==="cursos")h+='<div class="card"><b>Open Water Diver</b><div style="color:var(--suave);font-size:13px">Empieza el lunes 16 nov</div><div style="font-size:13px;margin-top:6px">4 de 10 pasos listos</div></div>';
+  if(sub==="buceos")h+='<div class="card"><b>La Caleta</b><div style="color:var(--suave);font-size:13px">Sábado 21 nov · Inscrita</div></div>';
+  if(sub==="perfil"){
+    h+='<div class="sect">Mis datos</div><div class="card"><div class="fila"><span>Celular</span><b>809-•••-••34</b></div><div class="fila"><span>Correo</span><b>ana@ejemplo.com</b></div><div class="fila"><span>Dirección</span><b>Calle 1, Naco</b></div><div class="fila"><span>Emergencia</span><b>Luis · 809-•••-••00</b></div><div class="fila"><span>Tallas</span><b>BCD M · Wetsuit M · 39</b></div><button class="btn">Cambiar mis datos</button></div>';
+    h+='<div class="sect">Mis documentos</div><div class="card">'+
+      '<div class="doc"><div class="mini" style="border-radius:50%">'+PERSONA.replace('viewBox','width="34" height="34" viewBox')+'</div><div class="tx"><b>Mi foto</b><small><span class="chip">Subida</span></small></div><button class="lk" onclick="ver(\'Tu foto\')">Ver</button><button class="lk">Cambiar</button></div>'+
+      '<div class="doc"><div class="mini ced"></div><div class="tx"><b>Mi cédula</b><small><span class="chip">Subida</span></small></div>'+(op==="b"?'<button class="lk" onclick="ver(\'Tu cédula\')">Ver</button>':'')+'<button class="lk">Cambiar</button></div>'+
+      '<div class="doc"><div class="mini"></div><div class="tx"><b>Mi certificación</b><small>Open Water Diver · SNSI</small></div><button class="lk" onclick="ver(\'Tu certificación\')">Ver</button><button class="lk">Cambiar</button></div>'+
+      '</div>';
+  }
+  h+='<a class="link">Salir</a>';
+  $("pant").innerHTML=h;
+}
+document.querySelectorAll("#seg button").forEach(b=>b.onclick=()=>{op=b.dataset.o;sub="perfil";document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("sel",x===b));pinta()});
+pinta();
+</script></body></html>

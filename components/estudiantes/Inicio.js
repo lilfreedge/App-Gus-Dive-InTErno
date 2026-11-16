@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Buscar, IconoWA } from "@/components/viajes/Piezas";
-import { IconHistory, IconPlus, IconCatalog, IconEdit, IconChart, IconLink } from "@/components/icons";
+import { IconHistory, IconPlus, IconCatalog, IconEdit, IconChart, IconLink, IconUsers } from "@/components/icons";
 import { listoParaAlmacen, pagoInstructorPendiente, debe, pagoListo, rd, avance, faltaDe, fechaCorta, hoyISO, nombreEtapa, soloDigitos, fechasDe, textoCupo, fechaCursoCorta, ocupados, quedan, linkWhatsApp } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
 import CompartirLink, { svgQr, urlCompleta, VentanaQr } from "@/components/CompartirLink";
@@ -933,6 +933,8 @@ export function Mas({ yo, p, ir }) {
     { r: "basedatos", t: "Catálogo de cursos", sub: "Los cursos que damos y los instructores.", I: IconCatalog },
     // V85 (maqueta V85, "1, a"): darle el app de los clientes a la gente.
     { r: "appgus", t: "App Gus Dive (para los clientes)", sub: "El link, el código QR y mandarlo por WhatsApp.", I: IconLink },
+    // V85 (nota del 15-nov: "solo yo tendré acceso a esto"): solo el Titular.
+    ...(yo?.esTitular ? [{ r: "usoapp", t: "Quién usa el app Gus Dive", sub: "Los buzos que han entrado al app, y cuándo fue la última vez.", I: IconUsers }] : []),
     // V67 ("4"): Estadísticas; y la Bitácora con su permiso ("3").
     ...(p.estadisticas ? [{ r: "estadisticas", t: "Estadísticas", sub: "Estudiantes, cursos, cobros, interesados y certificaciones.", I: IconChart }] : []),
     ...(p.bitacora ? [{ r: "bitacora", t: "Bitácora", sub: "Todo lo que se ha hecho, con quién y cuándo.", I: IconHistory }] : []),
@@ -1005,6 +1007,86 @@ export function AppGusDive({ ir, avisar }) {
         </div>
       </div>
       {imprimir && <VentanaQr url={url} titulo="Descarga el app de Gus Dive" onCerrar={() => setImprimir(false)} />}
+    </>
+  );
+}
+
+// V85 (nota del 15-nov, con foto de Más: "necesito que aquí me pongas algo
+// para yo poder ver todos los buzos que interactúan con el app Gus Dive.
+// Solo yo tendré acceso a esto") -- Más › "Quién usa el app Gus Dive", solo
+// el Titular: quién entró al app con su cédula, cuándo fue la última vez,
+// cuántas visitas lleva, si la tiene instalada y si activó los avisos.
+// (Quien solo mira el app sin entrar con su cédula no se puede saber quién es.)
+const cuandoUso = (iso) => {
+  const d = new Date(iso);
+  const hoy = hoyISO();
+  const dia = new Date(d.getTime() - 4 * 3600000).toISOString().slice(0, 10);
+  const hora = d.toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit", timeZone: "America/Santo_Domingo" });
+  return dia === hoy ? `hoy ${hora}` : `${fechaCursoCorta(dia)} ${hora}`;
+};
+export function UsoAppGus({ ir }) {
+  const [datos, setDatos] = useState(null);
+  const [error, setError] = useState("");
+  const [q, setQ] = useState("");
+  useEffect(() => {
+    fetch("/api/app-gus/uso")
+      .then(async (r) => {
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || "No se pudo cargar.");
+        setDatos(j);
+      })
+      .catch((e) => setError(e.message));
+  }, []);
+  const t = q.trim().toLowerCase();
+  const lista = (datos?.personas || []).filter((x) => !t || `${x.nombre} ${x.cel}`.toLowerCase().includes(t));
+  return (
+    <>
+      <a className="back-link" onClick={() => ir("mas")} style={{ cursor: "pointer" }}>
+        ← Más
+      </a>
+      <h1 className="page-title">Quién usa el app Gus Dive</h1>
+      <div className="hint-text" style={{ marginBottom: 12 }}>
+        Los buzos que han entrado al app con su cédula. Quien solo la mira sin entrar no sale aquí. Solo tú ves esta pantalla.
+      </div>
+      {error && <div className="card aviso-box">{error}</div>}
+      {datos?.falta && <div className="card aviso-box">Falta correr en Supabase el SQL de la V85 (migration_99.sql).</div>}
+      {!datos && !error && <div className="hint-text">Cargando…</div>}
+      {datos && !datos.falta && (
+        <>
+          <div className="ce-cuadros">
+            <div className="ce-cuadro">
+              <b>{datos.personas.length}</b>
+              <span>Personas que han entrado</span>
+            </div>
+            <div className="ce-cuadro">
+              <b>{datos.personas.filter((x) => x.instalada).length}</b>
+              <span>Con el app instalada</span>
+            </div>
+            <div className="ce-cuadro">
+              <b>{datos.celularesConAvisos}</b>
+              <span>Celulares con avisos activados</span>
+            </div>
+          </div>
+          <Buscar value={q} onChange={setQ} placeholder="Buscar por nombre o celular…" />
+          <div className="card vj-lista">
+            {lista.map((x) => (
+              <div key={x.id} className="ce-uso-fila">
+                <div className="ce-uso-main">
+                  <b>{x.nombre}</b>
+                  <small>
+                    {[formatoCel(x.cel), `Última vez: ${cuandoUso(x.ultima)}`, `${x.veces} ${x.veces === 1 ? "visita" : "visitas"}`, `desde el ${fechaCursoCorta(new Date(new Date(x.primera).getTime() - 4 * 3600000).toISOString().slice(0, 10))}`].filter(Boolean).join(" · ")}
+                  </small>
+                </div>
+                <div className="ce-uso-chips">
+                  {x.instalada && <span className="ce-chip azul">Instalada</span>}
+                  {x.avisos && <span className="ce-chip curso">Avisos</span>}
+                </div>
+              </div>
+            ))}
+            {!lista.length && <div className="hint-text" style={{ padding: 14 }}>{t ? "No hay nadie con esa búsqueda." : "Todavía nadie ha entrado al app con su cédula."}</div>}
+          </div>
+        </>
+      )}
     </>
   );
 }

@@ -12,6 +12,20 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V86",
+    fecha: "15 de noviembre, 2026",
+    titulo: "App Gus Dive: Mi cuenta con la foto, los documentos y los pagos del cliente",
+    descripcion:
+      "App Gus Dive, Mi cuenta (ya con la cédula puesta): arriba sale una tarjeta amarilla con la foto del cliente, su nombre y su certificación; al tocar la foto se ve en grande. Mi perfil ahora tiene dos partes. \"Mis datos\": celular, correo, dirección, contacto de emergencia y tallas, con \"Cambiar mis datos\". \"Mis documentos\": su foto, su cédula y su firma, cada una con \"Ver\" (la abre en grande) y \"Cambiar\" (o \"Subir\" si falta), que lleva a Mis documentos. En Mis cursos, debajo de cada curso, sale cuánto cuesta, cuánto lleva pagado y sus pagos uno por uno (fecha, forma y monto). Cada imagen se abre con un permiso corto que se le da solo a esa persona, confirmando su cédula y su celular igual que al entrar.",
+  },
+  {
+    version: "V85",
+    fecha: "15 de noviembre, 2026",
+    titulo: "App Gus Dive: \"Volver al inicio\", datos al día y \"Quién usa el app\"",
+    descripcion:
+      "App Gus Dive: al volver al app (o al cambiar de pestaña) se piden otra vez los cursos y los buceos; antes, si el app se había quedado abierta por detrás, un curso recién creado no salía hasta cerrarla y abrirla. Control Estudiantes › Más: \"Quién usa el app Gus Dive\" (solo el Titular), con los buzos que han entrado al app con su cédula, cuándo fue la última vez, cuántas visitas llevan, si la tienen instalada y si activaron los avisos; necesita el SQL todo_v85_una_sola_vez.sql y empieza a contar desde que se corre. Alquiler: logo nuevo en la barra y en la pantalla de carga (el GUS blanco con las franjas transparentes, que toman el rojo del fondo). Las pantallas finales tienen el botón \"Volver al inicio\", que lleva al menú del app: al terminar el link de interesados, al terminar el registro de un curso y al terminar la inscripción a un buceo (también en Mis documentos y en Mi perfil del buceo). Con el app instalada no hay botón de \"atrás\", y la persona se quedaba ahí.",
+  },
+  {
     version: "V84",
     fecha: "15 de noviembre, 2026",
     titulo: "App Gus Dive: menú abajo, catálogo de cursos, calendario, contacto, alquiler y avisos",

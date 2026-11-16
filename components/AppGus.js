@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CampoCel, IconoWA } from "@/components/viajes/Piezas";
 import { soloDigitos, formatoCedula, celValido, rd, fechaObj, fechaCorta } from "@/lib/viajes/modelo";
-import { leerPersona, guardarPersona, olvidarPersona } from "@/lib/app-gus";
+import { leerPersona, guardarPersona, olvidarPersona, enApp } from "@/lib/app-gus";
 import InstalarApp from "@/components/InstalarApp";
 import { IconHome, IconEstudiantes, IconDivingMask, IconCalendar, IconUser, IconMapPin, IconBell, IconArrowLeft, IconInstagram, IconGlobe } from "@/components/icons";
 
@@ -25,6 +26,16 @@ import { IconHome, IconEstudiantes, IconDivingMask, IconCalendar, IconUser, Icon
 // su precio, aunque no tengan fecha. Calendario: cursos (amarillo) y buceos
 // (azul). En Inicio: Contacto (a), precios de alquiler (b) y "Avísame de
 // cursos y buceos nuevos" (c, notificación en el celular).
+//
+// V86 (maqueta V86: "¿cómo vamos a manejar esta parte aquí? porque quisiera
+// que el cliente tenga acceso a ver su foto y demás" → "1. sí pero... otro
+// color en vez de ese azul... intentemos con el amarillo de SNSI", "2. B",
+// "3. sí", "puedes quitar la parte de mi certificación") -- Mi cuenta: arriba
+// una tarjeta amarilla con su foto, su nombre y su certificación; en Mi
+// perfil, "Mis datos" (con dirección y emergencia) y "Mis documentos" (su
+// foto, su cédula y su firma, con "Ver"; sin la fila de "Mi certificación");
+// en Mis cursos, sus pagos uno por uno. Las imágenes se abren con un permiso
+// corto que da /api/app-gus/archivo (cédula + celular, igual que al entrar).
 const DIA3 = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 const DIA_LARGO = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 const MES3 = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -352,7 +363,39 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
   const [verPrecios, setVerPrecios] = useState(false);
+  // V86 (maqueta V86): la foto de la tarjeta de Mi cuenta y la ventana para
+  // ver su foto, su cédula o su firma en grande.
+  const [fotoMala, setFotoMala] = useState(false);
+  const fotoPedida = useRef(false);
+  const [visor, setVisor] = useState(null); // { titulo, url, pdf, cargando, error, mala }
   const avisos = useAvisos();
+  const router = useRouter();
+  const ultimaVez = useRef(Date.now());
+
+  // V85 (nota del 15-nov: "creé un curso y me llegó la notificación... pero
+  // cuando entro al app y voy al curso, me aparece como que todavía no se ha
+  // creado curso") -- el app instalada se queda abierta por detrás y, al
+  // volver a ella, enseñaba los cursos y buceos de cuando se abrió. Ahora,
+  // cada vez que vuelve a estar a la vista (o se regresa a ella con "atrás"),
+  // pide los datos otra vez.
+  useEffect(() => {
+    const refrescar = (forzar) => {
+      if (document.visibilityState !== "visible") return;
+      if (!forzar && Date.now() - ultimaVez.current < 10000) return;
+      ultimaVez.current = Date.now();
+      router.refresh();
+    };
+    const alVer = () => refrescar(false);
+    const alVolver = (e) => e.persisted && refrescar(true);
+    document.addEventListener("visibilitychange", alVer);
+    window.addEventListener("focus", alVer);
+    window.addEventListener("pageshow", alVolver);
+    return () => {
+      document.removeEventListener("visibilitychange", alVer);
+      window.removeEventListener("focus", alVer);
+      window.removeEventListener("pageshow", alVolver);
+    };
+  }, [router]);
 
   // La pestaña queda en la dirección (#cursos), así "atrás" vuelve a ella.
   function setTab(t) {
@@ -361,6 +404,11 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
       history.replaceState(null, "", t === "inicio" ? location.pathname + location.search : `#${t}`);
     } catch {}
     window.scrollTo(0, 0);
+    // V85: al cambiar de pestaña, datos frescos (si ya pasó un rato).
+    if (Date.now() - ultimaVez.current > 10000) {
+      ultimaVez.current = Date.now();
+      router.refresh();
+    }
   }
 
   async function cargar(p, nuevo) {
@@ -368,7 +416,7 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
     setError("");
     try {
       const [b, e] = await Promise.all([
-        post("/api/app-gus", p),
+        post("/api/app-gus", { ...p, instalada: enApp(), avisos: leerMarca() }),
         post("/api/estudiantes/publico", { accion: "estado", ...p }).catch(() => null),
       ]);
       guardarPersona({ ...p, primer: b.primer });
@@ -396,16 +444,47 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
     setListo(true);
   }, []);
 
+  // V86: el permiso de su foto dura una hora. Si el app se quedó abierta más
+  // que eso y la foto ya no carga, se pide otro (una sola vez); si tampoco
+  // carga (un formato que este celular no enseña), queda el dibujo.
+  async function fotoFallo() {
+    if (fotoPedida.current || !persona) return setFotoMala(true);
+    fotoPedida.current = true;
+    try {
+      const r = await post("/api/app-gus/archivo", { tipoDoc: persona.tipoDoc, doc: persona.doc, cel: persona.cel, que: "foto" });
+      setYo((y) => (y ? { ...y, perfil: { ...y.perfil, fotoUrl: r.url } } : y));
+    } catch {
+      setFotoMala(true);
+    }
+  }
+  // Su cédula y su firma se piden al tocar "Ver" (permiso de dos minutos).
+  async function verArchivo(que, titulo) {
+    if (!persona) return;
+    if (que === "foto" && yo?.perfil?.fotoUrl && !fotoMala) return setVisor({ titulo, url: yo.perfil.fotoUrl });
+    setVisor({ titulo, cargando: true });
+    try {
+      const r = await post("/api/app-gus/archivo", { tipoDoc: persona.tipoDoc, doc: persona.doc, cel: persona.cel, que });
+      setVisor({ titulo, url: r.url, pdf: !!r.pdf });
+    } catch (e) {
+      setVisor({ titulo, error: e.message });
+    }
+  }
+
   function salir() {
     olvidarPersona();
     setPersona(null);
     setYo(null);
+    setVisor(null);
+    setFotoMala(false);
+    fotoPedida.current = false;
     setDoc("");
     setCel("");
     setSub("cursos");
   }
   const docListo = tipoDoc === "cedula" ? soloDigitos(doc).length === 11 : doc.replace(/[\s-]/g, "").length >= 6;
   const nombre = yo?.primer || persona?.primer || "";
+  const fotoBuena = !!yo?.perfil?.fotoUrl && !fotoMala;
+  const certTexto = [yo?.perfil?.nivel, yo?.perfil?.agencia].filter(Boolean).join(" · ");
   const wa = whatsapp ? `https://wa.me/${soloDigitos(whatsapp).length === 10 ? "1" : ""}${soloDigitos(whatsapp)}?text=${encodeURIComponent("Hola, les escribo desde el app de Gus Dive.")}` : "";
 
   return (
@@ -571,8 +650,17 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
         {/* ---------- Mi cuenta ---------- */}
         {tab === "cuenta" && persona && (
           <>
-            <div className="ag-hola">
-              <div className="ag-hola-t">{nombre ? `Hola, ${nombre}` : "Mi cuenta"}</div>
+            {/* V86 (maqueta V86, "1. sí... con el amarillo de SNSI"): su foto,
+                su nombre y su certificación. Tocar la foto la abre en grande. */}
+            <div className="ag-carnet">
+              <button className="ag-carnet-foto" disabled={!fotoBuena} onClick={() => verArchivo("foto", "Tu foto")} aria-label="Ver mi foto">
+                {fotoBuena ? <img src={yo.perfil.fotoUrl} alt="" onError={fotoFallo} /> : <IconUser size={40} />}
+              </button>
+              <div className="ag-carnet-tx">
+                <b>{yo?.perfil?.nombre || nombre || "Mi cuenta"}</b>
+                {certTexto && <small>{certTexto}</small>}
+                {yo?.perfil?.cert && <small>No. {yo.perfil.cert}</small>}
+              </div>
             </div>
             <div className="ag-tabs">
               {[
@@ -609,6 +697,20 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
                       {e.estado !== "espera" && (yo.falta.foto || yo.falta.cedula) && <span className="ag-chip rojo">Falta {[yo.falta.foto && "tu foto", yo.falta.cedula && "tu cédula"].filter(Boolean).join(" y ")}</span>}
                       {e.estado === "espera" && <span className="ag-chip gris">En lista de espera</span>}
                     </div>
+                    {/* V86 ("3. sí"): sus pagos, uno por uno. */}
+                    {e.precio != null && e.estado !== "espera" && (
+                      <div className="ag-pagos">
+                        <div className="ag-pagos-t">
+                          Curso {rd(e.precio)} · pagado {rd(e.pagado || 0)}
+                        </div>
+                        {(e.pagos || []).map((x, i) => (
+                          <div key={i} className="ag-pago">
+                            <span>{[x.fecha ? fechaCorta(x.fecha) : "", x.forma].filter(Boolean).join(" · ")}</span>
+                            <b>{rd(x.monto)}</b>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
                 {!yo.estudios.length && <div className="pb-card pb-h">Todavía no tienes cursos con nosotros.</div>}
@@ -654,23 +756,77 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
               </>
             )}
             {yo && sub === "perfil" && (
-              <div className="pb-card">
-                {[
-                  ["Nombre", yo.perfil.nombre],
-                  ["Celular", yo.perfil.cel],
-                  ["Correo", yo.perfil.correo || "—"],
-                  ["Certificación", [yo.perfil.agencia, yo.perfil.nivel].filter(Boolean).join(" · ") || "—"],
-                  ["Tallas", [yo.perfil.tallas?.bcd && `BCD ${yo.perfil.tallas.bcd}`, yo.perfil.tallas?.wetsuit && `Wetsuit ${yo.perfil.tallas.wetsuit}`, yo.perfil.tallas?.chapaletas && `Chapaletas ${yo.perfil.tallas.chapaletas}`].filter(Boolean).join(" · ") || "—"],
-                ].map(([k, v]) => (
-                  <div key={k} className="ag-dato">
-                    <span>{k}</span>
-                    <b>{v}</b>
+              <>
+                <div className="ag-sec">Mis datos</div>
+                <div className="pb-card" style={{ marginTop: 0 }}>
+                  {[
+                    ["Celular", yo.perfil.cel],
+                    ["Correo", yo.perfil.correo || "—"],
+                    ["Dirección", yo.perfil.direccion || "—"],
+                    ["Emergencia", yo.perfil.emergencia || "—"],
+                    ["Tallas", [yo.perfil.tallas?.bcd && `BCD ${yo.perfil.tallas.bcd}`, yo.perfil.tallas?.wetsuit && `Wetsuit ${yo.perfil.tallas.wetsuit}`, yo.perfil.tallas?.chapaletas && `Chapaletas ${yo.perfil.tallas.chapaletas}`].filter(Boolean).join(" · ") || "—"],
+                  ].map(([k, v]) => (
+                    <div key={k} className="ag-dato">
+                      <span>{k}</span>
+                      <b>{v}</b>
+                    </div>
+                  ))}
+                  <a className="pb-btn sec" href="/estudiante?mis=1" style={{ marginTop: 12 }}>
+                    Cambiar mis datos
+                  </a>
+                </div>
+                {/* V86 (maqueta V86, "2. B"): su foto, su cédula (también la
+                    puede ver) y su firma. Se cambian donde siempre: Mis
+                    documentos del link de cursos. */}
+                <div className="ag-sec">Mis documentos</div>
+                <div className="pb-card" style={{ marginTop: 0 }}>
+                  <div className="ag-doc">
+                    <span className="ag-doc-mini redonda">{fotoBuena ? <img src={yo.perfil.fotoUrl} alt="" onError={fotoFallo} /> : <IconUser size={24} />}</span>
+                    <span className="ag-doc-tx">
+                      <b>Mi foto</b>
+                      <span className={`ag-chip${yo.perfil.foto ? "" : " rojo"}`}>{yo.perfil.foto ? "Subida" : "Falta"}</span>
+                    </span>
+                    {yo.perfil.foto && (
+                      <button className="ag-doc-lk" onClick={() => verArchivo("foto", "Tu foto")}>
+                        Ver
+                      </button>
+                    )}
+                    <a className="ag-doc-lk" href="/estudiante?mis=1">
+                      {yo.perfil.foto ? "Cambiar" : "Subir"}
+                    </a>
                   </div>
-                ))}
-                <a className="pb-btn sec" href="/estudiante?mis=1" style={{ marginTop: 12 }}>
-                  Cambiar mis datos
-                </a>
-              </div>
+                  <div className="ag-doc">
+                    <span className="ag-doc-mini ced" />
+                    <span className="ag-doc-tx">
+                      <b>{persona.tipoDoc === "pasaporte" ? "Mi documento" : "Mi cédula"}</b>
+                      <span className={`ag-chip${yo.perfil.cedula ? "" : " rojo"}`}>{yo.perfil.cedula ? "Subida" : "Falta"}</span>
+                    </span>
+                    {yo.perfil.cedula && (
+                      <button className="ag-doc-lk" onClick={() => verArchivo("cedula", persona.tipoDoc === "pasaporte" ? "Tu documento" : "Tu cédula")}>
+                        Ver
+                      </button>
+                    )}
+                    <a className="ag-doc-lk" href="/estudiante?mis=1">
+                      {yo.perfil.cedula ? "Cambiar" : "Subir"}
+                    </a>
+                  </div>
+                  {yo.estudios.some((e) => e.firma?.hay) && (
+                    <div className="ag-doc">
+                      <span className="ag-doc-mini firma" />
+                      <span className="ag-doc-tx">
+                        <b>Mi firma</b>
+                        <span className="ag-chip">Guardada</span>
+                      </span>
+                      <button className="ag-doc-lk" onClick={() => verArchivo("firma", "Tu firma")}>
+                        Ver
+                      </button>
+                      <a className="ag-doc-lk" href="/estudiante?mis=1">
+                        Cambiar
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
             {error && <div className="pb-error">{error}</div>}
             {avisos.estado === "activos" && (
@@ -729,6 +885,22 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
 
         <InstalarApp style={{ marginTop: 16 }} />
       </div>
+
+      {/* V86: su foto, su cédula o su firma en grande. */}
+      {visor && (
+        <div className="ag-visor" onClick={() => setVisor(null)}>
+          <b>{visor.titulo}</b>
+          {visor.cargando && <span>Un momento…</span>}
+          {visor.error && <span>{visor.error}</span>}
+          {visor.url && !visor.pdf && !visor.mala && <img src={visor.url} alt={visor.titulo} onError={() => setVisor((v) => (v ? { ...v, mala: true } : v))} />}
+          {visor.url && (visor.pdf || visor.mala) && (
+            <a className="pb-btn" href={visor.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+              {visor.pdf ? "Abrir el PDF" : "Abrir el archivo"}
+            </a>
+          )}
+          <button className="ag-visor-x">Cerrar</button>
+        </div>
+      )}
 
       <nav className="ag-menu">
         {MENU.map(([k, t, Icono]) => (

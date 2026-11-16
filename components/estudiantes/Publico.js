@@ -9,7 +9,7 @@ import { CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck, IconLock, IconCamera } from "@/components/icons";
 import { subirArchivo } from "@/lib/estudiantes/subir";
 import { leerPersona, guardarPersona } from "@/lib/app-gus";
-import InstalarApp from "@/components/InstalarApp";
+import InstalarApp, { VolverInicio } from "@/components/InstalarApp";
 
 // Control Estudiantes -- el link de registro del estudiante (público, sin
 // cuenta). Reemplaza el formulario de Google. Opción D de la maqueta:
@@ -992,6 +992,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
 
         {paso === "estado" && estado && <MisDocumentos estado={estado} setEstado={setEstado} id={id} tipoDoc={tipoDoc} doc={doc} cel={cel} setCel={setCel} tienda={tienda} wa={wa} ir={ir} />}
         {/* V81 (maqueta V81/V82): la tarjeta para instalar App Gus. */}
+        {((paso === "listo" && res) || (paso === "estado" && estado)) && <VolverInicio />}
         {((paso === "listo" && res) || (paso === "estado" && estado)) && <InstalarApp style={{ marginTop: 12 }} />}
       </div>
     </div>

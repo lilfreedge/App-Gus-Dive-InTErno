@@ -96,7 +96,10 @@ export async function POST(request) {
       const c = cursos[e.cursoId] || null;
       const a = avance(e, c);
       const firma = puedeCambiarArchivo(e.firma);
-      return { ...resumen(e), avance: { hechos: a.hechos, total: a.total, pct: a.pct }, falta: e.estado === "curso" ? faltaDe(e, c) : [], firma: { hay: !!e.firma, puede: firma.puede, desde: firma.desdeCuando || null } };
+      // V86 (maqueta V86, "3. sí"): sus pagos, uno por uno, para "Mis cursos"
+      // del app Gus Dive (solo la fecha, el monto y la forma).
+      const pagos = (e.pagos || []).map((x) => ({ fecha: x.fecha || "", monto: Number(x.monto) || 0, forma: x.forma || "" }));
+      return { ...resumen(e), pagos, avance: { hechos: a.hechos, total: a.total, pct: a.pct }, falta: e.estado === "curso" ? faltaDe(e, c) : [], firma: { hay: !!e.firma, puede: firma.puede, desde: firma.desdeCuando || null } };
     });
     // Los menores que esta persona registró (solo cómo van).
     const { data: menoresF } = await s.from("viajes_buzos").select("*").eq("celular", soloDigitos(b.cel)).not("tutor", "is", null);

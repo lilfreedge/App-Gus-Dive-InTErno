@@ -8,7 +8,7 @@ import { CampoCel } from "./Piezas";
 import { IconCheck, IconClip, IconCalendar, IconLock, IconChat, IconAlert, IconCamera } from "@/components/icons";
 import { urlPrincipal } from "@/lib/direccion";
 import { leerPersona, guardarPersona } from "@/lib/app-gus";
-import InstalarApp from "@/components/InstalarApp";
+import InstalarApp, { VolverInicio } from "@/components/InstalarApp";
 
 // V42 -- Lo que ve el buzo en el link de inscripción (maqueta-viajes-v2).
 // Se identifica con su cédula o pasaporte; el celular queda para escribirle.
@@ -1187,6 +1187,7 @@ export default function PublicoViaje({ v, tienda }) {
               </div>
             )}
             {/* V81 (maqueta V81/V82): la tarjeta para instalar App Gus. */}
+            {((paso === "fin" && resultado) || (paso === "perfil" && perfil)) && <VolverInicio />}
             {((paso === "fin" && resultado) || (paso === "perfil" && perfil)) && <InstalarApp style={{ marginTop: 12 }} />}
           </>
         )}

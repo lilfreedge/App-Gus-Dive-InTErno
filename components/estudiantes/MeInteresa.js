@@ -6,7 +6,7 @@ import { IconCheck } from "@/components/icons";
 import { celValido } from "@/lib/viajes/modelo";
 import { FUENTES } from "@/lib/estudiantes/modelo";
 import { Privacidad } from "./Publico";
-import InstalarApp from "@/components/InstalarApp";
+import InstalarApp, { VolverInicio } from "@/components/InstalarApp";
 
 // El link de interesados ("Registro de interesado"). Historia:
 // - V60/V62: primero pedía la cédula o el pasaporte para ligarlo con su
@@ -70,6 +70,7 @@ export default function MeInteresa({ cursos, cursoInicial = null }) {
             </div>
           </div>
         )}
+        {paso === "listo" && <VolverInicio />}
         {paso === "listo" && <InstalarApp style={{ marginTop: 12 }} />}
 
         {paso === "datos" && (

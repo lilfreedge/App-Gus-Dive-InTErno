@@ -66,6 +66,20 @@ export default function InstalarApp({ style }) {
   );
 }
 
+// V85 (pedido explícito, con foto de la pantalla final del link de
+// interesados: "aquí debería dejarme volver al menú principal" → "ponlo en
+// las tres pantallas") -- con el app instalada no hay botón de "atrás", así
+// que las pantallas finales (interesados, registro de curso, inscripción a
+// un buceo; también Mis documentos y Mi perfil) llevan este botón al menú
+// del app Gus Dive.
+export function VolverInicio() {
+  return (
+    <a className="pb-btn sec" href="/gus" style={{ display: "block", textDecoration: "none", textAlign: "center", marginTop: 12 }}>
+      Volver al inicio
+    </a>
+  );
+}
+
 // V83 (maqueta V83, opción B aprobada: "1. B") -- la hoja de iPhone pasa de
 // 3 pasos en texto a un tutorial paso a paso, con un dibujo de Safari y un
 // círculo rojo donde hay que tocar. Son los pasos de sus fotos (Safari
