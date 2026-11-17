@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V96",
+    fecha: "17 de noviembre, 2026",
+    titulo: "App Gus Dive: \"Mi curso\" con el progreso del estudiante",
+    descripcion:
+      "App Gus Dive, Mi cuenta › Mis cursos: cada curso tiene \"Ver mi progreso\". Al tocarlo se abre \"Mi curso\": el nombre, la fecha, el instructor y la barra de avance; \"Te falta\" con lo que le toca a él (lo que debe, con botón para escribirle a la tienda por WhatsApp; su foto y su cédula, con botón para subirlas); la próxima clase según el itinerario del curso (la tienda confirma la hora); sus pasos por grupo (Papeles, Teoría, En el agua, Entregas) con lo que ya está listo; y sus pagos. Cuando termina el curso dice en qué va su certificación. Los pasos son los mismos que marca la tienda en Control Estudiantes. Entrar con solo la cédula o solo el celular queda en la maqueta V96, sin programar. No necesita SQL.",
+  },
+  {
     version: "V95",
     fecha: "16 de noviembre, 2026",
     titulo: "Pasos del curso en grupo, Deshacer en la ficha y Dar de baja del curso",

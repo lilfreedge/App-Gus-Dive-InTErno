@@ -4163,3 +4163,35 @@ html[data-theme="dark"] .ce-gp.sel { background: #3a3010; }
 .ce-deshacer { background: none; border: 0; padding: 0; margin: 0 0 0 10px; width: auto; font: inherit; font-size: 12.5px; font-weight: 700; color: #9a5b0e; text-decoration: underline; cursor: pointer; }
 html[data-theme="dark"] .ce-deshacer { color: #f3d77a; }
 .ce-deshacer-conf { margin: 6px 0 10px; }
+
+/* V96 (app Gus Dive, "Mi curso"): el estudiante toca su curso y ve su progreso. */
+.ag-curso-toca { cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+.ag-curso-toca:hover { border-color: #c9d6de; box-shadow: 0 2px 8px rgba(6, 50, 79, 0.08); }
+.ag-curso-toca:active { transform: scale(0.995); }
+.ag-curso-ver { margin-top: 10px; padding-top: 8px; border-top: 1px solid #eef3f6; font-size: 13.5px; font-weight: 800; color: #06324f; }
+.ag-mc-cab { border-top: 4px solid #f6ce46; }
+.ag-mc-titulo { display: block; font-size: 19px; font-weight: 800; color: #1a2733; }
+.ag-barra.ag-mc-barra { height: 12px; margin: 14px 0 6px; }
+.ag-mc-avance { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; }
+.ag-mc-avance b { font-weight: 800; color: #1a2733; }
+.ag-mc-avance span { font-weight: 800; color: #2c8a4b; }
+.ag-mc-etapa { margin-top: 10px; background: #e3f4ea; color: #1b6b3c; border-radius: 10px; padding: 8px 10px; font-size: 13.5px; font-weight: 700; }
+.ag-mc-pend { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff; border: 1px solid #f3c9c3; border-left: 4px solid #d2402f; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+.ag-mc-pend b { display: block; color: #a8291c; font-size: 14.5px; }
+.ag-mc-pend small { display: block; color: #5c6b78; font-size: 12.5px; }
+.ag-mc-pend-btn { flex-shrink: 0; background: #06324f; color: #fff; border-radius: 9px; padding: 8px 12px; font-size: 13px; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.ag-mc-prox { margin-bottom: 0; }
+.ag-mc-pasos { padding: 4px 14px; }
+.ag-mc-grupo { padding: 10px 0; border-bottom: 1px solid #eef3f6; }
+.ag-mc-grupo:last-child { border-bottom: 0; }
+.ag-mc-grupo-t { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.ag-mc-grupo-t span { font-size: 11.5px; font-weight: 800; color: #5c6b78; text-transform: uppercase; letter-spacing: 0.05em; }
+.ag-mc-grupo-t small { font-size: 12px; font-weight: 700; color: #5c6b78; }
+.ag-mc-paso { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 14.5px; color: #1a2733; }
+.ag-mc-paso i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #cfd9e0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-style: normal; }
+.ag-mc-paso.listo i { background: #2c8a4b; border-color: #2c8a4b; color: #fff; }
+.ag-mc-paso.otro i { border-color: #e0a33a; }
+.ag-mc-paso span { flex: 1; min-width: 0; }
+.ag-mc-paso em { font-style: normal; font-size: 12px; font-weight: 800; color: #2c8a4b; }
+.ag-mc-paso.otro em { color: #9a5b0e; }
+.ag-mc-paso.pendiente span { color: #5c6b78; }

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { textoCalzado } from "@/lib/tallas";
 import { useRouter } from "next/navigation";
 import { CampoCel, IconoWA } from "@/components/viajes/Piezas";
-import { soloDigitos, formatoCedula, celValido, rd, fechaObj, fechaCorta } from "@/lib/viajes/modelo";
+import { soloDigitos, formatoCedula, celValido, rd, fechaObj, fechaCorta, hoyISO } from "@/lib/viajes/modelo";
 import { leerPersona, guardarPersona, olvidarPersona, enApp } from "@/lib/app-gus";
 import InstalarApp from "@/components/InstalarApp";
 import { IconHome, IconEstudiantes, IconDivingMask, IconCalendar, IconUser, IconMapPin, IconBell, IconArrowLeft, IconInstagram, IconGlobe, IconCheck } from "@/components/icons";
@@ -410,12 +410,158 @@ function Cursos({ catalogo, cursos, mensaje = "" }) {
 }
 
 // ------------------------------------------------------------ app
+// V96 (app Gus Dive, "Mi curso"): el estudiante toca su curso en Mi cuenta y
+// ve su progreso, todo de corrido (opción A de la maqueta V96): lo que le
+// falta hacer a él, la próxima clase, sus pasos por grupo y sus pagos.
+const GRUPOS_MI_CURSO = [
+  ["Papeles", ["record", "identificacion", "foto"]],
+  ["Teoría", ["teoria1", "teoria2", "teoria3", "examen"]],
+  ["En el agua", ["piscina", "caleta1", "caleta2", "caletaNocturna"]],
+  ["Entregas", ["equipos", "gorra"]],
+];
+const linkWa = (num, texto) => (num ? `https://wa.me/${soloDigitos(num).length === 10 ? "1" : ""}${soloDigitos(num)}?text=${encodeURIComponent(texto)}` : "");
+function textoEtapa(e) {
+  const escuela = e.escuela || "la escuela";
+  if (e.estado === "almacen") return "Terminaste el curso. Estamos procesando tu certificación.";
+  if (e.estado === "certificacion") return "Tu certificación ya está lista.";
+  if (e.estado === "entregada" || e.estado === "avisado") return `Tu certificación está lista. ${escuela} te mandó un correo con tus datos para entrar a su app.`;
+  return "";
+}
+function MiCurso({ e, falta, whatsapp, alVolver }) {
+  const hoy = hoyISO();
+  const enCurso = e.estado === "curso";
+  const pasos = [...(e.pasos || [])];
+  if (e.examen) pasos.push({ k: "examen", t: "Examen", v: e.examen.v === "aprobado" ? "listo" : ["na", "pendiente"].includes(e.examen.v) ? e.examen.v : "otro", nota: e.examen.t });
+  const proxima = enCurso ? (e.dias || []).find((d) => d.fecha >= hoy) : null;
+  const pend = [];
+  if (e.debe > 0) pend.push({ k: "pago", t: `Debe ${rd(e.debe)}`, sub: "Escríbenos y te decimos cómo pagar.", href: linkWa(whatsapp, `Hola, quiero pagar mi curso de ${e.curso}.`), boton: "Escribir", fuera: true });
+  if (e.estado !== "espera" && falta?.foto) pend.push({ k: "foto", t: "Falta tu foto", sub: "Para tu certificación.", href: "/estudiante?mis=1", boton: "Subir foto" });
+  if (e.estado !== "espera" && falta?.cedula) pend.push({ k: "cedula", t: "Falta tu cédula", sub: "Una foto donde se lea bien.", href: "/estudiante?mis=1", boton: "Subir cédula" });
+  const etapa = textoEtapa(e);
+  return (
+    <>
+      <button className="ag-volver" onClick={alVolver}>
+        <IconArrowLeft size={16} /> Mis cursos
+      </button>
+      <div className="pb-card ag-mc-cab">
+        <b className="ag-mc-titulo">{e.curso}</b>
+        <div className="pb-h" style={{ margin: "2px 0 0" }}>
+          {e.fechaInicio ? `${e.fechaInicio > hoy ? "Empieza" : "Empezó"} el ${DIA_LARGO[fechaObj(e.fechaInicio).getDay()]} ${fechaCorta(e.fechaInicio)}` : e.etapa}
+        </div>
+        {e.instructor && <div className="pb-h" style={{ margin: "2px 0 0" }}>Instructor: {e.instructor}</div>}
+        {e.avance?.total > 0 && (
+          <>
+            <div className="ag-barra ag-mc-barra">
+              <i style={{ width: `${e.avance.pct}%` }} />
+            </div>
+            <div className="ag-mc-avance">
+              <b>
+                {e.avance.hechos} de {e.avance.total} pasos
+              </b>
+              <span>{e.avance.pct}%</span>
+            </div>
+          </>
+        )}
+        {etapa && <div className="ag-mc-etapa">{etapa}</div>}
+      </div>
+
+      {pend.length > 0 && (
+        <>
+          <div className="ag-sec">Te falta</div>
+          {pend.map((x) => (
+            <div key={x.k} className="ag-mc-pend">
+              <span>
+                <b>{x.t}</b>
+                <small>{x.sub}</small>
+              </span>
+              {x.href && (
+                <a className="ag-mc-pend-btn" href={x.href} {...(x.fuera ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
+                  {x.boton}
+                </a>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+
+      {proxima && (
+        <>
+          <div className="ag-sec">Próxima clase</div>
+          <div className="ag-item ag-mc-prox">
+            <Fecha iso={proxima.fecha} tipo="cur" />
+            <span className="ag-tx">
+              <b>{proxima.texto}</b>
+              <small>
+                {proxima.fecha === hoy ? "Hoy" : `${DIA_LARGO[fechaObj(proxima.fecha).getDay()]} ${fechaCorta(proxima.fecha)}`} · según el plan del curso. La tienda te confirma la hora.
+              </small>
+            </span>
+          </div>
+        </>
+      )}
+
+      {pasos.length > 0 && (
+        <>
+          <div className="ag-sec">Tu progreso</div>
+          <div className="pb-card ag-mc-pasos">
+            {GRUPOS_MI_CURSO.map(([t, ks]) => {
+              const xs = ks.map((k) => pasos.find((p) => p.k === k)).filter((p) => p && p.v !== "na");
+              if (!xs.length) return null;
+              const l = xs.filter((p) => p.v === "listo").length;
+              return (
+                <div key={t} className="ag-mc-grupo">
+                  <div className="ag-mc-grupo-t">
+                    <span>{t}</span>
+                    <small>
+                      {l} de {xs.length}
+                    </small>
+                  </div>
+                  {xs.map((p) => (
+                    <div key={p.k} className={`ag-mc-paso ${p.v}`}>
+                      <i>{p.v === "listo" && <IconCheck size={13} />}</i>
+                      <span>{p.t}</span>
+                      {p.v === "listo" && <em>Listo</em>}
+                      {p.v === "otro" && <em>{p.nota}</em>}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {e.precio != null && e.estado !== "espera" && (
+        <>
+          <div className="ag-sec">Pagos</div>
+          <div className="pb-card ag-pagos" style={{ marginTop: 0, borderTop: 0 }}>
+            <div className="ag-pagos-t">
+              Curso {rd(e.precio)} · pagado {rd(e.pagado || 0)}
+            </div>
+            {(e.pagos || []).map((x, i) => (
+              <div key={i} className="ag-pago">
+                <span>{[x.fecha ? fechaCorta(x.fecha) : "", x.forma].filter(Boolean).join(" · ")}</span>
+                <b>{rd(x.monto)}</b>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
 export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], whatsapp = "", mensaje = "" }) {
   const [tab, setTabEstado] = useState("inicio");
   const [listo, setListo] = useState(false); // ya leyó lo guardado en el celular
   const [persona, setPersona] = useState(null);
   const [yo, setYo] = useState(null); // { primer, cursos, buceos, perfil }
-  const [sub, setSub] = useState("cursos");
+  const [sub, setSubEstado] = useState("cursos");
+  // V96: el curso abierto en Mi cuenta › Mis cursos ("Mi curso").
+  const [miCurso, setMiCurso] = useState(null);
+  const setSub = (k) => {
+    setSubEstado(k);
+    setMiCurso(null);
+  };
   const [tipoDoc, setTipoDoc] = useState("cedula");
   const [doc, setDoc] = useState("");
   const [cel, setCel] = useState("");
@@ -733,13 +879,43 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
               ))}
             </div>
             {!yo && cargando && <div className="pb-card pb-h">Un momento…</div>}
-            {yo && sub === "cursos" && (
+            {yo && sub === "cursos" && miCurso && yo.estudios.some((e) => e.id === miCurso) && (
+              <MiCurso
+                e={yo.estudios.find((e) => e.id === miCurso)}
+                falta={yo.falta}
+                whatsapp={whatsapp}
+                alVolver={() => {
+                  setMiCurso(null);
+                  window.scrollTo(0, 0);
+                }}
+              />
+            )}
+            {yo && sub === "cursos" && !(miCurso && yo.estudios.some((e) => e.id === miCurso)) && (
               <>
                 {yo.estudios.map((e) => (
-                  <div key={e.id} className="pb-card ag-curso">
+                  <div
+                    key={e.id}
+                    className={`pb-card ag-curso${e.estado !== "espera" ? " ag-curso-toca" : ""}`}
+                    {...(e.estado !== "espera"
+                      ? {
+                          role: "button",
+                          tabIndex: 0,
+                          onClick: () => {
+                            setMiCurso(e.id);
+                            window.scrollTo(0, 0);
+                          },
+                          onKeyDown: (ev) => {
+                            if (ev.key === "Enter" || ev.key === " ") {
+                              ev.preventDefault();
+                              setMiCurso(e.id);
+                            }
+                          },
+                        }
+                      : {})}
+                  >
                     <b>{e.curso}</b>
                     <div className="pb-h" style={{ margin: "2px 0 0" }}>
-                      {e.fechaInicio ? `Empieza el ${DIA_LARGO[fechaObj(e.fechaInicio).getDay()]} ${fechaCorta(e.fechaInicio)}` : e.etapa}
+                      {e.fechaInicio ? `${e.fechaInicio > hoyISO() ? "Empieza" : "Empezó"} el ${DIA_LARGO[fechaObj(e.fechaInicio).getDay()]} ${fechaCorta(e.fechaInicio)}` : e.etapa}
                     </div>
                     {e.avance?.total > 0 && (
                       <>
@@ -756,20 +932,8 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
                       {e.estado !== "espera" && (yo.falta.foto || yo.falta.cedula) && <span className="ag-chip rojo">Falta {[yo.falta.foto && "tu foto", yo.falta.cedula && "tu cédula"].filter(Boolean).join(" y ")}</span>}
                       {e.estado === "espera" && <span className="ag-chip gris">En lista de espera</span>}
                     </div>
-                    {/* V86 ("3. sí"): sus pagos, uno por uno. */}
-                    {e.precio != null && e.estado !== "espera" && (
-                      <div className="ag-pagos">
-                        <div className="ag-pagos-t">
-                          Curso {rd(e.precio)} · pagado {rd(e.pagado || 0)}
-                        </div>
-                        {(e.pagos || []).map((x, i) => (
-                          <div key={i} className="ag-pago">
-                            <span>{[x.fecha ? fechaCorta(x.fecha) : "", x.forma].filter(Boolean).join(" · ")}</span>
-                            <b>{rd(x.monto)}</b>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {/* V86 ("3. sí"): sus pagos, uno por uno. V96: ahora dentro de "Mi curso". */}
+                    {e.estado !== "espera" && <div className="ag-curso-ver">Ver mi progreso ›</div>}
                   </div>
                 ))}
                 {!yo.estudios.length && <div className="pb-card pb-h">Todavía no tienes cursos con nosotros.</div>}

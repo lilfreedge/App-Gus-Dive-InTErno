@@ -3,8 +3,8 @@ import { limpiarTallas } from "@/lib/tallas";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buzoAFila, filaABuzo, nuevoId } from "@/lib/viajes/datos";
 import { filaACurso, filaAEst, interesadoAFila } from "@/lib/estudiantes/datos";
-import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula, formatoCel, hoyISO, fechaLarga, fechaCorta, celValido, celGuardar } from "@/lib/viajes/modelo";
-import { pasosIniciales, pagado, debe, nombreEtapa, menorDe12, avance, faltaDe } from "@/lib/estudiantes/modelo";
+import { celOculto, nombreCorto, primerNombre, soloDigitos, formatoCedula, formatoCel, hoyISO, fechaLarga, fechaCorta, celValido, celGuardar, sumarDias } from "@/lib/viajes/modelo";
+import { pasosIniciales, pagado, debe, nombreEtapa, menorDe12, avance, faltaDe, pasosDe, nombreExamen } from "@/lib/estudiantes/modelo";
 import { docValido, buscarPorDoc, celCoincide, logLink, edadHoy, tokenMenor, puedeCambiarArchivo, puedeCambiarCel, cambiarCelular } from "@/lib/estudiantes/servidor";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 import { cedulaValida, MSG_CEDULA_MALA } from "@/lib/viajes/modelo";
@@ -109,7 +109,13 @@ export async function POST(request) {
       // V86 (maqueta V86, "3. sí"): sus pagos, uno por uno, para "Mis cursos"
       // del app Gus Dive (solo la fecha, el monto y la forma).
       const pagos = (e.pagos || []).map((x) => ({ fecha: x.fecha || "", monto: Number(x.monto) || 0, forma: x.forma || "" }));
-      return { ...resumen(e), pagos, avance: { hechos: a.hechos, total: a.total, pct: a.pct }, falta: e.estado === "curso" ? faltaDe(e, c) : [], firma: { hay: !!e.firma, puede: firma.puede, desde: firma.desdeCuando || null } };
+      // V96 (app Gus Dive, "Mi curso"): cómo va en cada paso, el examen, el
+      // instructor y los días del curso (del itinerario del Catálogo), para la
+      // pantalla de su progreso.
+      const pasos = pasosDe(e, c).map((p) => ({ k: p.k, t: p.t, v: (e.pasos || {})[p.k] || "pendiente" }));
+      const examen = c?.llevaExamen === false ? null : { v: e.examen || "pendiente", t: nombreExamen(e.examen || "pendiente") };
+      const dias = e.fechaInicio && Array.isArray(c?.semana) ? c.semana.map((t, i) => ({ fecha: sumarDias(e.fechaInicio, i), texto: String(t || "").trim() })).filter((x) => x.texto) : [];
+      return { ...resumen(e), pagos, avance: { hechos: a.hechos, total: a.total, pct: a.pct }, falta: e.estado === "curso" ? faltaDe(e, c) : [], firma: { hay: !!e.firma, puede: firma.puede, desde: firma.desdeCuando || null }, pasos, examen, instructor: e.instructor || "", dias };
     });
     // Los menores que esta persona registró (solo cómo van).
     const { data: menoresF } = await s.from("viajes_buzos").select("*").eq("celular", soloDigitos(b.cel)).not("tutor", "is", null);

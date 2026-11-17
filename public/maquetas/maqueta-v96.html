@@ -1,0 +1,133 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V96 · Mi curso y cómo entrar</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#e3eaef;--texto:#1a2733;--suave:#5c6b78;--navy:#06324f;--verde:#2c8a4b;--snsi:#f6ce46;--rojo:#a8291c}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:760px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.fila2{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.tel{width:330px;max-width:100%;background:#f7f9fb;border:8px solid #1a2733;border-radius:30px;overflow:hidden;flex-shrink:0}
+.tel-head{display:flex;align-items:center;gap:6px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--borde);font-weight:800;font-size:13px;color:var(--navy)}
+.tel-head i{display:inline-block;width:34px;height:14px;border-radius:4px;background:#d2402f}
+.tel-body{padding:12px;min-height:520px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px;margin-bottom:10px}
+.volver{border:0;background:none;font:inherit;font-weight:700;color:var(--navy);padding:0;margin-bottom:6px;cursor:pointer}
+.tit{font-size:18px;font-weight:800}.gris{color:var(--suave);font-size:12.5px}
+.barra{height:12px;border-radius:99px;background:#e6ecf0;overflow:hidden;margin:12px 0 5px}.barra i{display:block;height:100%;background:var(--verde)}
+.av{display:flex;justify-content:space-between;font-weight:800;font-size:13.5px}.av span{color:var(--verde)}
+.sec{font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.05em;margin:14px 2px 6px}
+.pend{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border:1px solid #f3c9c3;border-left:4px solid #d2402f;border-radius:12px;padding:9px 10px;margin-bottom:7px}
+.pend b{display:block;color:var(--rojo);font-size:13.5px}.pend small{display:block;color:var(--suave);font-size:11.5px}
+.pb{background:var(--navy);color:#fff;border-radius:9px;padding:7px 10px;font-size:12px;font-weight:800;white-space:nowrap;border:0}
+.prox{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--borde);border-radius:14px;padding:10px}
+.fc{display:flex;flex-direction:column;align-items:center;justify-content:center;width:46px;height:52px;border-radius:10px;background:#fff6cc;color:#7a5c00;flex-shrink:0}.fc small{font-size:10px;font-weight:700;text-transform:uppercase}.fc b{font-size:18px;line-height:1}
+.grupo{padding:8px 0;border-bottom:1px solid #eef3f6}.grupo:last-child{border-bottom:0}
+.grupo-t{display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.paso{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:13.5px}
+.paso i{width:20px;height:20px;border-radius:50%;border:2px solid #cfd9e0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-style:normal;color:#fff;font-size:11px;font-weight:900}
+.paso.ok i{background:var(--verde);border-color:var(--verde)}.paso em{margin-left:auto;font-style:normal;font-size:11.5px;font-weight:800;color:var(--verde)}
+.paso.no{color:var(--suave)}
+.lista-curso{cursor:pointer}.ver{margin-top:8px;padding-top:7px;border-top:1px solid #eef3f6;font-weight:800;color:var(--navy);font-size:13px}
+.itabs{display:flex;gap:4px;margin:4px 0 10px}.itabs button{flex:1;border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 2px;font:inherit;font-size:12px;font-weight:700;color:var(--suave);cursor:pointer}.itabs button.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+.tl{position:relative;padding-left:26px}.tl:before{content:"";position:absolute;left:10px;top:4px;bottom:4px;width:2px;background:#dfe6ea}
+.tl-p{position:relative;padding:6px 0 10px}.tl-p i{position:absolute;left:-26px;top:6px;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #cfd9e0;display:flex;align-items:center;justify-content:center;font-style:normal;color:#fff;font-size:11px;font-weight:900}
+.tl-p.ok i{background:var(--verde);border-color:var(--verde)}.tl-p.hoy i{border-color:var(--snsi);background:#fff6cc}
+.tl-p b{display:block;font-size:13.5px}.tl-p small{color:var(--suave);font-size:11.5px}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.aviso{background:#fff3dc;border:1px solid #f1d9a8;color:#7a4a0c;border-radius:10px;padding:10px 12px;font-size:13px;margin:10px 0}
+.campo{display:block;width:100%;border:1px solid var(--borde);border-radius:9px;padding:9px 10px;font:inherit;font-size:13px;margin:4px 0 8px;background:#fff;color:var(--suave)}
+.lab{font-size:11.5px;font-weight:700;color:var(--suave)}
+.btn{display:block;width:100%;background:var(--navy);color:#fff;border:0;border-radius:9px;padding:10px;font:inherit;font-weight:800;font-size:13px;margin-top:4px}
+.opc{font-size:13px;font-weight:800;margin:0 0 6px}
+.reco{display:inline-block;background:#ffd166;color:#1a2733;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800;margin-left:6px}
+.cand{display:inline-block;color:var(--suave);font-size:11.5px}
+.oc{filter:blur(3px);user-select:none}
+.ex{flex:1;min-width:260px}
+</style></head><body>
+<div class="maq"><b>Maqueta V96</b> · App Gus Dive, Mi cuenta: tocar el curso y ver el progreso, y cómo entrar. Datos de ejemplo.
+  <div class="tabs"><button class="sel" data-p="p1">A · Mi curso, todo de corrido (programado)</button><button data-p="p2">B · Con pestañas</button><button data-p="p3">C · Línea de tiempo</button><button data-p="p4">Entrar con cédula o celular</button></div>
+</div>
+<div class="wrap">
+
+<!-- A -->
+<div class="pest sel" id="p1">
+  <h2>A · Todo de corrido (es la que quedó programada)</h2>
+  <p class="sub">En Mis cursos, cada curso tiene "Ver mi progreso". Al tocarlo se abre su curso: arriba lo que le falta hacer a él, la próxima clase, sus pasos por grupo y sus pagos. Pruébalo: toca el curso.</p>
+  <div class="fila2">
+    <div class="tel"><div class="tel-head"><i></i>Gus Dive</div><div class="tel-body" id="a-tel"></div></div>
+    <div class="ex">
+      <div class="nota">De dónde sale cada cosa: los pasos y el examen son los mismos que marca la tienda en Control Estudiantes (por eso, al marcar en grupo, el estudiante lo ve al momento). La próxima clase sale del itinerario del curso en el Catálogo; como no tenemos la hora guardada, dice "La tienda te confirma la hora".</div>
+      <div class="nota">"Te falta" solo enseña lo que le toca a él: el pago (botón para escribirle a la tienda por WhatsApp, porque todavía no hay pago en línea), su foto y su cédula (botón para subirlas). Las teorías, la piscina y lo demás los marca la tienda.</div>
+      <div class="nota">No puse "Agregar a mi calendario" ni el WhatsApp del instructor: no tenemos la hora de cada clase ni el celular del instructor guardados. Se pueden agregar si me dices.</div>
+    </div>
+  </div>
+</div>
+
+<!-- B -->
+<div class="pest" id="p2">
+  <h2>B · Con pestañas</h2>
+  <p class="sub">Lo mismo, separado en Progreso / Próxima clase / Pagos. Más ordenado, pero esconde cosas detrás de cada pestaña.</p>
+  <div class="tel"><div class="tel-head"><i></i>Gus Dive</div><div class="tel-body" id="b-tel"></div></div>
+</div>
+
+<!-- C -->
+<div class="pest" id="p3">
+  <h2>C · Línea de tiempo</h2>
+  <p class="sub">Los pasos como una línea de arriba hacia abajo, con el día de cada uno. Más bonito, pero ocupa más espacio.</p>
+  <div class="tel"><div class="tel-head"><i></i>Gus Dive</div><div class="tel-body" id="c-tel"></div></div>
+</div>
+
+<!-- Entrar -->
+<div class="pest" id="p4">
+  <h2>Entrar con cédula o con celular</h2>
+  <p class="sub">Esto NO lo programé todavía. Al entrar, la persona ve su foto, la foto de su cédula, su dirección, su contacto de emergencia y sus pagos. Hoy pide las dos cosas (cédula y celular) para que alguien que sepa solo una no pueda ver lo de otra persona. Además, se ponen una sola vez: quedan guardadas en el celular.</p>
+  <div class="aviso">Con una sola (solo cédula o solo celular), cualquiera que sepa el celular o la cédula de otra persona podría entrar y ver la foto de su cédula y sus datos. Por eso te propongo estas tres maneras.</div>
+  <div class="fila2">
+    <div class="ex"><div class="opc">A · Como hoy: las dos</div><div class="tel"><div class="tel-head"><i></i>Gus Dive</div><div class="tel-body">
+      <div class="card"><div class="gris">Entra con tu cédula y tu celular. Lo pones una sola vez: queda guardado en este celular.</div>
+      <div class="lab" style="margin-top:8px">Cédula</div><div class="campo">000-0000000-0</div><div class="lab">Tu celular</div><div class="campo">000-000-0000</div><button class="btn">Entrar</button></div>
+    </div></div><div class="cand">Lo más seguro. Más trabajo la primera vez.</div></div>
+    <div class="ex"><div class="opc">B · Con una o la otra, pero lo delicado escondido</div><div class="tel"><div class="tel-head"><i></i>Gus Dive</div><div class="tel-body" id="e-b"></div></div><div class="cand">Entra fácil y ve sus cursos y su progreso. Para ver la foto de su cédula, su dirección y sus pagos, pone la otra.</div></div>
+    <div class="ex"><div class="opc">C · Con una o la otra + código al correo <span class="reco">la que recomiendo</span></div><div class="tel"><div class="tel-head"><i></i>Gus Dive</div><div class="tel-body" id="e-c"></div></div><div class="cand">Pone su cédula o su celular, le llega un código de 6 números a su correo (el que ya tenemos) y entra. Sin costo (usa los mismos correos del app). Si no tiene correo guardado, entra como hoy, con las dos.</div></div>
+  </div>
+</div>
+
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const PASOS=[["Papeles",[["Record de entrenamiento",1],["Copia de identificación",1],["Foto",0]]],["Teoría",[["Teoría 1",1],["Teoría 2",0],["Teoría 3",0],["Examen",0]]],["En el agua",[["Práctica piscina",0],["Caleta 1",0],["Caleta 2",0]]],["Entregas",[["Entrega de equipos",1],["Gorra Gus",0]]]];
+const ck='&#10003;';
+function grupos(){return PASOS.map(([t,xs])=>`<div class="grupo"><div class="grupo-t"><span>${t}</span><span>${xs.filter(x=>x[1]).length} de ${xs.length}</span></div>${xs.map(([n,ok])=>`<div class="paso ${ok?"ok":"no"}"><i>${ok?ck:""}</i>${n}${ok?"<em>Listo</em>":""}</div>`).join("")}</div>`).join("")}
+const cab=`<div class="card" style="border-top:4px solid #f6ce46"><div class="tit">Open Water Diver</div><div class="gris">Empezó el lunes 30 nov</div><div class="gris">Instructor: Instructor de ejemplo</div><div class="barra"><i style="width:31%"></i></div><div class="av">4 de 13 pasos<span>31%</span></div></div>`;
+const pend=`<div class="sec">Te falta</div><div class="pend"><span><b>Debe RD$29,500</b><small>Escríbenos y te decimos cómo pagar.</small></span><button class="pb">Escribir</button></div><div class="pend"><span><b>Falta tu foto</b><small>Para tu certificación.</small></span><button class="pb">Subir foto</button></div>`;
+const prox=`<div class="sec">Próxima clase</div><div class="prox"><span class="fc"><small>mar</small><b>1</b><small>dic</small></span><span><b>Teoría 2</b><br><small class="gris">martes 1 dic · según el plan del curso. La tienda te confirma la hora.</small></span></div>`;
+const pagos=`<div class="sec">Pagos</div><div class="card"><div class="gris">Curso RD$29,500 · pagado RD$0</div></div>`;
+let aAbierto=false;
+function aTel(){ $("a-tel").innerHTML=aAbierto?`<button class="volver" id="a-v">&larr; Mis cursos</button>${cab}${pend}${prox}<div class="sec">Tu progreso</div><div class="card" style="padding:4px 12px">${grupos()}</div>${pagos}`:
+  `<div class="card" style="background:#f6ce46;border:0;font-weight:800">Hola</div><div class="itabs"><button class="sel">Mis cursos</button><button>Mis buceos</button><button>Mi perfil</button></div><div class="card lista-curso" id="a-c"><b>Open Water Diver</b><div class="gris">Empieza el lunes 30 nov</div><div class="barra" style="height:8px"><i style="width:31%"></i></div><div class="gris">4 de 13 pasos listos</div><div class="ver">Ver mi progreso &rsaquo;</div></div>`;
+  if($("a-c"))$("a-c").onclick=()=>{aAbierto=true;aTel()}; if($("a-v"))$("a-v").onclick=()=>{aAbierto=false;aTel()}; }
+aTel();
+let bT="prog";
+function bTel(){ $("b-tel").innerHTML=`<button class="volver">&larr; Mis cursos</button>${cab}<div class="itabs">${[["prog","Progreso"],["prox","Próxima clase"],["pag","Pagos"]].map(([k,t])=>`<button class="${bT===k?"sel":""}" data-k="${k}">${t}</button>`).join("")}</div>${bT==="prog"?pend+`<div class="card" style="padding:4px 12px">${grupos()}</div>`:bT==="prox"?prox:pagos}`;
+  $("b-tel").querySelectorAll(".itabs button").forEach(b=>b.onclick=()=>{bT=b.dataset.k;bTel()}); }
+bTel();
+const TL=[["Record de entrenamiento","antes del curso",1],["Teoría 1","lunes 30 nov",1],["Teoría 2","martes 1 dic",2],["Teoría 3","miércoles 2 dic",0],["Examen","jueves 3 dic",0],["Práctica piscina","viernes 4 dic",0],["Caleta 1","sábado 5 dic",0],["Caleta 2","domingo 6 dic",0],["Gorra Gus","al terminar",0]];
+$("c-tel").innerHTML=`<button class="volver">&larr; Mis cursos</button>${cab}${pend}<div class="sec">Tu curso, día por día</div><div class="card"><div class="tl">${TL.map(([n,d,e])=>`<div class="tl-p ${e===1?"ok":e===2?"hoy":""}"><i>${e===1?ck:""}</i><b>${n}${e===2?' <span style="color:#7a5c00;font-size:11px">· próxima</span>':""}</b><small>${d}</small></div>`).join("")}</div></div>`;
+let eb="ced",ebOk=false;
+function eB(){ $("e-b").innerHTML=`<div class="card"><div class="itabs">${[["ced","Cédula"],["cel","Celular"]].map(([k,t])=>`<button class="${eb===k?"sel":""}" data-k="${k}">${t}</button>`).join("")}</div><div class="lab">${eb==="ced"?"Cédula":"Tu celular"}</div><div class="campo">${eb==="ced"?"000-0000000-0":"000-000-0000"}</div><button class="btn" id="eb-ok">Entrar</button></div>`+(ebOk?`<div class="card"><b>Open Water Diver</b><div class="gris">4 de 13 pasos listos</div></div><div class="card"><div class="lab">Mi cédula · mi dirección · mis pagos</div><div class="oc">Foto de la cédula · Calle de ejemplo · RD$0</div><div class="gris" style="margin-top:6px">Para ver esto, pon también tu ${eb==="ced"?"celular":"cédula"}.</div></div>`:"");
+  $("e-b").querySelectorAll(".itabs button").forEach(b=>b.onclick=()=>{eb=b.dataset.k;ebOk=false;eB()}); $("eb-ok").onclick=()=>{ebOk=true;eB()}; }
+eB();
+let ec="ced",ecPaso=0;
+function eC(){ const t=$("e-c");
+  if(ecPaso===0){t.innerHTML=`<div class="card"><div class="itabs">${[["ced","Cédula"],["cel","Celular"]].map(([k,x])=>`<button class="${ec===k?"sel":""}" data-k="${k}">${x}</button>`).join("")}</div><div class="lab">${ec==="ced"?"Cédula":"Tu celular"}</div><div class="campo">${ec==="ced"?"000-0000000-0":"000-000-0000"}</div><button class="btn" id="ec-ok">Mandarme el código</button></div>`;
+    t.querySelectorAll(".itabs button").forEach(b=>b.onclick=()=>{ec=b.dataset.k;eC()}); $("ec-ok").onclick=()=>{ecPaso=1;eC()};}
+  else if(ecPaso===1){t.innerHTML=`<div class="card"><div class="gris">Te mandamos un código de 6 números a tu correo a••••@gmail.com.</div><div class="lab" style="margin-top:8px">Código</div><div class="campo">______</div><button class="btn" id="ec-ok">Entrar</button><div class="gris" style="margin-top:8px">¿No te llegó? Revisa el correo no deseado o escríbenos.</div></div>`;$("ec-ok").onclick=()=>{ecPaso=2;eC()};}
+  else {t.innerHTML=`<div class="card" style="background:#f6ce46;border:0;font-weight:800">Hola</div><div class="card"><b>Open Water Diver</b><div class="gris">4 de 13 pasos listos</div></div><div class="gris">Queda guardado en este celular: la próxima vez entra solo.</div><button class="btn" id="ec-r" style="background:#fff;color:#06324f;border:1px solid #e3eaef">Volver a probar</button>`;$("ec-r").onclick=()=>{ecPaso=0;eC()};} }
+eC();
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('sel',x===b));document.querySelectorAll('.pest').forEach(p=>p.classList.toggle('sel',p.id===b.dataset.p));window.scrollTo(0,0)}));
+</script>
+</body></html>
