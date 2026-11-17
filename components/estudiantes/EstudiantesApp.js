@@ -200,6 +200,24 @@ export default function EstudiantesApp({ p, yo, personas }) {
         fallo(e);
       }
     },
+    // V95 (maqueta v95, aprobada): marcar (o deshacer) pasos a varios
+    // estudiantes a la vez. lista = [{ est, cambios, lineas: [{ texto, antes, despues }] }].
+    // Una línea de bitácora por cada paso de cada estudiante.
+    async marcarEnGrupo(lista) {
+      if (!lista.length) return true;
+      local((d) => ({ ...d, estudiantes: d.estudiantes.map((x) => { const it = lista.find((l) => l.est.id === x.id); return it ? { ...x, ...it.cambios } : x; }) }));
+      try {
+        for (const it of lista) await guardar(supabase.from("est_estudiantes").update(estAFila(it.cambios)).eq("id", it.est.id));
+        const ahora = new Date().toISOString();
+        const filas = lista.flatMap((it) => it.lineas.map((l) => ({ id: nuevoId(), estudiante_id: it.est.id, user_id: yo.id, nombre: yo.corto, texto: l.texto, antes: l.antes ?? null, despues: l.despues ?? null })));
+        setDb((d) => ({ ...d, bitacora: [...filas.map((f) => ({ id: f.id, estudianteId: f.estudiante_id, quien: yo.corto, texto: f.texto, antes: f.antes, despues: f.despues, cuando: ahora })).reverse(), ...d.bitacora] }));
+        if (filas.length) await supabase.from("est_bitacora").insert(filas);
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
     async cambiarBuzo(b, cambios, texto) {
       local((d) => ({ ...d, buzos: d.buzos.map((x) => (x.id === b.id ? { ...x, ...cambios } : x)) }));
       try {

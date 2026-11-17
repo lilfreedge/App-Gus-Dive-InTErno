@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V95",
+    fecha: "16 de noviembre, 2026",
+    titulo: "Pasos del curso en grupo, Deshacer en la ficha y Dar de baja del curso",
+    descripcion:
+      "Control Estudiantes, página de cada curso, pestaña Estudiantes: botón \"Marcar pasos en grupo\". Los pasos salen en tarjetas (Teoría y examen, En el agua, Entregas) con cuántos ya están listos; se pueden escoger uno o varios. Salen los estudiantes del curso ya marcados: se desmarca a quien no vino y se le da al botón (el Examen queda Aprobado). Después sale \"Deshacer\". Record, identificación y foto no salen ahí porque son de cada persona. Ficha del estudiante: al marcar Listo en un paso, pregunta si también es para los demás del mismo curso (\"Marcar a los seleccionados\" o \"Solo a…\"). Pago al instructor: \"Marcar pagado\" espera a que el estudiante termine el curso (todos los pasos y el examen; el pago del estudiante no cuenta) y dice qué le falta; el \"Pagado\" se puede deshacer. \"Deshacer\" también en la última marca del camino (Mandado a procesar, Recibido, Subido al Drive, Procesado, Llegó la certificación, Le avisaron), con confirmación; si la marca lo había pasado al paso siguiente, vuelve al anterior. \"Cancelar este curso\" ahora se llama \"Dar de baja del curso\" y pide confirmar. Todo queda en la bitácora: una línea por cada paso de cada estudiante y cada \"Deshacer\". No necesita SQL.",
+  },
+  {
     version: "V93",
     fecha: "16 de noviembre, 2026",
     titulo: "Tallas de calzado y camisa y peso en libras del cliente",

@@ -1,0 +1,272 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V95 · Pasos del curso en grupo</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--verde:#1f8f4e;--verdef:#e3f4ea;--ce:#8a6a00;--snsi:#f6ce46}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:720px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin:10px 0}
+.cab{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.fcaja{display:flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:56px;border-radius:12px;background:#fff8dc;border:1px solid #f1df9a;color:var(--ce);flex-shrink:0}
+.fcaja small{font-size:10.5px;font-weight:700;text-transform:uppercase}.fcaja b{font-size:20px;line-height:1}
+.titulo{font-size:19px;font-weight:800;margin:0}.gris{color:var(--suave);font-size:13px}
+.ptabs{display:flex;gap:4px;border-bottom:1px solid var(--borde);margin:12px 0 10px}
+.ptabs span{padding:8px 12px;font-weight:700;color:var(--suave);font-size:13px}.ptabs span.sel{color:var(--ce);border-bottom:2px solid var(--ce)}
+.btn{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer}
+.btn.am{background:var(--snsi);color:#2b2200}.btn.am:disabled{opacity:.45;cursor:default}
+.btn.bl{background:#fff;border:1px solid var(--borde);color:var(--texto)}
+.btn.chico{padding:6px 10px;font-size:12.5px}
+.fila{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #eef2f5}.fila:last-child{border-bottom:0}
+.prog{font-size:12px;font-weight:800;border-radius:999px;padding:3px 9px;background:#fff3dc;color:#9a5b0e;white-space:nowrap}.prog.ok{background:var(--verdef);color:var(--verde)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.chip{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:6px 11px;font:inherit;font-size:13px;font-weight:700;color:var(--texto);cursor:pointer}
+.chip.sel{background:var(--snsi);border-color:var(--snsi);color:#2b2200}
+.chip small{font-weight:600;color:var(--suave);margin-left:4px}.chip.sel small{color:#5a4700}
+.panel{border:2px solid var(--snsi);background:#fffdf3;border-radius:14px;padding:14px;margin:10px 0}
+.panel h3{margin:0 0 2px;font-size:15px}
+.marca{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f1ead0;cursor:pointer}.marca:last-child{border-bottom:0}
+.marca input{width:20px;height:20px;accent-color:#8a6a00;flex-shrink:0}
+.marca .ya{margin-left:auto;font-size:12px;font-weight:800;color:var(--verde)}
+.marca.off{cursor:default;color:var(--suave)}
+.pie{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.toast{display:none;align-items:center;justify-content:space-between;gap:10px;background:#1a2733;color:#fff;border-radius:12px;padding:10px 12px;margin:10px 0;font-size:13px}
+.toast.on{display:flex}.toast a{color:#ffd166;font-weight:800;cursor:pointer}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.seg{display:inline-flex;border:1px solid var(--borde);border-radius:8px;overflow:hidden;flex-shrink:0}
+.seg button{padding:5px 9px;font:inherit;font-size:12px;font-weight:700;color:var(--suave);background:#fff;border:0;border-left:1px solid var(--borde);cursor:pointer}
+.seg button:first-child{border-left:0}.seg button.listo{background:var(--verdef);color:var(--verde)}.seg button.pendiente{background:#fff3dc;color:#9a5b0e}.seg button.na{background:#eef2f5;color:var(--texto)}
+.tabla{overflow-x:auto;border:1px solid var(--borde);border-radius:12px;background:#fff}
+table{border-collapse:collapse;min-width:640px;width:100%;font-size:12.5px}
+th,td{border-bottom:1px solid #eef2f5;padding:7px 6px;text-align:center;white-space:nowrap}
+th{background:#fafbfc;font-size:11.5px;color:var(--suave);font-weight:800}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:1;padding-left:10px}
+th:first-child{background:#fafbfc}
+.todos{display:block;margin:4px auto 0;border:1px solid #e6d79a;background:#fff8dc;color:var(--ce);border-radius:6px;font:inherit;font-size:10.5px;font-weight:800;padding:2px 6px;cursor:pointer}
+.celda{border:0;border-radius:6px;font:inherit;font-size:11px;font-weight:800;padding:4px 6px;min-width:34px;cursor:pointer}
+.celda.listo{background:var(--verdef);color:var(--verde)}.celda.pendiente{background:#fff3dc;color:#9a5b0e}.celda.na{background:#eef2f5;color:var(--suave)}
+.preg{margin:6px 0;padding-left:20px}.preg li{margin:6px 0}
+.bit{padding:8px 0;border-bottom:1px solid #eef2f5;font-size:13px}.bit:last-child{border-bottom:0}.bit small{display:block;color:var(--suave);font-size:12px}
+.bit .ad{color:var(--suave)}.bit .ah{font-weight:800}
+.gp-t{display:flex;align-items:center;gap:7px;margin:14px 0 7px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8a7a3c}
+.gp-t svg{width:16px;height:16px}
+.gp-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+.gp{position:relative;text-align:left;background:#fff;border:1.5px solid #ece4c4;border-radius:14px;padding:11px 12px 10px;font:inherit;color:var(--texto);cursor:pointer;box-shadow:0 1px 2px rgba(60,48,0,.05);transition:border-color .15s,background .15s,transform .1s}
+.gp:hover{border-color:#e0c75c}.gp:active{transform:scale(.98)}
+.gp b{display:block;font-size:14px;font-weight:800;padding-right:22px}
+.gp .bar{height:6px;border-radius:999px;background:#f3edd6;margin:9px 0 5px;overflow:hidden}
+.gp .bar i{display:block;height:100%;border-radius:999px;background:#e6b800}
+.gp small{font-size:12px;font-weight:700;color:var(--suave)}
+.gp .ok{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;display:none;align-items:center;justify-content:center}
+.gp .ok svg{width:12px;height:12px}
+.gp.sel{border:2px solid #c9a227;background:#fff6cc;padding:10.5px 11.5px 9.5px;box-shadow:0 2px 8px rgba(201,162,39,.25)}
+.gp.sel .ok{display:flex;background:#c9a227;color:#fff}
+.gp.lleno{background:#f3faf5;border-color:#cfe9d8;cursor:default}
+.gp.lleno .bar i{background:var(--verde)}.gp.lleno small{color:var(--verde)}
+.gp.lleno .ok{display:flex;background:var(--verde);color:#fff}
+.link{color:#9a5b0e;font-weight:800;font-size:12.5px;cursor:pointer;text-decoration:underline;margin-left:8px}
+</style></head><body>
+<div class="maq"><b>Maqueta V95</b> · Marcar los pasos del curso a varios estudiantes a la vez. Nombres de ejemplo. Nada programado todavía.
+  <div class="tabs"><button class="sel" data-p="p1">A · Desde el curso (escogida)</button><button data-p="p2">B · Planilla</button><button data-p="p3">C · Desde la ficha (escogida)</button><button data-p="p4">D · Pago al instructor</button><button data-p="p5">E · Dar de baja y Deshacer</button></div>
+</div>
+<div class="wrap">
+
+<!-- A -->
+<div class="pest sel" id="p1">
+  <h2>A · En la página del curso: escoger los pasos y desmarcar a quien no vino</h2>
+  <p class="sub">Control Estudiantes › Cursos › el curso de esa fecha › pestaña Estudiantes. Pruébalo: toca "Marcar pasos en grupo", escoge uno o varios pasos y dale al botón.</p>
+  <div class="card">
+    <div class="cab"><span class="fcaja"><small>lun</small><b>16</b><small>nov</small></span><div><p class="titulo">Open Water Diver</p><div class="gris">Instructor de ejemplo · del 16 nov al 22 nov</div></div></div>
+    <div class="ptabs"><span class="sel">Estudiantes 5</span><span>Interesados</span><span>Datos</span></div>
+    <button class="btn am" id="a-abrir">Marcar pasos en grupo</button>
+    <div class="toast" id="a-toast"><span id="a-toast-t"></span><a id="a-deshacer">Deshacer</a></div>
+    <div class="panel" id="a-panel" style="display:none">
+      <h3>¿Qué pasos hicieron?</h3>
+      <div class="gris">Toca uno o varios. Tócalo otra vez para quitarlo.</div>
+      <div id="a-chips"></div>
+      <div id="a-lista-wrap" style="display:none">
+        <h3 id="a-quien" style="margin-top:18px">¿Quiénes lo hicieron?</h3>
+        <div class="gris">Ya vienen todos marcados. Desmarca a quien no vino.</div>
+        <div id="a-lista" style="margin-top:6px"></div>
+        <div class="gris" id="a-res" style="margin-top:10px;font-weight:700"></div>
+        <div class="pie"><button class="btn am" id="a-marcar" disabled>Marcar Listo</button><button class="btn bl" id="a-cerrar">Cancelar</button></div>
+      </div>
+    </div>
+    <div id="a-gente" style="margin-top:8px"></div>
+  </div>
+  <div class="card"><div class="gris" style="font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.04em">Bitácora de movimientos</div><div id="a-bit"></div></div>
+  <div class="nota">A quien desmarcas se le queda el paso como estaba (Pendiente), y lo marcas después en su ficha cuando lo haga. En el Examen se marca Aprobado; a quien le toca repetir o no pasó se le pone en su ficha. Cada paso de cada estudiante queda en la bitácora con su propia línea, y "Deshacer" también queda anotado. Funciona igual en el celular.</div>
+</div>
+
+<!-- B -->
+<div class="pest" id="p2">
+  <h2>B · Planilla del curso: todos los estudiantes y todos los pasos</h2>
+  <p class="sub">Como el sheet: una fila por estudiante y una columna por paso. Toca una casilla para cambiarla (Pendiente → Listo → N/A). "Todos" pone Listo a toda la columna.</p>
+  <div class="tabla"><table id="b-tabla"></table></div>
+  <div class="nota">En la computadora se ve completa. En el celular hay que mover la tabla de lado, y las casillas quedan chiquitas para el dedo.</div>
+</div>
+
+<!-- C -->
+<div class="pest" id="p3">
+  <h2>C · Desde la ficha de un estudiante</h2>
+  <p class="sub">Al marcar Listo en una ficha, pregunta si también es para los demás del mismo curso. Pruébalo: toca "Listo" en cualquier paso.</p>
+  <div class="card">
+    <p class="titulo">Ana Pérez</p>
+    <div class="gris">Open Water Diver · SNSI · empezó el 16 nov</div>
+    <div id="c-pasos" style="margin-top:10px"></div>
+  </div>
+  <div class="nota">Sirve cuando ya estás dentro de una ficha. Se puede sumar a la A: la A para marcar desde el curso y la C para cuando estás en una ficha. También queda en la bitácora.</div>
+</div>
+
+<!-- D -->
+<div class="pest" id="p4">
+  <h2>D · Deshacer el pago al instructor</h2>
+  <p class="sub">Ficha del estudiante › Pago al instructor. Empieza como tu foto: estudiante que todavía no termina y ya marcado pagado. Toca "Deshacer" y confirma: el botón queda bloqueado hasta que el estudiante termine todo. Cambia aquí abajo para verlo desbloqueado.</p>
+  <div class="gris" style="font-weight:700">Ver como si el estudiante:</div>
+  <div class="chips" id="d-etapas"></div>
+  <div class="card">
+    <div style="font-weight:800;font-size:15px;margin-bottom:4px">Pago al instructor</div>
+    <div class="fila"><span class="gris">Instructor</span><span>Instructor de ejemplo</span></div>
+    <div id="d-zona"></div>
+  </div>
+  <div class="card"><div class="gris" style="font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.04em">Bitácora de movimientos</div><div id="d-bit"></div></div>
+  <div class="nota">"Deshacer" sale en letra chica y pide confirmar. Lo puede usar quien tiene el permiso de marcar el pago al instructor. Se queda anotado quién lo deshizo, cuándo y qué tenía antes (fecha y quién lo había marcado). "Marcar pagado" queda bloqueado hasta que el estudiante tenga listos todos los pasos del curso y el examen aprobado; mientras, dice qué le falta. A quien ya se marcó antes de tiempo (como en tu foto) se le puede deshacer.</div>
+</div>
+
+<!-- E -->
+<div class="pest" id="p5">
+  <h2>E · "Dar de baja del curso" y "Deshacer" en las marcas de la ficha</h2>
+  <p class="sub">Ficha del estudiante. Pruébalo: deshaz la última marca de "Pendiente procesar", vuelve a marcarla, y da de baja al estudiante.</p>
+  <div class="card">
+    <div style="font-weight:800;font-size:15px;margin-bottom:4px">2. Pendiente procesar</div>
+    <div id="e-marcas"></div>
+  </div>
+  <div class="card">
+    <div style="font-weight:800;font-size:15px;margin-bottom:4px">Datos del curso</div>
+    <div class="fila"><span class="gris">Curso</span><span>Open Water Diver</span></div>
+    <div class="fila"><span class="gris">Fecha</span><span>lun 16 nov</span></div>
+    <div id="e-baja" style="margin-top:10px"></div>
+  </div>
+  <div class="card"><div class="gris" style="font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.04em">Bitácora de movimientos</div><div id="e-bit"></div></div>
+  <div class="nota">"Deshacer" sale solo en la última marca, para que no se dañe el orden: primero se deshace "Procesado", después "Subido al Drive", y así. Si la marca había pasado al estudiante al paso siguiente ("Mandado a procesar", "Llegó la certificación" o "Le avisaron"), al deshacerla vuelve al paso de antes. Al deshacer "Procesado", el No. de certificación se queda escrito para volver a marcarlo. "Dar de baja del curso" (antes "Cancelar este curso") pide confirmar y se puede reabrir. Todo queda en la bitácora.</div>
+</div>
+
+</div>
+<script>
+const GENTE=["Ana Pérez","Carlos Méndez","Laura Gómez","Miguel Rosario","Sofía Díaz"];
+const PASOS=[["teoria1","Teoría 1","Teoría 1",1],["teoria2","Teoría 2","Teoría 2",1],["teoria3","Teoría 3","Teoría 3",1],["piscina","Práctica piscina","Piscina",1],["caleta1","Caleta 1","Caleta 1",1],["caleta2","Caleta 2","Caleta 2",1],["record","Record de entrenamiento","Record",0],["identificacion","Copia de identificación","Identif.",0],["foto","Foto","Foto",0],["equipos","Entrega de equipos","Equipos",1],["gorra","Gorra Gus","Gorra",1]];
+const GRUPO=PASOS.filter(p=>p[3]);
+function inicial(){return GENTE.map((n,i)=>{const o={};PASOS.forEach(p=>o[p[0]]="pendiente");if(i===1){o.teoria1="listo";o.foto="listo"}if(i===3){o.identificacion="listo"}return o})}
+const nom=k=>PASOS.find(p=>p[0]===k)[1];
+const listos=o=>PASOS.filter(p=>o[p[0]]==="listo"||o[p[0]]==="na").length;
+
+// A (varios pasos a la vez + Examen)
+let A=inicial();A.forEach(o=>o.examen="pendiente");
+let aSel=[],aMarcas=[],aAntes=null,aUltimo=[],bitA=[];
+const $=id=>document.getElementById(id);
+const esEx=k=>k==="examen";
+const nomA=k=>esEx(k)?"Examen":nom(k);
+const hecho=(o,k)=>esEx(k)?o.examen==="aprobado":o[k]!=="pendiente";
+const yLista=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" y "+a[a.length-1];
+function aGente(){ $("a-gente").innerHTML=GENTE.map((n,i)=>{const l=listos(A[i]);return `<div class="fila"><span>${n}</span><span class="prog ${l===PASOS.length?"ok":""}">${l} de ${PASOS.length} listos${A[i].examen==="aprobado"?" · examen aprobado":""}</span></div>`}).join("") }
+const SVG=(d)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICO={libro:SVG('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7"/><path d="M9 11h7"/>'),
+  mascara:SVG('<rect x="4" y="6" width="16" height="10" rx="5"/><path d="M10 16v1.5a2 2 0 0 0 4 0V16"/><path d="M4 10L1 9.3M20 10l3-0.7"/>'),
+  caja:SVG('<path d="M21 8L12 3 3 8v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>'),
+  check:SVG('<polyline points="20 6 9 17 4 12"/>')};
+const GRUPOS=[["Teoría y examen","libro",["teoria1","teoria2","teoria3","examen"]],["En el agua","mascara",["piscina","caleta1","caleta2"]],["Entregas","caja",["equipos","gorra"]]];
+function aChips(){ const n=GENTE.length;
+  $("a-chips").innerHTML=GRUPOS.map(([t,ic,ks])=>`<div class="gp-t">${ICO[ic]}${t}</div><div class="gp-g">${ks.map(k=>{const l=A.filter(o=>hecho(o,k)).length,lleno=l===n,pal=esEx(k)?"aprobados":"listos";
+    return `<button class="gp ${lleno?"lleno":aSel.includes(k)?"sel":""}" data-k="${k}" ${lleno?"disabled":""}><span class="ok">${ICO.check}</span><b>${nomA(k)}</b><div class="bar"><i style="width:${Math.round(l/n*100)}%"></i></div><small>${lleno?(esEx(k)?"Todos aprobados":"Todos listos"):`${l} de ${n} ${pal}`}</small></button>`}).join("")}</div>`).join("");
+  $("a-chips").querySelectorAll(".gp:not([disabled])").forEach(b=>b.onclick=()=>{const k=b.dataset.k;aSel=aSel.includes(k)?aSel.filter(x=>x!==k):[...aSel,k];
+    const orden=GRUPOS.flatMap(g=>g[2]);aSel.sort((x,y)=>orden.indexOf(x)-orden.indexOf(y));
+    aMarcas=A.map(o=>aSel.some(x=>!hecho(o,x)));aChips();aLista();
+    const q=$("a-quien");if(aSel.length&&q.getBoundingClientRect().top>innerHeight-120)q.scrollIntoView({behavior:"smooth",block:"center"})}) }
+function aLista(){ $("a-lista-wrap").style.display=aSel.length?"block":"none"; if(!aSel.length)return;
+  $("a-quien").textContent="¿Quiénes hicieron "+yLista(aSel.map(nomA))+"?";
+  $("a-lista").innerHTML=GENTE.map((n,i)=>{const o=A[i],ya=aSel.every(k=>hecho(o,k)),parte=aSel.filter(k=>hecho(o,k));
+    return `<label class="marca ${ya?"off":""}"><input type="checkbox" data-i="${i}" ${ya||aMarcas[i]?"checked":""} ${ya?"disabled":""}><span>${n}${!ya&&parte.length?`<br><small class="gris">Ya tiene ${yLista(parte.map(nomA))}</small>`:""}</span>${ya?'<span class="ya">Ya lo tiene</span>':""}</label>`}).join("");
+  $("a-lista").querySelectorAll("input:not([disabled])").forEach(c=>c.onchange=()=>{aMarcas[+c.dataset.i]=c.checked;aBoton()});
+  const pas=aSel.filter(k=>!esEx(k)).map(nomA);
+  $("a-res").textContent=[pas.length?`${yLista(pas)} ${pas.length===1?"queda":"quedan"} Listo.`:"",aSel.includes("examen")?"Examen queda Aprobado.":""].filter(Boolean).join(" ");
+  aBoton() }
+function aBoton(){const k=aMarcas.filter(Boolean).length;$("a-marcar").disabled=!k;$("a-marcar").textContent=k?`Marcar ${aSel.length===1?nomA(aSel[0]):aSel.length+" pasos"} a ${k} estudiante${k===1?"":"s"}`:"Marca al menos uno"}
+$("a-abrir").onclick=()=>{$("a-panel").style.display="block";$("a-abrir").style.display="none";aSel=[];aChips();aLista()};
+$("a-cerrar").onclick=()=>{$("a-panel").style.display="none";$("a-abrir").style.display=""};
+function bitHtml(lista){return lista.length?lista.slice().reverse().map(x=>`<div class="bit">${x.t}${x.a?`: <span class="ad">${x.a}</span> → <span class="ah">${x.d}</span>`:""}<small>${x.q}</small></div>`).join(""):'<div class="gris" style="padding:8px 0">Todavía no hay movimientos.</div>'}
+function aBit(){$("a-bit").innerHTML=bitHtml(bitA)}
+$("a-marcar").onclick=()=>{aAntes=JSON.parse(JSON.stringify(A));aUltimo=[];const quienes=new Set();
+  aMarcas.forEach((m,i)=>{if(!m)return;aSel.forEach(k=>{if(hecho(A[i],k))return;const d=esEx(k)?"Aprobado":"Listo";if(esEx(k))A[i].examen="aprobado";else A[i][k]="listo";aUltimo.push({i,k,d});quienes.add(i);bitA.push({t:`${nomA(k)} (en grupo): ${GENTE[i]}`,a:"Pendiente",d,q:"Pipe · ahora"})})});
+  const k=quienes.size;$("a-toast-t").textContent=`${yLista(aSel.map(nomA))}: marcado a ${k} estudiante${k===1?"":"s"}.`;$("a-toast").classList.add("on");$("a-panel").style.display="none";$("a-abrir").style.display="";aGente();aBit()};
+$("a-deshacer").onclick=()=>{if(aAntes){A=aAntes;aAntes=null;aUltimo.forEach(x=>bitA.push({t:`Deshizo ${nomA(x.k)} (en grupo): ${GENTE[x.i]}`,a:x.d,d:"Pendiente",q:"Pipe · ahora"}));aGente();aBit()}$("a-toast").classList.remove("on")};
+aGente();aBit();
+
+// B
+let B=inicial();const ciclo={pendiente:"listo",listo:"na",na:"pendiente"},corto={listo:"Listo",pendiente:"Pdte",na:"N/A"};
+function bTabla(){ const t=$("b-tabla");
+  t.innerHTML=`<tr><th>Estudiante</th>${PASOS.map(p=>`<th>${p[2]}${p[3]?`<button class="todos" data-k="${p[0]}">Todos</button>`:""}</th>`).join("")}</tr>`+
+  GENTE.map((n,i)=>`<tr><td>${n}</td>${PASOS.map(p=>`<td><button class="celda ${B[i][p[0]]}" data-i="${i}" data-k="${p[0]}">${corto[B[i][p[0]]]}</button></td>`).join("")}</tr>`).join("");
+  t.querySelectorAll(".celda").forEach(b=>b.onclick=()=>{const o=B[+b.dataset.i];o[b.dataset.k]=ciclo[o[b.dataset.k]];bTabla()});
+  t.querySelectorAll(".todos").forEach(b=>b.onclick=()=>{B.forEach(o=>{if(o[b.dataset.k]==="pendiente")o[b.dataset.k]="listo"});bTabla()}) }
+bTabla();
+
+// C
+let C=inicial(),cAbierto=null;
+function cPasos(){ const yo=C[0];
+  $("c-pasos").innerHTML=PASOS.map(p=>{let h=`<div class="fila"><span>${p[1]}</span><span class="seg">${["listo","pendiente","na"].map(v=>`<button class="${yo[p[0]]===v?v:""}" data-k="${p[0]}" data-v="${v}">${{listo:"Listo",pendiente:"Pendiente",na:"N/A"}[v]}</button>`).join("")}</span></div>`;
+    if(cAbierto===p[0]){const otros=GENTE.slice(1).map((n,j)=>({n,i:j+1})).filter(x=>C[x.i][p[0]]==="pendiente");
+      h+=`<div class="panel" style="margin:0 0 8px"><h3>¿${p[1]} también para los demás de este curso?</h3>${otros.length?otros.map(x=>`<label class="marca"><input type="checkbox" data-i="${x.i}" checked><span>${x.n}</span></label>`).join("")+`<div class="pie"><button class="btn am chico" id="c-si">Marcar a los seleccionados</button><button class="btn bl chico" id="c-no">Solo a Ana</button></div>`:`<div class="gris">Los demás ya lo tienen listo.</div><div class="pie"><button class="btn bl chico" id="c-no">Cerrar</button></div>`}</div>`}
+    return h}).join("");
+  $("c-pasos").querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{const k=b.dataset.k,v=b.dataset.v;const antes=yo[k];yo[k]=v;cAbierto=(v==="listo"&&antes!=="listo"&&GRUPOk(k))?k:null;cPasos()});
+  const si=$("c-si"),no=$("c-no");
+  if(si)si.onclick=()=>{$("c-pasos").querySelectorAll(".panel input:checked").forEach(c=>C[+c.dataset.i][cAbierto]="listo");cAbierto=null;cPasos()};
+  if(no)no.onclick=()=>{cAbierto=null;cPasos()} }
+const GRUPOk=k=>GRUPO.some(p=>p[0]===k);
+cPasos();
+
+// D
+let dPagado="16 nov · Pipe",dConfirmar=false;const bitD=[{t:"Pagó al instructor (Instructor de ejemplo): Ana Pérez",q:"Pipe · 16 nov"}];
+function dZona(){ const z=$("d-zona");
+  if(dPagado){z.innerHTML=`<div class="fila"><span class="gris">Pagado</span><span>${dPagado}${dConfirmar?"":'<a class="link" id="d-des">Deshacer</a>'}</span></div>`+(dConfirmar?`<div class="panel" style="margin:8px 0 0"><h3>¿Deshacer el pago al instructor?</h3><div class="gris">Vuelve a quedar pendiente. Queda anotado en la bitácora.</div><div class="pie"><button class="btn am chico" id="d-si">Sí, deshacer</button><button class="btn bl chico" id="d-no">Cancelar</button></div></div>`:"");
+    const des=$("d-des");if(des)des.onclick=()=>{dConfirmar=true;dZona()};
+    const si=$("d-si"),no=$("d-no");
+    if(si)si.onclick=()=>{bitD.push({t:"Deshizo el pago al instructor: Ana Pérez",a:"Pagado "+dPagado,d:"Pendiente",q:"Pipe · ahora"});dPagado=null;dConfirmar=false;dZona()};
+    if(no)no.onclick=()=>{dConfirmar=false;dZona()};
+  } else if(!dTermino){z.innerHTML=`<button class="btn bl" disabled style="margin-top:8px;opacity:.45;cursor:default">Marcar pagado</button><div class="gris" style="margin-top:6px">Se puede marcar cuando el estudiante termine todo el curso: teorías, piscina, caletas y examen aprobado. Le falta: Caleta 2 y Examen.</div>`;
+  } else {z.innerHTML=`<button class="btn bl" id="d-marcar" style="margin-top:8px">Marcar pagado</button>`;
+    $("d-marcar").onclick=()=>{dPagado="hoy · Pipe";bitD.push({t:"Pagó al instructor (Instructor de ejemplo): Ana Pérez",q:"Pipe · ahora"});dZona()}}
+  $("d-etapas").innerHTML=["Todavía no termina","Ya terminó todo"].map((t,i)=>`<button class="chip ${dTermino===!!i?"sel":""}" data-e="${i}">${t}</button>`).join("");
+  $("d-etapas").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{dTermino=b.dataset.e==="1";dConfirmar=false;dZona()});
+  $("d-bit").innerHTML=bitHtml(bitD) }
+let dTermino=false;
+dZona();
+
+// E
+const E_M=[["recibido","Recibido para procesar","Lo recibí","Lo recibieron para procesar"],["drive","Subido al Drive","Lo subí al Drive","Lo subió al Drive"],["procesado","Procesado · No. OWD2139","Procesado","Lo procesó"]];
+let eH={recibido:"14 nov · Pipe",drive:"15 nov · Pipe",procesado:"16 nov · Pipe"},eConf=null,eBaja=false,eConfBaja=false;const bitE=[];
+function eRender(){ let h="";const ultima=[...E_M].reverse().find(m=>eH[m[0]]);
+  for(const [k,t,btn,txt] of E_M){ if(eH[k]){h+=`<div class="fila"><span class="gris">${t}</span><span>${eH[k]}${ultima&&ultima[0]===k&&eConf!==k?'<a class="link" data-des="'+k+'">Deshacer</a>':""}</span></div>`;
+      if(eConf===k)h+=`<div class="panel" style="margin:8px 0"><h3>¿Deshacer "${t.split(" · ")[0]}"?</h3><div class="gris">Vuelve a quedar pendiente. Queda anotado en la bitácora.</div><div class="pie"><button class="btn am chico" id="e-si">Sí, deshacer</button><button class="btn bl chico" id="e-no">Cancelar</button></div></div>`;}
+    else {h+=k==="procesado"?`<div class="fila"><span class="gris">No. de certificación</span><span style="display:flex;gap:6px;align-items:center"><input value="OWD2139" style="width:110px;padding:6px 8px;border:1px solid var(--borde);border-radius:8px;font:inherit"><button class="btn am chico" data-mar="${k}">${btn}</button></span></div>`:`<button class="btn bl" data-mar="${k}" style="margin-top:8px">${btn}</button>`;break;} }
+  $("e-marcas").innerHTML=h;
+  $("e-marcas").querySelectorAll("[data-des]").forEach(a=>a.onclick=()=>{eConf=a.dataset.des;eRender()});
+  $("e-marcas").querySelectorAll("[data-mar]").forEach(b=>b.onclick=()=>{const m=E_M.find(x=>x[0]===b.dataset.mar);eH[m[0]]="hoy · Pipe";bitE.push({t:`${m[3]}: Ana Pérez`,q:"Pipe · ahora"});eRender()});
+  const si=$("e-si"),no=$("e-no");
+  if(si)si.onclick=()=>{const m=E_M.find(x=>x[0]===eConf);bitE.push({t:`Deshizo "${m[1].split(" · ")[0]}": Ana Pérez`,a:eH[eConf],d:"Pendiente",q:"Pipe · ahora"});delete eH[eConf];eConf=null;eRender()};
+  if(no)no.onclick=()=>{eConf=null;eRender()};
+  const z=$("e-baja");
+  if(eBaja){z.innerHTML=`<div class="nota" style="margin:0;background:#fff3dc;border-color:#f1d9a8;color:#7a4a0c">Dado de baja de este curso. <button class="btn bl chico" id="e-reabrir" style="margin-left:6px">Reabrir</button></div>`;
+    $("e-reabrir").onclick=()=>{eBaja=false;bitE.push({t:"Reabrió el curso: Ana Pérez",a:"Dado de baja",d:"En curso",q:"Pipe · ahora"});eRender()};}
+  else if(eConfBaja){z.innerHTML=`<div class="panel" style="margin:0"><h3>¿Dar de baja a Ana Pérez de este curso?</h3><div class="gris">Su cupo queda libre. Lo puedes reabrir después.</div><div class="pie"><button class="btn am chico" id="e-bsi">Sí, dar de baja</button><button class="btn bl chico" id="e-bno">Cancelar</button></div></div>`;
+    $("e-bsi").onclick=()=>{eBaja=true;eConfBaja=false;bitE.push({t:"Dio de baja del curso: Ana Pérez",a:"En curso",d:"Dado de baja",q:"Pipe · ahora"});eRender()};
+    $("e-bno").onclick=()=>{eConfBaja=false;eRender()};}
+  else {z.innerHTML=`<button class="btn bl chico" id="e-baja-b">Dar de baja del curso</button>`;$("e-baja-b").onclick=()=>{eConfBaja=true;eRender()};}
+  $("e-bit").innerHTML=bitHtml(bitE) }
+eRender();
+
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('sel',x===b));document.querySelectorAll('.pest').forEach(p=>p.classList.toggle('sel',p.id===b.dataset.p));window.scrollTo(0,0)}));
+</script>
+</body></html>

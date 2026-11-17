@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { Atras } from "@/components/viajes/Piezas";
 import { IconoWA, CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck, IconEdit, IconCamera, IconEye } from "@/components/icons";
@@ -18,6 +18,7 @@ import {
   debe,
   pagoListo,
   faltaDe,
+  faltaClases,
   listoParaAlmacen,
   nombreExamen,
   nombreEtapa,
@@ -37,6 +38,7 @@ import {
 import { formatoCel, formatoCedula } from "@/lib/viajes/modelo";
 import { cursoDe, buzoDe } from "./Inicio";
 import { nuevoId } from "@/lib/estudiantes/datos";
+import { TambienParaOtros, otrosParaPaso } from "./PasosGrupo";
 import FechaNacimiento from "@/components/FechaNacimiento";
 
 // V60 ("164"): los intereses abiertos de esta persona (por su ficha de buzo o
@@ -105,15 +107,47 @@ function Avatar({ ruta, nombre, ops }) {
   );
 }
 
-function Hecho({ titulo, sello, extra }) {
+// V95 (maqueta v95, aprobada): "Deshacer" en letra chica, con confirmación.
+function Hecho({ titulo, sello, extra, deshacer, pregunta, aviso }) {
+  const [conf, setConf] = useState(false);
   return (
-    <div className="ce-dato">
-      <span>{titulo}</span>
-      <span>
-        {cuando(sello)}
-        {extra ? ` · ${extra}` : ""}
-      </span>
-    </div>
+    <>
+      <div className="ce-dato">
+        <span>{titulo}</span>
+        <span>
+          {cuando(sello)}
+          {extra ? ` · ${extra}` : ""}
+          {deshacer && !conf && (
+            <button type="button" className="ce-deshacer" onClick={() => setConf(true)}>
+              Deshacer
+            </button>
+          )}
+        </span>
+      </div>
+      {deshacer && conf && (
+        <div className="ce-gp-panel ce-deshacer-conf">
+          <h3>{pregunta || `¿Deshacer "${titulo}"?`}</h3>
+          <div className="hint-text" style={{ marginTop: 2 }}>
+            {aviso || "Vuelve a quedar pendiente."} Queda anotado en la bitácora.
+          </div>
+          <div className="ce-gp-pie">
+            <button
+              type="button"
+              className="btn ce-gp-boton"
+              onClick={async () => {
+                setConf(false);
+                await deshacer();
+              }}
+            >
+              Sí, deshacer
+            </button>
+            <button type="button" className="btn secondary" onClick={() => setConf(false)}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -130,6 +164,9 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
   const [borrar, setBorrar] = useState(null);
   const [subiendo, setSubiendo] = useState("");
   const [verBitacora, setVerBitacora] = useState(false);
+  // V95 (maqueta v95, aprobada): "¿también para los demás?" y "Dar de baja" con confirmación.
+  const [tambien, setTambien] = useState(null);
+  const [baja, setBaja] = useState(false);
 
   const cambiar = (cambios, texto, antes, despues) => ops.cambiarEst(est, cambios, `${texto}: ${b.nombre}`, antes, despues);
   const etapas = est.etapas || {};
@@ -146,7 +183,33 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
     const antes = (est.pasos || {})[k] || "pendiente";
     if (antes === v) return;
     cambiar({ pasos: { ...est.pasos, [k]: v } }, PASOS.find((x) => x.k === k)?.t || k, ESTADOS_PASO.find((x) => x.v === antes)?.t, ESTADOS_PASO.find((x) => x.v === v)?.t);
+    setTambien(v === "listo" && otrosParaPaso(db, est, k).length ? k : null);
   }
+  // V95: "Deshacer" sale solo en la última marca del camino, para no dañar el orden.
+  const CADENA = ["mandado", "recibido", "drive", "procesado", "cert", "avisado", "entregada"];
+  const ultimaMarca = [...CADENA].reverse().find((k) => etapas[k]);
+  const sinEtapa = (k) => {
+    const o = { ...etapas };
+    delete o[k];
+    return o;
+  };
+  const DESHACER = {
+    mandado: p.estudiantes && est.estado === "almacen" && (() => cambiar({ estado: "curso", etapas: sinEtapa("mandado") }, 'Deshizo "Mandado a procesar"', "Pendiente procesar", "En curso")),
+    recibido: p.almacen && est.estado === "almacen" && (() => cambiar({ etapas: sinEtapa("recibido") }, 'Deshizo "Recibido para procesar"', cuando(etapas.recibido), "Pendiente")),
+    drive: p.almacen && est.estado === "almacen" && (() => cambiar({ etapas: sinEtapa("drive") }, 'Deshizo "Subido al Drive"', cuando(etapas.drive), "Pendiente")),
+    procesado:
+      p.almacen &&
+      est.estado === "almacen" &&
+      (() => {
+        // El No. de certificación se queda escrito para volver a marcarlo.
+        setCert(est.numeroCert || "");
+        return cambiar({ etapas: sinEtapa("procesado") }, 'Deshizo "Procesado"', est.numeroCert ? `No. ${est.numeroCert}` : cuando(etapas.procesado), "Pendiente");
+      }),
+    cert: p.almacen && est.estado === "certificacion" && (() => cambiar({ estado: "almacen", etapas: sinEtapa("cert") }, 'Deshizo "Llegó la certificación"', "Certificación", "Pendiente procesar")),
+    avisado: p.entregar && ["entregada", "avisado"].includes(est.estado) && (() => cambiar({ estado: "certificacion", etapas: sinEtapa("avisado") }, 'Deshizo "Le avisaron"', "Avisado", "Certificación")),
+  };
+  const deshacerDe = (k) => (k === ultimaMarca && DESHACER[k]) || null;
+  const faltaCl = faltaClases(est, c);
   function agregarNota(t) {
     const texto = String(t || "").trim();
     if (!texto) return;
@@ -206,9 +269,9 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
 
       {est.estado === "cancelado" ? (
         <div className="aviso-box" style={{ marginTop: 10 }}>
-          Este curso está cancelado.{" "}
+          Dado de baja de este curso.{" "}
           {p.estudiantes && (
-            <button className="btn secondary vj-mini" onClick={() => cambiar({ estado: "curso" }, "Reabrió el curso", "Cancelado", "En curso")}>
+            <button className="btn secondary vj-mini" onClick={() => cambiar({ estado: "curso" }, "Reabrió el curso", "Dado de baja", "En curso")}>
               Reabrir
             </button>
           )}
@@ -306,7 +369,8 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
         {pasosDe(est, c).map((x) => {
           const v = (est.pasos || {})[x.k] || "pendiente";
           return (
-            <div key={x.k} className="ce-ck">
+            <Fragment key={x.k}>
+            <div className="ce-ck">
               <span>
                 {x.t}
                 {/* "56. si, es posible que firme virtual?": la firma que hizo en el link. */}
@@ -324,6 +388,20 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
                 ))}
               </span>
             </div>
+              {tambien === x.k && (
+                  <TambienParaOtros
+                    key={`${est.id}-${x.k}`}
+                    db={db}
+                    est={est}
+                    k={x.k}
+                    ops={ops}
+                    alCerrar={(n) => {
+                      setTambien(null);
+                      if (n) avisar(`${x.t}: también para ${n} estudiante${n === 1 ? "" : "s"}`);
+                    }}
+                  />
+              )}
+            </Fragment>
           );
         })}
         {/* V67 ("3"): sin "Ver montos", no sale lo del pago. */}
@@ -358,7 +436,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
             </div>
           </>
         )}
-        {etapas.mandado && <Hecho titulo="Mandado a procesar" sello={etapas.mandado} />}
+        {etapas.mandado && <Hecho titulo="Mandado a procesar" sello={etapas.mandado} deshacer={deshacerDe("mandado")} aviso="Vuelve al paso 1 (Curso)." />}
       </div>
 
       </>)}
@@ -498,7 +576,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
         ) : (
           <>
             {etapas.recibido ? (
-              <Hecho titulo="Recibido para procesar" sello={etapas.recibido} />
+              <Hecho titulo="Recibido para procesar" sello={etapas.recibido} deshacer={deshacerDe("recibido")} />
             ) : (
               p.almacen && (
                 <button className="btn btn-primary vj-btn" onClick={() => cambiar({ etapas: { ...etapas, recibido: sello } }, "Lo recibieron para procesar")}>
@@ -508,7 +586,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
             )}
             {etapas.recibido &&
               (etapas.drive ? (
-                <Hecho titulo="Subido al Drive" sello={etapas.drive} />
+                <Hecho titulo="Subido al Drive" sello={etapas.drive} deshacer={deshacerDe("drive")} />
               ) : (
                 p.almacen && (
                   <button className="btn secondary vj-btn" style={{ marginTop: 8 }} onClick={() => cambiar({ etapas: { ...etapas, drive: sello } }, "Lo subió al Drive")}>
@@ -518,7 +596,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
               ))}
             {etapas.drive &&
               (etapas.procesado ? (
-                <Hecho titulo="Procesado" sello={etapas.procesado} extra={est.numeroCert ? `No. ${est.numeroCert}` : ""} />
+                <Hecho titulo="Procesado" sello={etapas.procesado} extra={est.numeroCert ? `No. ${est.numeroCert}` : ""} deshacer={deshacerDe("procesado")} aviso="Vuelve a quedar pendiente; el No. de certificación se queda escrito." />
               ) : (
                 p.almacen && (
                   <div className="ce-ck">
@@ -552,7 +630,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
       {/* ---------------------------------------------------- 3-5 */}
       <div className={`ce-etapa${idx < 2 ? " gris" : ""}`}>
         <h4>3. Certificación {idx > 2 && <IconCheck size={16} />}</h4>
-        {etapas.cert ? <Hecho titulo="Llegó la certificación" sello={etapas.cert} /> : <div className="hint-text">Cuando llegue, se marca aquí.</div>}
+        {etapas.cert ? <Hecho titulo="Llegó la certificación" sello={etapas.cert} deshacer={deshacerDe("cert")} aviso="Vuelve a Pendiente procesar." /> : <div className="hint-text">Cuando llegue, se marca aquí.</div>}
       </div>
       <div className={`ce-etapa${idx < 2 ? " gris" : ""}`}>
         <h4>4. Avisarle {idx >= 3 && <IconCheck size={16} />}</h4>
@@ -565,7 +643,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
           </>
         )}
         {idx >= 2 && !b.cel && <div className="hint-text">No tiene celular guardado. Ponlo en Sus datos.</div>}
-        {etapas.avisado && <Hecho titulo="Le avisaron" sello={etapas.avisado} />}
+        {etapas.avisado && <Hecho titulo="Le avisaron" sello={etapas.avisado} deshacer={deshacerDe("avisado")} aviso="Vuelve a Certificación." />}
         {/* V55: sin "La recogió" ("87": le llega un correo de la escuela). */}
         {etapas.entregada && <Hecho titulo="La recogió" sello={etapas.entregada} />}
         {idx < 2 && <div className="hint-text">Avisar por WhatsApp (le llega un correo de {est.escuela || "la escuela"} con sus datos para entrar a su app).</div>}
@@ -578,13 +656,27 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
           <span>Instructor</span>
           <span>{est.instructor || "—"}</span>
         </div>
+        {/* V95 (maqueta v95, aprobada): se puede deshacer, y "Marcar pagado" espera a que
+            termine el curso (pasos y examen; el pago del estudiante no cuenta). */}
         {etapas.pago_instructor ? (
-          <Hecho titulo="Pagado" sello={etapas.pago_instructor} />
+          <Hecho
+            titulo="Pagado"
+            sello={etapas.pago_instructor}
+            pregunta="¿Deshacer el pago al instructor?"
+            deshacer={p.pago_instructor ? () => cambiar({ etapas: sinEtapa("pago_instructor") }, `Deshizo el pago al instructor${est.instructor ? ` (${est.instructor})` : ""}`, `Pagado ${cuando(etapas.pago_instructor)}`, "Pendiente") : null}
+          />
         ) : (
           p.pago_instructor && (
-            <button className="btn secondary vj-btn" style={{ marginTop: 8 }} onClick={() => cambiar({ etapas: { ...etapas, pago_instructor: sello } }, `Pagó al instructor${est.instructor ? ` (${est.instructor})` : ""}`)}>
-              Marcar pagado
-            </button>
+            <>
+              <button className="btn secondary vj-btn" style={{ marginTop: 8 }} disabled={faltaCl.length > 0} onClick={() => cambiar({ etapas: { ...etapas, pago_instructor: sello } }, `Pagó al instructor${est.instructor ? ` (${est.instructor})` : ""}`)}>
+                Marcar pagado
+              </button>
+              {faltaCl.length > 0 && (
+                <div className="hint-text" style={{ marginTop: 6 }}>
+                  Se puede marcar cuando termine el curso (teorías, práctica y examen). Le falta: {faltaCl.join(", ")}.
+                </div>
+              )}
+            </>
           )
         )}
       </div>
@@ -737,11 +829,37 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
       {/* ---------------------------------------------------- Cancelar / borrar */}
       {/* V64 ("290"): en lista de espera no hay curso que cancelar. */}
       {/* V67 ("3"): con el permiso "Cancelar cursos". */}
-      {p.cancelar && est.estado === "curso" && (
-        <button className="btn secondary vj-mini" style={{ marginTop: 12 }} onClick={() => cambiar({ estado: "cancelado" }, "Canceló el curso", nombreEtapa(est.estado), "Cancelado")}>
-          Cancelar este curso
-        </button>
-      )}
+      {/* V95 (maqueta v95, "7. B"): antes "Cancelar este curso" (sonaba a que se cancelaba
+          para todos). Solo saca a este estudiante, con confirmación. */}
+      {p.cancelar &&
+        est.estado === "curso" &&
+        (baja ? (
+          <div className="ce-gp-panel" style={{ marginTop: 12 }}>
+            <h3>¿Dar de baja a {b.nombre} de este curso?</h3>
+            <div className="hint-text" style={{ marginTop: 2 }}>
+              Su cupo queda libre. Lo puedes reabrir después. Queda anotado en la bitácora.
+            </div>
+            <div className="ce-gp-pie">
+              <button
+                type="button"
+                className="btn ce-gp-boton"
+                onClick={() => {
+                  setBaja(false);
+                  cambiar({ estado: "cancelado" }, "Lo dio de baja del curso", nombreEtapa(est.estado), "Dado de baja");
+                }}
+              >
+                Sí, dar de baja
+              </button>
+              <button type="button" className="btn secondary" onClick={() => setBaja(false)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button className="btn secondary vj-mini" style={{ marginTop: 12 }} onClick={() => setBaja(true)}>
+            Dar de baja del curso
+          </button>
+        ))}
       {/* V67 ("3"): con el permiso "Borrar estudiantes" (antes, solo el Titular). */}
       {p.borrar && (
         <div className="vj-borrar" style={{ marginTop: 14 }}>

@@ -12,6 +12,7 @@ import { urlPrincipal } from "@/lib/direccion";
 import InteresadosCurso, { interesadosDeCurso } from "./InteresadosCurso";
 import { ElegirCurso } from "./Interesados";
 import QrEntrega from "./QrEntrega";
+import { MarcarEnGrupo } from "./PasosGrupo";
 
 // Pantallas de Control Estudiantes: Inicio, la lista, Más y la Bitácora.
 
@@ -323,6 +324,8 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
 
       {tab === "estudiantes" && (
         <>
+          {/* V95 (maqueta v95, aprobada): marcar pasos a varios estudiantes a la vez. */}
+          {p.estudiantes && <MarcarEnGrupo db={db} c={c} gente={gente} ops={ops} />}
           {gente.length > 0 ? (
             <div className="card vj-lista">
               {gente.map((e) => (
