@@ -12,7 +12,7 @@ import CampanaNotificaciones from "@/components/CampanaNotificaciones";
 import NotificacionesPagina from "@/components/NotificacionesPagina";
 import { IconGear, IconLogout, IconShuffle, IconHistory, IconUsers } from "@/components/icons";
 import { cargarTodo, estAFila, buzoAFila, cursoAFila, interesadoAFila, fechaAFila, nuevoId } from "@/lib/estudiantes/datos";
-import { fechaCursoCorta } from "@/lib/estudiantes/modelo";
+import { fechaCursoCorta, rd } from "@/lib/estudiantes/modelo";
 import { Inicio, Lista, Mas, Bitacora, Directorio, DetalleCurso, PorEtapa, AppGusDive, UsoAppGus } from "./Inicio";
 import { Ficha } from "./Ficha";
 import { Nuevo } from "./Nuevo";
@@ -307,16 +307,20 @@ export default function EstudiantesApp({ p, yo, personas }) {
     // solo, una vez, al crearla. El servidor lo manda y lo anota aquí.
     // V91 (maqueta v92, aprobada): "otro" manda el correo otra vez y reinicia
     // "realizado" y "entregado" (queda anotado en la bitácora).
-    async pedirPresupuesto(fechaId, otro = false) {
+    async pedirPresupuesto(fechaId, otro = false, detalle = null) {
+      // V98 (maqueta V99): con el presupuesto en montos ({ estudiantes, hoja }).
       try {
-        const r = await fetch("/api/estudiantes/presupuesto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "pedir", fechaId, otro }) });
+        const r = await fetch("/api/estudiantes/presupuesto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "pedir", fechaId, otro, ...(detalle ? { detalle } : {}) }) });
         const j = await r.json().catch(() => ({}));
         if (!r.ok || j.error) throw new Error(j.error || "No se pudo mandar el correo del presupuesto.");
-        if (j.en) local((d) => ({ ...d, fechas: (d.fechas || []).map((x) => (x.id === fechaId ? { ...x, presupuestoPedidoEn: j.en, ...(otro ? { presupuestoRealizadoEn: null, presupuestoEntregadoEn: null, presupuestoEntregadoInfo: null } : {}) } : x)) }));
-        if (otro) await log(null, "Pidió otro presupuesto");
+        if (j.en) local((d) => ({ ...d, fechas: (d.fechas || []).map((x) => (x.id === fechaId ? { ...x, presupuestoPedidoEn: j.en, ...(j.detalle ? { presupuestoDetalle: j.detalle } : {}), ...(otro ? { presupuestoRealizadoEn: null, presupuestoEntregadoEn: null, presupuestoEntregadoInfo: null } : {}) } : x)) }));
+        const ultimo = j.detalle?.[j.detalle.length - 1];
+        await log(null, `${otro ? "Pidió otro presupuesto" : "Pidió el presupuesto"}${ultimo ? `: ${rd(ultimo.total)} (${ultimo.estudiantes} estudiante${ultimo.estudiantes === 1 ? "" : "s"})` : ""}`);
+        if (j.sinDetalle) avisar("El correo salió, pero el detalle no quedó guardado: falta correr migration_103.sql.");
         return true;
       } catch (e) {
         await log(null, `Presupuesto: ${e.message}`);
+        avisar(e.message);
         return false;
       }
     },

@@ -1,0 +1,154 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V100 · Lo que dijo el cliente en la ficha de la orden</title>
+<style>
+:root{--azul:#0a3d62;--azul-claro:#1f6b9a;--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--rojo:#d64545;--sup:#eef3f6;--verde:#2c9e5b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1000px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.reco{background:#e5f6ec;color:var(--verde);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px}
+.tab.on .reco{background:#fff}
+.vista{display:none;max-width:1000px;margin:0 auto;padding:0 16px 40px}.vista.on{display:block}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;margin-bottom:14px}
+.opc{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:13px}
+.opc label{display:inline-flex;gap:6px;align-items:center;background:#fff;border:1px solid var(--borde);border-radius:999px;padding:6px 11px;cursor:pointer;font-weight:600}
+.app{background:#fff;border:1px solid var(--borde);border-radius:14px;overflow:hidden}
+.barra{background:var(--azul);color:#fff;border-bottom:3px solid #06243a;padding:10px 14px;font-weight:800;font-size:13px;display:flex;gap:8px;align-items:center}
+.logo{background:var(--rojo);color:#fff;font-weight:900;font-size:11px;border-radius:6px;padding:3px 6px}
+.cuerpo{padding:14px;background:var(--fondo)}
+.migas{font-size:12.5px;color:var(--suave);margin-bottom:10px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:16px;margin-bottom:12px}
+.arriba{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.no{font-size:20px;font-weight:800}.fecha{font-size:12px;color:var(--suave);margin-top:2px}
+.estado{display:inline-block;margin-top:8px;background:#e4f1f9;color:var(--azul);font-weight:800;font-size:12.5px;border-radius:999px;padding:3px 10px}
+.cobrar{background:var(--sup);border:2px solid var(--azul-claro);border-radius:10px;padding:12px}
+.cobrar .t{font-size:11px;font-weight:700;color:var(--azul-claro);margin-bottom:4px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.ancho{grid-column:1/-1}
+.et{font-size:11.5px;font-weight:600;color:var(--suave);margin-bottom:2px}
+.va{font-size:14.5px;line-height:1.45}.va.dest{font-size:16.5px;font-weight:700}
+.va a{color:var(--azul-claro);text-decoration:none;border-bottom:1px solid #b9d3e4}
+.nuevo{outline:2px dashed #e0a800;outline-offset:6px;border-radius:4px}
+.caja{background:#fff8e1;border:2px solid #f1c94b;border-radius:10px;padding:12px 14px}
+.caja .t{font-size:11px;font-weight:800;color:#8a6200;letter-spacing:.3px;margin-bottom:8px}
+.caja .fila{margin-top:8px}.caja .fila:first-of-type{margin-top:0}
+.caja .et{color:#8a6200}
+.trajo{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
+.trajo span{background:var(--sup);border-radius:999px;padding:2px 9px;font-size:12.5px}
+.trajo span.no-vino{background:#fde8e8;color:var(--rojo)}
+.hint{color:var(--suave);font-size:12.5px}
+.pie{font-size:12px;color:var(--suave);margin-top:10px}
+.lado{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+.cel{border:1px solid var(--borde);border-radius:18px;overflow:hidden;background:#fff}
+.cel .grid,.cel .arriba{grid-template-columns:1fr}
+.etq{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;color:var(--suave)}
+.lista{display:flex;flex-direction:column;gap:14px}
+.sin{display:inline-block;border:1.5px dashed #c98a3f;background:#fbf0e3;color:#a8641d;font-weight:800;font-size:13px;border-radius:999px;padding:2px 10px}
+.internas{background:var(--sup);border:1px solid var(--borde);border-radius:12px;padding:12px;margin-top:16px}
+.internas .t{font-size:11.5px;font-weight:800;color:var(--suave);letter-spacing:.4px;margin-bottom:8px}
+.fila-int{display:flex;gap:8px}.inp{flex:1;min-width:0;background:#fff;border:1px solid var(--borde);border-radius:9px;padding:9px 10px;color:#98a5b0;font-size:13.5px}
+.agr{background:#6f8399;color:#fff;font-weight:800;border-radius:9px;padding:9px 12px;font-size:13.5px}
+.arriba .lista{gap:12px}
+@media(max-width:760px){.lado{grid-template-columns:1fr}.grid,.arriba{grid-template-columns:1fr}}
+</style></head><body>
+<div class="maq"><b>Maqueta V100</b> · App Equipos de clientes › ficha de la orden: dónde salen los "Problemas reportados por cliente" y los "Daños visibles" que se anotan al registrar un regulador. Hoy se guardan, pero en la ficha no salen (solo en "Mis trabajos" del técnico y en el informe). Nada de esto está programado: falta tu respuesta.</div>
+<div class="tabs" id="tabs">
+  <button class="tab" data-v="hoy">Hoy</button>
+  <button class="tab" data-v="a">A · Con los demás datos</button>
+  <button class="tab on" data-v="b">B · En una caja aparte <span class="reco">la que recomiendo</span></button>
+  <button class="tab" data-v="tec">Ficha del técnico</button>
+</div>
+
+<!-- HOY -->
+<div class="vista" id="v-hoy">
+  <div class="nota">Así se ve hoy (como tu foto, con datos de prueba): lo que el cliente dijo y los daños que se vieron al recibirlo no aparecen en ninguna parte de la ficha.</div>
+  <div class="lado"><div class="app"><div class="barra"><span class="logo">GUS</span> Equipos de clientes</div><div class="cuerpo" data-ficha="hoy"></div></div>
+  <div><div class="etq">En el celular</div><div class="cel"><div class="barra"><span class="logo">GUS</span> Equipos de clientes</div><div class="cuerpo" data-ficha="hoy"></div></div></div></div>
+</div>
+
+<!-- A -->
+<div class="vista" id="v-a">
+  <div class="nota">A: los dos salen en la misma lista, entre "Servicio a realizar" y "Autorización del cliente", del mismo tamaño que lo demás (la raya amarilla es solo para que los veas en la maqueta). Si al registrar no se escribió nada, no salen.</div>
+  <div class="opc"><label><input type="checkbox" class="chk-trajo"> También "Lo que trajo" (lo que se marcó: 1ra etapa, 2da etapa, octopus, brújula…)</label></div>
+  <div class="lado"><div class="app"><div class="barra"><span class="logo">GUS</span> Equipos de clientes</div><div class="cuerpo" data-ficha="a"></div></div>
+  <div><div class="etq">En el celular</div><div class="cel"><div class="barra"><span class="logo">GUS</span> Equipos de clientes</div><div class="cuerpo" data-ficha="a"></div></div></div></div>
+</div>
+
+<!-- B -->
+<div class="vista on" id="v-b">
+  <div class="nota">B: una caja amarilla "AL RECIBIRLO" a la derecha, debajo de "Códigos a cobrar" (ahí hoy queda espacio en blanco). Llama más la atención y el técnico lo ve de una vez. En el celular sale debajo de "Códigos a cobrar".</div>
+  <div class="opc"><label><input type="checkbox" class="chk-trajo"> También "Lo que trajo" (lo que se marcó: 1ra etapa, 2da etapa, octopus, brújula…)</label></div>
+  <div class="lado"><div class="app"><div class="barra"><span class="logo">GUS</span> Equipos de clientes</div><div class="cuerpo" data-ficha="b"></div></div>
+  <div><div class="etq">En el celular</div><div class="cel"><div class="barra"><span class="logo">GUS</span> Equipos de clientes</div><div class="cuerpo" data-ficha="b"></div></div></div></div>
+</div>
+
+<!-- TÉCNICO -->
+<div class="vista" id="v-tec">
+  <div class="nota">El técnico tiene su propia ficha de la orden. Hoy ahí tampoco salen (solo en su lista "Mis trabajos"). Propuesta: ponerlos debajo de "Servicio a realizar", igual que en A.</div>
+  <div class="lado"><div class="cel" style="max-width:380px"><div class="barra"><span class="logo">GUS</span> Mis trabajos</div><div class="cuerpo">
+    <div class="card"><div class="lista">
+      <div><div class="et">Equipo</div><div class="va dest">Regulador — SHERWOOD N/A</div></div>
+      <div><div class="et">Servicio a realizar</div><div class="va"><b>Reparación</b></div></div>
+      <div class="nuevo"><div class="et">Problemas reportados por cliente</div><div class="va">Verificar las 2das etapas tienen escape fuerte</div></div>
+      <div class="nuevo"><div class="et">Daños visibles</div><div class="va">En la manguera se logra apreciar unos tape, tapando orificios.</div></div>
+      <div><div class="et">Notas de recepción</div><div class="va">Lo trajo con la bolsa negra.</div></div>
+      <div><div class="et">Cliente</div><div class="va">Cliente de prueba</div></div>
+    </div></div>
+    <div class="card"><div class="etq" style="margin-bottom:10px">Tu trabajo</div><div class="lista">
+      <div><div class="et">Códigos a cobrar</div><div class="va">—</div></div>
+      <div><div class="et">Informe de mantenimiento</div><div class="va" style="color:var(--rojo);font-weight:700">Falta el informe</div></div>
+    </div></div>
+  </div></div></div><div></div></div>
+</div>
+
+<script>
+const PROB = "Verificar las 2das etapas tienen escape fuerte";
+const DANOS = "En la manguera se logra apreciar unos tape, tapando orificios.";
+const TRAJO = ["Primera etapa (Sherwood)", "Segunda etapa (Sherwood)", "Octopus", "Manguera de BC", "Manómetro"];
+const NO_VINO = ["Brújula"];
+let conTrajo = false;
+function trajoHtml(){
+  return '<div class="trajo">' + TRAJO.map(t => '<span>' + t + '</span>').join("") + NO_VINO.map(t => '<span class="no-vino">Sin ' + t.toLowerCase() + '</span>').join("") + '</div>';
+}
+function ficha(modo){
+  const prob = '<div class="ancho nuevo"><div class="et">Problemas reportados por cliente</div><div class="va">' + PROB + '</div></div>'
+    + '<div class="ancho nuevo"><div class="et">Daños visibles</div><div class="va">' + DANOS + '</div></div>'
+    + (conTrajo ? '<div class="ancho nuevo"><div class="et">Lo que trajo</div>' + trajoHtml() + '</div>' : "");
+  const caja = '<div class="caja"><div class="t">AL RECIBIRLO</div>'
+    + '<div class="fila"><div class="et">Problemas reportados por cliente</div><div class="va">' + PROB + '</div></div>'
+    + '<div class="fila"><div class="et">Daños visibles</div><div class="va">' + DANOS + '</div></div>'
+    + (conTrajo ? '<div class="fila"><div class="et">Lo que trajo</div>' + trajoHtml() + '</div>' : "")
+    + '</div>';
+  return '<div class="card">'
+    + '<div class="arriba"><div class="lista">'
+    + '<div><div class="et">No. de orden</div><div class="no">2205 <span style="color:var(--suave);font-weight:700">— CLIENTE DE PRUEBA</span></div><div class="fecha">Ingreso: 14/11/2026</div></div>'
+    + '<div><div class="et">Equipo</div><div class="va dest" style="color:var(--azul)">Regulador — SHERWOOD N/A</div></div>'
+    + '<div><div class="et">Estado</div><span class="estado">Pendiente por despachar</span></div>'
+    + '<div><div class="et">Técnico asignado</div><span class="sin">Sin asignar</span></div>'
+    + '</div><div class="lista"><div class="cobrar"><div class="t">CÓDIGOS A COBRAR</div><ul style="margin:0;padding-left:16px"><li>REG-5126 · MANTENIMIENTO REGULADOR</li></ul></div>'
+    + (modo === "b" ? caja : "")
+    + '</div></div>'
+    + '<div class="grid">'
+    + '<div class="ancho"><div class="et">Cliente</div><div class="va dest"><a href="#" onclick="return false">CLIENTE DE PRUEBA</a></div></div>'
+    + '<div class="ancho"><div class="et">Equipo</div><div class="va dest"><a href="#" onclick="return false">Regulador — SHERWOOD N/A</a></div></div>'
+    + '<div class="ancho"><div class="et">Servicio a realizar</div><div class="va">Reparación</div></div>'
+    + (modo === "a" ? prob : "")
+    + '<div class="ancho"><div class="et">Autorización del cliente</div><div class="va">Solo lo indicado, nada más<div class="hint">avisarle si hay que cambiarle algunas piezas</div></div></div>'
+    + '</div>'
+    + '<div class="internas"><div class="t">NOTAS INTERNAS · NO LAS VE EL CLIENTE</div><div class="fila-int"><div class="inp">Escribe una nota interna…</div><div class="agr">Agregar</div></div></div>'
+    + '</div><div class="pie">Lo de abajo (Seguimiento, Nota, bitácora) sigue igual.</div>';
+}
+function pintar(){ document.querySelectorAll("[data-ficha]").forEach(el => el.innerHTML = ficha(el.dataset.ficha)); }
+document.querySelectorAll(".chk-trajo").forEach(c => c.addEventListener("change", e => {
+  conTrajo = e.target.checked;
+  document.querySelectorAll(".chk-trajo").forEach(o => o.checked = conTrajo);
+  pintar();
+}));
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest(".tab"); if (!b) return;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t === b));
+  document.querySelectorAll(".vista").forEach(v => v.classList.toggle("on", v.id === "v-" + b.dataset.v));
+});
+pintar();
+</script>
+</body></html>

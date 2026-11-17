@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { tieneAcceso } from "@/lib/roles";
 import { enviarAvisoSolicitud } from "@/lib/solicitudes-correo";
+import { origenDe } from "@/lib/direccion";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -33,6 +34,7 @@ export async function POST(request, { params }) {
     solicitud,
     destinatarios: config?.solicitudes_correos || [],
     responderA: user.email,
+    origen: origenDe(request),
   });
 
   await supabase

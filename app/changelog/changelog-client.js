@@ -12,6 +12,27 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V99",
+    fecha: "17 de noviembre, 2026",
+    titulo: "Actividad reciente con todos los movimientos y los correos del app con el mismo formato",
+    descripcion:
+      "Panel › Actividad reciente: ahora salen también los tanques enviados a prueba hidrostática y los que regresaron (con el resultado), las solicitudes de códigos al almacén y lo que se recibió, y los recordatorios marcados como hechos, junto con las salidas, los llenados, los mantenimientos, las inspecciones y los cambios de compresores. Lo que alguien hizo de un tirón sale en una sola línea (por ejemplo \"3 tanques enviados a PH\" con los códigos). Cada uno ve solo lo de las pantallas a las que tiene acceso. Salen los últimos 10 (antes 8). Correos: todos los que manda el app tienen el mismo formato, con el logo de Gus arriba y la franja del color de cada app: cuenta nueva por aprobar, solicitud de códigos al almacén, aviso fijo leído, recordatorios, avisos de Buceos, \"ya puedes inscribirte\" y lista de espera. Los informes no cambian. No necesita SQL.",
+  },
+  {
+    version: "V98",
+    fecha: "17 de noviembre, 2026",
+    titulo: "Presupuestos predeterminados por cantidad de estudiantes",
+    descripcion:
+      "Control Estudiantes › Más › Catálogo de cursos › el curso › Presupuestos: un presupuesto para cada cantidad de estudiantes (1, 2, 3…), con secciones y líneas como la hoja de la tienda (concepto, precio, cantidad, total; también líneas de solo texto, como las yolas). \"Agregar\" copia el anterior; \"Empezar con la hoja de Open Water\" pone la de 4 estudiantes. Página del curso › Presupuesto: al tocar \"Mandar correo de presupuesto\" sale el de los inscritos con el total; un toque y se manda. \"Ver el detalle o cambiar algo\" lo cambia solo para esa vez. Si no hay uno para esa cantidad, usa el más cercano y lo avisa. Lo que se pidió queda guardado en la tarjeta (fecha, quién, estudiantes, total y \"Ver detalle\"), también cada \"Pedir otro presupuesto\". Correo a Dinorah: el total grande, las gorras, los inscritos y el detalle en tablas, con los logos de Gus y SNSI; el correo del código para entrar al app usa el mismo formato. Los presupuestos no salen en el app de los clientes. Necesita migration_103.sql para guardar el detalle; sin ella, el correo sale igual.",
+  },
+  {
+    version: "V97",
+    fecha: "17 de noviembre, 2026",
+    titulo: "App Gus Dive: \"Mi curso\" día por día y entrar con la cédula o con el celular",
+    descripcion:
+      "App Gus Dive, Mi curso: los pasos salen como línea de tiempo, día por día según el itinerario del curso (antes del curso: papeles; luego cada clase con su fecha; al terminar: la gorra), con la próxima clase marcada en amarillo y lo que ya está listo en verde. App Gus Dive, Mi cuenta: se entra con la cédula, con el celular o con otro documento, y le llega un código de 6 números a su correo (vence a los 10 minutos; máximo 5 intentos por código). Queda guardado en el celular como antes. Si no tenemos su correo, o si prefiere, entra como antes con la cédula y el celular. Si un celular lo tienen varias personas, pide la cédula. Control Estudiantes › Más: \"Quién usa el app Gus Dive\" pasa al final. Necesita migration_102.sql (los códigos); sin ella, se entra como antes con las dos cosas.",
+  },
+  {
     version: "V96",
     fecha: "17 de noviembre, 2026",
     titulo: "App Gus Dive: \"Mi curso\" con el progreso del estudiante",

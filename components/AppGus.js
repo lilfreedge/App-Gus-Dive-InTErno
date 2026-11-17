@@ -411,14 +411,18 @@ function Cursos({ catalogo, cursos, mensaje = "" }) {
 
 // ------------------------------------------------------------ app
 // V96 (app Gus Dive, "Mi curso"): el estudiante toca su curso en Mi cuenta y
-// ve su progreso, todo de corrido (opción A de la maqueta V96): lo que le
-// falta hacer a él, la próxima clase, sus pasos por grupo y sus pagos.
-const GRUPOS_MI_CURSO = [
-  ["Papeles", ["record", "identificacion", "foto"]],
-  ["Teoría", ["teoria1", "teoria2", "teoria3", "examen"]],
-  ["En el agua", ["piscina", "caleta1", "caleta2", "caletaNocturna"]],
-  ["Entregas", ["equipos", "gorra"]],
+// ve su progreso. V97 ("15. C", maqueta V96): sus pasos como línea de tiempo,
+// día por día, con la próxima clase marcada; arriba lo que le falta hacer a
+// él y abajo sus pagos.
+const LINEA_MI_CURSO = [
+  ["antes", ["record", "identificacion", "foto"]],
+  ["dia", ["teoria1", "teoria2", "teoria3", "examen"]],
+  ["agua", ["equipos"]],
+  ["dia", ["piscina", "caleta1", "caleta2", "caletaNocturna"]],
+  ["fin", ["gorra"]],
 ];
+const ETIQUETA_LINEA = { antes: "Antes del curso", agua: "Antes de entrar al agua", fin: "Al terminar el curso" };
+const sinTildes = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 const linkWa = (num, texto) => (num ? `https://wa.me/${soloDigitos(num).length === 10 ? "1" : ""}${soloDigitos(num)}?text=${encodeURIComponent(texto)}` : "");
 function textoEtapa(e) {
   const escuela = e.escuela || "la escuela";
@@ -432,7 +436,15 @@ function MiCurso({ e, falta, whatsapp, alVolver }) {
   const enCurso = e.estado === "curso";
   const pasos = [...(e.pasos || [])];
   if (e.examen) pasos.push({ k: "examen", t: "Examen", v: e.examen.v === "aprobado" ? "listo" : ["na", "pendiente"].includes(e.examen.v) ? e.examen.v : "otro", nota: e.examen.t });
-  const proxima = enCurso ? (e.dias || []).find((d) => d.fecha >= hoy) : null;
+  // Cada paso con su día (del itinerario del curso, por el nombre del paso).
+  const linea = LINEA_MI_CURSO.flatMap(([tipo, ks]) =>
+    ks
+      .map((k) => pasos.find((p) => p.k === k))
+      .filter((p) => p && p.v !== "na")
+      .map((p) => ({ ...p, tipo, fecha: tipo === "dia" ? (e.dias || []).find((d) => sinTildes(d.texto) === sinTildes(p.t))?.fecha || "" : "" }))
+  );
+  const proxima = enCurso ? linea.find((p) => p.v !== "listo" && p.fecha && p.fecha >= hoy) : null;
+  const diaDe = (f) => (f === hoy ? "Hoy" : `${DIA_LARGO[fechaObj(f).getDay()]} ${fechaCorta(f)}`);
   const pend = [];
   if (e.debe > 0) pend.push({ k: "pago", t: `Debe ${rd(e.debe)}`, sub: "Escríbenos y te decimos cómo pagar.", href: linkWa(whatsapp, `Hola, quiero pagar mi curso de ${e.curso}.`), boton: "Escribir", fuera: true });
   if (e.estado !== "espera" && falta?.foto) pend.push({ k: "foto", t: "Falta tu foto", sub: "Para tu certificación.", href: "/estudiante?mis=1", boton: "Subir foto" });
@@ -484,45 +496,24 @@ function MiCurso({ e, falta, whatsapp, alVolver }) {
         </>
       )}
 
-      {proxima && (
+      {linea.length > 0 && (
         <>
-          <div className="ag-sec">Próxima clase</div>
-          <div className="ag-item ag-mc-prox">
-            <Fecha iso={proxima.fecha} tipo="cur" />
-            <span className="ag-tx">
-              <b>{proxima.texto}</b>
-              <small>
-                {proxima.fecha === hoy ? "Hoy" : `${DIA_LARGO[fechaObj(proxima.fecha).getDay()]} ${fechaCorta(proxima.fecha)}`} · según el plan del curso. La tienda te confirma la hora.
-              </small>
-            </span>
-          </div>
-        </>
-      )}
-
-      {pasos.length > 0 && (
-        <>
-          <div className="ag-sec">Tu progreso</div>
-          <div className="pb-card ag-mc-pasos">
-            {GRUPOS_MI_CURSO.map(([t, ks]) => {
-              const xs = ks.map((k) => pasos.find((p) => p.k === k)).filter((p) => p && p.v !== "na");
-              if (!xs.length) return null;
-              const l = xs.filter((p) => p.v === "listo").length;
+          <div className="ag-sec">Tu curso, día por día</div>
+          <div className="pb-card ag-tl">
+            {linea.map((p) => {
+              const esProx = proxima && proxima.k === p.k;
+              const cuando = p.fecha ? diaDe(p.fecha) : ETIQUETA_LINEA[p.tipo] || "";
               return (
-                <div key={t} className="ag-mc-grupo">
-                  <div className="ag-mc-grupo-t">
-                    <span>{t}</span>
-                    <small>
-                      {l} de {xs.length}
-                    </small>
-                  </div>
-                  {xs.map((p) => (
-                    <div key={p.k} className={`ag-mc-paso ${p.v}`}>
-                      <i>{p.v === "listo" && <IconCheck size={13} />}</i>
-                      <span>{p.t}</span>
-                      {p.v === "listo" && <em>Listo</em>}
-                      {p.v === "otro" && <em>{p.nota}</em>}
-                    </div>
-                  ))}
+                <div key={p.k} className={`ag-tl-p ${p.v}${esProx ? " prox" : ""}`}>
+                  <i>{p.v === "listo" && <IconCheck size={12} />}</i>
+                  <b>
+                    {p.t}
+                    {esProx && <span className="ag-tl-tag">Próxima clase</span>}
+                  </b>
+                  <small>
+                    {[cuando, p.v === "listo" ? "Listo" : p.v === "otro" ? p.nota : ""].filter(Boolean).join(" · ")}
+                  </small>
+                  {esProx && <small>La tienda te confirma la hora.</small>}
                 </div>
               );
             })}
@@ -567,6 +558,14 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
   const [cel, setCel] = useState("");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+  // V97 ("16. C", maqueta V96): entrar con la cédula O con el celular, más un
+  // código que le llega a su correo. paso: "pedir" | "codigo" | "dos" (como
+  // antes, con las dos cosas: si no tenemos su correo o si él lo prefiere).
+  const [porCel, setPorCel] = useState(false);
+  const [paso, setPaso] = useState("pedir");
+  const [codigo, setCodigo] = useState("");
+  const [envio, setEnvio] = useState(null); // { id, correo }
+  const [aviso, setAviso] = useState("");
   const [verPrecios, setVerPrecios] = useState(false);
   // V86 (maqueta V86): la foto de la tarjeta de Mi cuenta y la ventana para
   // ver su foto, su cédula o su firma en grande.
@@ -675,6 +674,42 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
     }
   }
 
+  async function pedirCodigo() {
+    setCargando(true);
+    setError("");
+    try {
+      const r = await post("/api/app-gus/codigo", porCel ? { accion: "pedir", por: "celular", cel } : { accion: "pedir", tipoDoc, doc });
+      if (r.sinCorreo || r.sinTabla) {
+        setAviso(r.sinCorreo ? "No tenemos tu correo guardado. Entra con tu cédula y tu celular." : "Por ahora entra con tu cédula y tu celular.");
+        setPaso("dos");
+      } else {
+        setEnvio({ id: r.id, correo: r.correo });
+        setCodigo("");
+        setPaso("codigo");
+      }
+    } catch (e) {
+      setError(e.message);
+    }
+    setCargando(false);
+  }
+  async function entrarConCodigo() {
+    setCargando(true);
+    setError("");
+    let r = null;
+    try {
+      r = await post("/api/app-gus/codigo", { accion: "verificar", id: envio?.id, codigo });
+    } catch (e) {
+      setError(e.message);
+    }
+    setCargando(false);
+    if (r) await cargar({ tipoDoc: r.tipoDoc, doc: r.doc, cel: r.cel }, true);
+  }
+  function irAPaso(p) {
+    setError("");
+    setAviso("");
+    setPaso(p);
+  }
+
   function salir() {
     olvidarPersona();
     setPersona(null);
@@ -685,6 +720,10 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
     setDoc("");
     setCel("");
     setSub("cursos");
+    setPaso("pedir");
+    setCodigo("");
+    setEnvio(null);
+    setAviso("");
   }
   const docListo = tipoDoc === "cedula" ? soloDigitos(doc).length === 11 : doc.replace(/[\s-]/g, "").length >= 6;
   const nombre = yo?.primer || persona?.primer || "";
@@ -1073,31 +1112,100 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
           <>
             <div className="ag-titulo">Mi cuenta</div>
             <div className="pb-card" style={{ marginTop: 6 }}>
-              <div className="pb-h" style={{ marginTop: 0 }}>
-                Entra con tu cédula para ver tus cursos, tus buceos y tus datos. La pones una sola vez: queda guardada en este celular.
-              </div>
-              <div className="pb-seg">
-                <button className={tipoDoc === "cedula" ? "sel" : ""} onClick={() => (setTipoDoc("cedula"), setDoc(""))}>
-                  Cédula
-                </button>
-                <button className={tipoDoc === "pasaporte" ? "sel" : ""} onClick={() => (setTipoDoc("pasaporte"), setDoc(""))}>
-                  Otro documento
-                </button>
-              </div>
-              <input
-                className="pb-input"
-                inputMode={tipoDoc === "cedula" ? "numeric" : "text"}
-                value={doc}
-                onChange={(e) => setDoc(tipoDoc === "cedula" ? formatoCedula(e.target.value) : e.target.value.toUpperCase())}
-                placeholder={tipoDoc === "cedula" ? "000-0000000-0" : "Pasaporte"}
-                autoComplete="off"
-              />
-              <label className="ce-pub-l">Tu celular</label>
-              <CampoCel className="pb-input" value={cel} onChange={setCel} />
-              {error && <div className="pb-error">{error}</div>}
-              <button className="pb-btn" disabled={cargando || !docListo || !celValido(cel)} onClick={() => cargar({ tipoDoc, doc, cel }, true)}>
-                {cargando ? "Un momento…" : "Entrar con mi cédula"}
-              </button>
+              {paso === "codigo" ? (
+                <>
+                  <div className="pb-h" style={{ marginTop: 0 }}>
+                    Te mandamos un código de 6 números a <b>{envio?.correo}</b>. Escríbelo aquí.
+                  </div>
+                  <input
+                    className="pb-input ag-codigo"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={codigo}
+                    onChange={(e) => setCodigo(soloDigitos(e.target.value).slice(0, 6))}
+                    placeholder="000000"
+                  />
+                  {error && <div className="pb-error">{error}</div>}
+                  <button className="pb-btn" disabled={cargando || codigo.length !== 6} onClick={entrarConCodigo}>
+                    {cargando ? "Un momento…" : "Entrar"}
+                  </button>
+                  <div className="pb-h">¿No te llegó? Revisa el correo no deseado.</div>
+                  <div className="ag-login-links">
+                    <button disabled={cargando} onClick={pedirCodigo}>
+                      Mandarme otro código
+                    </button>
+                    <button onClick={() => irAPaso("dos")}>Entrar con mi cédula y mi celular</button>
+                  </div>
+                </>
+              ) : paso === "dos" ? (
+                <>
+                  <div className="pb-h" style={{ marginTop: 0 }}>
+                    {aviso || "Entra con tu cédula y tu celular."} Lo pones una sola vez: queda guardado en este celular.
+                  </div>
+                  <div className="pb-seg">
+                    <button className={tipoDoc === "cedula" ? "sel" : ""} onClick={() => (setTipoDoc("cedula"), setDoc(""))}>
+                      Cédula
+                    </button>
+                    <button className={tipoDoc === "pasaporte" ? "sel" : ""} onClick={() => (setTipoDoc("pasaporte"), setDoc(""))}>
+                      Otro documento
+                    </button>
+                  </div>
+                  <input
+                    className="pb-input"
+                    inputMode={tipoDoc === "cedula" ? "numeric" : "text"}
+                    value={doc}
+                    onChange={(e) => setDoc(tipoDoc === "cedula" ? formatoCedula(e.target.value) : e.target.value.toUpperCase())}
+                    placeholder={tipoDoc === "cedula" ? "000-0000000-0" : "Pasaporte"}
+                    autoComplete="off"
+                  />
+                  <label className="ce-pub-l">Tu celular</label>
+                  <CampoCel className="pb-input" value={cel} onChange={setCel} />
+                  {error && <div className="pb-error">{error}</div>}
+                  <button className="pb-btn" disabled={cargando || !docListo || !celValido(cel)} onClick={() => cargar({ tipoDoc, doc, cel }, true)}>
+                    {cargando ? "Un momento…" : "Entrar"}
+                  </button>
+                  <div className="ag-login-links">
+                    <button onClick={() => irAPaso("pedir")}>Entrar con un código a mi correo</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="pb-h" style={{ marginTop: 0 }}>
+                    Entra con tu cédula o con tu celular. Te mandamos un código a tu correo para confirmar que eres tú. Queda guardado en este celular.
+                  </div>
+                  <div className="pb-seg">
+                    <button className={!porCel && tipoDoc === "cedula" ? "sel" : ""} onClick={() => (setPorCel(false), setTipoDoc("cedula"), setDoc(""), setError(""))}>
+                      Cédula
+                    </button>
+                    <button className={porCel ? "sel" : ""} onClick={() => (setPorCel(true), setError(""))}>
+                      Celular
+                    </button>
+                    <button className={!porCel && tipoDoc === "pasaporte" ? "sel" : ""} onClick={() => (setPorCel(false), setTipoDoc("pasaporte"), setDoc(""), setError(""))}>
+                      Otro documento
+                    </button>
+                  </div>
+                  {porCel ? (
+                    <CampoCel className="pb-input" value={cel} onChange={setCel} />
+                  ) : (
+                    <input
+                      className="pb-input"
+                      inputMode={tipoDoc === "cedula" ? "numeric" : "text"}
+                      value={doc}
+                      onChange={(e) => setDoc(tipoDoc === "cedula" ? formatoCedula(e.target.value) : e.target.value.toUpperCase())}
+                      placeholder={tipoDoc === "cedula" ? "000-0000000-0" : "Pasaporte"}
+                      autoComplete="off"
+                    />
+                  )}
+                  {error && <div className="pb-error">{error}</div>}
+                  <button className="pb-btn" disabled={cargando || (porCel ? !celValido(cel) : !docListo)} onClick={pedirCodigo}>
+                    {cargando ? "Un momento…" : "Mandarme el código"}
+                  </button>
+                  <div className="ag-login-links">
+                    <button onClick={() => irAPaso("dos")}>Entrar con mi cédula y mi celular</button>
+                  </div>
+                </>
+              )}
             </div>
             {avisos.estado === "activos" && (
               <div className="ag-avisos-on">

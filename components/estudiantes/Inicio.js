@@ -13,6 +13,7 @@ import InteresadosCurso, { interesadosDeCurso } from "./InteresadosCurso";
 import { ElegirCurso } from "./Interesados";
 import QrEntrega from "./QrEntrega";
 import { MarcarEnGrupo } from "./PasosGrupo";
+import { PedirPresupuesto, PedidosGuardados } from "./PresupuestoHoja";
 
 // Pantallas de Control Estudiantes: Inicio, la lista, Más y la Bitácora.
 
@@ -125,7 +126,8 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
   // curso, con el botón para avisarles por correo.
   const [tab, setTab] = useState(avisarDeEntrada ? "interesados" : "estudiantes");
   // V91 (maqueta v92, aprobada): "Pedir otro presupuesto" y el QR del instructor.
-  const [otro, setOtro] = useState(false);
+  // V98 (maqueta V99): el pedido del presupuesto ("nuevo" | "otro" | false).
+  const [pedir, setPedir] = useState(false);
   const [qr, setQr] = useState(false);
   const f = (db.fechas || []).find((x) => x.id === fechaId);
   const atras = (
@@ -202,11 +204,14 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
             <span>Sin pedir</span>
           )}
         </div>
-        {!f.presupuestoPedidoEn && (
-          <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => ops.pedirPresupuesto(f.id)}>
+        {/* V98 (maqueta V99, "30. sí"): lo que se pidió queda guardado aquí, con su detalle. */}
+        <PedidosGuardados f={f} />
+        {!f.presupuestoPedidoEn && !pedir && (
+          <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => setPedir("nuevo")}>
             Mandar correo de presupuesto
           </button>
         )}
+        {pedir && <PedirPresupuesto f={f} c={c} inscritos={gente.filter((e) => e.estado !== "espera").length} otro={pedir === "otro"} ops={ops} alCerrar={() => setPedir(false)} />}
         {f.presupuestoPedidoEn && !f.presupuestoRealizadoEn && (
           <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => ops.marcarPresupuesto(f, c?.nombre)}>
             Marcar como realizado
@@ -225,32 +230,11 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
           )
         )}
         {/* V91 (maqueta v92, aprobada): "Pedir otro presupuesto", en letra chica y con confirmación. */}
-        {f.presupuestoPedidoEn && !otro && (
+        {f.presupuestoPedidoEn && !pedir && (
           <div style={{ marginTop: 10 }}>
-            <button type="button" onClick={() => setOtro(true)} style={{ background: "none", border: 0, padding: 0, color: "#5c6b78", textDecoration: "underline", cursor: "pointer", fontSize: 12.5 }}>
+            <button type="button" onClick={() => setPedir("otro")} style={{ background: "none", border: 0, padding: 0, color: "#5c6b78", textDecoration: "underline", cursor: "pointer", fontSize: 12.5 }}>
               Pedir otro presupuesto
             </button>
-          </div>
-        )}
-        {otro && (
-          <div style={{ marginTop: 10, border: "1px solid #dfe6ea", borderRadius: 10, padding: 10 }}>
-            <div className="hint-text">
-              Se manda otra vez el correo a Dinorah con la lista actual de inscritos y de espera. Se vuelven a marcar como realizado y entregado.
-            </div>
-            <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-              <button
-                className="btn btn-primary vj-mini"
-                onClick={async () => {
-                  const ok = await ops.pedirPresupuesto(f.id, true);
-                  if (ok !== false) setOtro(false);
-                }}
-              >
-                Mandar otro correo
-              </button>
-              <button className="btn secondary vj-mini" onClick={() => setOtro(false)}>
-                Cancelar
-              </button>
-            </div>
           </div>
         )}
         {esOWD && (
@@ -1013,13 +997,14 @@ export function Mas({ yo, p, ir }) {
     { r: "basedatos", t: "Catálogo de cursos", sub: "Los cursos que damos y los instructores.", I: IconCatalog },
     // V85 (maqueta V85, "1, a"): darle el app de los clientes a la gente.
     { r: "appgus", t: "App Gus Dive (para los clientes)", sub: "El link, el código QR y mandarlo por WhatsApp.", I: IconLink },
-    // V85 (nota del 15-nov: "solo yo tendré acceso a esto"): solo el Titular.
-    ...(yo?.esTitular ? [{ r: "usoapp", t: "Quién usa el app Gus Dive", sub: "Los buzos que han entrado al app, y cuándo fue la última vez.", I: IconUsers }] : []),
     // V67 ("4"): Estadísticas; y la Bitácora con su permiso ("3").
     ...(p.estadisticas ? [{ r: "estadisticas", t: "Estadísticas", sub: "Estudiantes, cursos, cobros, interesados y certificaciones.", I: IconChart }] : []),
     ...(p.bitacora ? [{ r: "bitacora", t: "Bitácora", sub: "Todo lo que se ha hecho, con quién y cuándo.", I: IconHistory }] : []),
     // V89 (maqueta V90, aprobada): Correos automáticos también aquí (presupuesto de cursos).
     ...(yo?.esTitular ? [{ r: "correos", href: "/correos-automaticos", t: "Correos automáticos", sub: "Quién recibe el presupuesto de cada curso y los avisos.", I: IconMail }] : []),
+    // V85 (nota del 15-nov: "solo yo tendré acceso a esto"): solo el Titular.
+    // V97 ("QUIEN USA EL APP PONMELO DE ULTIMO"): al final de la lista.
+    ...(yo?.esTitular ? [{ r: "usoapp", t: "Quién usa el app Gus Dive", sub: "Los buzos que han entrado al app, y cuándo fue la última vez.", I: IconUsers }] : []),
     // V76 (pedido explícito, con foto: "Quitame administracion de mas y
     // ponmelo en settings asi como lo tenemos en los otros apps") -- ya
     // estaba en Settings (el engranaje); aquí era un duplicado. Como en

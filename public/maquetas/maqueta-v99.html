@@ -1,0 +1,148 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V99 · Presupuestos predeterminados</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--ce:#8a6a00;--snsi:#f6ce46;--verde:#2c9e5b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:760px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin:10px 0}
+.panel{border:2px solid var(--snsi);background:#fffdf3;border-radius:14px;padding:14px;margin:10px 0}
+.gris{color:var(--suave);font-size:13px}
+.btn{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer}
+.btn.am{background:var(--ce);color:#fff}.btn.bl{background:#fff;border:1px solid var(--borde);color:var(--texto)}.btn.chico{padding:6px 10px;font-size:12.5px}
+.link{border:0;background:none;padding:0;font:inherit;font-weight:800;color:#06324f;text-decoration:underline;cursor:pointer}
+.contador{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--borde);border-radius:12px;padding:8px 12px;margin:8px 0}
+.contador button{width:30px;height:30px;border-radius:50%;border:1px solid var(--borde);background:#fff;font-size:18px;font-weight:800;cursor:pointer}
+.big{font-size:28px;font-weight:900;color:#1a2733}
+.fila{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #eef2f5;flex-wrap:wrap}.fila:last-child{border-bottom:0}
+.pre{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--borde);border-radius:12px;padding:11px 12px;margin-bottom:8px;cursor:pointer}
+.pre.sel{border:2px solid #c9a227;background:#fff6cc}
+.pre b{font-size:14.5px}.pre .m{font-weight:900;font-size:15px}
+.sec{font-size:11.5px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px;display:flex;justify-content:space-between}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:13px}
+th,td{border:1px solid #d5dde3;padding:6px;text-align:center}
+th{background:#f4f7f9;font-weight:800}td:first-child,th:first-child{text-align:left}
+td input{width:70px;border:1px solid var(--borde);border-radius:6px;padding:4px;font:inherit;text-align:center;background:#fffef6}
+.tot td{font-weight:800;background:#fafbfc}
+.info{background:#f4f7f9;border-radius:8px;padding:7px 10px;font-size:13px;margin-bottom:4px}
+.aviso{background:#fff3dc;border:1px solid #f1d9a8;color:#7a4a0c;border-radius:10px;padding:10px 12px;font-size:13px;margin:10px 0}
+.ok{background:#e9f8ef;border:1px solid #bfe6cf;color:#1b6b3c;border-radius:10px;padding:10px 12px;font-size:13px;margin:10px 0}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.reco{display:inline-block;background:#ffd166;color:#1a2733;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800;margin-left:6px}
+.mas{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px;margin-bottom:8px}
+.mas i{width:40px;height:40px;border-radius:50%;background:var(--snsi);flex-shrink:0;display:block}
+.mas b{display:block;color:#173a63}.mas small{color:var(--suave)}
+.mas.nuevo{border:2px dashed #c9a227}
+.correo{background:#fff;border:1px solid var(--borde);border-radius:12px;overflow:hidden}
+.correo .cab{background:var(--snsi);color:#2b2200;padding:10px 14px}.correo .cab small{display:block;font-size:10.5px;font-weight:800;letter-spacing:.1em}
+.correo .cuerpo{padding:14px;font-size:13.5px}
+.tot-correo{background:#f4f7f9;border-radius:10px;padding:12px;text-align:center;margin:8px 0 12px}.tot-correo b{display:block;font-size:26px}
+@media (max-width:520px){th,td{padding:5px 3px;font-size:12px}td input{width:52px}}
+</style></head><body>
+<div class="maq"><b>Maqueta V99</b> · Presupuestos predeterminados según cuántos estudiantes, y dónde manejarlos. Números de ejemplo (el de 4 es tu hoja, ahora con la piscina en el total). Nada programado.
+  <div class="tabs"><button class="sel" data-p="p1">1 · Al pedir: un toque</button><button data-p="p2">A · En Catálogo de cursos <span class="reco">la que recomiendo</span></button><button data-p="p3">B · Más › Presupuestos</button><button data-p="p4">C · Se guarda al pedirlo</button><button data-p="p5">Así le llega a Dinorah</button></div>
+</div>
+<div class="wrap">
+
+<!-- 1 -->
+<div class="pest sel" id="p1">
+  <h2>1 · En la página del curso: el presupuesto ya sale listo</h2>
+  <p class="sub">Toca "Mandar correo de presupuesto" y sale el predeterminado para los inscritos de ese curso, con el total. Si está bien, un toque y se manda. Si hace falta, abres el detalle y cambias algo solo para esta vez. Pruébalo: cambia los estudiantes.</p>
+  <div class="contador"><span class="gris">Para probar · inscritos:</span><button id="menos">−</button><b id="n">4</b><button id="mas">+</button></div>
+  <div class="card">
+    <div class="fila" style="padding-top:0"><b>Presupuesto</b><span class="gris">Open Water Diver · lun 30 nov</span></div>
+    <div class="panel" id="pedir"></div>
+  </div>
+  <div class="nota">El detalle de lo que se pidió queda guardado en el curso (en la tarjeta Presupuesto: "Pedido el 17 nov · RD$25,200 · ver detalle"), aunque a Dinorah le importe solo el total.</div>
+</div>
+
+<!-- A -->
+<div class="pest" id="p2">
+  <h2>A · Más › Catálogo de cursos › Open Water Diver › "Presupuestos"</h2>
+  <p class="sub">Cada curso del catálogo tiene su lista: un presupuesto para cada cantidad de estudiantes. Tocas uno y lo cambias (es la misma hoja de siempre). "Agregar" copia el anterior para que solo cambies lo que sube. Los demás cursos los llenas tú cuando quieras.</p>
+  <div class="card">
+    <b style="font-size:16px">Open Water Diver</b><div class="gris">Precio RD$29,500 · Pasos · Itinerario · <b style="color:#1a2733">Presupuestos</b></div>
+    <div class="sec">Presupuestos predeterminados</div>
+    <div id="lista"></div>
+    <button class="btn bl chico" id="agregar">+ Agregar para <span id="sig"></span> estudiantes (copia el de <span id="ant"></span>)</button>
+  </div>
+  <div class="card" id="editor"></div>
+</div>
+
+<!-- B -->
+<div class="pest" id="p3">
+  <h2>B · Una sección propia: Más › Presupuestos</h2>
+  <p class="sub">Todos los presupuestos de todos los cursos en un solo lugar, aparte del catálogo. Por dentro funciona igual que la A.</p>
+  <div class="mas"><i></i><span><b>Catálogo de cursos</b><small>Los cursos que damos y los instructores.</small></span></div>
+  <div class="mas nuevo"><i></i><span><b>Presupuestos</b><small>Lo que se le pide a Dinorah según el curso y cuántos estudiantes.</small></span></div>
+  <div class="mas"><i></i><span><b>App Gus Dive (para los clientes)</b><small>El link, el código QR y mandarlo por WhatsApp.</small></span></div>
+  <div class="card"><b>Presupuestos</b>
+    <div class="fila"><span><b>Open Water Diver</b><br><span class="gris">1 a 6 estudiantes</span></span><span class="gris">RD$13,100 a RD$26,200</span></div>
+    <div class="fila"><span><b>Advanced Open Water</b><br><span class="gris">Sin presupuestos todavía</span></span><button class="btn bl chico">+ Agregar</button></div>
+    <div class="fila"><span><b>Rescue Diver</b><br><span class="gris">Sin presupuestos todavía</span></span><button class="btn bl chico">+ Agregar</button></div>
+  </div>
+  <div class="nota">Ventaja: lo encuentras rápido. Desventaja: el curso queda en dos lugares (su precio y pasos en el Catálogo, su presupuesto aquí).</div>
+</div>
+
+<!-- C -->
+<div class="pest" id="p4">
+  <h2>C · Se va guardando solo, al pedirlo</h2>
+  <p class="sub">No hay que llenar nada antes. La primera vez que pides para 6 estudiantes, llenas la hoja y marcas "Guardar como predeterminado para 6". La próxima vez con 6, ya sale listo.</p>
+  <div class="card"><div class="panel">
+    <b>Presupuesto para 6 estudiantes</b>
+    <div class="aviso">Todavía no tienes uno para 6 estudiantes. Te puse el de 5 para que lo cambies.</div>
+    <div class="gris">… la hoja …</div>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-weight:700"><input type="checkbox" checked style="width:18px;height:18px;accent-color:#8a6a00"> Guardar como predeterminado para 6 estudiantes</label>
+    <button class="btn am" style="margin-top:10px">Mandar a Dinorah</button>
+  </div></div>
+  <div class="nota">Se puede sumar a la A o a la B: así los vas llenando con el uso y, si algo cambia de precio, lo corriges en la lista.</div>
+</div>
+
+<!-- correo -->
+<div class="pest" id="p5">
+  <h2>Así le llega a Dinorah</h2>
+  <p class="sub">Lo grande es el total. Abajo, los nombres (para las gorras) y el detalle por si lo quiere ver.</p>
+  <div class="correo"><div class="cab"><small>GUS DIVE CENTER</small><b>Presupuesto y gorras · Open Water Diver, lun 30 nov</b></div><div class="cuerpo" id="correo"></div></div>
+</div>
+
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const rd=x=>"RD$"+Math.round(Number(x)||0).toLocaleString("en-US");
+// Un presupuesto = secciones con líneas (concepto, precio, cantidad). "info" = solo texto (las yolas).
+function hoja(n){const yolas=Math.ceil((n+2)/4),car=yolas;const caleta=[["Entrada Parque",100,n],["Viaje Yola",2500,yolas*2],["Cargadores",200,car],["Parqueo",100,yolas],["Persona extra Yola",1000,1]];
+  return [{t:"Piscina",l:[["Piscina",300,n]]},{t:"Yolas",info:[`Sábado: ${yolas} yolas · capacidad ${yolas*4} · total real ${n+2}`,`Domingo: ${yolas} yolas · capacidad ${yolas*4} · total real ${n+2}`]},{t:"La Caleta 1",l:caleta.map(x=>[...x])},{t:"La Caleta 2",l:caleta.map(x=>[...x])}]}
+const PRES={};for(let i=1;i<=6;i++)PRES[i]=hoja(i);
+const total=h=>h.reduce((s,sec)=>s+(sec.l||[]).reduce((a,[,p,c])=>a+p*c,0),0);
+const copia=h=>JSON.parse(JSON.stringify(h));
+function tabla(h,id){return h.map((sec,si)=>`<div class="sec"><span>${sec.t}</span>${sec.l?`<span>${rd((sec.l||[]).reduce((a,[,p,c])=>a+p*c,0))}</span>`:""}</div>`+(sec.info?sec.info.map(x=>`<div class="info">${x}</div>`).join(""):`<table><tr><th></th><th>Precio</th><th>Cant.</th><th>Total</th></tr>${sec.l.map(([t,p,c],li)=>`<tr><td>${t}</td><td><input data-h="${id}" data-s="${si}" data-l="${li}" data-k="1" value="${p}"></td><td><input data-h="${id}" data-s="${si}" data-l="${li}" data-k="2" value="${c}"></td><td>${rd(p*c)}</td></tr>`).join("")}</table>`)).join("")+`<div class="fila" style="margin-top:8px"><b>Presupuesto total</b><b class="big" style="font-size:20px">${rd(total(h))}</b></div>`}
+function enlazar(cont,h,alCambiar){cont.querySelectorAll("input[data-h]").forEach(i=>i.onchange=()=>{h[+i.dataset.s].l[+i.dataset.l][+i.dataset.k]=Number(i.value)||0;alCambiar()})}
+// 1 · al pedir
+let n=4,abierto=false,actual=null,guardar=false;
+function pedir(){ $("n").textContent=n; const hay=PRES[n];const usar=hay||PRES[Math.min(n,Object.keys(PRES).length)];if(!actual)actual=copia(usar);
+  $("pedir").innerHTML=`<div class="gris">Presupuesto para <b>${n} estudiante${n===1?"":"s"}</b>${hay?" · el predeterminado":""}</div>${hay?"":`<div class="aviso">No tienes uno para ${n}. Te puse el de ${Object.keys(PRES).length} para que lo cambies.</div>`}<div class="big">${rd(total(actual))}</div>
+  <button class="link" id="ver">${abierto?"Esconder el detalle":"Ver el detalle o cambiar algo"}</button><div id="det">${abierto?tabla(actual,"p"):""}</div>
+  ${!hay||abierto?`<label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-weight:700"><input type="checkbox" id="g" ${guardar||!hay?"checked":""} style="width:18px;height:18px;accent-color:#8a6a00"> Guardar como predeterminado para ${n} estudiantes</label>`:""}
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn am" id="mandar">Mandar a Dinorah</button><button class="btn bl">Cancelar</button></div>`;
+  $("ver").onclick=()=>{abierto=!abierto;pedir()}; if(abierto)enlazar($("det"),actual,pedir); if($("g"))$("g").onchange=e=>{guardar=e.target.checked};
+  $("mandar").onclick=()=>{if($("g")&&$("g").checked)PRES[n]=copia(actual);$("pedir").insertAdjacentHTML("beforeend",`<div class="ok">Mandado a Dinorah: ${rd(total(actual))}. El detalle quedó guardado en el curso.${$("g")&&$("g").checked?` Y quedó como predeterminado para ${n}.`:""}</div>`);pintarLista();correo()}; }
+$("menos").onclick=()=>{if(n>1){n--;actual=null;abierto=false;guardar=false;pedir()}};$("mas").onclick=()=>{if(n<8){n++;actual=null;abierto=false;guardar=false;pedir()}};
+// A · lista y editor
+let ed=4;
+function pintarLista(){const ks=Object.keys(PRES).map(Number).sort((a,b)=>a-b);
+  $("lista").innerHTML=ks.map(k=>`<div class="pre ${k===ed?"sel":""}" data-k="${k}"><b>${k} estudiante${k===1?"":"s"}</b><span class="m">${rd(total(PRES[k]))}</span></div>`).join("");
+  $("lista").querySelectorAll(".pre").forEach(x=>x.onclick=()=>{ed=+x.dataset.k;pintarLista()});
+  const ult=ks[ks.length-1];$("sig").textContent=ult+1;$("ant").textContent=ult;
+  $("editor").innerHTML=`<b>Presupuesto para ${ed} estudiante${ed===1?"":"s"}</b><div class="gris">Cambia precios o cantidades; el total se calcula solo. Puedes agregar o quitar líneas y secciones.</div>${tabla(PRES[ed],"e")}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn bl chico">+ Línea</button><button class="btn bl chico">+ Sección</button><button class="btn bl chico">Quitar este presupuesto</button></div>`;
+  enlazar($("editor"),PRES[ed],pintarLista);}
+$("agregar").onclick=()=>{const ks=Object.keys(PRES).map(Number);const ult=Math.max(...ks);PRES[ult+1]=copia(PRES[ult]);ed=ult+1;pintarLista()};
+// correo
+function correo(){const h=PRES[4];$("correo").innerHTML=`<p style="margin:0">Hola Dinorah, este es el presupuesto para este curso:</p><div class="tot-correo">Presupuesto total<b>${rd(total(h))}</b>4 estudiantes</div><p style="margin:0 0 4px"><b>Gorras (4):</b> Estudiante 1, Estudiante 2, Estudiante 3, Estudiante 4</p><p style="margin:0 0 10px;color:#5c6b78">Lista de espera: nadie.</p><div style="font-size:12px;color:#5c6b78">Detalle</div>${h.filter(s=>s.l).map(s=>`<div style="font-size:12.5px;margin-top:4px"><b>${s.t}</b>: ${s.l.map(([t,p,c])=>`${t} ${rd(p)}×${c}`).join(" · ")} = ${rd(s.l.reduce((a,[,p,c])=>a+p*c,0))}</div>`).join("")}`}
+pedir();pintarLista();correo();
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('sel',x===b));document.querySelectorAll('.pest').forEach(p=>p.classList.toggle('sel',p.id===b.dataset.p));window.scrollTo(0,0)}));
+</script>
+</body></html>

@@ -1,5 +1,6 @@
 "use client";
 
+import { PresupuestosCurso } from "./PresupuestoHoja";
 import { useEffect, useState } from "react";
 import { IconEdit, IconPlus } from "@/components/icons";
 import { PASOS, ESCUELAS, rd, nombrePaso } from "@/lib/estudiantes/modelo";
@@ -204,6 +205,9 @@ function EditarCurso({ c, ops, yo, cerrar }) {
             <input type="checkbox" checked={f.info?.qr_instructor !== false} onChange={(e) => set("info", { ...(f.info || {}), qr_instructor: e.target.checked })} /> Entregar el presupuesto al instructor con QR (el QR vence a los 15 minutos)
           </label>
         </div>
+        {/* V98 (maqueta V99, "29. A por ahora"): los presupuestos predeterminados del curso, por cantidad de estudiantes. */}
+        <div className="ce-pasos-grupo-t">Presupuestos</div>
+        <PresupuestosCurso info={f.info} setInfo={(info) => set("info", info)} />
         <div className="hint-text" style={{ margin: 0 }}>
           Pasos que lleva (los demás le salen al estudiante como N/A)
         </div>

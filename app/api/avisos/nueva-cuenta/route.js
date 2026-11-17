@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { enviarAvisoNuevaCuenta } from "@/lib/correo-nueva-cuenta";
+import { origenDe } from "@/lib/direccion";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,6 +25,7 @@ export async function POST(request) {
     nombre,
     correo,
     destinatarios: config?.nuevas_cuentas_correos || [],
+    origen: origenDe(request),
   });
 
   return NextResponse.json(resultado, { status: resultado.ok ? 200 : 502 });

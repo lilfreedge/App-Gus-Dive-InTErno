@@ -272,7 +272,7 @@ export async function POST(request) {
     texto: `Se inscribió por el link: ${b.nombre}${nuevo ? " (nuevo)" : ""}${inscritoPor ? ` (la inscribió ${nombreCorto(inscritoPor.nombre)})` : ""}${enEspera ? " · lista de espera" : ""}`,
   });
   // V68 ("15"): correo de lista de espera al buzo, si dejó su correo.
-  if (enEspera && (await mandarListaEspera({ correo: b.correo, nombre: primerNombre(b.nombre), que: `${v.nombre} (${fechaCorta(v.fecha)})`, whatsapp: TIENDA_WA, buceo: true }))) {
+  if (enEspera && (await mandarListaEspera({ correo: b.correo, nombre: primerNombre(b.nombre), que: `${v.nombre} (${fechaCorta(v.fecha)})`, whatsapp: TIENDA_WA, buceo: true, origen: origenDe(request) }))) {
     await s.from("viajes_bitacora").insert({ viaje_id: v.id, quien: "Link", texto: `Se le mandó el correo de lista de espera a ${b.nombre}` });
   }
 

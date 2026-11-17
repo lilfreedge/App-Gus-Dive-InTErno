@@ -5,7 +5,7 @@ import { getProfileYUser, tieneAcceso, esOperativo, esRolEquipos } from "@/lib/r
 import { seccionesVisibles } from "@/lib/nav";
 import { obtenerPendientesInterno } from "@/lib/notificaciones";
 import AppHeader from "@/components/AppHeader";
-import { IconPackage, IconTank, IconAlert, IconLock, IconGear, IconCompressor, IconEye } from "@/components/icons";
+import { IconPackage, IconTank, IconAlert, IconLock, IconGear, IconCompressor, IconEye, IconSend, IconRefresh, IconClipboard, IconCheck } from "@/components/icons";
 import InicioOperativo from "./operativo";
 import AvisosFijos from "@/components/AvisosFijos";
 import { avisosParaMi } from "@/lib/avisos-fijos-server";
@@ -58,6 +58,12 @@ export default async function DashboardPage({ searchParams }) {
   // V52 ("5. ok. incluye también algún trabajo que se le haga al
   // compresor"): los mantenimientos e inspecciones de compresores.
   const puedeVerCompresores = tieneAcceso(profile, "compresores");
+  // V98 ("necesito que en la actividad reciente aparezcan todos los movimientos
+  // posibles: salidas, llenados, envío de tanques a PH, retorno de tanque de PH,
+  // etc."): también las pruebas hidrostáticas (envío y regreso), las
+  // solicitudes al almacén (pedidas y recibidas) y los recordatorios hechos.
+  const puedeVerHidro = tieneAcceso(profile, "registrar_hidrostatica");
+  const puedeVerSolicitudes = tieneAcceso(profile, "solicitudes_almacen");
   // Sin ninguna sección habilitada (solo "Inicio" en el menú de arriba):
   // en vez de una pantalla vacía, un aviso.
   const sinSecciones =
@@ -76,7 +82,8 @@ export default async function DashboardPage({ searchParams }) {
   else if (periodo === "mes") desde.setDate(desde.getDate() - 30);
   else desde.setDate(desde.getDate() - 7);
 
-  const [salidasRes, tanquesRes, ultimasSalidas, ultimosTanques, pendientes, ultimosMant, ultimasInsp, ultimosComp] =
+  const sinError = (r) => (r && !r.error ? r : { data: [] });
+  const [salidasRes, tanquesRes, ultimasSalidas, ultimosTanques, pendientes, ultimosMant, ultimasInsp, ultimosComp, ultimosEnvios, ultimasPruebas, ultimasSolicitudes, ultimosRecibidos, ultimosRecHechos] =
     await Promise.all([
       puedeSalidas
         ? supabase
@@ -108,7 +115,39 @@ export default async function DashboardPage({ searchParams }) {
       puedeVerCompresores
         ? supabase.from("mantenimientos_compresores_con_nombre").select("*").order("created_at", { ascending: false }).limit(8).then((r) => r, () => ({ data: [] }))
         : Promise.resolve({ data: [] }),
+      puedeVerHidro
+        ? supabase.from("envios_hidrostatica").select("id, created_at, tanque_codigo_snapshot, nombre_usuario_snapshot, nota").order("created_at", { ascending: false }).limit(30).then(sinError, () => ({ data: [] }))
+        : Promise.resolve({ data: [] }),
+      puedeVerHidro
+        ? supabase.from("pruebas_hidrostaticas_con_nombre").select("*").order("created_at", { ascending: false }).limit(30).then(sinError, () => ({ data: [] }))
+        : Promise.resolve({ data: [] }),
+      puedeVerSolicitudes
+        ? supabase.from("solicitudes_almacen").select("id, folio, created_at, nombre_usuario_snapshot, nota, items:solicitudes_almacen_items(id)").order("created_at", { ascending: false }).limit(8).then(sinError, () => ({ data: [] }))
+        : Promise.resolve({ data: [] }),
+      puedeVerSolicitudes
+        ? supabase.from("solicitudes_almacen_items").select("id, codigo_snapshot, descripcion_snapshot, cantidad, recibido_at, recibido_por_nombre, solicitud:solicitudes_almacen(folio)").not("recibido_at", "is", null).order("recibido_at", { ascending: false }).limit(8).then(sinError, () => ({ data: [] }))
+        : Promise.resolve({ data: [] }),
+      puedeVerCompresores
+        ? supabase.from("recordatorios_hechos").select("id, hecho_en, nombre_usuario, recordatorio:recordatorios_compresores(titulo), compresor:compresores(*)").order("hecho_en", { ascending: false }).limit(8).then(sinError, () => ({ data: [] }))
+        : Promise.resolve({ data: [] }),
     ]);
+
+  // Las pruebas que vienen de un envío son el regreso del tanque.
+  const idsPruebas = (ultimasPruebas.data || []).map((x) => x.id);
+  const { data: enviosConPrueba } = idsPruebas.length
+    ? await supabase.from("envios_hidrostatica").select("prueba_id").in("prueba_id", idsPruebas).then(sinError, () => ({ data: [] }))
+    : { data: [] };
+  const conEnvio = new Set((enviosConPrueba || []).map((x) => x.prueba_id));
+  // Varios tanques enviados (o regresados) juntos salen en una sola línea.
+  const agrupar = (filas, quien, crear) => {
+    const grupos = new Map();
+    for (const f of filas) {
+      const k = `${quien(f) || ""}|${String(f.created_at).slice(0, 16)}`;
+      if (!grupos.has(k)) grupos.set(k, []);
+      grupos.get(k).push(f);
+    }
+    return [...grupos.values()].map(crear);
+  };
 
   const totalSalidas = (salidasRes.data || []).length;
   const totalTanques = (tanquesRes.data || []).reduce(
@@ -172,9 +211,57 @@ export default async function DashboardPage({ searchParams }) {
       cantidad: m.compresor_codigo_snapshot,
       detalle: m.notas || m.proceso_piezas,
     })),
+    ...agrupar(ultimosEnvios.data || [], (e) => e.nombre_usuario_snapshot, (g) => ({
+      tipo: "envio_ph",
+      id: g[0].id,
+      created_at: g[0].created_at,
+      full_name: g[0].nombre_usuario_snapshot,
+      titulo: "Envío a prueba hidrostática",
+      cantidad: g.length === 1 ? g[0].tanque_codigo_snapshot : `${g.length} tanques`,
+      detalle: [g.length > 1 ? g.map((e) => e.tanque_codigo_snapshot).filter(Boolean).join(", ") : "", g[0].nota].filter(Boolean).join(" · "),
+    })),
+    ...agrupar(ultimasPruebas.data || [], (p) => p.full_name || p.nombre_usuario_snapshot, (g) => ({
+      tipo: "regreso_ph",
+      id: g[0].id,
+      created_at: g[0].created_at,
+      full_name: g[0].full_name || g[0].nombre_usuario_snapshot,
+      titulo: conEnvio.has(g[0].id) ? "Regreso de prueba hidrostática" : "Prueba hidrostática",
+      resultado: g.every((p) => p.resultado === g[0].resultado) ? g[0].resultado : null,
+      folio: g.length === 1 ? g[0].folio : null,
+      cantidad: g.length === 1 ? g[0].tanque_codigo_snapshot : `${g.length} tanques`,
+      detalle: [g.length > 1 ? g.map((p) => `${p.tanque_codigo_snapshot || ""}${p.resultado === "Rechazado" ? " (rechazado)" : ""}`).filter((x) => x.trim()).join(", ") : "", g.length === 1 ? g[0].nota : ""].filter(Boolean).join(" · "),
+    })),
+    ...(ultimasSolicitudes.data || []).map((x) => ({
+      tipo: "solicitud",
+      id: x.id,
+      created_at: x.created_at,
+      full_name: x.nombre_usuario_snapshot,
+      titulo: "Solicitud al almacén",
+      folio: x.folio,
+      cantidad: `${(x.items || []).length} artículo${(x.items || []).length === 1 ? "" : "s"}`,
+      detalle: x.nota,
+    })),
+    ...(ultimosRecibidos.data || []).map((x) => ({
+      tipo: "recibido",
+      id: x.id,
+      created_at: x.recibido_at,
+      full_name: x.recibido_por_nombre,
+      titulo: `Recibido del almacén: ${x.codigo_snapshot}`,
+      folio: x.solicitud?.folio ?? null,
+      cantidad: x.cantidad,
+      detalle: x.descripcion_snapshot,
+    })),
+    ...(ultimosRecHechos.data || []).map((x) => ({
+      tipo: "recordatorio",
+      id: x.id,
+      created_at: x.hecho_en,
+      full_name: x.nombre_usuario,
+      titulo: `Recordatorio hecho: ${x.recordatorio?.titulo || "compresor"}`,
+      cantidad: x.compresor?.codigo || x.compresor?.nombre || "",
+    })),
   ]
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 8);
+    .slice(0, 10);
 
   // V51: avisos fijos de App Interno.
   const avisosFijos = await avisosParaMi(supabase, { apps: ["interno"], persona: profile });
@@ -378,7 +465,7 @@ export default async function DashboardPage({ searchParams }) {
           </>
         )}
 
-        {(puedeSalidas || puedeVerLlenados || puedeVerMantenimientos || puedeVerInspecciones || puedeVerCompresores) && (
+        {(puedeSalidas || puedeVerLlenados || puedeVerMantenimientos || puedeVerInspecciones || puedeVerCompresores || puedeVerHidro || puedeVerSolicitudes) && (
         <>
         <div className="section-title">
           Actividad reciente
@@ -398,6 +485,14 @@ export default async function DashboardPage({ searchParams }) {
                       <IconEye size={14} />
                     ) : a.tipo === "compresor" ? (
                       <IconCompressor size={14} />
+                    ) : a.tipo === "envio_ph" ? (
+                      <IconSend size={14} />
+                    ) : a.tipo === "regreso_ph" ? (
+                      <IconRefresh size={14} />
+                    ) : a.tipo === "solicitud" || a.tipo === "recibido" ? (
+                      <IconClipboard size={14} />
+                    ) : a.tipo === "recordatorio" ? (
+                      <IconCheck size={14} />
                     ) : (
                       <IconTank size={14} />
                     )}{" "}

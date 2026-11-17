@@ -1,4 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/service";
+import { infoPublica } from "@/lib/estudiantes/presupuesto";
 import { filaACurso } from "@/lib/estudiantes/datos";
 import { TIENDA } from "@/lib/viajes/servidor";
 import { CUENTAS_CURSOS, TITULAR_CURSOS, RNC_CURSOS } from "@/lib/estudiantes/modelo";
@@ -26,7 +27,7 @@ export const metadata = {
 export default async function EstudiantePage({ searchParams }) {
   const s = createServiceClient();
   const { data } = await s.from("est_cursos").select("*").eq("activo", true).order("orden").order("nombre");
-  const lista = (data || []).map((r) => ({ ...filaACurso(r), grupo: r.grupo || null, info: r.info || null, en_link: r.en_link }));
+  const lista = (data || []).map((r) => ({ ...filaACurso(r), grupo: r.grupo || null, info: infoPublica(r.info) || null, en_link: r.en_link }));
   // V55: con sus fechas próximas y cuántos cupos quedan ("64", "71. B").
   const { conFechas, porCurso } = await fechasProximas(s, lista.map((c) => c.id));
   // V65 ("286"): por grupos, con la información (la "i"); los que no salen en el link, fuera.

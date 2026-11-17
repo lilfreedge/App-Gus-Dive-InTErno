@@ -1,0 +1,111 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V97 · Qué pedir en el presupuesto</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--ce:#8a6a00;--snsi:#f6ce46;--verde:#2c9e5b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px;line-height:1.45}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.6;position:sticky;top:0;z-index:5}.maq b{color:#ffd166}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tabs button{border:1px solid #44566a;background:transparent;color:#cfd8df;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.tabs button.sel{background:#ffd166;border-color:#ffd166;color:#1a2733}
+.wrap{max-width:760px;margin:0 auto;padding:18px 16px 40px}
+.pest{display:none}.pest.sel{display:block}
+h2{font-size:17px;margin:4px 0 6px}.sub{color:var(--suave);margin:0 0 14px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin:10px 0}
+.panel{border:2px solid var(--snsi);background:#fffdf3;border-radius:14px;padding:14px;margin:10px 0}
+.panel h3,.card h3{margin:0 0 4px;font-size:15px}
+.gris{color:var(--suave);font-size:13px}
+.btn{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer}
+.btn.am{background:var(--ce);color:#fff}.btn.bl{background:#fff;border:1px solid var(--borde);color:var(--texto)}.btn.chico{padding:6px 10px;font-size:12.5px}
+.fila{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #eef2f5;flex-wrap:wrap}.fila:last-child{border-bottom:0}
+.lin{display:grid;grid-template-columns:22px 1fr 86px;gap:8px;align-items:start;padding:10px 0;border-bottom:1px solid #f1ead0}
+.lin:last-child{border-bottom:0}
+.lin input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;accent-color:#8a6a00}
+.lin b{display:block;font-size:14px}.lin small{display:block;color:var(--suave);font-size:12px}
+.lin .cant{width:100%;border:1px solid var(--borde);border-radius:8px;padding:7px 8px;font:inherit;font-weight:800;text-align:center}
+.lin.off b,.lin.off small{opacity:.45}
+.unidad{font-size:11px;color:var(--suave);text-align:center;margin-top:2px}
+.contador{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--borde);border-radius:12px;padding:8px 12px;margin:8px 0}
+.contador button{width:30px;height:30px;border-radius:50%;border:1px solid var(--borde);background:#fff;font-size:18px;font-weight:800;cursor:pointer}
+.contador b{font-size:16px}
+.otra{display:grid;grid-template-columns:1fr 86px auto;gap:8px;margin-top:8px}
+.otra input{border:1px solid var(--borde);border-radius:8px;padding:8px;font:inherit}
+textarea{width:100%;border:1px solid var(--borde);border-radius:10px;padding:9px;font:inherit;min-height:60px}
+.correo{background:#fff;border:1px solid var(--borde);border-radius:12px;overflow:hidden;margin-top:10px}
+.correo .cab{background:var(--snsi);color:#2b2200;padding:10px 14px}.correo .cab small{display:block;font-size:10.5px;font-weight:800;letter-spacing:.1em}.correo .cab b{font-size:15px}
+.correo .cuerpo{padding:12px 14px;font-size:13.5px}.correo ul{margin:6px 0 10px;padding-left:20px}
+.nota{background:#eef5fb;border:1px solid #cfe1f1;color:#1d4466;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.regla{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 0;border-bottom:1px solid #eef2f5}.regla:last-child{border-bottom:0}
+.regla input,.regla select{width:100%;border:1px solid var(--borde);border-radius:8px;padding:7px 8px;font:inherit;font-size:13px}
+.regla .full{grid-column:1/-1}
+.lab{font-size:11.5px;font-weight:700;color:var(--suave)}
+.chip{display:inline-block;background:#fff3dc;color:#9a5b0e;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:800}
+@media (max-width:520px){.regla{grid-template-columns:1fr}}
+</style></head><body>
+<div class="maq"><b>Maqueta V97</b> · Presupuesto: que pregunte qué vas a pedir, según el curso y cuántos estudiantes hay. Nada programado todavía.
+  <div class="tabs"><button class="sel" data-p="p1">1 · Al pedir el presupuesto</button><button data-p="p2">2 · En el Catálogo: qué pide cada curso</button></div>
+</div>
+<div class="wrap">
+
+<div class="pest sel" id="p1">
+  <h2>1 · Al tocar "Mandar correo de presupuesto"</h2>
+  <p class="sub">Antes de mandar, sale "¿Qué vas a pedir?" con la lista de ese curso ya calculada con los inscritos. Puedes quitar cosas, cambiar cantidades y agregar otras. Abajo ves cómo le llega el correo a Dinorah. Pruébalo: cambia los estudiantes.</p>
+  <div class="contador"><span class="gris">Para probar · estudiantes inscritos:</span><button id="menos">−</button><b id="n">5</b><button id="mas">+</button><span class="gris">+ 1 instructor</span></div>
+  <div class="card">
+    <div class="fila" style="padding-top:0"><b>Presupuesto</b><span class="gris">Open Water Diver · lun 30 nov</span></div>
+    <div class="panel" style="margin-bottom:0">
+      <h3>¿Qué vas a pedir?</h3>
+      <div class="gris">Calculado con <b id="n2">5</b> estudiantes y 1 instructor. Cambia lo que haga falta.</div>
+      <div id="lineas" style="margin-top:6px"></div>
+      <div class="otra"><input id="o-t" placeholder="Otra cosa (ej. hielo, agua)"><input id="o-c" type="number" min="1" placeholder="Cant."><button class="btn bl chico" id="o-b">Agregar</button></div>
+      <div class="lab" style="margin-top:12px">Nota para Dinorah (opcional)</div>
+      <textarea id="nota" placeholder="Ej. este grupo tiene 2 menores."></textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn am" id="mandar">Mandar a Dinorah</button><button class="btn bl">Cancelar</button></div>
+    </div>
+    <div class="gris" style="margin-top:10px">Así le llega el correo:</div>
+    <div class="correo"><div class="cab"><small>GUS DIVE CENTER</small><b>Presupuesto y gorras · Open Water Diver, lun 30 nov</b></div><div class="cuerpo" id="vista"></div></div>
+  </div>
+  <div class="nota">"Pedir otro presupuesto" abre el mismo formulario con lo último que se pidió, para cambiar solo lo que hizo falta (por ejemplo, se inscribieron 2 más). En la tarjeta del curso queda guardado qué se pidió y cuándo.</div>
+</div>
+
+<div class="pest" id="p2">
+  <h2>2 · Catálogo de cursos › Editar curso › "Presupuesto de este curso"</h2>
+  <p class="sub">Cada curso tiene su propia lista y cómo se cuenta cada cosa. Se pone una vez; después el presupuesto sale calculado solo. Los cursos que no llevan presupuesto (por ejemplo Nitrox) se dejan vacíos.</p>
+  <div class="card"><h3>Open Water Diver</h3><div class="gris">Las reglas son de ejemplo: me dices las de verdad.</div><div id="reglas"></div>
+    <button class="btn bl chico" style="margin-top:10px">+ Agregar otra cosa</button></div>
+  <div class="card"><h3>Advanced Open Water <span class="chip">ejemplo de otro curso</span></h3>
+    <div class="fila"><span>Yolas (lanchas)</span><span class="gris">1 por cada 6 personas · 2 días</span></div>
+    <div class="fila"><span>Entradas al Parque Nacional La Caleta</span><span class="gris">por persona · 2 días</span></div>
+    <div class="fila"><span>Parqueo del instructor</span><span class="gris">fijo · 2 días</span></div>
+    <div class="gris" style="margin-top:6px">Sin pizza (no tiene teoría en la tienda) y sin gorras.</div></div>
+</div>
+
+</div>
+<script>
+const $=id=>document.getElementById(id);
+let n=5;
+const REGLAS=[
+  {t:"Yolas (lanchas)",como:"cada",cada:6,dias:2,u:"yolas por día",txt:"1 por cada 6 personas, 2 días de caleta"},
+  {t:"Pizza para los días de teoría",como:"persona",dias:3,u:"personas × 3 días",txt:"por persona (estudiantes + instructor), 3 días de teoría"},
+  {t:"Entradas al Parque Nacional La Caleta",como:"persona",dias:2,u:"entradas",txt:"por persona, 2 días de caleta",mult:true},
+  {t:"Parqueo del instructor",como:"fijo",cant:1,dias:2,u:"días",txt:"fijo, los 2 días de buceo",mult:true},
+  {t:"Gorras de OWD",como:"estudiante",u:"gorras",txt:"una por cada estudiante"},
+];
+let lineas=[],extra=[];
+function calcular(){const per=n+1;lineas=REGLAS.map(r=>{let c=r.como==="cada"?Math.ceil(per/r.cada):r.como==="persona"?per:r.como==="estudiante"?n:r.cant||1;if(r.mult&&r.dias)c=c*r.dias;
+  const det=r.como==="cada"?`${per} personas · 1 yola por cada ${r.cada} · ${r.dias} días`:r.como==="persona"?`${n} estudiantes + 1 instructor${r.mult?` × ${r.dias} días`:` · ${r.dias} días`}`:r.como==="estudiante"?`${n} estudiantes`:`${r.dias} días`;
+  return {t:r.t,c,det,u:r.u,on:true}})}
+function pintar(){ $("n").textContent=n;$("n2").textContent=n;
+  const todas=[...lineas,...extra];
+  $("lineas").innerHTML=todas.map((l,i)=>`<div class="lin ${l.on?"":"off"}"><input type="checkbox" data-i="${i}" ${l.on?"checked":""}><span><b>${l.t}</b><small>${l.det||"Agregado a mano"}</small></span><span><input class="cant" data-c="${i}" type="number" min="0" value="${l.c}"><div class="unidad">${l.u||""}</div></span></div>`).join("");
+  $("lineas").querySelectorAll("input[type=checkbox]").forEach(x=>x.onchange=()=>{todas[+x.dataset.i].on=x.checked;pintar()});
+  $("lineas").querySelectorAll(".cant").forEach(x=>x.oninput=()=>{todas[+x.dataset.c].c=x.value;vista()});
+  vista() }
+function vista(){const todas=[...lineas,...extra].filter(l=>l.on);const nota=$("nota").value.trim();
+  $("vista").innerHTML=`<p style="margin:0 0 6px">Hola Dinorah, este es el presupuesto que necesitamos para este curso:</p><ul>${todas.map(l=>`<li><b>${l.c}</b> · ${l.t}${l.u?` <span style="color:#5c6b78">(${l.u})</span>`:""}</li>`).join("")}</ul>${nota?`<p style="margin:0 0 6px"><b>Nota:</b> ${nota.replace(/</g,"&lt;")}</p>`:""}<p style="margin:0 0 4px"><b>Inscritos (${n}):</b> Estudiante 1${n>1?`, … Estudiante ${n}`:""}</p><p style="margin:0;color:#5c6b78">Lista de espera: nadie.</p>`}
+$("menos").onclick=()=>{if(n>1){n--;calcular();pintar()}};$("mas").onclick=()=>{if(n<20){n++;calcular();pintar()}};
+$("o-b").onclick=()=>{const t=$("o-t").value.trim(),c=$("o-c").value;if(!t)return;extra.push({t,c:c||1,u:"",det:"",on:true});$("o-t").value="";$("o-c").value="";pintar()};
+$("nota").oninput=vista;$("mandar").onclick=()=>{$("mandar").textContent="Mandado (en la maqueta no se manda nada)"};
+calcular();pintar();
+$("reglas").innerHTML=REGLAS.map(r=>`<div class="regla"><div class="full"><div class="lab">Qué se pide</div><input value="${r.t}"></div><div><div class="lab">Cómo se cuenta</div><select>${[["persona","Por persona (estudiantes + instructor)"],["estudiante","Por estudiante"],["cada","1 por cada X personas"],["fijo","Fijo"]].map(([v,t])=>`<option ${v===r.como?"selected":""}>${t}</option>`).join("")}</select></div><div><div class="lab">${r.como==="cada"?"Cada cuántas personas · días":"Días"}</div><input value="${r.como==="cada"?`${r.cada} personas · ${r.dias} días`:r.dias?`${r.dias} días`:"—"}"></div></div>`).join("");
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('sel',x===b));document.querySelectorAll('.pest').forEach(p=>p.classList.toggle('sel',p.id===b.dataset.p));window.scrollTo(0,0)}));
+</script>
+</body></html>

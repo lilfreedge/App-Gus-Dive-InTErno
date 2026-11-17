@@ -6,6 +6,8 @@ import { permisosEst, fechaCursoCorta } from "@/lib/estudiantes/modelo";
 import { origenDe } from "@/lib/direccion";
 import { mandarPresupuesto } from "@/lib/correo-presupuesto";
 import { crearTokenEntrega } from "@/lib/entrega-qr";
+import { limpiarHoja, totalHoja } from "@/lib/estudiantes/presupuesto";
+import { nombreCorto } from "@/lib/viajes/modelo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -70,6 +72,10 @@ export async function POST(request) {
 
   const nombreCurso = curso?.nombre || "Curso";
   const fecha = fechaCursoCorta(fr.inicio);
+  // V98 (maqueta V99): el presupuesto con montos (el predeterminado del curso,
+  // o lo que se cambió solo para esta vez). Sin él, sale la lista de siempre.
+  const hoja = body.detalle?.hoja ? limpiarHoja(body.detalle.hoja) : null;
+  const detalle = hoja && hoja.secciones.length ? { estudiantes: Math.max(0, Math.round(Number(body.detalle.estudiantes) || inscritos.length)), hoja } : null;
   const ok = await mandarPresupuesto({
     para: destinos,
     curso: nombreCurso,
@@ -78,6 +84,7 @@ export async function POST(request) {
     espera,
     gorras: ES_OWD(nombreCurso) ? inscritos.length : null,
     origen: origenDe(request),
+    detalle,
   });
   if (!ok) return NextResponse.json({ error: "No se pudo mandar el correo del presupuesto." }, { status: 502 });
 
@@ -86,5 +93,22 @@ export async function POST(request) {
   if (error) return NextResponse.json({ error: "El correo salió, pero no se pudo anotar. Revisa que ya se haya corrido migration_100.sql." }, { status: 500 });
   // Si todavía no se corrió migration_101.sql, esta columna no existe: no pasa nada.
   if (body.otro) await s.from("est_fechas").update({ presupuesto_entregado_en: null, presupuesto_entregado_info: null }).eq("id", id);
-  return NextResponse.json({ ok: true, en: ahora, enviados: destinos.length });
+  // V98: queda guardado lo que se pidió (migration_103). Si falta la columna,
+  // el correo ya salió igual y se avisa.
+  let guardados = null;
+  let sinDetalle = false;
+  if (detalle) {
+    if (!("presupuesto_detalle" in fr)) sinDetalle = true;
+    else {
+      const previo = Array.isArray(fr.presupuesto_detalle) ? fr.presupuesto_detalle : [];
+      const nuevo = { en: ahora, por: nombreCorto(profile?.full_name || profile?.email || "") || "", estudiantes: detalle.estudiantes, total: totalHoja(hoja), hoja };
+      guardados = [...previo, nuevo].slice(-12);
+      const { error: eD } = await s.from("est_fechas").update({ presupuesto_detalle: guardados }).eq("id", id);
+      if (eD) {
+        sinDetalle = true;
+        guardados = null;
+      }
+    }
+  }
+  return NextResponse.json({ ok: true, en: ahora, enviados: destinos.length, ...(guardados ? { detalle: guardados } : {}), ...(sinDetalle ? { sinDetalle: true } : {}) });
 }

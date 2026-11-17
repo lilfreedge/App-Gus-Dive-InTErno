@@ -9,6 +9,7 @@ import { docValido, buscarPorDoc, celCoincide, logLink, edadHoy, tokenMenor, pue
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 import { cedulaValida, MSG_CEDULA_MALA } from "@/lib/viajes/modelo";
 import { mandarListaEspera } from "@/lib/correo-lista-espera";
+import { origenDe } from "@/lib/direccion";
 
 // Un celular de 10 dígitos puede estar guardado con el "1" de EE.UU. delante
 // (11 dígitos) si lo escribió así quien llenó el interesado; se busca con las dos formas.
@@ -378,7 +379,7 @@ export async function POST(request) {
   // V68 ("15"): correo de lista de espera, si dejó su correo. En su ficha sale que se le mandó.
   if (espera && !tutorTxt) {
     const correo = buzo.correo || String(body.datos?.correo || "").trim();
-    if (await mandarListaEspera({ correo, nombre: primerNombre(buzo.nombre), que: curso.nombre, whatsapp: TIENDA_WA })) {
+    if (await mandarListaEspera({ correo, nombre: primerNombre(buzo.nombre), que: curso.nombre, whatsapp: TIENDA_WA, origen: origenDe(request) })) {
       await s.from("est_estudiantes").update({ etapas: { correo_espera: { en: new Date().toISOString(), por: "Link" } } }).eq("id", fila.id);
       await logLink(s, fila.id, `Se le mandó el correo de lista de espera (${curso.nombre})`);
     }
