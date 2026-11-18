@@ -781,52 +781,113 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
           <div className="pb-card">
             <div className="pb-t">{menor ? `El curso de ${primerM}` : "Tu curso"}</div>
             <div className="pb-h">{menor ? "¿Qué curso va a tomar?" : "¿Qué curso vas a tomar?"}</div>
-            {/* V65 ("286. ok", maqueta V64): por grupos y por niveles; la "i" con
-                la información; Nitrox dentro de Open Water y OXY dentro de BLS. */}
-            {gruposCursos(cursos).map((g) => (
-              <div key={g.k}>
-                {g.t && <div className="ce-op-grupo">{g.t}</div>}
-                {g.lista.map((c) => {
-                  const extra = extraDe(cursos, c);
-                  return (
-                    <div key={c.id} className={`pb-op ce-op${c.fechas.length ? "" : " gris"}`}>
-                      <button
-                        type="button"
-                        className="ce-op-main"
-                        onClick={() => {
-                          setCursoSel(c.id);
-                          setCursoId(c.id);
-                          setFechaVista("");
-                          if (!c.fechas.length) ir("espera");
-                        }}
-                      >
-                        {c.nombre}
-                        {cortaDe(c) && " "}
-                        {cortaDe(c) && <span className="ag-nivel ce-op-nivel">{cortaDe(c)}</span>}
-                        <div className="pb-op-sub">{c.fechas.length ? `${c.fechas.length} ${c.fechas.length === 1 ? "fecha próxima" : "fechas próximas"}` : "Todavía no hay fecha"}</div>
-                        {c.precio != null && <div className="ce-pub-precio">{rd(c.precio)}</div>}
-                        {!c.fechas.length && <span className="ce-pub-chip espera">Sin fecha por ahora</span>}
-                      </button>
-                      {c.info && (
-                        <button type="button" className="ce-op-i" aria-label={`Información de ${c.nombre}`} onClick={() => setInfoDe(c)}>
-                          i
-                        </button>
-                      )}
-                      {extra && (
-                        <label className="ce-op-extra">
-                          <input type="checkbox" checked={tambien[c.id] === extra.id} onChange={(e) => setTambien({ ...tambien, [c.id]: e.target.checked ? extra.id : null })} />
-                          <span>
-                            Agregar {extra.nombre}
-                            {extra.precio != null ? ` (+${rd(extra.precio)})` : ""}
-                            {esOwd(c.nombre) && esNitrox(extra.nombre) && <small className="ce-op-extra-sub">{TEXTO_NITROX_JUNTO}</small>}
-                          </span>
-                        </label>
-                      )}
+            {/* V104 (maqueta V107, "92. B"): primero, grandes, los cursos que
+                tienen fecha, con las fechas como botones (se escoge ahí mismo) y
+                "Agregar Nitrox"; abajo, en una lista chica, los que todavía no
+                tienen fecha, con "Avísame". Antes (V65): una caja por curso,
+                por grupos. */}
+            {/* V104 (maqueta V107, "92. B" + "me gusta que separaste en la opción A:
+                cursos de buceo, primeros auxilios y especialidades... la B con
+                eso"): por grupos; en cada grupo, primero, grandes, los cursos
+                con fecha (las fechas como botones, se escoge ahí mismo) y
+                después, en una lista chica, los que todavía no tienen fecha,
+                con "Avísame". */}
+            {(() => {
+              const avisar = (c) => (setCursoSel(c.id), setCursoId(c.id), setFechaVista(""), ir("espera"));
+              return gruposCursos(cursos).map((g) => (
+                <div key={g.k}>
+                  {g.t && <div className="ce-op-grupo">{g.t}</div>}
+                    {g.lista.filter((c) => c.fechas.length).map((c) => {
+                      const extra = extraDe(cursos, c);
+                      const todasLlenas = c.fechas.every((f) => f.quedan === 0);
+                      const fv = c.fechas.find((f) => f.id === fechaVista);
+                      return (
+                        <div key={c.id} className="ce-bc">
+                          <div className="ce-bc-top">
+                            <div>
+                              <b className="ce-bc-n">{c.nombre}</b>
+                              {cortaDe(c) && " "}
+                              {cortaDe(c) && <span className="ag-nivel ce-op-nivel">{cortaDe(c)}</span>}
+                              {c.precio != null && <div className="ce-pub-precio">{rd(c.precio)}</div>}
+                            </div>
+                            {c.info && (
+                              <button type="button" className="ce-op-i ce-bc-i" aria-label={`Información de ${c.nombre}`} onClick={() => setInfoDe(c)}>
+                                i
+                              </button>
+                            )}
+                          </div>
+                          <div className="ce-bc-fechas">
+                            {c.fechas.map((f) => {
+                              const llena = f.quedan === 0;
+                              return (
+                                <button
+                                  key={f.id}
+                                  type="button"
+                                  disabled={llena}
+                                  className={`${llena ? "lleno" : ""}${fechaVista === f.id ? " sel" : ""}`}
+                                  onClick={() => (setCursoId(c.id), setFechaVista(fechaVista === f.id ? "" : f.id))}
+                                >
+                                  {fechaCortaItinerario(f.inicio)}
+                                  <small>{llena ? "Lleno" : f.quedan != null ? `Quedan ${f.quedan}` : "Con cupo"}</small>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {extra && (
+                            <label className="ce-op-extra ce-bc-extra">
+                              <input type="checkbox" checked={tambien[c.id] === extra.id} onChange={(e) => setTambien({ ...tambien, [c.id]: e.target.checked ? extra.id : null })} />
+                              <span>
+                                Agregar {extra.nombre}
+                                {extra.precio != null ? ` (+${rd(extra.precio)})` : ""}
+                                {esOwd(c.nombre) && esNitrox(extra.nombre) && <small className="ce-op-extra-sub">{TEXTO_NITROX_JUNTO}</small>}
+                              </span>
+                            </label>
+                          )}
+                          {fv && (
+                            <div className="ce-bc-sel">
+                              <div className="pb-h" style={{ margin: "0 0 4px" }}>
+                                Empieza el {fechaLarga(fv.inicio)}
+                              </div>
+                              <Semana inicio={fv.inicio} semana={c.semana} itinerario={fv.itinerario} />
+                              {error && <div className="pb-error">{error}</div>}
+                              <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: c.id, fechaId: fv.id })}>
+                                {cargando ? "Registrando…" : "Escoger esta fecha"}
+                              </button>
+                            </div>
+                          )}
+                          {todasLlenas && (
+                            <button type="button" className="ce-bc-av" onClick={() => avisar(c)}>
+                              Todas las fechas están llenas · Avísame cuando haya otra ›
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  {g.lista.some((c) => !c.fechas.length) && (
+                    <div className="ce-bl">
+                        {g.lista.filter((c) => !c.fechas.length).map((c) => (
+                          <div key={c.id} className="ce-bl-f">
+                            <button type="button" className="ce-bl-main" onClick={() => avisar(c)}>
+                              <span className="ce-bl-m">
+                                <b>{c.nombre}</b>
+                                {cortaDe(c) && " "}
+                                {cortaDe(c) && <span className="ag-nivel ce-op-nivel">{cortaDe(c)}</span>}
+                                {c.precio != null && <small>{rd(c.precio)}</small>}
+                              </span>
+                              <span className="ce-bl-av">Avísame ›</span>
+                            </button>
+                            {c.info && (
+                              <button type="button" className="ce-bl-i" aria-label={`Información de ${c.nombre}`} onClick={() => setInfoDe(c)}>
+                                i
+                              </button>
+                            )}
+                          </div>
+                        ))}
                     </div>
-                  );
-                })}
-              </div>
-            ))}
+                  )}
+                </div>
+              ));
+            })()}
             {infoDe && <InfoCurso c={infoDe} cerrar={() => setInfoDe(null)} escoger={() => (setInfoDe(null), setCursoSel(infoDe.id), setCursoId(infoDe.id), setFechaVista(""), !infoDe.fechas.length && ir("espera"))} />}
             <button className="pb-btn sec" onClick={() => ir(menor ? "menor" : "datos")}>
               Atrás

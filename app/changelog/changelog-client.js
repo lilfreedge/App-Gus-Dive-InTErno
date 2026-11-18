@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V104",
+    fecha: "18 de noviembre, 2026",
+    titulo: "Link de registro: la lista de cursos más ordenada",
+    descripcion:
+      "Link de registro › \"Tu curso\": separado por grupos (Cursos de buceo, Primeros auxilios, Especialidades). En cada grupo, primero, en tarjetas grandes, los cursos que tienen fecha abierta, con su etiqueta, su precio y las fechas como botones (\"Quedan 3\" o \"Lleno\"). Se toca la fecha y ahí mismo sale la semana del curso y \"Escoger esta fecha\" (un paso menos). \"Agregar Nitrox\" va dentro de Open Water, antes de escoger. Si todas las fechas de un curso están llenas, sale \"Avísame cuando haya otra\". Debajo, en una lista chica, los cursos de ese grupo que todavía no tienen fecha, cada uno con su precio, la \"i\" y \"Avísame\" (queda en Interesados). Arreglado: el link de registro y el app Gus Dive seguían enseñando cursos que ya se habían borrado del Catálogo (Freediving y Refresh OWD). El app guardaba una copia vieja de la lista de cursos; ahora cada vez la busca en la base, así que lo que se cambie en el Catálogo sale enseguida en el link y en el app. No necesita SQL.",
+  },
+  {
     version: "V103",
     fecha: "18 de noviembre, 2026",
     titulo: "Descripción corta de cada curso y sin el mensaje de la lista de cursos",

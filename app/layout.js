@@ -13,6 +13,12 @@ import "./globals.css";
 // ("Más") no aparecía para el Titular pese a que el dato en Supabase era
 // correcto, en cualquier despliegue/sesión/navegador probado.
 export const dynamic = "force-dynamic";
+// V104 (18-nov-2026): en Next.js 14, "force-dynamic" no basta para que las
+// consultas (fetch) no se guarden en la caché de datos: el link de registro y
+// el app Gus Dive seguían enseñando cursos ya quitados del Catálogo. Con esto
+// ninguna consulta de las páginas se guarda (además, los clientes de Supabase
+// ya piden "no-store", ver lib/supabase/service.js).
+export const fetchCache = "force-no-store";
 
 export const metadata = {
   title: "Gus App",
