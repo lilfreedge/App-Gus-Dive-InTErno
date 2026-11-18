@@ -5,6 +5,7 @@ import { estadoViaje } from "@/lib/viajes/modelo";
 import { TIENDA, encuentroDe } from "@/lib/viajes/servidor";
 import PublicoViaje from "@/components/viajes/Publico";
 import { linkGrupoValido } from "@/lib/viajes/modelo";
+import { metaClientes, APP_CLIENTES } from "@/lib/metadata-clientes";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,10 @@ export async function generateMetadata({ params }) {
   const s = createServiceClient();
   const { data } = await s.from("viajes").select("nombre").eq("slug", params.slug).maybeSingle();
   // V81: se instala como "App Gus".
-  return { title: data ? `Inscripción · ${data.nombre} · Gus Dive Center` : "Gus Dive Center", manifest: "/app-gus.webmanifest", icons: { apple: "/icono-app-192.png" }, appleWebApp: { capable: true, title: "Gus Dive", statusBarStyle: "default" } };
+  // V101: con su propia vista previa del link.
+  return data
+    ? metaClientes(`Inscripción · ${data.nombre} · Gus Dive Center`, `Inscríbete en ${data.nombre} con Gus Dive Center.`, APP_CLIENTES)
+    : metaClientes("Gus Dive Center", "Buceos con Gus Dive Center.", APP_CLIENTES);
 }
 
 // V42 -- Link de inscripción de un viaje (público, sin cuenta). Solo se le
@@ -51,8 +55,9 @@ export default async function InscripcionPage({ params }) {
     habitaciones: !!v.habitaciones,
     // V68 ("14"): el grupo de WhatsApp del buceo.
     linkGrupo: linkGrupoValido(v.linkGrupo) ? v.linkGrupo : "",
-    // V59: con la inscripción cerrada sale como lleno (lista de espera).
+    // V59: con la inscripción cerrada sale como lleno. V101: sin lista de espera.
     quedan: estadoViaje(v) === "cerrado_insc" ? 0 : Math.max(0, (v.cupoMax || 0) - (count || 0)),
+    cerrado: estadoViaje(v) === "cerrado_insc",
     abierto: ["abierto", "cerrado_insc"].includes(estadoViaje(v)),
   };
   return <PublicoViaje v={publico} tienda={TIENDA} />;

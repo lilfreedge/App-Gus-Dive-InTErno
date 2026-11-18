@@ -12,6 +12,7 @@ import NotasInternas from "@/components/NotasInternas";
 import AvisosFijos from "@/components/AvisosFijos";
 import RecordatorioOrings from "@/components/RecordatorioOrings";
 import { manualesPara, tituloManual, linkManual } from "@/lib/manuales";
+import { componentesRecibidosFicha } from "@/lib/informe-mantenimiento";
 import {
   guardarOrden,
   codigosDe,
@@ -345,6 +346,27 @@ export default function TecnicoInicio({
             Daños visibles: <b style={{ color: "var(--texto)" }}>{o.regulador_danos_visibles}</b>
           </div>
         )}
+        {/* V100 ("46. sí"): lo que trajo el regulador al recibirlo. */}
+        {o.tipo_equipo === "Reguladores" &&
+          (() => {
+            const { vino, noVino } = componentesRecibidosFicha(o.regulador_componentes);
+            if (!vino.length && !noVino.length) return null;
+            return (
+              <div className="tec-hint" style={{ fontSize: 14.5, marginTop: 6 }}>
+                Lo que trajo:
+                <div className="ord-trajo">
+                  {vino.map((t) => (
+                    <span key={t}>{t}</span>
+                  ))}
+                  {noVino.map((t) => (
+                    <span key={t} className="no-vino">
+                      Sin {t.toLowerCase()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 10 }}>
           {o.foto_url && <FotoLightbox src={o.foto_url} alt="Foto del equipo" thumbSize={86} />}
           <div style={{ fontSize: 14.5, color: "var(--texto-suave)", lineHeight: 1.45 }}>

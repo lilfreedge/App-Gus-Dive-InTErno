@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CALZADO_EU, textoCalzado, CAMISA, PESO_MIN, PESO_MAX } from "@/lib/tallas";
 import { soloDigitos, formatoCedula, rd, fechaCorta, fechaLarga, primerNombre, celValido, formatoCel } from "@/lib/viajes/modelo";
-import { semanaDe, menorDe12, edad as edadDe } from "@/lib/estudiantes/modelo";
+import { menorDe12, edad as edadDe } from "@/lib/estudiantes/modelo";
 import FechaNacimiento from "@/components/FechaNacimiento";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "@/components/viajes/Piezas";
@@ -11,6 +11,8 @@ import { IconCheck, IconLock, IconCamera } from "@/components/icons";
 import { subirArchivo } from "@/lib/estudiantes/subir";
 import { leerPersona, guardarPersona } from "@/lib/app-gus";
 import InstalarApp, { VolverInicio } from "@/components/InstalarApp";
+import { fechaCortaItinerario, horaBonita, itinerarioDeCatalogo } from "@/lib/estudiantes/itinerario";
+import { esOwd, esNitrox } from "@/lib/estudiantes/junto";
 
 // Control Estudiantes -- el link de registro del estudiante (público, sin
 // cuenta). Reemplaza el formulario de Google. Opción D de la maqueta:
@@ -196,6 +198,8 @@ function gruposCursos(cursos) {
   if (resto.length) conocidos[3].lista.push(...resto);
   return conocidos.filter((g) => g.lista.length);
 }
+// V101 (maqueta V105, "76. B"): el Nitrox con el Open Water es un día más de teoría.
+const TEXTO_NITROX_JUNTO = "Un día más de teoría, por cuadrar con tu instructor.";
 // Open Water → Nitrox; BLS → OXY.
 const PAREJAS = [
   [/^open water diver$/i, /^nitrox$/i],
@@ -239,8 +243,11 @@ function InfoCurso({ c, cerrar, escoger }) {
 }
 
 // V55 -- La semana del curso (Open Water: "79"), para cuando escoge la fecha.
-function Semana({ inicio, semana }) {
-  const dias = semanaDe(inicio, semana);
+// V100 (maqueta V102): si el curso tiene su itinerario confirmado, sale ese
+// (con la hora; el examen "lo cuadras con el instructor").
+function Semana({ inicio, semana, itinerario }) {
+  const lista = Array.isArray(itinerario) && itinerario.length ? itinerario : itinerarioDeCatalogo(semana, inicio);
+  const dias = lista.map((x) => ({ dia: x.cuadrar || !x.fecha ? "Por cuadrar" : fechaCortaItinerario(x.fecha), texto: `${x.t}${x.cuadrar ? " · lo cuadras con el instructor" : x.hora ? ` · ${horaBonita(x.hora)}` : ""}` }));
   if (!dias.length) return null;
   return (
     <div className="ce-pub-semana">
@@ -371,6 +378,32 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
     if (mis) verEstado({ tipoDoc: g.tipoDoc, doc: g.doc, cel: g.cel });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // V101 ("53. sí", maqueta V101): ya no hay lista de espera. Si el curso no
+  // tiene fecha o todas están llenas, "Avísame cuando haya fecha" lo anota en
+  // Interesados con sus datos (si falta algo, va al link de interesados con el
+  // curso ya escogido).
+  const [avisado, setAvisado] = useState("");
+  const avisarme = (curso) =>
+    correr(async () => {
+      const nombreCurso = curso.nombre;
+      const link = `/me-interesa?curso=${encodeURIComponent(nombreCurso)}`;
+      const nombre = menor ? "" : String(d.nombre || buzo?.nombre || "").trim();
+      const correo = menor ? "" : String(d.correo || "").trim();
+      if (!nombre || !correo || !celValido(cel)) {
+        window.location.href = link;
+        return;
+      }
+      const r = await fetch("/api/estudiantes/interesado", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre, cel, correo, curso: nombreCurso, fuente: "Link" }) })
+        .then((x) => x.json())
+        .catch(() => ({ error: true }));
+      if (!r || r.error) {
+        window.location.href = link;
+        return;
+      }
+      setAvisado(nombreCurso);
+      setCursoSel(curso.id);
+      ir("espera");
+    });
   const registrar = (extra = {}) =>
     correr(async () => {
       // V59: el contacto de emergencia se guarda como "Nombre · 809-000-0000".
@@ -767,7 +800,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
                         {c.nombre}
                         <div className="pb-op-sub">{c.fechas.length ? `${c.fechas.length} ${c.fechas.length === 1 ? "fecha próxima" : "fechas próximas"}` : "Todavía no hay fecha"}</div>
                         {c.precio != null && <div className="ce-pub-precio">{rd(c.precio)}</div>}
-                        {!c.fechas.length && <span className="ce-pub-chip espera">Lista de espera</span>}
+                        {!c.fechas.length && <span className="ce-pub-chip espera">Sin fecha por ahora</span>}
                       </button>
                       {c.info && (
                         <button type="button" className="ce-op-i" aria-label={`Información de ${c.nombre}`} onClick={() => setInfoDe(c)}>
@@ -777,8 +810,11 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
                       {extra && (
                         <label className="ce-op-extra">
                           <input type="checkbox" checked={tambien[c.id] === extra.id} onChange={(e) => setTambien({ ...tambien, [c.id]: e.target.checked ? extra.id : null })} />
-                          Agregar {extra.nombre}
-                          {extra.precio != null ? ` (+${rd(extra.precio)})` : ""}
+                          <span>
+                            Agregar {extra.nombre}
+                            {extra.precio != null ? ` (+${rd(extra.precio)})` : ""}
+                            {esOwd(c.nombre) && esNitrox(extra.nombre) && <small className="ce-op-extra-sub">{TEXTO_NITROX_JUNTO}</small>}
+                          </span>
                         </label>
                       )}
                     </div>
@@ -806,20 +842,32 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
                 <div key={f.id}>
                   <button className={`pb-op${abierta ? " sel" : ""}`} onClick={() => setFechaVista(abierta ? "" : f.id)}>
                     Empieza el {fechaLarga(f.inicio)}
-                    {f.quedan != null && <span className={`ce-pub-chip ${llena ? "lleno" : "ok"}`}>{llena ? "Lleno · lista de espera" : `Quedan ${f.quedan} ${f.quedan === 1 ? "cupo" : "cupos"}`}</span>}
+                    {f.quedan != null && <span className={`ce-pub-chip ${llena ? "lleno" : "ok"}`}>{llena ? "Lleno" : `Quedan ${f.quedan} ${f.quedan === 1 ? "cupo" : "cupos"}`}</span>}
                   </button>
                   {abierta && (
                     <div style={{ margin: "-2px 0 10px" }}>
-                      <Semana inicio={f.inicio} semana={cursoElegido.semana} />
+                      <Semana inicio={f.inicio} semana={cursoElegido.semana} itinerario={f.itinerario} />
                       {error && <div className="pb-error">{error}</div>}
-                      <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: cursoElegido.id, fechaId: f.id, espera: llena })}>
-                        {cargando ? "Registrando…" : llena ? "Ponerme en la lista de espera" : "Escoger esta fecha"}
-                      </button>
+                      {llena ? (
+                        <div className="ce-pub-aviso" style={{ textAlign: "center" }}>Esta fecha ya se llenó.</div>
+                      ) : (
+                        <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: cursoElegido.id, fechaId: f.id })}>
+                          {cargando ? "Registrando…" : "Escoger esta fecha"}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
               );
             })}
+            {cursoElegido.fechas.length > 0 && cursoElegido.fechas.every((f) => f.quedan === 0) && (
+              <>
+                <div className="ce-pub-aviso" style={{ textAlign: "center", marginTop: 6 }}>Todas las fechas de {cursoElegido.nombre} están llenas.</div>
+                <button className="pb-btn" disabled={cargando} onClick={() => avisarme(cursoElegido)}>
+                  {cargando ? "Un momento…" : "Avísame cuando haya otra fecha"}
+                </button>
+              </>
+            )}
             <button className="pb-btn sec" onClick={() => (setCursoSel(""), setFechaVista(""))}>
               Escoger otro curso
             </button>
@@ -840,22 +888,33 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
               <>
                 {fijoCurso.precio != null && <div className="ce-pub-precio">{rd(fijoCurso.precio)}</div>}
                 <div style={{ textAlign: "left" }}>
-                  <Semana inicio={fijoFecha.inicio} semana={fijoCurso.semana} />
+                  <Semana inicio={fijoFecha.inicio} semana={fijoCurso.semana} itinerario={fijoFecha.itinerario} />
                 </div>
                 {fijoExtra && (
                   <label className="ce-op-extra ce-fijo-extra">
                     <input type="checkbox" checked={tambien[fijoCurso.id] === fijoExtra.id} onChange={(e) => setTambien({ ...tambien, [fijoCurso.id]: e.target.checked ? fijoExtra.id : null })} />
-                    Agregar {fijoExtra.nombre}
-                    {fijoExtra.precio != null ? ` (+${rd(fijoExtra.precio)})` : ""}
+                    <span>
+                      Agregar {fijoExtra.nombre}
+                      {fijoExtra.precio != null ? ` (+${rd(fijoExtra.precio)})` : ""}
+                      {esOwd(fijoCurso.nombre) && esNitrox(fijoExtra.nombre) && <small className="ce-op-extra-sub">{TEXTO_NITROX_JUNTO}</small>}
+                    </span>
                   </label>
                 )}
               </>
             )}
             {error && <div className="pb-error">{error}</div>}
-            <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: fijoCurso.id, fechaId: fijoFecha.id, espera: fijoLleno })}>
-              {cargando ? "Registrando…" : fijoLleno ? "Ponerme en la lista de espera" : "Inscribirme"}
-            </button>
-            {fijoLleno && fijoCurso.fechas.length > 1 ? (
+            {fijoLleno ? (
+              !fijoCurso.fechas.some((x) => x.id !== fijoFecha.id && x.quedan !== 0) && (
+                <button className="pb-btn" disabled={cargando} onClick={() => avisarme(fijoCurso)}>
+                  {cargando ? "Un momento…" : "Avísame cuando haya otra fecha"}
+                </button>
+              )
+            ) : (
+              <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: fijoCurso.id, fechaId: fijoFecha.id })}>
+                {cargando ? "Registrando…" : "Inscribirme"}
+              </button>
+            )}
+            {fijoLleno && fijoCurso.fechas.some((x) => x.id !== fijoFecha.id && x.quedan !== 0) ? (
               <button className="pb-btn sec" onClick={() => (setFijoId(""), setCursoSel(fijoCurso.id), setCursoId(fijoCurso.id), setFechaVista(""))}>
                 Ver otras fechas de {fijoCurso.nombre}
               </button>
@@ -881,22 +940,30 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
                   <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
                 </svg>
               </div>
-              <div className="pb-t">Todavía no hay fecha</div>
+              <div className="pb-t">{avisado === cursoElegido.nombre ? "Te avisamos" : cursoElegido.fechas.length ? "Las fechas están llenas" : "Todavía no hay fecha"}</div>
               <div className="pb-h">
                 para <b>{cursoElegido.nombre}</b>
               </div>
             </div>
-            <div className="ce-pub-aviso" style={{ textAlign: "center" }}>
-              Déjanos tus datos y te avisamos por WhatsApp cuando abramos este curso.
-            </div>
-            {error && <div className="pb-error">{error}</div>}
-            <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: cursoElegido.id, espera: true })}>
-              {/* V64 ("287. C") */}
-              {cargando ? "Un momento…" : "Quiero que me avisen"}
-            </button>
-            <button className="pb-btn sec" onClick={() => (setCursoSel(""), ir("curso"))}>
+            {avisado === cursoElegido.nombre ? (
+              <div className="ce-pub-aviso" style={{ textAlign: "center" }}>
+                <b>¡Listo!</b> Te avisamos por correo y WhatsApp cuando abramos una fecha de {cursoElegido.nombre}.
+              </div>
+            ) : (
+              <>
+                <div className="ce-pub-aviso" style={{ textAlign: "center" }}>
+                  Te avisamos por correo y WhatsApp cuando abramos una fecha.
+                </div>
+                {error && <div className="pb-error">{error}</div>}
+                <button className="pb-btn" disabled={cargando} onClick={() => avisarme(cursoElegido)}>
+                  {cargando ? "Un momento…" : "Avísame cuando haya fecha"}
+                </button>
+              </>
+            )}
+            <button className="pb-btn sec" onClick={() => (setFijoId(""), setCursoSel(""), ir("curso"))}>
               Ver otro curso
             </button>
+            {avisado === cursoElegido.nombre && <VolverInicio />}
           </div>
         )}
 
@@ -969,12 +1036,21 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
             </div>
             {res.tambien && (
               <div className="pb-h" style={{ marginTop: 4 }}>
-                También quedaste anotado en <b>{res.tambien}</b>: te escribimos para la fecha.
+                {/* V101 (maqueta V105): el Nitrox con el Open Water ya va en esa misma semana. */}
+                {res.tambienJunto ? (
+                  <>
+                    También quedaste en <b>{res.tambien}</b>: la teoría de {res.tambien} la cuadras con tu instructor.
+                  </>
+                ) : (
+                  <>
+                    También quedaste anotado en <b>{res.tambien}</b>: te escribimos para la fecha.
+                  </>
+                )}
               </div>
             )}
             {res.fecha && res.semana && (
               <div style={{ textAlign: "left" }}>
-                <Semana inicio={res.fecha} semana={res.semana} />
+                <Semana inicio={res.fecha} semana={res.semana} itinerario={res.itinerario} />
               </div>
             )}
             {res.espera && !res.ya ? (
@@ -1165,7 +1241,7 @@ function MisDocumentos({ estado, setEstado, id, tipoDoc, doc, cel, setCel, tiend
           <div className="pb-h" style={{ margin: "2px 0 6px" }}>
             {[e.escuela, e.fechaInicio ? `${e.fechaInicio > new Date(Date.now() - 4 * 3600000).toISOString().slice(0, 10) ? "empieza" : "empezó"} el ${fechaCorta(e.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
           </div>
-          {e.estado === "espera" && <div className="ce-pub-aviso" style={{ marginBottom: 6 }}>Estás en la lista de espera. Te escribimos por WhatsApp cuando haya fecha.</div>}
+          {e.estado === "espera" && <div className="ce-pub-aviso" style={{ marginBottom: 6 }}>Todavía no tiene fecha. Te escribimos por WhatsApp cuando haya fecha.</div>}
           {e.estado !== "espera" &&
             [
               { k: "curso", t: "En curso", sub: "Terminando las clases, el pago y el examen." },
@@ -1259,7 +1335,7 @@ function MisDocumentos({ estado, setEstado, id, tipoDoc, doc, cel, setCel, tiend
               <b>{m.primer}</b>
               {m.estudios.map((e) => (
                 <div key={e.id} className="pb-h" style={{ margin: "2px 0 0" }}>
-                  {e.curso} — {e.estado === "espera" ? "lista de espera" : e.etapa.toLowerCase()}
+                  {e.curso} — {e.estado === "espera" ? "sin fecha todavía" : e.etapa.toLowerCase()}
                   {e.debe > 0 ? ` · falta pagar ${rd(e.debe)}` : ""}
                 </div>
               ))}

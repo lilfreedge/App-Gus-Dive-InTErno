@@ -6,7 +6,6 @@ import { puedeCambiarCel, cambiarCelular } from "@/lib/estudiantes/servidor";
 import { avisar } from "@/lib/viajes/avisos";
 import { origenDe } from "@/lib/direccion";
 import { cedulaValida, MSG_CEDULA_MALA, linkGrupoValido } from "@/lib/viajes/modelo";
-import { mandarListaEspera } from "@/lib/correo-lista-espera";
 const TIENDA_WA = process.env.VIAJES_WHATSAPP_TIENDA || "8095660818";
 
 export const dynamic = "force-dynamic";
@@ -160,10 +159,10 @@ export async function POST(request) {
   if (body.accion !== "inscribir") return NextResponse.json({ error: "Acción desconocida." }, { status: 400 });
 
   // ------------------------------------------------------------ inscribir
-  // V59 (nota 2-nov): con la inscripción cerrada no se rechaza: queda en lista
-  // de espera, como cuando está lleno ("que no diga que está cerrada").
-  const cerradoInsc = estadoViaje(v) === "cerrado_insc";
-  if (estadoViaje(v) !== "abierto" && !cerradoInsc) return NextResponse.json({ error: `Este ${palabraViaje(v)} ya no recibe inscripciones.` }, { status: 400 });
+  // V101 ("53. sí", maqueta V101): ya no hay lista de espera. Con la
+  // inscripción cerrada o el buceo lleno, ya no se inscribe nadie más.
+  if (estadoViaje(v) === "cerrado_insc") return NextResponse.json({ error: `La inscripción para este ${palabraViaje(v)} está cerrada.` }, { status: 400 });
+  if (estadoViaje(v) !== "abierto") return NextResponse.json({ error: `Este ${palabraViaje(v)} ya no recibe inscripciones.` }, { status: 400 });
   if (!docValido(tipo, body.doc)) return NextResponse.json({ error: "Revisa tu cédula o pasaporte." }, { status: 400 });
   const o = v.opciones.find((x) => x.id === body.opcion && !x.noPaga);
   if (!o) return NextResponse.json({ error: "Elige una opción." }, { status: 400 });
@@ -223,7 +222,8 @@ export async function POST(request) {
     .eq("viaje_id", v.id)
     .eq("estado", "inscrito")
     .neq("rol", "staff");
-  const enEspera = cerradoInsc || (count || 0) >= (v.cupoMax || 0);
+  if ((count || 0) >= (v.cupoMax || 0)) return NextResponse.json({ error: `Este ${palabraViaje(v)} ya está lleno.`, lleno: true }, { status: 400 });
+  const enEspera = false;
 
   let inscritoPor = null;
   if (body.inscritoPorDoc) {
@@ -271,10 +271,6 @@ export async function POST(request) {
     quien: "Link",
     texto: `Se inscribió por el link: ${b.nombre}${nuevo ? " (nuevo)" : ""}${inscritoPor ? ` (la inscribió ${nombreCorto(inscritoPor.nombre)})` : ""}${enEspera ? " · lista de espera" : ""}`,
   });
-  // V68 ("15"): correo de lista de espera al buzo, si dejó su correo.
-  if (enEspera && (await mandarListaEspera({ correo: b.correo, nombre: primerNombre(b.nombre), que: `${v.nombre} (${fechaCorta(v.fecha)})`, whatsapp: TIENDA_WA, buceo: true, origen: origenDe(request) }))) {
-    await s.from("viajes_bitacora").insert({ viaje_id: v.id, quien: "Link", texto: `Se le mandó el correo de lista de espera a ${b.nombre}` });
-  }
 
   // V44: avisos (en el app, correo y celular, según lo que escogió el Titular).
   const origen = origenDe(request);
@@ -294,7 +290,7 @@ export async function POST(request) {
     await avisar(
       s,
       "lleno",
-      { titulo: `Se llenó ${v.nombre}`, texto: `Llegó a ${v.cupoMax} buzos (${fechaCorta(v.fecha)}). Los próximos que se inscriban quedan en lista de espera.`, viajeId: v.id, ruta },
+      { titulo: `Se llenó ${v.nombre}`, texto: `Llegó a ${v.cupoMax} buzos (${fechaCorta(v.fecha)}). El link ya no deja inscribir a nadie más.`, viajeId: v.id, ruta },
       origen
     );
   }

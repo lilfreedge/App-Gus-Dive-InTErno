@@ -13,6 +13,7 @@ import NotificacionesPagina from "@/components/NotificacionesPagina";
 import { IconGear, IconLogout, IconShuffle, IconHistory, IconUsers } from "@/components/icons";
 import { cargarTodo, estAFila, buzoAFila, cursoAFila, interesadoAFila, fechaAFila, nuevoId } from "@/lib/estudiantes/datos";
 import { fechaCursoCorta, rd } from "@/lib/estudiantes/modelo";
+import { limpiarItinerario, itinerarioDe, cambiosItinerario, moverItinerario } from "@/lib/estudiantes/itinerario";
 import { Inicio, Lista, Mas, Bitacora, Directorio, DetalleCurso, PorEtapa, AppGusDive, UsoAppGus } from "./Inicio";
 import { Ficha } from "./Ficha";
 import { Nuevo } from "./Nuevo";
@@ -355,7 +356,16 @@ export default function EstudiantesApp({ p, yo, personas }) {
       try {
         if (esNueva) await guardar(supabase.from("est_fechas").insert({ id: f.id, ...fechaAFila(f), creado_por: yo.id }));
         else await guardar(supabase.from("est_fechas").update(fechaAFila(f)).eq("id", f.id));
-        local((d) => ({ ...d, fechas: esNueva ? [...(d.fechas || []), f] : (d.fechas || []).map((x) => (x.id === f.id ? f : x)) }));
+        // V100: si el curso pasa a otro lunes, su itinerario se corre igual.
+        const previa = esNueva ? null : (db.fechas || []).find((x) => x.id === f.id);
+        let extra = {};
+        if (previa?.itinerario && previa.inicio !== f.inicio) {
+          const movido = moverItinerario(previa.itinerario, previa.inicio, f.inicio);
+          const { error: eIt } = await supabase.from("est_fechas").update({ itinerario: movido }).eq("id", f.id);
+          if (!eIt) extra = { itinerario: movido };
+        }
+        // Se mezcla con lo que ya tenía (itinerario, presupuesto…).
+        local((d) => ({ ...d, fechas: esNueva ? [...(d.fechas || []), { conItinerario: !!d.conItinerario, ...f }] : (d.fechas || []).map((x) => (x.id === f.id ? { ...x, ...f, ...extra } : x)) }));
         // Los estudiantes de esa fecha quedan con su día de inicio.
         if (!esNueva) {
           const de = db.estudiantes.filter((e) => e.fechaId === f.id && e.fechaInicio !== f.inicio);
@@ -373,6 +383,33 @@ export default function EstudiantesApp({ p, yo, personas }) {
         fallo(e);
         return false;
       }
+    },
+    // V100 (maqueta V102): guarda el itinerario de un curso; `confirmar` lo
+    // marca como confirmado. Queda en la bitácora con lo que cambió.
+    async guardarItinerario(f, c, items, confirmar) {
+      const it = limpiarItinerario(items);
+      const previa = (db.fechas || []).find((x) => x.id === f.id) || f;
+      const antes = itinerarioDe(previa, c);
+      const cambios = cambiosItinerario(antes, it || []);
+      const fila = { itinerario: it, ...(confirmar ? { itinerario_confirmado_en: new Date().toISOString() } : {}) };
+      const { error: e } = await supabase.from("est_fechas").update(fila).eq("id", f.id);
+      if (e) {
+        if (/itinerario/i.test(e.message || "") || e.code === "42703" || e.code === "PGRST204") {
+          avisar("Para guardar el itinerario falta correr migration_104.sql en Supabase.");
+          return false;
+        }
+        fallo(e);
+        return false;
+      }
+      local((d) => ({
+        ...d,
+        conItinerario: true,
+        fechas: (d.fechas || []).map((x) => (x.id === f.id ? { ...x, conItinerario: true, itinerario: it, ...(confirmar ? { itinerarioConfirmadoEn: fila.itinerario_confirmado_en } : {}) } : x)),
+      }));
+      const yaEstaba = !!previa.itinerarioConfirmadoEn;
+      await log(null, `${yaEstaba ? "Cambió el itinerario" : "Confirmó el itinerario"}: ${c?.nombre || "curso"} · ${fechaCursoCorta(f.inicio)}${cambios.length ? ` (${cambios.join("; ")})` : ""}`);
+      avisar(yaEstaba ? "Itinerario guardado" : "Itinerario confirmado");
+      return true;
     },
     async borrarFecha(f, c) {
       try {

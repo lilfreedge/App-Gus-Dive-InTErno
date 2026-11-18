@@ -5,6 +5,7 @@ import { TIENDA } from "@/lib/viajes/servidor";
 import { CUENTAS_CURSOS, TITULAR_CURSOS, RNC_CURSOS } from "@/lib/estudiantes/modelo";
 import EstudiantePublico from "@/components/estudiantes/Publico";
 import { fechasProximas } from "@/lib/estudiantes/fechas-servidor";
+import { metaClientes, APP_CLIENTES } from "@/lib/metadata-clientes";
 
 export const dynamic = "force-dynamic";
 // V76 (pedido explícito: "vamos con la opcion 2" -- que este link se
@@ -14,13 +15,9 @@ export const dynamic = "force-dynamic";
 // vuelve a ver "Mis documentos".
 // V79 (recordatorio: "que la gente lo pueda tener en su cel"): en iPhone,
 // al "Agregar a pantalla de inicio" sale con su ícono y su nombre.
-export const metadata = {
-  title: "Mis Cursos · Gus Dive Center",
-  // V81: se instala como "App Gus" (una sola app para los clientes, maqueta V82).
-  manifest: "/app-gus.webmanifest",
-  icons: { apple: "/icono-app-192.png" },
-  appleWebApp: { capable: true, title: "Gus Dive", statusBarStyle: "default" },
-};
+// V81: se instala como "App Gus" (una sola app para los clientes, maqueta
+// V82). V101: con su propia vista previa del link.
+export const metadata = metaClientes("Mis Cursos · Gus Dive Center", "Regístrate en tu curso de buceo con Gus Dive Center y sube tus documentos.", APP_CLIENTES);
 
 // Control Estudiantes -- el link de registro (público, sin cuenta). Solo se
 // le manda al navegador la lista de cursos y cómo pagar.

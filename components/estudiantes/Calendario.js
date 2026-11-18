@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cursosDelDia } from "@/components/viajes/Inicio";
 import { hoyISO } from "@/lib/estudiantes/modelo";
+import { itinerarioDe, horaBonita } from "@/lib/estudiantes/itinerario";
 
 // V59 ("161"; nota 2-nov: "un botón de calendario entre Estudiantes e
 // Interesados vinculado con el calendario de buceos"): el mes, como en
@@ -29,6 +30,18 @@ export function Calendario({ db, ir }) {
   const cambiarMes = (n) => setMes(({ a, m }) => ({ a: m + n < 0 ? a - 1 : m + n > 11 ? a + 1 : a, m: (m + n + 12) % 12 }));
   const nombreCurso = Object.fromEntries(db.cursos.map((c) => [c.id, c.nombre]));
   const cursosCal = (db.fechas || []).filter((f) => f.activo).map((f) => ({ id: f.id, nombre: nombreCurso[f.cursoId] || "Curso", inicio: f.inicio }));
+  // V100 (maqueta V102): cada actividad del itinerario del curso en su día
+  // (con la hora). Si el curso no tiene itinerario, como antes (lunes a domingo).
+  const conItin = new Set();
+  const actividades = [];
+  for (const f of (db.fechas || []).filter((x) => x.activo)) {
+    const c = db.cursos.find((x) => x.id === f.cursoId);
+    const items = itinerarioDe(f, c).filter((x) => x.fecha);
+    if (!items.length) continue;
+    conItin.add(f.id);
+    const corto = (nombreCurso[f.cursoId] || "Curso").split(" ").map((w) => w[0]).join("").slice(0, 4);
+    items.forEach((x, i) => actividades.push({ id: `${f.id}-${i}`, iso: x.fecha, texto: `${corto} · ${x.t}${x.hora ? ` ${horaBonita(x.hora)}` : ""}`, titulo: `${nombreCurso[f.cursoId] || "Curso"} · ${x.t}`, empieza: i === 0 }));
+  }
   const hoy = hoyISO();
   return (
     <>
@@ -53,7 +66,8 @@ export function Calendario({ db, ir }) {
           ))}
           {celdas.map((d) => {
             const iso = isoDe(d);
-            const cursos = cursosDelDia(cursosCal, iso);
+            const cursos = cursosDelDia(cursosCal.filter((c) => !conItin.has(c.id)), iso);
+            const delDia = actividades.filter((a) => a.iso === iso);
             const buceos = (db.viajes || []).filter((v) => v.fecha === iso && v.estado !== "cancelado");
             return (
               <div key={iso} className={`vj-cal-dia${d.getMonth() !== mes.m ? " fuera" : ""}${iso === hoy ? " hoy" : ""}`}>
@@ -61,6 +75,11 @@ export function Calendario({ db, ir }) {
                 {cursos.map((c) => (
                   <button key={c.id} type="button" className={`vj-cal-curso${c.dia === 1 ? " empieza" : ""}`} title={`${c.nombre} · día ${c.dia} de 7`} onClick={() => ir("cursos")} style={{ border: 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
                     {c.dia === 1 ? c.nombre : `${c.nombre.split(" ").map((w) => w[0]).join("").slice(0, 4)} · día ${c.dia}`}
+                  </button>
+                ))}
+                {delDia.map((a) => (
+                  <button key={a.id} type="button" className={`vj-cal-curso${a.empieza ? " empieza" : ""}`} title={a.titulo} onClick={() => ir("cursos")} style={{ border: 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
+                    {a.texto}
                   </button>
                 ))}
                 {buceos.map((v) => (

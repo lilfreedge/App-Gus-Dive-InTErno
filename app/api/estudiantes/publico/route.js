@@ -8,8 +8,9 @@ import { pasosIniciales, pagado, debe, nombreEtapa, menorDe12, avance, faltaDe, 
 import { docValido, buscarPorDoc, celCoincide, logLink, edadHoy, tokenMenor, puedeCambiarArchivo, puedeCambiarCel, cambiarCelular } from "@/lib/estudiantes/servidor";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 import { cedulaValida, MSG_CEDULA_MALA } from "@/lib/viajes/modelo";
-import { mandarListaEspera } from "@/lib/correo-lista-espera";
 import { origenDe } from "@/lib/direccion";
+import { limpiarItinerario, itinerarioDeCatalogo } from "@/lib/estudiantes/itinerario";
+import { esOwd, esNitrox, owdDeNitrox, nitroxDeOwd, posTeoriaNitrox, TEORIA_NITROX } from "@/lib/estudiantes/junto";
 
 // Un celular de 10 dígitos puede estar guardado con el "1" de EE.UU. delante
 // (11 dígitos) si lo escribió así quien llenó el interesado; se busca con las dos formas.
@@ -103,6 +104,10 @@ export async function POST(request) {
     const { data: cfilas } = ids.length ? await s.from("est_cursos").select("*").in("id", ids) : { data: [] };
     const cursos = Object.fromEntries((cfilas || []).map((c) => [c.id, filaACurso(c)]));
     const foto = puedeCambiarArchivo(b.foto);
+    // V100 (maqueta V102): el itinerario confirmado de su curso, si lo tiene.
+    const idsF = [...new Set(ests.map((e) => e.fechaId).filter(Boolean))];
+    const { data: fechasEst } = idsF.length ? await s.from("est_fechas").select("*").in("id", idsF) : { data: [] };
+    const fechaPor = Object.fromEntries((fechasEst || []).map((f) => [f.id, f]));
     const estudios = ests.map((e) => {
       const c = cursos[e.cursoId] || null;
       const a = avance(e, c);
@@ -115,8 +120,28 @@ export async function POST(request) {
       // pantalla de su progreso.
       const pasos = pasosDe(e, c).map((p) => ({ k: p.k, t: p.t, v: (e.pasos || {})[p.k] || "pendiente" }));
       const examen = c?.llevaExamen === false ? null : { v: e.examen || "pendiente", t: nombreExamen(e.examen || "pendiente") };
-      const dias = e.fechaInicio && Array.isArray(c?.semana) ? c.semana.map((t, i) => ({ fecha: sumarDias(e.fechaInicio, i), texto: String(t || "").trim() })).filter((x) => x.texto) : [];
-      return { ...resumen(e), pagos, avance: { hechos: a.hechos, total: a.total, pct: a.pct }, falta: e.estado === "curso" ? faltaDe(e, c) : [], firma: { hay: !!e.firma, puede: firma.puede, desde: firma.desdeCuando || null }, pasos, examen, instructor: e.instructor || "", dias };
+      const itin = limpiarItinerario(fechaPor[e.fechaId]?.itinerario);
+      let dias = itin
+        ? itin.map((x) => ({ fecha: x.fecha || "", texto: x.t, hora: x.hora || "", cuadrar: !!x.cuadrar }))
+        : itinerarioDeCatalogo(c?.semana, e.fechaInicio).map((x) => ({ fecha: x.fecha || "", texto: x.t, hora: x.hora || "", cuadrar: !!x.cuadrar }));
+      // V101 (maqueta V105, "76. B"): el Nitrox con el Open Water. En el Open
+      // Water sale "Teoría Nitrox" (por cuadrar) después del examen; en el
+      // Nitrox, con qué Open Water va y su teoría por cuadrar.
+      const nx = nitroxDeOwd(ests, e);
+      const owd = owdDeNitrox(ests, e);
+      let nitrox = null;
+      let con = null;
+      if (nx) {
+        const pt = pasosDe(nx, cursos[nx.cursoId] || null).find((p) => /^teoria/.test(p.k));
+        nitrox = { v: pt ? (nx.pasos || {})[pt.k] || "pendiente" : "pendiente" };
+        const i = posTeoriaNitrox(dias);
+        dias = [...dias.slice(0, i + 1), { fecha: "", texto: TEORIA_NITROX, hora: "", cuadrar: true }, ...dias.slice(i + 1)];
+      }
+      if (owd) {
+        con = { curso: owd.curso, inicio: owd.fechaInicio || "" };
+        dias = dias.map((x) => ({ ...x, fecha: "", hora: "", cuadrar: true }));
+      }
+      return { ...resumen(e), ...(owd ? { fechaInicio: owd.fechaInicio || e.fechaInicio } : {}), pagos, avance: { hechos: a.hechos, total: a.total, pct: a.pct }, falta: e.estado === "curso" ? faltaDe(e, c) : [], firma: { hay: !!e.firma, puede: firma.puede, desde: firma.desdeCuando || null }, pasos, examen, instructor: e.instructor || "", dias, nitrox, con };
     });
     // Los menores que esta persona registró (solo cómo van).
     const { data: menoresF } = await s.from("viajes_buzos").select("*").eq("celular", soloDigitos(b.cel)).not("tutor", "is", null);
@@ -313,17 +338,18 @@ export async function POST(request) {
   // V55: la fecha que escogió ("64", "71. B"). Si está llena o el curso no
   // tiene fecha, queda en lista de espera ("65").
   let fecha = null;
-  let espera = !!body.espera;
+  // V101 ("53. sí"): ya no hay lista de espera: sin fecha, se avisa desde
+  // Interesados ("Avísame cuando haya fecha").
+  if (body.espera) return NextResponse.json({ error: "Este curso todavía no tiene fecha. Toca \"Avísame cuando haya fecha\"." }, { status: 400 });
+  const espera = false;
   let pidioLlena = false;
   if (body.fechaId) {
     const { data: fr } = await s.from("est_fechas").select("*").eq("id", String(body.fechaId)).maybeSingle();
     if (!fr || fr.curso_id !== curso.id || fr.activo === false || fr.inicio < hoyISO()) return NextResponse.json({ error: "Esa fecha ya no está disponible. Escoge otra." }, { status: 400 });
     if (fr.cupo != null) {
       const { count } = await s.from("est_estudiantes").select("id", { count: "exact", head: true }).eq("fecha_id", fr.id).neq("estado", "cancelado");
-      if ((count || 0) >= fr.cupo) {
-        espera = true;
-        pidioLlena = true;
-      }
+      // V101 ("53. sí"): ya no hay lista de espera: una fecha llena no se escoge.
+      if ((count || 0) >= fr.cupo) return NextResponse.json({ error: "Esa fecha ya se llenó. Escoge otra fecha o toca \"Avísame cuando haya otra fecha\"." }, { status: 400 });
     }
     if (!espera) fecha = fr;
   }
@@ -355,7 +381,11 @@ export async function POST(request) {
   if (body.interesadoId) await s.from("est_interesados").update(interesadoAFila({ estado: "inscrito", estudianteId: fila.id })).eq("id", String(body.interesadoId)).in("celular", celesDe(cel));
   // V65 ("286"): "Agregar Nitrox" en Open Water (o "Agregar OXY" en BLS):
   // queda anotado también en ese curso, sin fecha (en lista de espera).
+  // V101 (maqueta V105, "75. sí", "76. B"): el Nitrox con el Open Water es un
+  // día más de teoría en la misma semana: queda en curso, con el lunes del
+  // Open Water y sin fecha propia (la teoría la cuadra con el instructor).
   let tambienNombre = null;
+  let tambienJunto = false;
   if (body.tambien && String(body.tambien) !== curso.id) {
     const { data: tf } = await s.from("est_cursos").select("*").eq("id", String(body.tambien)).maybeSingle();
     const t = tf ? filaACurso(tf) : null;
@@ -365,26 +395,20 @@ export async function POST(request) {
         const pasosT = pasosIniciales(t);
         if (buzo.foto && pasosT.foto === "pendiente") pasosT.foto = "listo";
         if (buzo.docFoto && pasosT.identificacion === "pendiente") pasosT.identificacion = "listo";
-        const filaT = { id: nuevoId(), buzo_id: buzo.id, curso_id: t.id, curso: t.nombre, escuela: t.escuelas?.[0] || null, fecha_inicio: null, pasos: pasosT, examen: t.llevaExamen ? "pendiente" : "na", precio: t.precio, estado: "espera", via: "link" };
+        const junto = !!fecha && esOwd(curso.nombre) && esNitrox(t.nombre);
+        const filaT = { id: nuevoId(), buzo_id: buzo.id, curso_id: t.id, curso: t.nombre, escuela: t.escuelas?.[0] || null, fecha_inicio: junto ? fecha.inicio : null, pasos: pasosT, examen: t.llevaExamen ? "pendiente" : "na", precio: t.precio, estado: junto ? "curso" : "espera", via: "link" };
         const { error: eT } = await s.from("est_estudiantes").insert(filaT);
         if (!eT) {
           tambienNombre = t.nombre;
-          await logLink(s, filaT.id, `Se registró por el link: ${buzo.nombre} (${t.nombre}, junto con ${curso.nombre})`);
+          tambienJunto = junto;
+          await logLink(s, filaT.id, `Se registró por el link: ${buzo.nombre} (${t.nombre}, junto con ${curso.nombre}${junto ? ` del ${fechaLarga(fecha.inicio)}; la teoría la cuadra con el instructor` : ""})`);
         }
       }
     }
   }
   const cuando = fecha ? ` · ${fechaLarga(fecha.inicio)}` : espera ? (pidioLlena ? " · lista de espera (la fecha estaba llena)" : " · lista de espera") : "";
   await logLink(s, fila.id, `Se registró por el link: ${buzo.nombre} (${curso.nombre}${cuando})${tutorTxt ? ` · menor de edad, lo registró ${tutorTxt}` : ""}`);
-  // V68 ("15"): correo de lista de espera, si dejó su correo. En su ficha sale que se le mandó.
-  if (espera && !tutorTxt) {
-    const correo = buzo.correo || String(body.datos?.correo || "").trim();
-    if (await mandarListaEspera({ correo, nombre: primerNombre(buzo.nombre), que: curso.nombre, whatsapp: TIENDA_WA, origen: origenDe(request) })) {
-      await s.from("est_estudiantes").update({ etapas: { correo_espera: { en: new Date().toISOString(), por: "Link" } } }).eq("id", fila.id);
-      await logLink(s, fila.id, `Se le mandó el correo de lista de espera (${curso.nombre})`);
-    }
-  }
   // V54: aviso en la campanita ("62. si").
   await avisarEquipoEst(s, { permiso: "estudiantes", titulo: espera ? "Nuevo en lista de espera (link)" : "Nuevo estudiante por el link", texto: `${buzo.nombre}${tutorTxt ? ` (menor, lo registró ${tutorTxt})` : ""} · ${curso.nombre}${fecha ? ` · ${fechaLarga(fecha.inicio)}` : ""}`, url: `/control-estudiantes/estudiante/${fila.id}` });
-  return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio, fecha: fecha ? fecha.inicio : null, espera, llena: pidioLlena, semana: fecha ? curso.semana || null : null, tambien: tambienNombre, ...permisoMenor });
+  return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio, fecha: fecha ? fecha.inicio : null, espera, llena: pidioLlena, semana: fecha ? curso.semana || null : null, itinerario: fecha ? limpiarItinerario(fecha.itinerario) : null, tambien: tambienNombre, tambienJunto, ...permisoMenor });
 }

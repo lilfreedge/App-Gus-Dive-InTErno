@@ -1,0 +1,176 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V101 · Componentes que cambiaron y sin lista de espera</title>
+<style>
+:root{--azul:#0a3d62;--azul-claro:#1f6b9a;--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--rojo:#d64545;--sup:#eef3f6;--verde:#2c9e5b;--amar:#f6ce46;--celeste:#4ebae8}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1000px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.vista{display:none;max-width:1000px;margin:0 auto;padding:0 16px 40px}.vista.on{display:block}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;margin-bottom:14px}
+.sub{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.sub button{border:1px solid var(--borde);background:#fff;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--suave)}
+.sub button.on{border-color:var(--azul);color:var(--azul);background:#e4f1f9}
+.doble{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.etq{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;color:var(--suave)}
+.etq.antes{color:#a33}.etq.despues{color:var(--verde)}
+.app{background:#fff;border:1px solid var(--borde);border-radius:14px;overflow:hidden}
+.barra{background:var(--azul);color:#fff;border-bottom:3px solid #06243a;padding:10px 14px;font-weight:800;font-size:13px;display:flex;gap:8px;align-items:center}
+.barra.est{background:#fff;color:var(--texto);border-bottom:1px solid var(--borde)}
+.barra.buc{background:var(--celeste);color:#06324f;border-bottom:3px solid #2a8fbd}
+.logo{background:var(--rojo);color:#fff;font-weight:900;font-size:11px;border-radius:6px;padding:3px 6px}
+.cuerpo{padding:14px;background:var(--fondo)}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin-bottom:10px}
+.et{font-size:11.5px;font-weight:600;color:var(--suave);margin-bottom:3px}
+.va{font-size:14.5px;line-height:1.45}
+.lista{display:flex;flex-direction:column;gap:12px}
+.trajo{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
+.trajo span{background:var(--sup);border:1px solid var(--borde);border-radius:999px;padding:2px 9px;font-size:13px}
+.trajo span.no-vino{background:#fdecec;border-color:transparent;color:var(--rojo);font-weight:600}
+.trajo span.cambio{background:#fff3df;border-color:#f0c37a;color:#8a5200;font-weight:600}
+.compara{font-size:12px;color:var(--suave);margin-top:6px}
+.compara b{color:#8a5200}
+.aviso{background:#fff3df;border:1px solid #f0c37a;color:#6b4100;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;margin-top:10px}
+.aviso b{display:block;margin-bottom:2px}
+.chk{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.chk span{border-radius:9px;padding:6px 11px;font-size:12.5px;font-weight:700;border:1px solid var(--borde);background:#fff}
+.chk span.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.chk span.dif{outline:2px solid #f0a33a;outline-offset:1px}
+.inp{border:1px solid var(--borde);border-radius:9px;padding:8px 10px;background:#fff;font-size:13px;margin-top:6px}
+.hint{color:var(--suave);font-size:12.5px;line-height:1.45}
+.cel{max-width:360px;border:1px solid var(--borde);border-radius:18px;overflow:hidden;background:#fff}
+.fecha{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid var(--borde);border-radius:12px;padding:10px 12px;background:#fff;margin-top:8px}
+.fecha b{font-size:14px}.fecha small{display:block;color:var(--suave);font-size:12px}
+.chip{border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800;white-space:nowrap}
+.chip.ok{background:#e5f6ec;color:var(--verde)}.chip.lleno{background:#fdecec;color:var(--rojo)}.chip.gris{background:var(--sup);color:var(--suave)}
+.btn{display:block;width:100%;border:0;border-radius:10px;padding:11px 14px;font-weight:800;font-size:14px;margin-top:10px;text-align:center;background:var(--amar);color:#2b2200}
+.btn.az{background:#06324f;color:#fff}.btn.sec{background:#fff;border:1px solid var(--borde);color:var(--texto);font-weight:700}
+.btn.dis{opacity:.45}
+.tit{font-size:17px;font-weight:800;margin-bottom:4px}
+.tabla{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--borde);border-radius:12px;overflow:hidden;font-size:13px}
+.tabla th{background:var(--sup);text-align:left;padding:8px 10px;font-size:11.5px;color:var(--suave);text-transform:uppercase;letter-spacing:.3px}
+.tabla td{padding:9px 10px;border-top:1px solid var(--borde);vertical-align:top;line-height:1.45}
+.tabla td:first-child{font-weight:700;width:26%}
+.tabla td.hoy{color:#8a3a3a}.tabla td.queda{color:#1d6b40}
+@media(max-width:760px){.doble{grid-template-columns:1fr}.tabla td:first-child{width:auto}.tabla,.tabla tbody,.tabla tr,.tabla td{display:block;width:100%}.tabla thead{display:none}.tabla td{border-top:0;padding:4px 10px}.tabla tr{border-top:1px solid var(--borde);padding:6px 0}}
+</style></head><body>
+<div class="maq"><b>Maqueta V101</b> · 45: cómo saber si un componente del regulador cambió. 41: cómo quedan las cosas sin lista de espera. Nada de esto está programado: falta tu respuesta.</div>
+<div class="tabs" id="tabs">
+  <button class="tab on" data-v="comp">45 · ¿Cambió algún componente?</button>
+  <button class="tab" data-v="links">41 · Sin lista de espera: los links</button>
+  <button class="tab" data-v="equipo">41 · Sin lista de espera: lo de la tienda</button>
+</div>
+
+<!-- 45 -->
+<div class="vista on" id="v-comp">
+  <div class="nota">Propuesta: el app compara lo que trajo el regulador esta vez con <b>la orden anterior de ese mismo equipo</b>. Si algo es distinto, sale marcado en naranja. Son dos lugares (se pueden hacer los dos):<br><b>A.</b> En la ficha de la orden, dentro de "Lo que trajo".<br><b>B.</b> Al registrar la orden, antes de guardar, para confirmarlo con el cliente ahí mismo (así después no hay discusión).</div>
+  <div class="doble">
+    <div>
+      <div class="etq">A · En la ficha de la orden</div>
+      <div class="app"><div class="barra"><span class="logo">GUS</span> Equipos de clientes</div><div class="cuerpo"><div class="card"><div class="lista">
+        <div><div class="et">Servicio a realizar</div><div class="va">Mantenimiento</div></div>
+        <div><div class="et">Problemas reportados por cliente</div><div class="va">Verificar las 2das etapas tienen escape fuerte</div></div>
+        <div><div class="et">Lo que trajo</div>
+          <div class="trajo">
+            <span>Primera etapa (Sherwood Brut)</span>
+            <span class="cambio">Segunda etapa (Aqualung) · cambió</span>
+            <span>Manguera de BC</span>
+            <span>Manómetro</span>
+            <span class="no-vino">Sin octopus · la vez pasada sí</span>
+          </div>
+          <div class="compara">Comparado con la orden 2150 (03/08/2026). <b>Antes:</b> Segunda etapa (Sherwood Brut), Octopus (Sherwood).</div>
+        </div>
+        <div><div class="et">Autorización del cliente</div><div class="va">Solo lo indicado, nada más</div></div>
+      </div></div></div></div>
+    </div>
+    <div>
+      <div class="etq">B · Al registrar la orden</div>
+      <div class="app"><div class="barra"><span class="logo">GUS</span> Registrar orden</div><div class="cuerpo"><div class="card">
+        <div class="et">Componentes recibidos</div>
+        <div class="hint">Según el equipo: Primera etapa Sherwood Brut, Segunda etapa Sherwood Brut, Octopus Sherwood, Manguera de BC, Manómetro</div>
+        <div class="chk"><span class="on">Primera etapa</span><span class="on dif">Segunda etapa</span><span class="dif">Octopus</span><span class="on">Manguera de BC</span><span class="on">Manómetro</span><span>Profundímetro</span></div>
+        <div class="inp">Aqualung</div>
+        <div class="aviso"><b>Esto es distinto a la vez pasada</b>Segunda etapa: antes Sherwood Brut, ahora Aqualung · Octopus: la vez pasada vino, ahora no.<br>Confírmalo con el cliente antes de guardar.</div>
+        <div class="btn az" style="margin-top:12px">Registrar orden</div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="nota" style="margin-top:14px;margin-bottom:0">Si es la primera vez que ese equipo viene, no hay con qué comparar y sale como hoy, sin marcas.</div>
+</div>
+
+<!-- 41 LINKS -->
+<div class="vista" id="v-links">
+  <div class="nota">Lo que ven los clientes cuando algo está lleno. Ya no se pueden anotar en espera y no les llega el correo de lista de espera.</div>
+  <div class="sub" id="sub-links"><button class="on" data-s="curso">Link de cursos</button><button data-s="sinfecha">Curso sin fechas</button><button data-s="buceo">Link de un buceo</button><button data-s="app">App Gus Dive</button></div>
+  <div class="doble">
+    <div><div class="etq antes">Hoy</div><div class="cel" id="l-hoy"></div></div>
+    <div><div class="etq despues">Cómo queda</div><div class="cel" id="l-queda"></div></div>
+  </div>
+</div>
+
+<!-- 41 EQUIPO -->
+<div class="vista" id="v-equipo">
+  <div class="nota">Lo de la tienda que también menciona la lista de espera. Nada se borra: quien ya está en lista de espera se queda donde está hasta que lo pases a una fecha o lo quites; esas secciones solo salen si queda alguien.</div>
+  <table class="tabla"><thead><tr><th>Dónde</th><th>Hoy</th><th>Cómo queda</th></tr></thead><tbody>
+    <tr><td>Control Estudiantes › Nuevo estudiante</td><td class="hoy">En "Fecha" se puede escoger "Lista de espera (sin fecha)".</td><td class="queda">Esa opción se quita. Si el curso no tiene fechas abiertas, dice "Este curso no tiene fechas abiertas" con "Crear curso" o "Anotarlo como interesado".</td></tr>
+    <tr><td>Control Estudiantes › Inicio y Cursos</td><td class="hoy">Cuadro y grupo "Lista de espera".</td><td class="queda">Solo sale si queda alguien de antes. Cuando ya no quede nadie, desaparece.</td></tr>
+    <tr><td>Página del curso › Interesados</td><td class="hoy">Arriba: "Ya llenaron sus datos y esperan un cupo".</td><td class="queda">Igual que arriba: solo si queda alguien de antes. Debajo siguen los interesados.</td></tr>
+    <tr><td>Buceos › el buceo</td><td class="hoy">"Cerrar inscripción" dice "quedan en lista de espera"; botón "Pasar a lista de espera"; cuadro "en espera".</td><td class="queda">"Cerrar inscripción: ya no se puede inscribir nadie más." Se quita "Pasar a lista de espera". El cuadro "en espera" y la sección de abajo solo salen si queda alguien de antes.</td></tr>
+    <tr><td>Avisos al equipo</td><td class="hoy">"Nuevo en lista de espera" y "Se llenó… los próximos quedan en lista de espera".</td><td class="queda">"Se llenó [buceo]: llegó a X buzos." Lo de lista de espera se quita.</td></tr>
+    <tr><td>Correo de lista de espera</td><td class="hoy">Le llega al cliente cuando se anota en espera.</td><td class="queda">Ya no se manda.</td></tr>
+  </tbody></table>
+</div>
+
+<script>
+const L = {
+  curso: {
+    hoy: '<div class="barra est"><span class="logo">GUS</span> Registro de estudiante</div><div class="cuerpo"><div class="tit">Open Water Diver</div><div class="hint">Escoge la fecha</div>'
+      + '<div class="fecha"><div><b>Lunes 23 nov</b><small>Hasta el domingo 29</small></div><span class="chip lleno">Lleno · lista de espera</span></div>'
+      + '<div class="btn">Ponerme en la lista de espera</div>'
+      + '<div class="fecha"><div><b>Lunes 7 dic</b><small>Hasta el domingo 13</small></div><span class="chip ok">Quedan 3 cupos</span></div></div>',
+    queda: '<div class="barra est"><span class="logo">GUS</span> Registro de estudiante</div><div class="cuerpo"><div class="tit">Open Water Diver</div><div class="hint">Escoge la fecha</div>'
+      + '<div class="fecha" style="opacity:.6"><div><b>Lunes 23 nov</b><small>Hasta el domingo 29</small></div><span class="chip lleno">Lleno</span></div>'
+      + '<div class="fecha"><div><b>Lunes 7 dic</b><small>Hasta el domingo 13</small></div><span class="chip ok">Quedan 3 cupos</span></div>'
+      + '<div class="btn">Escoger esta fecha</div>'
+      + '<div class="hint" style="margin-top:10px">Si todas las fechas están llenas: "Todas las fechas están llenas" y el botón "Avísame cuando haya otra fecha" (el link de interesados, con el curso ya escogido).</div></div>'
+  },
+  sinfecha: {
+    hoy: '<div class="barra est"><span class="logo">GUS</span> Registro de estudiante</div><div class="cuerpo"><div class="tit">Rescue Diver</div>'
+      + '<div class="fecha"><div><b>Rescue Diver</b><small>Todavía no hay fechas</small></div><span class="chip gris">Lista de espera</span></div>'
+      + '<div class="btn">Anotarme en la lista de espera</div><div class="hint" style="margin-top:8px">Llena todos sus datos y queda "en espera".</div></div>',
+    queda: '<div class="barra est"><span class="logo">GUS</span> Registro de estudiante</div><div class="cuerpo"><div class="tit">Rescue Diver</div>'
+      + '<div class="fecha"><div><b>Rescue Diver</b><small>Todavía no hay fechas</small></div><span class="chip gris">Sin fecha por ahora</span></div>'
+      + '<div class="btn">Avísame cuando haya fecha</div><div class="hint" style="margin-top:8px">Lo lleva al link de interesados con el curso ya escogido (nombre, celular y correo). Queda en Interesados y le avisas cuando abras una fecha, como hoy.</div></div>'
+  },
+  buceo: {
+    hoy: '<div class="barra buc"><span class="logo">GUS</span> Gus Dive</div><div class="cuerpo"><div class="tit">Catalina · sáb 28 nov</div>'
+      + '<div class="card" style="font-size:13px"><b>Este buceo está lleno.</b> Si te inscribes, quedas en la lista de espera y te avisamos si se abre un cupo.</div>'
+      + '<div class="hint">Cédula, nombre, celular…</div><div class="btn az">Anotarme en la lista de espera</div></div>',
+    queda: '<div class="barra buc"><span class="logo">GUS</span> Gus Dive</div><div class="cuerpo"><div class="tit">Catalina · sáb 28 nov</div>'
+      + '<div class="card" style="font-size:13px"><b>Este buceo está lleno.</b> Ya no quedan cupos.</div>'
+      + '<div class="btn az">Ver otros buceos</div><div class="btn sec">Escríbenos por WhatsApp</div>'
+      + '<div class="hint" style="margin-top:8px">Con la inscripción cerrada dice "La inscripción para este buceo está cerrada" con los mismos dos botones.</div></div>'
+  },
+  app: {
+    hoy: '<div class="barra"><span class="logo">GUS</span> Gus Dive</div><div class="cuerpo"><div class="tit">Próximos cursos</div>'
+      + '<div class="fecha"><div><b>Open Water Diver</b><small>Lunes 23 nov</small></div><span class="chip lleno">Lleno · lista de espera</span></div>'
+      + '<div class="fecha"><div><b>Mis cursos</b><small>Rescue Diver</small></div><span class="chip gris">En lista de espera</span></div></div>',
+    queda: '<div class="barra"><span class="logo">GUS</span> Gus Dive</div><div class="cuerpo"><div class="tit">Próximos cursos</div>'
+      + '<div class="fecha"><div><b>Open Water Diver</b><small>Lunes 23 nov</small></div><span class="chip lleno">Lleno</span></div>'
+      + '<div class="hint" style="margin-top:8px">En "Mis cursos", quien ya estaba en espera sigue viéndolo así hasta que la tienda lo pase a una fecha.</div></div>'
+  }
+};
+function linkSub(k){
+  document.getElementById("l-hoy").innerHTML = L[k].hoy;
+  document.getElementById("l-queda").innerHTML = L[k].queda;
+  document.querySelectorAll("#sub-links button").forEach(b => b.classList.toggle("on", b.dataset.s === k));
+}
+document.getElementById("sub-links").addEventListener("click", e => { const b = e.target.closest("button"); if (b) linkSub(b.dataset.s); });
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest(".tab"); if (!b) return;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t === b));
+  document.querySelectorAll(".vista").forEach(v => v.classList.toggle("on", v.id === "v-" + b.dataset.v));
+});
+linkSub("curso");
+</script>
+</body></html>

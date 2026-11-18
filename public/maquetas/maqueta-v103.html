@@ -1,0 +1,137 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V103 · Pasos del regulador y compresores en Movimientos</title>
+<style>
+:root{--azul:#0a3d62;--graf:#36454f;--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--rojo:#d64545;--sup:#eef3f6;--verde:#2c9e5b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1000px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.vista{display:none;max-width:1000px;margin:0 auto;padding:0 16px 40px}.vista.on{display:block}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;margin-bottom:14px}
+.doble{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.etq{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.etq.antes{color:#a33}.etq.despues{color:var(--verde)}
+.app{background:#fff;border:1px solid var(--borde);border-radius:14px;overflow:hidden}
+.barra{color:#fff;padding:10px 14px;font-weight:800;font-size:13px;display:flex;gap:8px;align-items:center;background:var(--graf);border-bottom:3px solid #222d34}
+.barra.nav{background:var(--azul);border-bottom-color:#06243a}
+.logo{background:var(--rojo);color:#fff;font-weight:900;font-size:11px;border-radius:6px;padding:3px 6px}
+.cuerpo{padding:14px;background:var(--fondo)}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;margin-bottom:10px}
+.t{font-size:16px;font-weight:800;margin-bottom:8px}
+.hint{color:var(--suave);font-size:12.5px;line-height:1.45}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chips span{border:1px solid var(--borde);border-radius:9px;padding:6px 10px;font-size:12.5px;font-weight:700;background:#fff}
+.chips span.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.paso{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--sup);cursor:pointer}
+.paso:first-of-type{border-top:0}
+.caja{width:22px;height:22px;border-radius:6px;border:2px solid #b9c4cc;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff}
+.paso.hecho .caja{background:var(--verde);border-color:var(--verde)}
+.paso .tx b{display:block;font-size:14px}.paso .tx small{color:var(--suave);font-size:12px}
+.paso.hecho .tx b{color:var(--verde)}
+.barra-av{height:8px;background:var(--sup);border-radius:999px;overflow:hidden;margin:6px 0 10px}
+.barra-av div{height:100%;background:var(--verde);transition:width .2s}
+.btn{display:block;width:100%;border:0;border-radius:10px;padding:10px 14px;font-weight:800;font-size:14px;margin-top:10px;text-align:center;background:var(--azul);color:#fff}
+.btn.dis{opacity:.4}
+.filtros{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.filtros span{border:1.5px solid #8796a3;border-radius:9px;padding:6px 11px;font-size:12.5px;font-weight:700;background:#fff;color:var(--azul)}
+.filtros span.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.filtros span.nuevo{border-color:#e0a800;box-shadow:0 0 0 2px #fbe9a6}
+.mov{padding:10px 0;border-top:1px solid var(--sup)}
+.mov:first-child{border-top:0}
+.mov .r{display:flex;justify-content:space-between;gap:8px}
+.mov b{font-size:14px}.mov .q{font-weight:800;color:var(--azul)}
+.mov small{display:block;color:var(--suave);font-size:12px;margin-top:2px}
+.mov.nuevo{background:#fffbea;border-radius:8px;padding:10px 8px}
+.badge{display:inline-block;background:#e4f1f9;color:var(--azul);font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;margin-left:5px}
+@media(max-width:760px){.doble{grid-template-columns:1fr}}
+</style></head><body>
+<div class="maq"><b>Maqueta V103</b> · 54: qué sería el "86" (pasos del mantenimiento del regulador). 55: los mantenimientos de compresores en Movimientos. Nada de esto está programado: falta tu respuesta.</div>
+<div class="tabs" id="tabs">
+  <button class="tab on" data-v="pasos">54 · El 86: pasos del regulador</button>
+  <button class="tab" data-v="comp">55 · Compresores en Movimientos</button>
+</div>
+
+<div class="vista on" id="v-pasos">
+  <div class="nota"><b>Qué es el 86:</b> en una lista tuya del 8 de noviembre había un punto que decía "procedimiento de reguladores como lista". No encontramos dónde lo pediste. Lo que me imagino que querías es esto: hoy el técnico, en el informe, solo marca al final lo que hizo (izquierda). La idea sería que tenga los pasos del mantenimiento <b>en orden</b>, y los vaya marcando mientras trabaja (derecha; toca los pasos). Al terminar, el informe se llena solo con lo que marcó. Si no era esto o no te interesa, lo quito de la lista.</div>
+  <div class="doble">
+    <div>
+      <div class="etq antes">Hoy · Informe de mantenimiento</div>
+      <div class="app"><div class="barra nav"><span class="logo">GUS</span> Informe del regulador</div><div class="cuerpo"><div class="card">
+        <div class="t">Trabajo realizado</div>
+        <div class="hint">Se marca todo al final, sin orden.</div>
+        <div class="chips"><span class="on">Limpieza ultrasónica</span><span>Revisión interna</span><span class="on">Ajuste de presión intermedia</span><span>Pruebas de flujo (2da etapa y octopus)</span><span>Pruebas de estanqueidad</span></div>
+        <div class="hint" style="margin-top:10px">Presión intermedia, o-rings, aprobado / no aprobado…</div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="etq despues">Idea · Pasos en orden</div>
+      <div class="app"><div class="barra nav"><span class="logo">GUS</span> Mantenimiento · Orden 2205</div><div class="cuerpo"><div class="card">
+        <div class="t">Pasos del mantenimiento</div>
+        <div class="hint" id="av-t">0 de 8 listos</div>
+        <div class="barra-av"><div id="av" style="width:0%"></div></div>
+        <div id="pasos"></div>
+        <div class="btn dis" id="fin">Terminar e ir al informe</div>
+      </div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="vista" id="v-comp">
+  <div class="nota"><b>La diferencia:</b> en el Inicio, "Actividad reciente" enseña solo los <b>últimos 10</b> movimientos, y ahí ya salen los de compresores. Pero en "Ver todo" (Movimientos, la lista completa con buscador y filtros) los de compresores <b>no salen</b>. La propuesta es agregarlos ahí, con su botón "Compresores" (marcado en amarillo).</div>
+  <div class="doble">
+    <div>
+      <div class="etq antes">Hoy · Movimientos (Ver todo)</div>
+      <div class="app"><div class="barra"><span class="logo">GUS</span> App Interno</div><div class="cuerpo"><div class="t">Movimientos</div>
+        <div class="filtros"><span class="on">Todos</span><span>Salidas</span><span>Llenados</span><span>Inspecciones</span><span>Mantenimientos</span><span>PH</span><span>Solicitudes</span><span>Recordatorios</span></div>
+        <div class="card">
+          <div class="mov"><div class="r"><b>Envío a prueba hidrostática</b><span class="q">3 tanques</span></div><small>Ana · 17 nov, 1:48 p. m.</small></div>
+          <div class="mov"><div class="r"><b>Plomos <span class="badge">Venta</span></b><span class="q">4</span></div><small>Ana · 17 nov, 11:23 a. m.</small></div>
+          <div class="mov"><div class="r"><b>Llenados de tanque</b><span class="q">6 tanque(s)</span></div><small>Luis · 16 nov, 4:10 p. m.</small></div>
+        </div>
+        <div class="hint">El mantenimiento del compresor del 16 nov no aparece aquí.</div>
+      </div></div>
+    </div>
+    <div>
+      <div class="etq despues">Cómo queda</div>
+      <div class="app"><div class="barra"><span class="logo">GUS</span> App Interno</div><div class="cuerpo"><div class="t">Movimientos</div>
+        <div class="filtros"><span class="on">Todos</span><span>Salidas</span><span>Llenados</span><span>Inspecciones</span><span>Mantenimientos</span><span class="nuevo">Compresores</span><span>PH</span><span>Solicitudes</span><span>Recordatorios</span></div>
+        <div class="card">
+          <div class="mov"><div class="r"><b>Envío a prueba hidrostática</b><span class="q">3 tanques</span></div><small>Ana · 17 nov, 1:48 p. m.</small></div>
+          <div class="mov"><div class="r"><b>Plomos <span class="badge">Venta</span></b><span class="q">4</span></div><small>Ana · 17 nov, 11:23 a. m.</small></div>
+          <div class="mov nuevo"><div class="r"><b>Mantenimiento de compresor</b><span class="q">COMP-1</span></div><small>Técnico · 16 nov, 5:02 p. m. · cambio de filtros</small></div>
+          <div class="mov"><div class="r"><b>Llenados de tanque</b><span class="q">6 tanque(s)</span></div><small>Luis · 16 nov, 4:10 p. m.</small></div>
+        </div>
+        <div class="hint">Al tocarlo se abre su detalle (qué se hizo, horas, piezas, quién) con "Ver el compresor".</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PASOS = [
+  ["Revisar cómo llegó", "Lo que dijo el cliente y los daños, ya anotados en la orden"],
+  ["Desarmar primera etapa", ""],
+  ["Desarmar segunda etapa y octopus", ""],
+  ["Limpieza ultrasónica", ""],
+  ["Cambiar o-rings y piezas del kit", "Anota cuáles"],
+  ["Armar y ajustar presión intermedia", "Anota la presión"],
+  ["Pruebas de flujo (2da etapa y octopus)", ""],
+  ["Pruebas de estanqueidad", "Sin fugas"],
+];
+const hecho = PASOS.map(() => false);
+function pintar(){
+  document.getElementById("pasos").innerHTML = PASOS.map((p,i) => `<div class="paso${hecho[i]?" hecho":""}" onclick="marcar(${i})"><div class="caja">${hecho[i]?"✓":""}</div><div class="tx"><b>${i+1}. ${p[0]}</b>${hecho[i]?`<small>Listo · Técnico, ${new Date().toLocaleTimeString("es-DO",{hour:"numeric",minute:"2-digit"})}</small>`:p[1]?`<small>${p[1]}</small>`:""}</div></div>`).join("");
+  const n = hecho.filter(Boolean).length;
+  document.getElementById("av").style.width = (n/PASOS.length*100)+"%";
+  document.getElementById("av-t").textContent = `${n} de ${PASOS.length} listos`;
+  document.getElementById("fin").classList.toggle("dis", n < PASOS.length);
+}
+function marcar(i){ hecho[i] = !hecho[i]; pintar(); }
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest(".tab"); if (!b) return;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t === b));
+  document.querySelectorAll(".vista").forEach(v => v.classList.toggle("on", v.id === "v-" + b.dataset.v));
+});
+pintar();
+</script>
+</body></html>

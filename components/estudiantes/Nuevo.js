@@ -44,7 +44,8 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId, fechaId }) {
   const curso = cursos.find((c) => c.id === f.cursoId);
   const fechas = curso ? fechasDe(db, curso.id) : [];
   // Sin el SQL de la V55 todavía no hay fechas: se escribe a mano como antes.
-  const cual = f.cual || (db.sinFechas ? "mano" : fechas.find((x) => quedan(db, x) !== 0)?.id ?? "espera");
+  // V101 ("53. sí"): ya no hay lista de espera: si no hay fecha con cupo, se escribe la fecha.
+  const cual = f.cual === "espera" ? "mano" : f.cual || (db.sinFechas ? "mano" : fechas.find((x) => quedan(db, x) !== 0)?.id ?? "mano");
   const fechaSel = fechas.find((x) => x.id === cual);
 
   const t = q.trim().toLowerCase();
@@ -262,10 +263,14 @@ export function Nuevo({ db, p, ops, ir, avisar, interesadoId, fechaId }) {
                     {fechaCursoCorta(x.inicio)} {x.inicio.slice(0, 4)} · {textoCupo(db, x)}
                   </option>
                 ))}
-                <option value="espera">Lista de espera (sin fecha)</option>
                 <option value="mano">Otra fecha (escribirla)</option>
               </select>
             </label>
+            {cual === "mano" && !db.sinFechas && !fechas.some((x) => quedan(db, x) !== 0) && (
+              <div className="hint-text" style={{ flexBasis: "100%" }}>
+                {curso?.nombre || "Este curso"} no tiene fechas abiertas con cupo. Crea el curso en Cursos › Crear curso, o escribe la fecha.
+              </div>
+            )}
             {cual === "mano" && (
               <label>
                 Fecha de inicio

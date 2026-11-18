@@ -1,0 +1,121 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V104 · Pasos del mantenimiento del regulador</title>
+<style>
+:root{--azul:#0a3d62;--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--rojo:#d64545;--sup:#eef3f6;--verde:#2c9e5b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.wrap{max-width:1000px;margin:0 auto;padding:14px 16px 40px}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;margin-bottom:14px}
+.doble{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+.app{background:#fff;border:1px solid var(--borde);border-radius:14px;overflow:hidden}
+.barra{background:var(--azul);color:#fff;border-bottom:3px solid #06243a;padding:10px 14px;font-weight:800;font-size:13px;display:flex;gap:8px;align-items:center}
+.logo{background:var(--rojo);color:#fff;font-weight:900;font-size:11px;border-radius:6px;padding:3px 6px}
+.cuerpo{padding:14px;background:var(--fondo)}
+.sec{background:var(--fondo);border:1px solid var(--borde);border-radius:10px;padding:14px;margin-bottom:12px;background:#fff}
+.lab{font-size:11px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.3px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.top span{font-size:12.5px;color:var(--suave);font-weight:700}
+.bar{height:8px;background:var(--sup);border-radius:999px;overflow:hidden;margin:8px 0 4px}
+.bar div{height:100%;background:var(--verde);transition:width .2s}
+.fase{margin-top:12px;font-size:12px;font-weight:800;color:var(--azul);text-transform:uppercase;letter-spacing:.3px;background:#e4f1f9;border-radius:6px;padding:4px 8px;display:inline-block}
+.paso{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--borde);cursor:pointer}
+.paso.primero{border-top:0}
+.caja{width:22px;height:22px;border-radius:6px;border:2px solid #b9c4cc;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:13px}
+.paso.hecho .caja{background:var(--verde);border-color:var(--verde)}
+.paso b{display:block;font-size:14px}
+.paso.hecho b{color:var(--verde)}
+.paso small{display:block;font-size:12px;color:var(--suave);margin-top:1px;line-height:1.4}
+.paso .ojo{color:#a05a00;font-weight:700}
+.pi{margin:4px 0 6px 32px;background:var(--sup);border-radius:10px;padding:10px}
+.pi label{font-size:12.5px;font-weight:700;color:var(--suave);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pi input{width:90px;border:1px solid var(--borde);border-radius:8px;padding:7px 9px;font-size:14px}
+.pi .ok{color:var(--verde);font-weight:700;font-size:12.5px;margin-top:6px}
+.pi .mal{color:#a05a00;font-weight:700;font-size:12.5px;margin-top:6px}
+.pi .man{display:inline-block;margin-top:8px;color:var(--azul);font-weight:700;font-size:12.5px;text-decoration:none;border-bottom:1px solid #b9d3e4}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips span{border:1px solid var(--borde);border-radius:9px;padding:6px 10px;font-size:12.5px;font-weight:700;background:#fff}
+.chips span.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.hint{color:var(--suave);font-size:12.5px;line-height:1.45}
+.lado h4{margin:0 0 6px;font-size:14px}
+.lado ul{margin:0 0 12px;padding-left:18px;line-height:1.55;font-size:13px}
+@media(max-width:820px){.doble{grid-template-columns:1fr}}
+</style></head><body>
+<div class="maq"><b>Maqueta V104</b> · Informe de mantenimiento del regulador: los pasos como los hacen ustedes, para que el técnico los vaya marcando. Toca los pasos y escribe una presión en el paso 11. Nada de esto está programado: falta tu respuesta.</div>
+<div class="wrap">
+  <div class="nota">Propuesta con lo que me contaste: <b>13 pasos en dos partes</b> ("Desarmar y lavar" y "Armar y probar"), en el orden en que los hacen. Se pueden marcar en el orden que vayan saliendo (por ejemplo, el 4 mientras se lava el 3). Cada paso queda con quién y a qué hora. Al marcarlos se marca solo el "Trabajo realizado" (abajo a la derecha). En el paso 11, la presión que escribas va directo a "Presión intermedia" del informe, con un aviso si se sale de lo normal y el manual del modelo si lo tenemos.</div>
+  <div class="doble">
+    <div class="app"><div class="barra"><span class="logo">GUS</span> Informe de mantenimiento · Orden 2205</div><div class="cuerpo">
+      <div class="sec">
+        <div class="top"><div class="lab">Pasos del mantenimiento</div><span id="cuenta">0 de 13 listos</span></div>
+        <div class="bar"><div id="av" style="width:0%"></div></div>
+        <div id="pasos"></div>
+      </div>
+      <div class="sec">
+        <div class="lab">Trabajo realizado</div>
+        <div class="hint" style="margin-top:4px">Se marca solo con los pasos (se puede tocar a mano también).</div>
+        <div class="chips" id="chips"></div>
+      </div>
+    </div></div>
+    <div class="lado">
+      <div class="sec">
+        <h4>Qué marca cada paso en "Trabajo realizado"</h4>
+        <ul>
+          <li><b>3 y 5</b> (ultrasonido) → Limpieza ultrasónica</li>
+          <li><b>4</b> (desarmar la primera etapa) → Revisión interna</li>
+          <li><b>11</b> (presión intermedia) → Ajuste de presión intermedia</li>
+          <li><b>13</b> (pileta) → Pruebas de estanqueidad y Pruebas de flujo</li>
+        </ul>
+        <h4>El aparato del paso 10</h4>
+        <div class="hint">Se llama <b>manómetro de presión intermedia</b> (en inglés, "IP gauge"): el reloj que se conecta a la manguera del BC para leer la presión intermedia. Así le puse en el paso.</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const PASOS = [
+  { fase: "Desarmar y lavar" },
+  { t: "Quitar la segunda etapa y el octopus" },
+  { t: "Quitar las mangueras, menos la de alta", s: "La de alta no: si le entra líquido se puede dañar el manómetro.", ojo: true },
+  { t: "Ultrasonido, ronda 1", s: "La segunda etapa, el octopus y las dos puntas de las mangueras.", marca: ["limpieza"] },
+  { t: "Desarmar la primera etapa", s: "Mientras se lava la ronda 1.", marca: ["revision"] },
+  { t: "Ultrasonido, ronda 2: la primera etapa", s: "Saca la ronda 1 y mete la primera etapa.", marca: ["limpieza"] },
+  { t: "Secar bien la primera etapa", s: "Que no le quede líquido que pueda llegar al manómetro.", ojo: true },
+  { t: "Revisar los o-rings y cambiar los que hagan falta", s: "Anota cuáles en \"Cambio de o-rings\", más abajo." },
+  { fase: "Armar y probar" },
+  { t: "Armar la primera etapa" },
+  { t: "Poner las mangueras, la segunda etapa y el octopus" },
+  { t: "Conectar la manguera del BC al manómetro de presión intermedia" },
+  { t: "Revisar la presión intermedia", pi: true, marca: ["ajuste"] },
+  { t: "Desconectar el manómetro" },
+  { t: "Probarlo en la pileta", s: "Que no tenga fugas y que respire bien.", marca: ["estanqueidad", "flujo"] },
+];
+const TRABAJO = [["limpieza","Limpieza ultrasónica"],["revision","Revisión interna"],["ajuste","Ajuste de presión intermedia"],["flujo","Pruebas de flujo (2da etapa y octopus)"],["estanqueidad","Pruebas de estanqueidad"]];
+const hecho = {}; let psi = "";
+const hora = () => new Date().toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" });
+function pintar(){
+  let n = 0, html = "", primero = true;
+  PASOS.forEach((p, i) => {
+    if (p.fase) { html += `<div class="fase">${p.fase}</div>`; primero = true; return; }
+    n++;
+    const h = hecho[i];
+    html += `<div class="paso${h ? " hecho" : ""}${primero ? " primero" : ""}" onclick="marcar(${i})"><div class="caja">${h ? "✓" : ""}</div><div><b>${n}. ${p.t}</b>${h ? `<small>Listo · Técnico · ${h}</small>` : p.s ? `<small${p.ojo ? ' class="ojo"' : ""}>${p.s}</small>` : ""}</div></div>`;
+    if (p.pi) {
+      const v = Number(psi);
+      const fuera = psi && (v < 130 || v > 145);
+      html += `<div class="pi" onclick="event.stopPropagation()"><label>Presión intermedia <input inputmode="numeric" value="${psi}" placeholder="140" oninput="psi=this.value.replace(/\\D/g,'');pintar();setTimeout(()=>{const x=document.querySelector('.pi input');x.focus();x.setSelectionRange(x.value.length,x.value.length)},0)"> psi</label>`
+        + (psi ? (fuera ? `<div class="mal">Fuera de lo normal (130 a 145 psi). Revísala con el manual.</div>` : `<div class="ok">Dentro de lo normal.</div>`) : "")
+        + `<div class="hint" style="margin-top:6px">Normal: entre 130 y 145 psi. Pistón: no más de 140. Diafragma: hay que ajustarla. <b>Consulta el manual del modelo.</b></div>`
+        + `<a class="man" href="#" onclick="return false">Ver el manual del Sherwood Brut ›</a></div>`;
+    }
+    primero = false;
+  });
+  document.getElementById("pasos").innerHTML = html;
+  const listos = Object.keys(hecho).length;
+  document.getElementById("cuenta").textContent = `${listos} de ${n} listos`;
+  document.getElementById("av").style.width = (listos / n * 100) + "%";
+  const on = new Set(); PASOS.forEach((p, i) => { if (hecho[i] && p.marca) p.marca.forEach((m) => on.add(m)); });
+  document.getElementById("chips").innerHTML = TRABAJO.map(([k, t]) => `<span class="${on.has(k) ? "on" : ""}">${t}</span>`).join("");
+}
+function marcar(i){ if (hecho[i]) delete hecho[i]; else hecho[i] = hora(); pintar(); }
+pintar();
+</script>
+</body></html>

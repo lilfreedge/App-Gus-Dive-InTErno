@@ -1,9 +1,10 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import MeInteresa from "@/components/estudiantes/MeInteresa";
+import { metaClientes, APP_CLIENTES } from "@/lib/metadata-clientes";
 
 export const dynamic = "force-dynamic";
 // V81: se instala como "App Gus".
-export const metadata = { title: "Registro de interesado · Gus Dive Center", manifest: "/app-gus.webmanifest", icons: { apple: "/icono-app-192.png" }, appleWebApp: { capable: true, title: "Gus Dive", statusBarStyle: "default" } };
+export const metadata = metaClientes("Registro de interesado · Gus Dive Center", "Déjanos tus datos y te avisamos cuando haya un curso.", APP_CLIENTES);
 
 // Control Estudiantes -- el link de interesados (para Instagram o la página
 // web). Cae en Interesados como "Nuevo".

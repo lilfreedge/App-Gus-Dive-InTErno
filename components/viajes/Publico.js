@@ -639,6 +639,10 @@ export default function PublicoViaje({ v, tienda }) {
         acepto,
         inscritoPorDoc: inscritoPor?.doc || null,
         inscritoPorTipo: inscritoPor?.tipo || null,
+      }).catch((e) => {
+        // V101: si se llenó (o se cerró) mientras llenaba el formulario, sale "lleno".
+        if (/lleno|cerrada/i.test(e.message || "")) setQuedan(0);
+        throw e;
       });
       setResultado({ ...j, docDe: { tipo: tipoDoc, doc, corto: nombreActual } });
       if (!j.ya && !j.enEspera) setQuedan((q) => Math.max(0, q - 1));
@@ -711,7 +715,7 @@ export default function PublicoViaje({ v, tienda }) {
                   <div className="pb-lleno">
                     <IconAlert size={20} />
                     <div>
-                      <b>Este {palabra} está lleno.</b> Si te inscribes, quedas en la lista de espera y te avisamos si se abre un cupo.
+                      <b>{v.cerrado ? `La inscripción para este ${palabra} está cerrada.` : `Este ${palabra} está lleno.`}</b> Ya no quedan cupos. Si ya estás inscrito, pon tu cédula para ver tu inscripción.
                     </div>
                   </div>
                 )}
@@ -1102,29 +1106,35 @@ export default function PublicoViaje({ v, tienda }) {
                   </label>
                 )}
                 {quedan > 0 ? (
-                  <div className="pb-resumen">
-                    Vas a inscribir a <b>{nombreActual}</b>
-                    {total ? ` · total ${rd(total)}` : ""}
-                  </div>
-                ) : (
-                  // V60 ("174"): que sepa antes de enviar que queda en lista de espera.
-                  <div className="pb-lleno pb-lleno-fin">
-                    <IconAlert size={20} />
-                    <div>
-                      <b>Este {palabra} está lleno.</b> Vas a anotar a {nombreActual} en la <b>lista de espera</b>. No tienes que pagar nada ahora: te escribimos si se abre un cupo.
+                  <>
+                    <div className="pb-resumen">
+                      Vas a inscribir a <b>{nombreActual}</b>
+                      {total ? ` · total ${rd(total)}` : ""}
                     </div>
-                  </div>
+                    {error && <div className="pb-error">{error}</div>}
+                    <button className="pb-btn" disabled={cargando} onClick={inscribir}>
+                      {cargando ? "Inscribiendo…" : v.reserva ? `Inscribirme · separar con ${rd(v.reserva.monto)}` : `Inscribirme${total ? ` · ${rd(total)}` : ""}`}
+                    </button>
+                  </>
+                ) : (
+                  // V101 ("53. sí"): sin lista de espera: lleno o cerrado, ya no se inscribe.
+                  <>
+                    <div className="pb-lleno pb-lleno-fin">
+                      <IconAlert size={20} />
+                      <div>
+                        <b>{v.cerrado ? `La inscripción para este ${palabra} está cerrada.` : `Este ${palabra} está lleno.`}</b> Ya no quedan cupos.
+                      </div>
+                    </div>
+                    <a className="pb-btn" href="/gus#buceos" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
+                      Ver otros buceos
+                    </a>
+                    {tienda?.whatsapp && (
+                      <a className="pb-btn sec" href={`https://wa.me/${numeroWhatsApp(tienda.whatsapp)}?text=${encodeURIComponent(`Hola, quería ir a ${v.nombre} del ${fechaLarga(v.fecha)} pero está lleno.`)}`} target="_blank" rel="noreferrer" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
+                        Escríbenos por WhatsApp
+                      </a>
+                    )}
+                  </>
                 )}
-                {error && <div className="pb-error">{error}</div>}
-                <button className="pb-btn" disabled={cargando} onClick={inscribir}>
-                  {cargando
-                    ? "Inscribiendo…"
-                    : quedan > 0
-                    ? v.reserva
-                      ? `Inscribirme · separar con ${rd(v.reserva.monto)}`
-                      : `Inscribirme${total ? ` · ${rd(total)}` : ""}`
-                    : "Anotarme en la lista de espera"}
-                </button>
                 <BotonAtras />
               </div>
             )}

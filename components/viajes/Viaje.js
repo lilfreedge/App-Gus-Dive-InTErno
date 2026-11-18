@@ -121,7 +121,7 @@ export function Viaje(props) {
         </div>
         <MenuMas
           opciones={[
-            p.editarViaje && ev === "abierto" && { t: "Cerrar inscripción", d: "Ya no se puede inscribir nadie más (quedan en lista de espera).", onClick: () => cambiarViaje({ estado: "cerrado_insc" }, "Cerró la inscripción", "Abierta", "Cerrada") },
+            p.editarViaje && ev === "abierto" && { t: "Cerrar inscripción", d: "Ya no se puede inscribir nadie más.", onClick: () => cambiarViaje({ estado: "cerrado_insc" }, "Cerró la inscripción", "Abierta", "Cerrada") },
             p.editarViaje && ev === "cerrado_insc" && { t: "Abrir inscripción", d: "Se puede volver a inscribir la gente.", onClick: () => cambiarViaje({ estado: "abierto" }, "Abrió la inscripción", "Cerrada", "Abierta") },
           ]}
         />
@@ -210,10 +210,13 @@ function ResumenBuceo({ db, v, r, p, pasado }) {
             <span>en el grupo</span>
           </div>
         )}
-        <div>
-          <b>{espera}</b>
-          <span>en espera</span>
-        </div>
+        {/* V101 ("53. sí"): sin lista de espera; sale solo si queda alguien de antes. */}
+        {espera > 0 && (
+          <div>
+            <b>{espera}</b>
+            <span>en espera</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -833,11 +836,6 @@ function PanelInscrito({ db, ops, v, p, ev, cerrado, x, cerrar, cambiar, ir, rol
             </div>
           ) : (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {x.estado === "inscrito" && (
-                <button className="btn secondary vj-mini" onClick={() => cambiar(x, { estado: "espera" }, "Pasó a lista de espera")}>
-                  Pasar a lista de espera
-                </button>
-              )}
               <button className="btn secondary vj-mini vj-rojo-txt" onClick={() => setQuitando(true)}>
                 Quitar del {P}
               </button>

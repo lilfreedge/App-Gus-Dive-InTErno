@@ -8,6 +8,7 @@ import { soloDigitos, formatoCedula, celValido, rd, fechaObj, fechaCorta, hoyISO
 import { leerPersona, guardarPersona, olvidarPersona, enApp } from "@/lib/app-gus";
 import InstalarApp from "@/components/InstalarApp";
 import { IconHome, IconEstudiantes, IconDivingMask, IconCalendar, IconUser, IconMapPin, IconBell, IconArrowLeft, IconInstagram, IconGlobe, IconCheck } from "@/components/icons";
+import { horaBonita } from "@/lib/estudiantes/itinerario";
 
 // V81 -- "App Gus" (maqueta V82 aprobada: "1. app gus", "2. ok"; y "¿hay
 // manera de que la gente pueda poner su cédula una vez y que quede guardado
@@ -87,7 +88,7 @@ function Fecha({ iso, tipo }) {
     </span>
   );
 }
-const cupos = (q) => (q == null ? "" : q === 0 ? "Lleno · lista de espera" : `Quedan ${q} ${q === 1 ? "cupo" : "cupos"}`);
+const cupos = (q) => (q == null ? "" : q === 0 ? "Lleno" : `Quedan ${q} ${q === 1 ? "cupo" : "cupos"}`);
 const linkCurso = (c) => `/estudiante?curso=${encodeURIComponent(c.fechaId)}`;
 
 function ItemCurso({ c, titulo }) {
@@ -441,8 +442,19 @@ function MiCurso({ e, falta, whatsapp, alVolver }) {
     ks
       .map((k) => pasos.find((p) => p.k === k))
       .filter((p) => p && p.v !== "na")
-      .map((p) => ({ ...p, tipo, fecha: tipo === "dia" ? (e.dias || []).find((d) => sinTildes(d.texto) === sinTildes(p.t))?.fecha || "" : "" }))
+      .map((p) => {
+        // V100 (maqueta V102): con la hora del itinerario del curso; el examen lo cuadra con el instructor.
+        const d = tipo === "dia" ? (e.dias || []).find((x) => sinTildes(x.texto) === sinTildes(p.t)) : null;
+        return { ...p, tipo, fecha: d?.fecha || "", hora: d?.hora || "", cuadrar: !!d?.cuadrar };
+      })
   );
+  // V101 (maqueta V105, "76. B"): si agregó Nitrox, su teoría va después del
+  // examen (por cuadrar con el instructor), con la etiqueta "Nitrox".
+  if (e.nitrox) {
+    const i = linea.map((p) => p.k).lastIndexOf("examen");
+    const j = i >= 0 ? i : linea.map((p) => p.tipo).lastIndexOf("dia");
+    linea.splice(j >= 0 ? j + 1 : linea.length, 0, { k: "teoriaNitrox", t: "Teoría Nitrox", tipo: "dia", v: e.nitrox.v === "listo" ? "listo" : "pendiente", fecha: "", hora: "", cuadrar: true, nitrox: true });
+  }
   const proxima = enCurso ? linea.find((p) => p.v !== "listo" && p.fecha && p.fecha >= hoy) : null;
   const diaDe = (f) => (f === hoy ? "Hoy" : `${DIA_LARGO[fechaObj(f).getDay()]} ${fechaCorta(f)}`);
   const pend = [];
@@ -458,7 +470,11 @@ function MiCurso({ e, falta, whatsapp, alVolver }) {
       <div className="pb-card ag-mc-cab">
         <b className="ag-mc-titulo">{e.curso}</b>
         <div className="pb-h" style={{ margin: "2px 0 0" }}>
-          {e.fechaInicio ? `${e.fechaInicio > hoy ? "Empieza" : "Empezó"} el ${DIA_LARGO[fechaObj(e.fechaInicio).getDay()]} ${fechaCorta(e.fechaInicio)}` : e.etapa}
+          {e.con
+            ? `Con tu ${e.con.curso}${e.con.inicio ? ` del ${DIA_LARGO[fechaObj(e.con.inicio).getDay()]} ${fechaCorta(e.con.inicio)}` : ""} · la teoría la cuadras con tu instructor`
+            : e.fechaInicio
+              ? `${e.fechaInicio > hoy ? "Empieza" : "Empezó"} el ${DIA_LARGO[fechaObj(e.fechaInicio).getDay()]} ${fechaCorta(e.fechaInicio)}`
+              : e.etapa}
         </div>
         {e.instructor && <div className="pb-h" style={{ margin: "2px 0 0" }}>Instructor: {e.instructor}</div>}
         {e.avance?.total > 0 && (
@@ -502,18 +518,19 @@ function MiCurso({ e, falta, whatsapp, alVolver }) {
           <div className="pb-card ag-tl">
             {linea.map((p) => {
               const esProx = proxima && proxima.k === p.k;
-              const cuando = p.fecha ? diaDe(p.fecha) : ETIQUETA_LINEA[p.tipo] || "";
+              const cuando = p.fecha ? `${diaDe(p.fecha)}${p.hora ? ` · ${horaBonita(p.hora)}` : ""}` : p.cuadrar ? "Lo cuadras con tu instructor" : ETIQUETA_LINEA[p.tipo] || "";
               return (
                 <div key={p.k} className={`ag-tl-p ${p.v}${esProx ? " prox" : ""}`}>
                   <i>{p.v === "listo" && <IconCheck size={12} />}</i>
                   <b>
                     {p.t}
                     {esProx && <span className="ag-tl-tag">Próxima clase</span>}
+                    {p.nitrox && <span className="ag-tl-tag nx">Nitrox</span>}
                   </b>
                   <small>
                     {[cuando, p.v === "listo" ? "Listo" : p.v === "otro" ? p.nota : ""].filter(Boolean).join(" · ")}
                   </small>
-                  {esProx && <small>La tienda te confirma la hora.</small>}
+                  {esProx && !p.hora && <small>La tienda te confirma la hora.</small>}
                 </div>
               );
             })}
@@ -954,7 +971,8 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
                   >
                     <b>{e.curso}</b>
                     <div className="pb-h" style={{ margin: "2px 0 0" }}>
-                      {e.fechaInicio ? `${e.fechaInicio > hoyISO() ? "Empieza" : "Empezó"} el ${DIA_LARGO[fechaObj(e.fechaInicio).getDay()]} ${fechaCorta(e.fechaInicio)}` : e.etapa}
+                      {/* V101 (maqueta V105): el Nitrox con el Open Water va en esa misma semana. */}
+                      {e.con ? `Con tu ${e.con.curso}${e.con.inicio ? ` del ${DIA_LARGO[fechaObj(e.con.inicio).getDay()]} ${fechaCorta(e.con.inicio)}` : ""}` : e.fechaInicio ? `${e.fechaInicio > hoyISO() ? "Empieza" : "Empezó"} el ${DIA_LARGO[fechaObj(e.fechaInicio).getDay()]} ${fechaCorta(e.fechaInicio)}` : e.etapa}
                     </div>
                     {e.avance?.total > 0 && (
                       <>
@@ -969,7 +987,7 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
                     <div className="ag-chips">
                       {e.debe > 0 ? <span className="ag-chip rojo">Debe {rd(e.debe)}</span> : e.precio ? <span className="ag-chip">Pagado</span> : null}
                       {e.estado !== "espera" && (yo.falta.foto || yo.falta.cedula) && <span className="ag-chip rojo">Falta {[yo.falta.foto && "tu foto", yo.falta.cedula && "tu cédula"].filter(Boolean).join(" y ")}</span>}
-                      {e.estado === "espera" && <span className="ag-chip gris">En lista de espera</span>}
+                      {e.estado === "espera" && <span className="ag-chip gris">Sin fecha todavía</span>}
                     </div>
                     {/* V86 ("3. sí"): sus pagos, uno por uno. V96: ahora dentro de "Mi curso". */}
                     {e.estado !== "espera" && <div className="ag-curso-ver">Ver mi progreso ›</div>}

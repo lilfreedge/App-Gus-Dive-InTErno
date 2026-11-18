@@ -36,7 +36,7 @@ import {
   quedan,
 } from "@/lib/estudiantes/modelo";
 import { formatoCel, formatoCedula } from "@/lib/viajes/modelo";
-import { cursoDe, buzoDe } from "./Inicio";
+import { cursoDe, buzoDe, nitroxJuntoDe, owdJuntoDe } from "./Inicio";
 import { nuevoId } from "@/lib/estudiantes/datos";
 import { TambienParaOtros, otrosParaPaso } from "./PasosGrupo";
 import FechaNacimiento from "@/components/FechaNacimiento";
@@ -175,6 +175,11 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
   // V55: la lista de espera cuenta como el paso 1 (todavía no empieza).
   const idx = est.estado === "cancelado" ? -1 : ETAPAS.findIndex((e) => e.k === (est.estado === "avisado" ? "entregada" : est.estado === "espera" ? "curso" : est.estado));
   const fecha = est.fechaId ? (db.fechas || []).find((f) => f.id === est.fechaId) : null;
+  // V101 (maqueta V105, "75. sí", "76. B"): el Nitrox que va con el Open Water
+  // (misma semana; la teoría la cuadra con el instructor), y al revés.
+  const owdJunto = owdJuntoDe(db, est);
+  const nitroxJunto = owdJunto ? null : nitroxJuntoDe(db, est);
+  const inicioOwd = owdJunto ? owdJunto.fechaInicio || (db.fechas || []).find((f) => f.id === owdJunto.fechaId)?.inicio || "" : "";
   const fechasLibres = c ? fechasDe(db, c.id, { soloFuturas: true }).filter((f) => quedan(db, f) !== 0) : [];
   const puedeAlgo = p.estudiantes || p.almacen || p.entregar;
   const enEspera = est.estado === "espera";
@@ -262,9 +267,20 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
       )}
       {!enEspera && (
         <div className="hint-text" style={{ fontSize: 14 }}>
-          {[est.curso, est.escuela, est.instructor, est.fechaInicio ? `${est.fechaInicio > hoyISO() ? "empieza" : "empezó"} el ${fechaCorta(est.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
+          {[est.curso, est.escuela, est.instructor, !owdJunto && est.fechaInicio ? `${est.fechaInicio > hoyISO() ? "empieza" : "empezó"} el ${fechaCorta(est.fechaInicio)}` : ""].filter(Boolean).join(" · ")}
           {est.via === "link" ? " · se registró por el link" : ""}
         </div>
+      )}
+      {owdJunto && (
+        <button type="button" className="ce-chip nx ce-junto" onClick={() => ir(`curso:${owdJunto.fechaId}`)}>
+          Con el {owdJunto.curso}
+          {inicioOwd ? ` del ${fechaCursoCorta(inicioOwd)}` : ""} · teoría por cuadrar con el instructor ›
+        </button>
+      )}
+      {nitroxJunto && (
+        <button type="button" className="ce-chip nx ce-junto" onClick={() => ir(`estudiante:${nitroxJunto.id}`)}>
+          + Nitrox · ver su Nitrox ›
+        </button>
       )}
 
       {est.estado === "cancelado" ? (
@@ -820,7 +836,7 @@ export function Ficha({ db, p, yo, ops, ir, avisar, id }) {
             </div>
             <div className="ce-dato">
               <span>Fecha</span>
-              <span>{est.estado === "espera" ? "Lista de espera" : fecha ? `${fechaCursoCorta(fecha.inicio)} · ${textoCupo(db, fecha)}` : est.fechaInicio ? fechaCorta(est.fechaInicio) : "—"}</span>
+              <span>{est.estado === "espera" ? "Lista de espera" : fecha ? `${fechaCursoCorta(fecha.inicio)} · ${textoCupo(db, fecha)}` : owdJunto ? `Con el ${owdJunto.curso}${inicioOwd ? ` · ${fechaCursoCorta(inicioOwd)}` : ""}` : est.fechaInicio ? fechaCorta(est.fechaInicio) : "—"}</span>
             </div>
           </>
         )}
@@ -1013,7 +1029,7 @@ function EditarDatos({ b, ops, cerrar }) {
 
 function EditarCurso({ db, est, cambiar, cerrar }) {
   // V55: la fecha se escoge de las fechas del curso, o lista de espera, u otra a mano.
-  const [f, setF] = useState({ cursoId: est.cursoId || "", escuela: est.escuela, instructor: est.instructor, fechaInicio: est.fechaInicio, cual: est.estado === "espera" ? "espera" : est.fechaId || (est.fechaInicio ? "mano" : "espera") });
+  const [f, setF] = useState({ cursoId: est.cursoId || "", escuela: est.escuela, instructor: est.instructor, fechaInicio: est.fechaInicio, cual: est.estado === "espera" ? "espera" : est.fechaId || "mano" });
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const curso = db.cursos.find((c) => c.id === f.cursoId);
   const fechas = curso ? fechasDe(db, curso.id) : [];
@@ -1072,7 +1088,8 @@ function EditarCurso({ db, est, cambiar, cerrar }) {
                 {fechaCursoCorta(x.inicio)} {x.inicio.slice(0, 4)} · {textoCupo(db, x)}
               </option>
             ))}
-            <option value="espera">Lista de espera (sin fecha)</option>
+            {/* V101 ("53. sí"): ya no hay lista de espera; solo sale si ya estaba así (p. ej. el Nitrox que se agregó con Open Water). */}
+            {est.estado === "espera" && <option value="espera">Sin fecha (como está ahora)</option>}
             <option value="mano">Otra fecha (escribirla)</option>
           </select>
         </label>

@@ -7,6 +7,8 @@ import Breadcrumb from "@/components/Breadcrumb";
 import HeaderSimple from "@/components/HeaderSimple";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import InformeMantenimientoForm from "./form-client";
+import { cargarManuales } from "@/lib/manuales-server";
+import { manualesPara, linkManual, tituloManual } from "@/lib/manuales";
 
 // "Informe de mantenimiento" (item 36, nueva feature, ronda grande de
 // feedback, 27-sep-2026) -- mockup aprobado Informe.dc.html. Pantalla
@@ -41,6 +43,19 @@ export default async function InformeMantenimientoPage({ params, searchParams })
       .maybeSingle();
     serie = equipo?.serie || null;
   }
+
+  // V101 (maqueta V104): el manual del modelo, para el paso de la presión
+  // intermedia. Igual que en la ficha de la orden: por marca y modelo, y por
+  // el detalle de cada componente (1ra etapa, 2da etapa…).
+  const textosComponentes = Object.values(orden.regulador_componentes || {})
+    .map((c) => (c && typeof c === "object" ? c.detalle : ""))
+    .filter(Boolean);
+  const manuales = manualesPara(
+    await cargarManuales(supabase),
+    [orden.equipo_marca_snapshot, orden.equipo_modelo_snapshot].filter(Boolean).join(" "),
+    ...textosComponentes,
+    ...textosComponentes.map((t) => [orden.equipo_marca_snapshot, t].filter(Boolean).join(" "))
+  ).map((m) => ({ href: linkManual(m), titulo: tituloManual(m) }));
 
   // V50: lo que se había ido guardando solo (si el informe no existe todavía).
   // Sin migration_75.sql la tabla no existe y no trae nada.
@@ -89,6 +104,7 @@ export default async function InformeMantenimientoPage({ params, searchParams })
             tecnicoSugerido={profile?.full_name || ""}
             sencillo
             borrador={borrador}
+            manuales={manuales}
             alGuardar={searchParams?.from === "tecnico" ? `${volverHref}&informe=ok` : volverHref}
           />
         </div>
@@ -139,6 +155,7 @@ export default async function InformeMantenimientoPage({ params, searchParams })
           serie={serie}
           tecnicoSugerido={profile?.full_name || ""}
           borrador={borrador}
+          manuales={manuales}
           volver={
             searchParams?.from === "tecnico"
               ? { href: volverHref, texto: "← Volver a mis trabajos" }

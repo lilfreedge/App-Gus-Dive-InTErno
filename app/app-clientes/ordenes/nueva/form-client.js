@@ -12,7 +12,7 @@ import { subirFoto } from "@/lib/storage-client";
 import { hoyISO } from "@/lib/fechas";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { COMPONENTES_REGULADOR_DEFS, componentesRecibidosTexto } from "@/lib/informe-mantenimiento";
+import { COMPONENTES_REGULADOR_DEFS, componentesRecibidosTexto, cambiosComponentes } from "@/lib/informe-mantenimiento";
 import {
   prefillComponentesRecibidos,
   detalleComponentesTexto,
@@ -192,6 +192,31 @@ export default function NuevaOrdenForm({
   // "quita la seccion de autorizacion del cliente, para todo. solo dejalo
   // para regulador") -- antes se mostraba siempre.
   const esRegulador = tipoEquipoActual === "Reguladores";
+
+  // V100 ("52. ambos"): lo que trajo el regulador la vez pasada (la orden
+  // anterior de ese equipo que tenga algo marcado), para avisar antes de
+  // guardar si algo es distinto y confirmarlo con el cliente.
+  const [ordenAnterior, setOrdenAnterior] = useState(null);
+  useEffect(() => {
+    setOrdenAnterior(null);
+    if (!equipoId || !esRegulador || equipoId === equipoCreadoAquiId) return;
+    let cancelado = false;
+    supabase
+      .from("ordenes_equipos")
+      .select("id, folio, no_orden_fisico, fecha, regulador_componentes")
+      .eq("equipo_id", equipoId)
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .then(({ data }) => {
+        if (cancelado) return;
+        const ant = (data || []).find((x) => x.regulador_componentes && Object.keys(x.regulador_componentes).length);
+        setOrdenAnterior(ant || null);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [equipoId, esRegulador, equipoCreadoAquiId, supabase]);
+  const cambiosVezPasada = ordenAnterior ? cambiosComponentes(componentesRecibidos, ordenAnterior.regulador_componentes) : null;
 
   function toggleComponenteRecibido(id) {
     setComponentesRecibidos((prev) => {
@@ -647,7 +672,7 @@ export default function NuevaOrdenForm({
                     // BC" resaltado en un solo tono no siempre se leía como
                     // "sí la trajo".
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 12.5, fontWeight: 600 }}>{c.label}</span>
+                      <span style={{ fontSize: 12.5, fontWeight: 600 }} className={cambiosVezPasada?.porId[c.id] ? "comp-dif" : undefined}>{c.label}</span>
                       <button
                         type="button"
                         className={presente ? "btn btn-primary" : "btn secondary"}
@@ -668,7 +693,7 @@ export default function NuevaOrdenForm({
                   ) : (
                     <button
                       type="button"
-                      className={presente ? "btn btn-primary" : "btn secondary"}
+                      className={`${presente ? "btn btn-primary" : "btn secondary"}${cambiosVezPasada?.porId[c.id] ? " comp-dif" : ""}`}
                       onClick={() => toggleComponenteRecibido(c.id)}
                       style={{ marginTop: 0, width: "auto", padding: "7px 12px", fontSize: 12.5 }}
                     >
@@ -697,6 +722,19 @@ export default function NuevaOrdenForm({
               );
             })}
           </div>
+          {/* V100 ("52. ambos"): aviso si es distinto a la vez pasada. */}
+          {cambiosVezPasada && (
+            <div className="comp-aviso">
+              <b>Esto es distinto a la vez pasada</b>
+              <ul>
+                {cambiosVezPasada.lineas.map((l) => (
+                  <li key={l}>{l}</li>
+                ))}
+              </ul>
+              Confírmalo con el cliente antes de guardar
+              {ordenAnterior?.fecha ? ` (orden ${ordenAnterior.no_orden_fisico || (ordenAnterior.folio ? `#${ordenAnterior.folio}` : "anterior")}, ${formatFechaDDMMAAAADeDate(ordenAnterior.fecha)})` : ""}.
+            </div>
+          )}
           </>
           )}
 

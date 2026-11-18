@@ -2,9 +2,10 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { filaAViaje } from "@/lib/viajes/datos";
 import { estadoViaje, fechaObj, hoyISO, DIAS, MESES, rd, us } from "@/lib/viajes/modelo";
 import AltoIframe from "@/components/viajes/AltoIframe";
+import { metaClientes } from "@/lib/metadata-clientes";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Próximos buceos · Gus Dive Center" };
+export const metadata = metaClientes("Próximos buceos · Gus Dive Center", "Los próximos buceos de Gus Dive Center.");
 
 // V42 -- Recuadro "Próximos viajes" para la página web (gusdivecenter.com).
 // Se pone UNA vez en WordPress (bloque "HTML personalizado"):

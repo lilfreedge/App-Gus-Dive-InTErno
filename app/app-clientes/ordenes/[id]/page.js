@@ -21,6 +21,7 @@ import { borradorYaTiene } from "@/lib/informe-mantenimiento";
 import { cargarManuales } from "@/lib/manuales-server";
 import { manualesPara, tituloManual, linkManual } from "@/lib/manuales";
 import FotoLightbox from "@/components/FotoLightbox";
+import RecepcionRegulador from "@/components/RecepcionRegulador";
 import { IconRefresh } from "@/components/icons";
 import { hoyISO } from "@/lib/fechas";
 
@@ -136,6 +137,22 @@ export default async function FichaOrdenPage({ params }) {
     ...textosComponentes,
     ...textosComponentes.map((t) => [o.equipo_marca_snapshot, t].filter(Boolean).join(" "))
   );
+  // V100 ("52. ambos"): la orden anterior del mismo equipo, para marcar en
+  // "Lo que trajo" lo que cambió. La primera para atrás que tenga algo marcado.
+  let ordenAnterior = null;
+  if (esRegulador && o.equipo_id) {
+    let q = supabase
+      .from("ordenes_equipos")
+      .select("id, folio, no_orden_fisico, fecha, created_at, regulador_componentes")
+      .eq("equipo_id", o.equipo_id)
+      .neq("id", o.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (o.created_at) q = q.lt("created_at", o.created_at);
+    const { data: previas } = await q;
+    const ant = (previas || []).find((x) => x.regulador_componentes && Object.keys(x.regulador_componentes).length);
+    if (ant) ordenAnterior = { componentes: ant.regulador_componentes, numero: ant.no_orden_fisico || (ant.folio ? `#${ant.folio}` : ""), fecha: ant.fecha };
+  }
   // V50: el informe de mantenimiento que se quedó a medias (se guarda solo).
   let borradorInforme = null;
   if (esRegulador && !o.informe_mantenimiento) {
@@ -496,6 +513,8 @@ export default async function FichaOrdenPage({ params }) {
               )}
             </Campo>
             <Campo etiqueta="Servicio a realizar" valor={o.que_se_hara} full />
+            {/* V100 ("44. a"): lo que dijo el cliente y lo que trajo, al recibirlo. */}
+            <RecepcionRegulador orden={o} Campo={Campo} full anterior={ordenAnterior} />
             {/* V32: No. de cotización (se pone en "Actualizar estado de orden"). */}
             {o.cotizacion && <Campo etiqueta="No. de cotización" valor={o.cotizacion} full />}
             {o.autorizacion_cliente && (

@@ -6,16 +6,14 @@ import { fechasProximas } from "@/lib/estudiantes/fechas-servidor";
 import { TIENDA } from "@/lib/viajes/servidor";
 import { TIPOS } from "@/lib/alquiler/modelo";
 import AppGus from "@/components/AppGus";
+import { metaClientes, APP_CLIENTES } from "@/lib/metadata-clientes";
 
 export const dynamic = "force-dynamic";
 // V81 -- "App Gus" (maqueta V82 aprobada): la app de los clientes. V83: se
 // llama "Gus Dive".
-export const metadata = {
-  title: "Gus Dive",
-  manifest: "/app-gus.webmanifest",
-  icons: { apple: "/icono-app-192.png" },
-  appleWebApp: { capable: true, title: "Gus Dive", statusBarStyle: "default" },
-};
+// V101: lo que sale al mandar el link por WhatsApp (antes salía la
+// descripción del app del personal).
+export const metadata = metaClientes("Gus Dive", "Cursos de buceo y buceos con Gus Dive Center: mira las próximas fechas, inscríbete y sigue tu curso desde el celular.", APP_CLIENTES);
 
 // Lo que se ve sin entrar: los próximos cursos (los que salen en el link del
 // estudiante) y los próximos buceos (los marcados para salir en la página

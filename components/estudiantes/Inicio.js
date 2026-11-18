@@ -14,11 +14,21 @@ import { ElegirCurso } from "./Interesados";
 import QrEntrega from "./QrEntrega";
 import { MarcarEnGrupo } from "./PasosGrupo";
 import { PedirPresupuesto, PedidosGuardados } from "./PresupuestoHoja";
+import { ConfirmarItinerario, TarjetaItinerario } from "./Itinerario";
+import { itinerarioDe } from "@/lib/estudiantes/itinerario";
+import { esOwd, esNitrox, owdDeNitrox, nitroxDeOwd } from "@/lib/estudiantes/junto";
 
 // Pantallas de Control Estudiantes: Inicio, la lista, Más y la Bitácora.
 
 export const cursoDe = (db, est) => db.cursos.find((c) => c.id === est.cursoId) || db.cursos.find((c) => c.nombre === est.curso) || null;
 export const buzoDe = (db, est) => db.buzos.find((b) => b.id === est.buzoId) || { nombre: "—" };
+// V101 (maqueta V105, "75. sí", "76. B"): el Nitrox que va con el Open Water
+// (un día más de teoría, por cuadrar). Ver lib/estudiantes/junto.js.
+const nombreCursoDe = (db) => (e) => cursoDe(db, e)?.nombre || e.curso;
+export const nitroxJuntoDe = (db, est) => nitroxDeOwd(db.estudiantes, est, nombreCursoDe(db));
+export const owdJuntoDe = (db, est) => owdDeNitrox(db.estudiantes, est, nombreCursoDe(db));
+// En el itinerario de un Open Water sale la teoría de Nitrox si el Catálogo tiene Nitrox.
+export const llevaTeoriaNitrox = (db, c) => esOwd(c?.nombre) && (db.cursos || []).some((x) => esNitrox(x.nombre) && x.activo !== false);
 
 const diasDesde = (iso) => (iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : 0);
 
@@ -45,7 +55,7 @@ export const FILTROS = [
   { k: "pago-instructor", t: "Pago al instructor", f: (e) => pagoInstructorPendiente(e) },
   { k: "debe", t: "Deben", f: (e) => e.estado !== "cancelado" && debe(e) > 0 },
   // V55: la lista de espera (curso sin fecha o fecha llena, "65").
-  { k: "espera", t: "Lista de espera", f: (e) => e.estado === "espera" },
+  { k: "espera", t: "Sin fecha", f: (e) => e.estado === "espera" },
   // V55: sin "Por recoger" ("87"); los que quedaron en "avisado" de antes cuentan como terminados.
   { k: "terminados", t: "Terminados", f: (e) => e.estado === "entregada" || e.estado === "avisado" },
   { k: "cancelados", t: "Cancelados", f: (e) => e.estado === "cancelado" },
@@ -102,6 +112,8 @@ export function TarjetaCurso({ db, f, onClick, abierta }) {
           {f.cupo ? ` · cupo ${f.cupo}` : ""}
           {f.nota ? ` · ${f.nota}` : ""}
         </span>
+        {/* V100 (maqueta V102): si el itinerario no se ha confirmado. */}
+        {f.conItinerario && !f.itinerarioConfirmadoEn && f.inicio >= hoyISO() && itinerarioDe(f, c).length > 0 && <span className="ce-iti-chip">Itinerario sin confirmar</span>}
       </span>
       <span className="ce-tcurso-k">
         <b>{k}</b>
@@ -154,6 +166,7 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
   // V88 (maqueta V88, aprobada): gorras de OWD = las marcadas como entregadas en la ficha.
   const esOWD = /^open water diver$/i.test(String(c?.nombre || "").trim());
   const gorrasListas = gente.filter((e) => e.pasos?.gorra === "listo").length;
+  const conNitrox = esOWD ? gente.filter((e) => nitroxJuntoDe(db, e)).length : 0;
   const [, m, d] = f.inicio.split("-").map(Number);
   const fin = sumarDias(f.inicio, 6);
   const pasar = (e) =>
@@ -192,6 +205,9 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
           </div>
         </div>
       </div>
+
+      {/* V100 (maqueta V102, "56. C + casilla"): el itinerario de este curso. */}
+      <TarjetaItinerario f={f} c={c} ops={ops} nitrox={llevaTeoriaNitrox(db, c)} gente={gente.map((e) => ({ id: e.id, nombre: buzoDe(db, e).nombre, cel: buzoDe(db, e).cel }))} />
 
       <div className="card" style={{ marginBottom: 12 }}>
         <div className="pg-res-top">
@@ -310,10 +326,16 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
         <>
           {/* V95 (maqueta v95, aprobada): marcar pasos a varios estudiantes a la vez. */}
           {p.estudiantes && <MarcarEnGrupo db={db} c={c} gente={gente} ops={ops} />}
+          {/* V101 (maqueta V105): cuántos agregaron Nitrox (su teoría la cuadran con el instructor). */}
+          {conNitrox > 0 && (
+            <div className="hint-text" style={{ margin: "0 0 8px" }}>
+              {conNitrox} con Nitrox · Teoría Nitrox por cuadrar con el instructor
+            </div>
+          )}
           {gente.length > 0 ? (
             <div className="card vj-lista">
               {gente.map((e) => (
-                <FilaDeCurso key={e.id} db={db} est={e} ir={ir} p={p} />
+                <FilaDeCurso key={e.id} db={db} est={e} ir={ir} p={p} nitrox={!!nitroxJuntoDe(db, e)} />
               ))}
             </div>
           ) : (
@@ -382,7 +404,7 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
 
 // V62 ("242"): la fila de un estudiante dentro de la página del curso: el
 // nombre, cómo va y, a la derecha, si pagó o cuánto debe.
-function FilaDeCurso({ db, est, ir, espera, p }) {
+function FilaDeCurso({ db, est, ir, espera, p, nitrox = false }) {
   const b = buzoDe(db, est);
   const c = cursoDe(db, est);
   const a = avance(est, c);
@@ -400,7 +422,10 @@ function FilaDeCurso({ db, est, ir, espera, p }) {
   return (
     <button className="vj-fila pg-fila" onClick={() => ir(`estudiante:${est.id}`)}>
       <span className="vj-fila-main">
-        <span className="vj-fila-nombre">{b.nombre}</span>
+        <span className="vj-fila-nombre">
+          {b.nombre}
+          {nitrox && <span className="ce-chip nx" style={{ marginLeft: 6 }}>+ Nitrox</span>}
+        </span>
         <span className="hint-text">{sub}</span>
         {!espera && est.estado === "curso" && (
           <span className="ce-barra">
@@ -432,7 +457,8 @@ export function Inicio({ db, p, ir, avisar }) {
     { k: "almacen", t: "Pendiente procesar" },
     { k: "por-avisar", t: "Certificación lista, por avisar", rojo: true },
     { k: "pago-instructor", t: "Pago al instructor pendiente" },
-    { k: "espera", t: "En lista de espera" },
+    // V101 ("53. sí"): sin lista de espera; el cuadro sale solo si queda alguien de antes.
+    ...(n("espera") > 0 ? [{ k: "espera", t: "Sin fecha" }] : []),
   ];
   return (
     <>
@@ -558,7 +584,8 @@ export function Lista({ db, p, yo, ops, ir, avisar }) {
   const abiertos = (db.fechas || [])
     .filter((f) => f.activo && (f.inicio >= haceUnaSemana || deFecha(f).some((e) => e.estado === "curso")))
     .sort((a, b) => a.inicio.localeCompare(b.inicio));
-  const sinFecha = db.estudiantes.filter((e) => e.estado === "curso" && !e.fechaId);
+  // V101 (maqueta V105): el Nitrox que va con un Open Water no sale aquí (ya tiene semana).
+  const sinFecha = db.estudiantes.filter((e) => e.estado === "curso" && !e.fechaId && !owdJuntoDe(db, e));
   const espera = db.estudiantes.filter((e) => e.estado === "espera");
   // V76 (pedido explícito, con foto: "donde dice lista de espera poner
   // 'Interesados' y que figuren los interesados a según el curso") -- esta
@@ -817,6 +844,10 @@ export function CalendarioLunes({ valor, onChange, marcados = [] }) {
 // V57 -- Crear o editar un curso (una fecha de un curso de la Base de datos).
 function FormCurso({ db, form, setForm, yo, ops, avisar, alCrear }) {
   const c = db.cursos.find((x) => x.id === form.cursoId);
+  // V100 (maqueta V102, "56. me gusta la C pero agrégale la casilla
+  // obligatoria que tiene la B"): después de crear el curso, el segundo paso
+  // "Confirma el itinerario".
+  const [paso2, setPaso2] = useState(null);
   const enEspera = c ? db.estudiantes.filter((e) => e.estado === "espera" && e.cursoId === c.id).length : 0;
   async function guardar() {
     if (!c) return avisar("Escoge el curso.");
@@ -825,8 +856,26 @@ function FormCurso({ db, form, setForm, yo, ops, avisar, alCrear }) {
     const nueva = !form.id;
     const f = { id: form.id || nuevoId(), cursoId: c.id, inicio: form.inicio, cupo: form.cupo === "" ? null : Number(form.cupo), instructor: form.instructor, nota: (form.nota || "").trim(), activo: true };
     const ok = await ops.guardarFecha(f, nueva, c);
+    if (ok && nueva && db.conItinerario && Array.isArray(c.semana) && c.semana.some((x) => String(x || "").trim())) {
+      setPaso2({ ...f, conItinerario: true });
+      return;
+    }
     if (ok) setForm(null);
     if (ok && nueva) alCrear?.(f, c);
+  }
+  const terminarPaso2 = () => {
+    const f = paso2;
+    setPaso2(null);
+    setForm(null);
+    alCrear?.(f, c);
+  };
+  if (paso2) {
+    return (
+      <div className="ce-form ce-form-curso" style={{ marginTop: 10 }}>
+        <span className="ce-iti-paso">Curso creado · paso 2 de 2</span>
+        <ConfirmarItinerario f={paso2} c={c} ops={ops} nitrox={llevaTeoriaNitrox(db, c)} alTerminar={terminarPaso2} alSaltar={terminarPaso2} />
+      </div>
+    );
   }
   return (
     <div className="ce-form ce-form-curso" style={{ marginTop: 10 }}>

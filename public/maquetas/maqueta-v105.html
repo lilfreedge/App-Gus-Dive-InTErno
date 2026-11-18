@@ -1,0 +1,171 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V105 · Nitrox como un día más de teoría</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--sup:#eef3f6;--verde:#2c9e5b;--amar:#f6ce46;--cafe:#7a5a14;--crema:#fffbea;--azul:#0a3d62;--nx:#0f7a6c}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1000px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:#2b2200;color:#fff;border-color:#2b2200}
+.vista{display:none;max-width:1000px;margin:0 auto;padding:0 16px 40px}.vista.on{display:block}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;margin-bottom:14px}
+.panel{background:var(--crema);border:1px solid #f0dc9a;border-radius:12px;padding:16px;max-width:700px}
+.panel h3{margin:0 0 4px;font-size:16px}
+.hint{color:var(--suave);font-size:12.5px;line-height:1.45;margin-top:4px}
+.iti{background:#fff;border:1px solid var(--borde);border-radius:12px;margin-top:10px;overflow:hidden}
+.dia{display:grid;grid-template-columns:118px 1fr auto;gap:8px;align-items:center;padding:8px 12px;border-top:1px solid var(--sup)}
+.dia:first-child{border-top:0}
+.dia .f{font-weight:800;font-size:13.5px}
+.dia .a{font-size:14px}.dia .a small{display:block;font-size:12px;color:var(--suave)}
+.dia.nx{background:#eaf7f4}
+.tag{display:inline-block;background:#d3efe9;color:var(--nx);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800;margin-left:6px;vertical-align:1px}
+.mini{border:1px solid var(--borde);background:#fff;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;color:var(--texto)}
+.chk{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:13.5px;background:#fff;border:1px solid var(--borde);border-radius:10px;padding:10px 12px}
+.btn{border:0;border-radius:10px;padding:10px 16px;font-weight:800;font-size:14px;background:#7a5a14;color:#fff;margin-top:12px}
+.opc{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.opc label{display:flex;gap:8px;align-items:flex-start;background:#fff;border:1px solid var(--borde);border-radius:10px;padding:9px 11px;cursor:pointer;font-size:13.5px}
+.opc label.on{border-color:var(--nx);box-shadow:0 0 0 2px #d3efe9}
+.opc small{display:block;color:var(--suave);font-size:12px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:14px;max-width:700px;margin-bottom:12px}
+.card h4{margin:0 0 8px;font-size:14px}
+.est{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--sup);font-size:14px}
+.est:first-of-type{border-top:0}
+.chip{display:inline-block;border-radius:999px;padding:2px 8px;font-size:11.5px;font-weight:800;background:var(--sup);color:var(--suave)}
+.chip.nx{background:#d3efe9;color:var(--nx)}.chip.alm{background:#fdf0c4;color:#7a5a14}.chip.gris{background:#eceff2;color:#7b8893}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:820px}
+.col h5{margin:0 0 6px;font-size:12px;color:var(--suave);text-transform:uppercase;letter-spacing:.3px}
+.cel{max-width:380px;background:#fff;border:1px solid var(--borde);border-radius:18px;overflow:hidden}
+.cel-top{background:var(--azul);color:#fff;padding:12px 14px;font-weight:800}
+.cel-body{padding:14px}
+.extra{border:1px solid #bfe5dc;background:#f2fbf8;border-radius:10px;padding:10px 12px;display:flex;gap:8px;align-items:flex-start;font-size:13.5px}
+.extra small{display:block;color:var(--nx);font-weight:700;font-size:12px;margin-top:2px}
+.fin{background:#e5f6ec;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.5;margin-top:12px}
+.linea{position:relative;padding-left:20px;margin-top:6px}
+.linea:before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--borde)}
+.punto{position:relative;padding:6px 0}
+.punto:before{content:"";position:absolute;left:-18px;top:11px;width:10px;height:10px;border-radius:50%;background:#c8d2d9}
+.punto.ok:before{background:var(--verde)}.punto.prox:before{background:var(--amar)}.punto.nx:before{background:var(--nx)}
+.punto b{font-size:13.5px}.punto small{display:block;color:var(--suave);font-size:12px}
+.tabla{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--borde);border-radius:12px;overflow:hidden;font-size:13px;max-width:820px}
+.tabla th{background:var(--sup);text-align:left;padding:8px 10px;font-size:11.5px;color:var(--suave);text-transform:uppercase}
+.tabla td{padding:9px 10px;border-top:1px solid var(--borde);vertical-align:top;line-height:1.45}
+.tabla td:first-child{font-weight:700;width:26%}
+@media(max-width:640px){.dia{grid-template-columns:1fr auto}.dia .a{grid-column:1/2}.dos{grid-template-columns:1fr}}
+</style></head><body>
+<div class="maq"><b>Maqueta V105</b> · Nitrox con el Open Water = un día más de teoría, en la misma semana del curso (en vez de quedar "Sin fecha"). Escoge abajo el día de la teoría de Nitrox y mira cómo cambia en cada pestaña. Nada de esto está programado: falta tu respuesta.</div>
+<div class="tabs">
+  <button class="tab on" data-v="1">1. Crear curso (itinerario)</button>
+  <button class="tab" data-v="2">2. Página del curso</button>
+  <button class="tab" data-v="3">3. Link de registro</button>
+  <button class="tab" data-v="4">4. Mi curso (app Gus Dive)</button>
+  <button class="tab" data-v="5">5. Hoy vs. propuesta</button>
+</div>
+
+<div class="vista on" id="v1">
+  <div class="nota">Al crear un <b>Open Water</b>, el itinerario trae una fila más: <b>Teoría Nitrox</b>, marcada "Solo los que agregaron Nitrox". Se cambia igual que las demás (día y hora), y tampoco puede caer el mismo día que otra actividad.</div>
+  <div class="panel">
+    <h3>Confirma el itinerario</h3>
+    <div class="hint">Open Water Diver · empieza el lun 23 nov. Cambia lo que haga falta: solo cambia para este curso.</div>
+    <div class="iti" id="iti"></div>
+    <div style="margin-top:14px;font-weight:800;font-size:13.5px">¿Qué día va la Teoría Nitrox? <span class="hint">(pregunta 76)</span></div>
+    <div class="opc" id="opc">
+      <label data-o="jue"><input type="radio" name="o" checked> <span><b>A.</b> Jueves a las 6:00 p. m.<small>El jueves queda libre porque el examen se cuadra con el instructor.</small></span></label>
+      <label data-o="cuadrar"><input type="radio" name="o"> <span><b>B.</b> Por cuadrar con el instructor, como el examen<small>Sin día fijo: sale "Lo cuadras con tu instructor".</small></span></label>
+      <label data-o="lunsig"><input type="radio" name="o"> <span><b>C.</b> El lunes siguiente a las 6:00 p. m.<small>Después de terminar el Open Water.</small></span></label>
+    </div>
+    <label class="chk"><input type="checkbox"> Revisé el itinerario y las fechas están bien.</label>
+    <button class="btn">Confirmar itinerario</button>
+  </div>
+</div>
+
+<div class="vista" id="v2">
+  <div class="nota">En la página del curso, los que agregaron Nitrox salen con la etiqueta <b>+ Nitrox</b>. Su Nitrox sigue siendo su propia ficha (sus pasos, su pago, su certificación), pero ya no dice "Sin fecha": dice con qué curso va.</div>
+  <div class="card">
+    <h4>Open Water Diver · lun 23 nov <span class="chip alm" style="margin-left:6px">5 estudiantes</span></h4>
+    <div class="hint" style="margin:-4px 0 8px">2 con Nitrox · <span class="cuandoNx"></span></div>
+    <div class="est"><span>Ana Martínez</span><span class="chip nx">+ Nitrox</span></div>
+    <div class="est"><span>Luis Peña</span><span></span></div>
+    <div class="est"><span>Carla Gómez</span><span class="chip nx">+ Nitrox</span></div>
+    <div class="est"><span>Pedro Ruiz</span><span></span></div>
+    <div class="est"><span>Sofía Díaz</span><span></span></div>
+  </div>
+  <div class="dos">
+    <div class="col"><h5>Ficha del Nitrox de Ana · hoy</h5><div class="card"><b>Nitrox</b><div style="margin-top:6px"><span class="chip gris">Sin fecha</span></div><div class="hint">Hay que escribirle para darle una fecha.</div></div></div>
+    <div class="col"><h5>Con la propuesta</h5><div class="card"><b>Nitrox</b><div style="margin-top:6px"><span class="chip nx">Con el Open Water del lun 23 nov</span></div><div class="hint">Teoría Nitrox: <span class="cuandoNx"></span></div></div></div>
+  </div>
+</div>
+
+<div class="vista" id="v3">
+  <div class="nota">En el link de registro, la casilla "Agregar Nitrox" ya dice cuándo es. Y al final ya no dice "te escribimos para la fecha".</div>
+  <div class="dos">
+    <div class="col"><h5>Escoger curso</h5>
+      <div class="cel"><div class="cel-top">Gus Dive · Registro de estudiante</div><div class="cel-body">
+        <div style="font-weight:800;margin-bottom:8px">Open Water Diver · lun 23 nov</div>
+        <div class="extra"><input type="checkbox" checked> <span><b>Agregar Nitrox</b><small class="enLink"></small></span></div>
+      </div></div>
+    </div>
+    <div class="col"><h5>Pantalla final</h5>
+      <div class="cel"><div class="cel-top">Gus Dive · Registro de estudiante</div><div class="cel-body">
+        <div style="font-weight:800;font-size:16px">Listo, Ana</div>
+        <div class="fin">Quedaste en <b>Open Water Diver</b> (empieza el lun 23 nov).<br>También quedaste en <b>Nitrox</b>: <span class="cuandoNx"></span>.</div>
+        <div class="hint">Hoy dice: "También quedaste anotado en Nitrox: te escribimos para la fecha."</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<div class="vista" id="v4">
+  <div class="nota">En "Mi curso" del app, la teoría de Nitrox sale en la línea de tiempo del Open Water, solo para los que lo agregaron.</div>
+  <div class="cel"><div class="cel-top">Mi curso · Open Water Diver</div><div class="cel-body">
+    <div class="linea" id="linea"></div>
+  </div></div>
+</div>
+
+<div class="vista" id="v5">
+  <table class="tabla">
+    <tr><th></th><th>Hoy</th><th>Con la propuesta</th></tr>
+    <tr><td>Agregar Nitrox en el link</td><td>Queda en Nitrox "Sin fecha"; la tienda le escribe para darle una.</td><td>Queda en Nitrox con la misma semana del Open Water y la Teoría Nitrox ya con día.</td></tr>
+    <tr><td>Itinerario del Open Water</td><td>Sin Nitrox.</td><td>Una fila más: Teoría Nitrox (solo los que lo agregaron).</td></tr>
+    <tr><td>Página del curso</td><td>No se ve quién agregó Nitrox.</td><td>Etiqueta "+ Nitrox" y cuántos lo agregaron.</td></tr>
+    <tr><td>Nitrox solo (ya certificado)</td><td>Su propio curso con su fecha.</td><td>Igual, no cambia.</td></tr>
+    <tr><td>Lo que ya está "Sin fecha"</td><td>—</td><td>Se queda como está (no se mueve nada solo).</td></tr>
+  </table>
+</div>
+
+<script>
+let opcion = "jue";
+const BASE = [
+  ["lun 23 nov", "Teoría 1", "6:00 p. m."], ["mar 24 nov", "Teoría 2", "6:00 p. m."], ["mié 25 nov", "Teoría 3", "6:00 p. m."],
+  ["Por cuadrar", "Examen", "Lo cuadra el estudiante con el instructor"],
+  ["vie 27 nov", "Piscina", ""], ["sáb 28 nov", "Caleta 1", ""], ["dom 29 nov", "Caleta 2", ""],
+];
+function nitrox() {
+  if (opcion === "cuadrar") return ["Por cuadrar", "Lo cuadra el estudiante con el instructor", "por cuadrar con tu instructor"];
+  if (opcion === "lunsig") return ["lun 30 nov", "6:00 p. m.", "lun 30 nov, 6:00 p. m."];
+  return ["jue 26 nov", "6:00 p. m.", "jue 26 nov, 6:00 p. m."];
+}
+function pintar() {
+  const n = nitrox();
+  const filas = BASE.map((x) => ({ f: x[0], t: x[1], h: x[2] }));
+  const nx = { f: n[0], t: "Teoría Nitrox", h: n[1], nx: true };
+  const pos = opcion === "jue" ? 3 : opcion === "cuadrar" ? 4 : filas.length;
+  filas.splice(opcion === "jue" ? 4 : pos, 0, nx);
+  document.getElementById("iti").innerHTML = filas.map((x) => `<div class="dia${x.nx ? " nx" : ""}"><div class="f">${x.f}</div><div class="a"><b>${x.t}</b>${x.nx ? '<span class="tag">Solo los que agregaron Nitrox</span>' : ""}${x.h ? `<small>${x.h}</small>` : ""}</div>${x.f === "Por cuadrar" ? "<span></span>" : '<span class="mini">Cambiar</span>'}</div>`).join("");
+  document.querySelectorAll(".cuandoNx").forEach((e) => (e.textContent = `Teoría Nitrox ${n[2]}`));
+  document.querySelectorAll(".enLink").forEach((e) => (e.textContent = opcion === "cuadrar" ? "Un día más de teoría, por cuadrar con tu instructor." : `Un día más de teoría: ${n[2]}.`));
+  const linea = [
+    ["ok", "Teoría 1", "lun 23 nov · 6:00 p. m."], ["ok", "Teoría 2", "mar 24 nov · 6:00 p. m."], ["prox", "Teoría 3", "mié 25 nov · 6:00 p. m. · tu próxima clase"],
+    ["", "Examen", "Lo cuadras con tu instructor"], ["", "Piscina", "vie 27 nov"], ["", "Caleta 1", "sáb 28 nov"], ["", "Caleta 2", "dom 29 nov"],
+  ];
+  const nxL = ["nx", "Teoría Nitrox", opcion === "cuadrar" ? "Lo cuadras con tu instructor" : n[2].replace(",", " ·")];
+  linea.splice(opcion === "jue" ? 4 : opcion === "cuadrar" ? 4 : linea.length, 0, nxL);
+  document.getElementById("linea").innerHTML = linea.map(([c, t, s]) => `<div class="punto ${c}"><b>${t}</b>${c === "nx" ? '<span class="tag">Nitrox</span>' : ""}<small>${s}</small></div>`).join("");
+  document.querySelectorAll("#opc label").forEach((l) => l.classList.toggle("on", l.dataset.o === opcion));
+}
+document.querySelectorAll("#opc label").forEach((l) => l.addEventListener("click", () => { opcion = l.dataset.o; l.querySelector("input").checked = true; pintar(); }));
+document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === t));
+  document.querySelectorAll(".vista").forEach((v) => v.classList.toggle("on", v.id === "v" + t.dataset.v));
+}));
+pintar();
+</script>
+</body></html>

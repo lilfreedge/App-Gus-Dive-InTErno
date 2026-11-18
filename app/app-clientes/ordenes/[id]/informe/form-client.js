@@ -8,6 +8,11 @@ import { sumarMeses, hoyISO } from "@/lib/fechas";
 import {
   COMPONENTES_REGULADOR_DEFS,
   MANTENIMIENTO_DEFS,
+  PASOS_REGULADOR,
+  FASES_REGULADOR,
+  PI_NORMAL,
+  numeroPresion,
+  mantenimientoConPasos,
   componentesRecibidosTexto,
   informeDefault,
   seccionesInforme,
@@ -52,7 +57,9 @@ const TEXTO_SUTIL_ESTILO = { fontSize: 13, color: "var(--texto-suave)" };
 // el informe no se haya guardado, todo lo que se llena se va guardando solo
 // ("Guardando…" / "✓ Guardado"), aunque esté a medias; al volver, sale como
 // se dejó. Respuesta a la maqueta: "6. Excelente".
-export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido = "", volver = null, sencillo = false, alGuardar = null, borrador = null }) {
+// V101 -- `manuales` ([{ href, titulo }]): los del modelo, para el paso de la
+// presión intermedia ("consulta el manual").
+export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido = "", volver = null, sencillo = false, alGuardar = null, borrador = null, manuales = [] }) {
   const supabase = createClient();
   const datosBorrador = !orden.informe_mantenimiento && borrador?.datos ? borrador.datos : null;
 
@@ -70,6 +77,23 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
   function toggleMantenimiento(id) {
     setInforme((prev) => ({ ...prev, mantenimiento: { ...prev.mantenimiento, [id]: !prev.mantenimiento?.[id] } }));
   }
+
+  // V100 (maqueta V103, "54. sí creo"): los pasos del mantenimiento, en orden.
+  // Cada uno queda con quién y cuándo; al marcarlo, se marca solo su "Trabajo
+  // realizado" (y se desmarca si se quita y ningún otro paso lo marca).
+  // V101 (maqueta V104): 13 pasos en dos partes; un paso puede marcar más de
+  // una cosa (la pileta: estanqueidad y flujo).
+  function togglePaso(paso) {
+    setInforme((prev) => {
+      const pasos = { ...(prev.pasos || {}) };
+      if (pasos[paso.id]) delete pasos[paso.id];
+      else pasos[paso.id] = { en: new Date().toISOString(), por: String(prev.tecnico || tecnicoSugerido || "").trim() };
+      return { ...prev, pasos, mantenimiento: mantenimientoConPasos(prev.mantenimiento, pasos, paso) };
+    });
+  }
+  const pasosHechos = PASOS_REGULADOR.filter((p) => informe.pasos?.[p.id]).length;
+  const psi = numeroPresion(informe.presion);
+  const psiFuera = psi !== null && (psi < PI_NORMAL.min || psi > PI_NORMAL.max);
 
   // "Cambio de o-rings" (1-oct-2026, nueva feature, pedido explícito: "un
   // campo en donde se pueda ir agregando o rings. tipo como se agregan
@@ -374,8 +398,77 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
 
           </>
           )}
+          {/* V100 (maqueta V103, "54. sí creo"): los pasos en orden. */}
+          <div style={SECCION_ESTILO}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+              <div style={SECCION_LABEL_ESTILO}>Pasos del mantenimiento</div>
+              <span style={{ fontSize: 12.5, color: "var(--texto-suave)", fontWeight: 700 }}>
+                {pasosHechos} de {PASOS_REGULADOR.length} listos
+              </span>
+            </div>
+            <div className="inf-pasos-barra">
+              <div style={{ width: `${(pasosHechos / PASOS_REGULADOR.length) * 100}%` }} />
+            </div>
+            {PASOS_REGULADOR.map((p, i) => {
+              const hecho = informe.pasos?.[p.id];
+              const empiezaFase = i === 0 || PASOS_REGULADOR[i - 1].fase !== p.fase;
+              return (
+                <div key={p.id}>
+                  {empiezaFase && <div className="inf-fase">{FASES_REGULADOR[p.fase]}</div>}
+                  <button type="button" className={`inf-paso${hecho ? " hecho" : ""}${empiezaFase ? " primero" : ""}`} onClick={() => togglePaso(p)}>
+                    <span className="inf-paso-caja">{hecho && <IconCheck size={13} />}</span>
+                    <span>
+                      <b>
+                        {i + 1}. {p.label}
+                      </b>
+                      {hecho ? (
+                        <small>
+                          Listo{hecho.por ? ` · ${hecho.por}` : ""} · {new Date(hecho.en).toLocaleString("es-DO", { timeZone: "America/Santo_Domingo", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+                        </small>
+                      ) : (
+                        p.sub && <small className={p.ojo ? "ojo" : ""}>{p.sub}</small>
+                      )}
+                    </span>
+                  </button>
+                  {/* V101 ("70"): después de desarmar la primera etapa, revisar cómo están los o-rings y las piezas. */}
+                  {p.nota && <div className="inf-paso-nota">{p.nota}</div>}
+                  {/* V101 (maqueta V104): la presión va directo a "Presión intermedia" del informe. */}
+                  {p.pi && (
+                    <div className="inf-paso-pi">
+                      <label>
+                        Presión intermedia
+                        <span className="inf-pi-campo">
+                          <input type="text" inputMode="decimal" value={informe.presion || ""} onChange={(e) => set("presion", e.target.value)} placeholder="140" />
+                          psi
+                        </span>
+                      </label>
+                      {psi !== null &&
+                        (psiFuera ? (
+                          <div className="inf-pi-mal">
+                            Fuera de lo normal ({PI_NORMAL.min} a {PI_NORMAL.max} psi). Revísala con el manual.
+                          </div>
+                        ) : (
+                          <div className="inf-pi-ok">Dentro de lo normal.</div>
+                        ))}
+                      <div className="hint-text" style={{ marginTop: 6 }}>
+                        Normal: entre {PI_NORMAL.min} y {PI_NORMAL.max} psi. Pistón: no más de 140. Diafragma: hay que ajustarlo. <b>Consulta el manual del modelo.</b>
+                      </div>
+                      {manuales.map((m) => (
+                        <a key={m.href} className="inf-pi-manual" href={m.href} target="_blank" rel="noopener noreferrer">
+                          Ver el manual del {m.titulo} ›
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {pasosHechos === PASOS_REGULADOR.length && <div className="hint-text" style={{ marginTop: 8 }}>Todos los pasos listos. Sigue con el informe abajo.</div>}
+          </div>
+
           <div style={SECCION_ESTILO}>
             <div style={SECCION_LABEL_ESTILO}>Trabajo realizado</div>
+            <div className="hint-text" style={{ marginTop: 4 }}>Se marca solo con los pasos (también se puede tocar a mano).</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
               {MANTENIMIENTO_DEFS.map((m) => (
                 <button
