@@ -198,6 +198,9 @@ function gruposCursos(cursos) {
   if (resto.length) conocidos[3].lista.push(...resto);
   return conocidos.filter((g) => g.lista.length);
 }
+// V103 (maqueta V106, "así es que lo quiero", "no en paréntesis"): la etiqueta
+// corta del curso junto al nombre, igual que en el app Gus Dive (info.nivel).
+const cortaDe = (c) => String(c?.info?.nivel || "").trim();
 // V101 (maqueta V105, "76. B"): el Nitrox con el Open Water es un día más de teoría.
 const TEXTO_NITROX_JUNTO = "Un día más de teoría, por cuadrar con tu instructor.";
 // Open Water → Nitrox; BLS → OXY.
@@ -798,6 +801,8 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
                         }}
                       >
                         {c.nombre}
+                        {cortaDe(c) && " "}
+                        {cortaDe(c) && <span className="ag-nivel ce-op-nivel">{cortaDe(c)}</span>}
                         <div className="pb-op-sub">{c.fechas.length ? `${c.fechas.length} ${c.fechas.length === 1 ? "fecha próxima" : "fechas próximas"}` : "Todavía no hay fecha"}</div>
                         {c.precio != null && <div className="ce-pub-precio">{rd(c.precio)}</div>}
                         {!c.fechas.length && <span className="ce-pub-chip espera">Sin fecha por ahora</span>}
@@ -877,7 +882,11 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
         {paso === "curso" && conFechas && fijoCurso && (
           <div className="pb-card">
             <div className="pb-h" style={{ margin: 0 }}>{menor ? `El curso de ${primerM}` : "Tu curso"}</div>
-            <div className="pb-t">{fijoCurso.nombre}</div>
+            <div className="pb-t">
+              {fijoCurso.nombre}
+              {cortaDe(fijoCurso) && " "}
+              {cortaDe(fijoCurso) && <span className="ag-nivel ce-op-nivel">{cortaDe(fijoCurso)}</span>}
+            </div>
             <div className="pb-h" style={{ marginTop: 0 }}>
               Empieza el {fechaLarga(fijoFecha.inicio)}
               {(fijoFecha.quedan != null || fijoLleno) && <> <span className={`ce-pub-chip ${fijoLleno ? "lleno" : "ok"}`}>{fijoLleno ? "Lleno" : `Quedan ${fijoFecha.quedan} ${fijoFecha.quedan === 1 ? "cupo" : "cupos"}`}</span></>}

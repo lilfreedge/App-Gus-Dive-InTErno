@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V103",
+    fecha: "18 de noviembre, 2026",
+    titulo: "Descripción corta de cada curso y sin el mensaje de la lista de cursos",
+    descripcion:
+      "Control Estudiantes › Más › Catálogo de cursos › Editar curso: debajo del nombre, \"Descripción corta\" (por ejemplo \"Curso básico para principiantes\"). Sale como etiqueta al lado del nombre del curso, en el app Gus Dive y ahora también en el link de registro, cuando el cliente escoge su curso. Ya viene escrita con la que salía antes en el app (\"Buceo básico\", \"Buceo avanzado\"…); si se deja vacía, no sale nada. Dentro de Control Estudiantes no sale. Se quitó la sección \"Mensaje de la lista de cursos\" del Catálogo, y el app Gus Dive ya no enseña ningún mensaje arriba de Cursos. No necesita SQL.",
+  },
+  {
     version: "V102",
     fecha: "18 de noviembre, 2026",
     titulo: "Nitrox con el Open Water, en la misma semana, y el texto de los links para clientes",

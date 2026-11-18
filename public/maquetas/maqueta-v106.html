@@ -1,0 +1,81 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V106 · Descripción corta del curso</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--sup:#eef3f6;--verde:#2c9e5b;--amar:#f6ce46;--navy:#0a3d62}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1000px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:#2b2200;color:#fff;border-color:#2b2200}
+.vista{display:none;max-width:1000px;margin:0 auto;padding:0 16px 40px}.vista.on{display:block}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;margin-bottom:14px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:16px;max-width:720px}
+.card h4{margin:0 0 12px;font-size:15px}
+.fila{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700;color:var(--suave)}
+input{border:1px solid var(--borde);border-radius:9px;padding:10px 11px;font-size:14px;color:var(--texto);font-family:inherit}
+.nuevo{margin-top:10px;background:#fffbea;border:1px dashed #e1c55a;border-radius:10px;padding:10px}
+.hint{color:var(--suave);font-size:12.5px;font-weight:500;line-height:1.45}
+.prev{margin-top:8px;font-size:13px;color:var(--suave)}.prev b{color:var(--texto)}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:820px}
+.col h5{margin:0 0 6px;font-size:12px;color:var(--suave);text-transform:uppercase;letter-spacing:.3px}
+.cel{background:#fff;border:1px solid var(--borde);border-radius:18px;overflow:hidden;max-width:380px}
+.cel-top{background:var(--navy);color:#fff;padding:12px 14px;font-weight:800}
+.cel-body{padding:12px}
+.cur{border:1px solid var(--borde);border-radius:12px;padding:11px 12px;margin-bottom:8px}
+.cur b{font-size:15px}.cur .par{font-weight:500;color:var(--suave)}
+.cur .l{display:flex;justify-content:space-between;font-size:12.5px;color:var(--suave);margin-top:4px}
+.chip{display:inline-block;background:#e4f1f9;color:var(--navy);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800;margin-left:6px}
+.op{border:1px solid var(--borde);border-radius:12px;padding:12px;margin-bottom:8px;font-weight:700}
+.op .par{font-weight:500;color:var(--suave)}
+@media(max-width:640px){.fila,.dos{grid-template-columns:1fr}}
+</style></head><body>
+<div class="maq"><b>Maqueta V106</b> · Catálogo de cursos › Editar curso: una descripción corta que el cliente ve entre paréntesis junto al nombre. Escribe en el campo amarillo y mira cómo sale en las otras pestañas. Solo para los clientes: dentro de Control Estudiantes no sale. Nada está programado.</div>
+<div class="tabs">
+  <button class="tab on" data-v="1">1. Editar curso</button>
+  <button class="tab" data-v="2">2. App Gus Dive › Cursos</button>
+  <button class="tab" data-v="3">3. Link de registro</button>
+</div>
+<div class="vista on" id="v1">
+  <div class="nota">El campo nuevo va debajo del nombre. Hoy cada curso ya tiene una etiqueta parecida que sale en el app ("Buceo básico", "Buceo avanzado"…). Propuesta: que sea este mismo campo, ya escrito con lo de hoy, para que lo cambies.</div>
+  <div class="card">
+    <h4>Editar: Open Water Diver</h4>
+    <div class="fila">
+      <label>Nombre<input id="nom" value="Open Water Diver"></label>
+      <label>Precio con ITBIS incluidos (RD$)<input value="29,500"></label>
+    </div>
+    <div class="nuevo">
+      <label>Descripción corta <span class="hint">Sale entre paréntesis junto al nombre, solo para los clientes. Déjala vacía si no quieres que salga nada.</span><input id="desc" value="Curso básico para principiantes" maxlength="60"></label>
+      <div class="prev">Así lo ve el cliente: <b id="prev"></b></div>
+    </div>
+  </div>
+</div>
+<div class="vista" id="v2">
+  <div class="dos">
+    <div class="col"><h5>Hoy</h5><div class="cel"><div class="cel-top">Gus Dive · Cursos</div><div class="cel-body">
+      <div class="cur"><b>Open Water Diver</b><span class="chip">Buceo básico</span><div class="l"><span>Próximo: lun 23 nov</span><span><b>RD$29,500</b> ›</span></div></div>
+      <div class="cur"><b>Advanced OWD</b><span class="chip">Buceo avanzado</span><div class="l"><span>Sin fecha todavía</span><span>›</span></div></div>
+    </div></div></div>
+    <div class="col"><h5>Con la propuesta</h5><div class="cel"><div class="cel-top">Gus Dive · Cursos</div><div class="cel-body">
+      <div class="cur"><b class="nomx"></b> <span class="par parx"></span><div class="l"><span>Próximo: lun 23 nov</span><span><b>RD$29,500</b> ›</span></div></div>
+      <div class="cur"><b>Advanced OWD</b> <span class="par">(Buceo avanzado)</span><div class="l"><span>Sin fecha todavía</span><span>›</span></div></div>
+      <div class="hint" style="margin-top:6px">También sale arriba al abrir el curso y en "Próximos cursos" del Inicio.</div>
+    </div></div></div>
+  </div>
+</div>
+<div class="vista" id="v3">
+  <div class="nota">¿También en el link de registro (cuando el cliente escoge su curso)? Es otra pantalla para el cliente; se recomienda que sí, para que se vea igual en los dos lados.</div>
+  <div class="cel"><div class="cel-top">Gus Dive · Registro de estudiante</div><div class="cel-body">
+    <div class="hint" style="margin-bottom:8px">¿Qué curso vas a tomar?</div>
+    <div class="op"><span class="nomx"></span> <span class="par parx"></span></div>
+    <div class="op">Advanced OWD <span class="par">(Buceo avanzado)</span></div>
+  </div></div>
+</div>
+<script>
+function pintar(){const n=document.getElementById("nom").value.trim(),d=document.getElementById("desc").value.trim();
+document.getElementById("prev").textContent=n+(d?` (${d})`:"");
+document.querySelectorAll(".nomx").forEach(e=>e.textContent=n);document.querySelectorAll(".parx").forEach(e=>e.textContent=d?`(${d})`:"");}
+["nom","desc"].forEach(id=>document.getElementById(id).addEventListener("input",pintar));
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));document.querySelectorAll(".vista").forEach(v=>v.classList.toggle("on",v.id==="v"+t.dataset.v));}));
+pintar();
+</script>
+</body></html>

@@ -1,0 +1,129 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V107 · Lista de cursos del link de registro</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--sup:#eef3f6;--verde:#2c9e5b;--amar:#f6ce46;--cafe:#7a5a14;--chip:#fdf1cf;--chipt:#5c4700}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1000px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:#2b2200;color:#fff;border-color:#2b2200}
+.reco{background:#e5f6ec;color:var(--verde);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px}
+.vista{display:none;max-width:1000px;margin:0 auto;padding:0 16px 40px}.vista.on{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;flex:1 1 260px;max-width:420px}
+.nota b{display:block;margin-bottom:4px}
+.cel{width:375px;max-width:100%;background:#fff;border:1px solid var(--borde);border-radius:22px;overflow:hidden}
+.cel-top{border-top:4px solid var(--amar);padding:12px 14px;border-bottom:1px solid var(--borde);font-weight:800;color:var(--cafe);display:flex;justify-content:space-between}
+.cel-body{padding:12px;background:var(--fondo);max-height:720px;overflow:auto}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px}
+.t{font-size:17px;font-weight:800}.h{color:var(--suave);font-size:13px;margin:2px 0 8px}
+.g{font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.3px;margin:12px 2px 6px}
+.chip{display:inline-block;background:var(--chip);color:var(--chipt);border-radius:999px;padding:1px 7px;font-size:10.5px;font-weight:800;vertical-align:1px}
+.sinf{display:inline-block;background:#fdf1cf;color:#7a5a14;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800}
+.i{width:22px;height:22px;border-radius:50%;border:1.5px solid #b08a2e;color:#b08a2e;font-style:italic;font-weight:800;font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff}
+/* hoy */
+.hoy-op{border:1px solid var(--borde);border-radius:12px;padding:11px 12px;margin-bottom:8px;position:relative}
+.hoy-op.gris{background:#f8fafb}
+.hoy-op b{font-size:14.5px}.hoy-op .s{font-size:12.5px;color:var(--suave);margin-top:2px}.hoy-op .p{font-weight:800;color:var(--cafe);font-size:13px}
+.hoy-op .i{position:absolute;right:10px;top:10px}
+/* A */
+.lista{background:#fff;border:1px solid var(--borde);border-radius:12px;overflow:hidden}
+.fila{display:flex;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid var(--sup);cursor:pointer}
+.fila:first-child{border-top:0}
+.fila .m{flex:1;min-width:0}.fila b{font-size:14px}.fila small{display:block;font-size:12px;color:var(--suave);margin-top:1px}
+.fila small.ok{color:var(--verde);font-weight:700}
+.fila .pr{font-weight:800;font-size:13px;color:var(--texto);white-space:nowrap}
+.fila .fl{color:#b9c4cc;font-size:16px}
+/* B */
+.dest{background:#fff;border:2px solid var(--amar);border-radius:14px;padding:12px;margin-bottom:10px}
+.dest .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.dest b{font-size:16px}.dest .pr{font-weight:800;color:var(--cafe)}
+.fechas{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.fechas button{border:1px solid var(--borde);background:#fff;border-radius:10px;padding:8px 10px;font-size:12.5px;font-weight:800;cursor:pointer;text-align:left}
+.fechas button small{display:block;font-weight:600;color:var(--verde);font-size:11px}
+.fechas button.lleno{color:#9aa6b0;background:#f3f5f7;cursor:not-allowed}.fechas button.lleno small{color:#9aa6b0}
+.fechas button.sel{background:#fbe9a6;border-color:#d9b84a}
+.nx{margin-top:8px;background:#fdf3cf;border-radius:10px;padding:8px 10px;font-size:13px;font-weight:600;color:#5c4700}
+.nx small{display:block;color:#0f7a6c;font-size:11.5px}
+.av{font-size:12px;font-weight:800;color:var(--cafe);white-space:nowrap}
+/* C */
+.seg{display:flex;background:#fff;border:1px solid var(--borde);border-radius:12px;padding:3px;gap:3px;margin-bottom:10px}
+.seg button{flex:1;border:0;background:none;border-radius:9px;padding:8px 4px;font-size:12px;font-weight:800;color:var(--suave);cursor:pointer}
+.seg button.on{background:#2b2200;color:#fff}
+@media(max-width:640px){.cel{width:100%}}
+</style></head><body>
+<div class="maq"><b>Maqueta V107</b> · Link de registro › "Tu curso": cómo se ve hoy la lista de cursos y tres maneras de ordenarla. Son los 14 cursos de tu Catálogo (sin Freediving); las fechas y los cupos son de ejemplo. Toca los cursos y las fechas para probar. Nada está programado.</div>
+<div class="tabs">
+  <button class="tab on" data-v="hoy">Hoy</button>
+  <button class="tab" data-v="a">A. Lista compacta</button>
+  <button class="tab" data-v="b">B. Primero los que tienen fecha <span class="reco">recomendada</span></button>
+  <button class="tab" data-v="c">C. Por pestañas</button>
+</div>
+
+<div class="vista on" id="v-hoy">
+  <div class="cel"><div class="cel-top"><span>GUS · SNSI</span><span>Registro de estudiante</span></div><div class="cel-body"><div class="card"><div class="t">Tu curso</div><div class="h">¿Qué curso vas a tomar?</div><div id="hoy"></div></div></div></div>
+  <div class="nota"><b>Lo que se ve desordenado hoy</b>Cada curso es una caja grande, aunque no tenga fecha. Los que se pueden tomar ya (con fecha) se pierden entre los que no tienen ("Sin fecha por ahora" se repite en casi todos). Unos tienen precio y otros no, y la "i" queda flotando arriba.</div>
+</div>
+
+<div class="vista" id="v-a">
+  <div class="cel"><div class="cel-top"><span>GUS · SNSI</span><span>Registro de estudiante</span></div><div class="cel-body"><div class="card"><div class="t">Tu curso</div><div class="h">¿Qué curso vas a tomar?</div><div id="a"></div></div></div></div>
+  <div class="nota"><b>A. Lista compacta</b>Mismos grupos, pero cada curso es una línea: nombre con su etiqueta, la próxima fecha (en verde) o "Sin fecha todavía", y el precio a la derecha. Todo alineado y del mismo tamaño. La "i" sale al tocar el curso, junto con sus fechas y "Agregar Nitrox".</div>
+</div>
+
+<div class="vista" id="v-b">
+  <div class="cel"><div class="cel-top"><span>GUS · SNSI</span><span>Registro de estudiante</span></div><div class="cel-body"><div class="card"><div class="t">Tu curso</div><div class="h">¿Qué curso vas a tomar?</div><div id="b"></div></div></div></div>
+  <div class="nota"><b>B. Primero los que tienen fecha</b>Arriba, grandes, solo los cursos que tienen fecha abierta, con sus fechas como botones (se escoge la fecha ahí mismo, un paso menos) y "Agregar Nitrox" en Open Water. Abajo, en una sola lista chica, "Otros cursos": los que todavía no tienen fecha, con "Avísame" para quedar en Interesados. Es la que recomiendo: casi todos vienen por un curso que ya tiene fecha, y lo demás no estorba.</div>
+</div>
+
+<div class="vista" id="v-c">
+  <div class="cel"><div class="cel-top"><span>GUS · SNSI</span><span>Registro de estudiante</span></div><div class="cel-body"><div class="card"><div class="t">Tu curso</div><div class="h">¿Qué curso vas a tomar?</div><div class="seg" id="segc"></div><div id="c"></div></div></div></div>
+  <div class="nota"><b>C. Por pestañas</b>Arriba se escoge el tipo (Buceo, Especialidades, Primeros auxilios) y solo salen esos cursos, en lista compacta como la A, primero los que tienen fecha. Menos cosas en pantalla a la vez, pero hay que tocar para ver los otros grupos.</div>
+</div>
+
+<script>
+const CURSOS = [
+  { n: "Open Water Diver", e: "Buceo básico", g: "Cursos de buceo", p: "29,500", f: [["lun 11 ene", 4], ["lun 8 feb", 0]], nx: true },
+  { n: "Advanced OWD", e: "Buceo avanzado", g: "Cursos de buceo", p: "29,500", f: [] },
+  { n: "Rescue Diver", e: "Buceo de rescate", g: "Cursos de buceo", p: "29,500", f: [] },
+  { n: "Divemaster", e: "Formación profesional", g: "Cursos de buceo", p: "", f: [] },
+  { n: "Instructor Course", e: "Formación de instructores", g: "Cursos de buceo", p: "", f: [] },
+  { n: "Refresh OWD", e: "", g: "Cursos de buceo", p: "", f: [] },
+  { n: "BLS", e: "", g: "Primeros auxilios", p: "", f: [] },
+  { n: "OXY", e: "", g: "Primeros auxilios", p: "", f: [] },
+  { n: "Nitrox", e: "", g: "Especialidades", p: "", f: [] },
+  { n: "Flotabilidad (Hovering Diver / Trim)", e: "", g: "Especialidades", p: "", f: [] },
+  { n: "Navegación subacuática", e: "", g: "Especialidades", p: "", f: [] },
+  { n: "Buceo nocturno", e: "", g: "Especialidades", p: "", f: [] },
+  { n: "Buceo profundo (Deep Diver)", e: "", g: "Especialidades", p: "", f: [] },
+  { n: "Pez León", e: "", g: "Especialidades", p: "", f: [] },
+];
+const GR = ["Cursos de buceo", "Primeros auxilios", "Especialidades"];
+const chip = (c) => (c.e ? ` <span class="chip">${c.e}</span>` : "");
+const abiertas = (c) => c.f.filter(([, q]) => q > 0);
+// Hoy
+document.getElementById("hoy").innerHTML = GR.map((g) => `<div class="g">${g}</div>` + CURSOS.filter((c) => c.g === g).map((c) => `<div class="hoy-op${c.f.length ? "" : " gris"}"><span class="i">i</span><b>${c.n}</b>${chip(c)}<div class="s">${c.f.length ? `${c.f.length} ${c.f.length === 1 ? "fecha próxima" : "fechas próximas"}` : "Todavía no hay fecha"}</div>${c.p ? `<div class="p">RD$${c.p}</div>` : ""}${c.f.length ? "" : '<span class="sinf">Sin fecha por ahora</span>'}${c.nx ? '<div class="nx"><input type="checkbox"> Agregar Nitrox<small>Un día más de teoría, por cuadrar con tu instructor.</small></div>' : ""}</div>`).join("")).join("");
+// A y C
+const fila = (c) => { const ab = abiertas(c); return `<div class="fila"><div class="m"><b>${c.n}</b>${chip(c)}<small class="${ab.length ? "ok" : ""}">${ab.length ? `Próximo: ${ab[0][0]}${c.f.length > 1 ? ` · ${c.f.length} fechas` : ""}` : "Sin fecha todavía"}</small></div>${c.p ? `<span class="pr">RD$${c.p}</span>` : ""}<span class="fl">›</span></div>`; };
+document.getElementById("a").innerHTML = GR.map((g) => `<div class="g">${g}</div><div class="lista">${CURSOS.filter((c) => c.g === g).map(fila).join("")}</div>`).join("");
+let segSel = GR[0];
+function pintarC() {
+  document.getElementById("segc").innerHTML = ["Cursos de buceo", "Especialidades", "Primeros auxilios"].map((g) => `<button class="${g === segSel ? "on" : ""}" data-g="${g}">${g.replace("Cursos de ", "")}</button>`).join("");
+  const l = CURSOS.filter((c) => c.g === segSel).sort((x, y) => abiertas(y).length - abiertas(x).length);
+  document.getElementById("c").innerHTML = `<div class="lista">${l.map(fila).join("")}</div>`;
+  document.querySelectorAll("#segc button").forEach((b) => b.onclick = () => { segSel = b.dataset.g; pintarC(); });
+}
+pintarC();
+// B
+let fSel = "";
+function pintarB() {
+  const con = CURSOS.filter((c) => c.f.length);
+  const sin = CURSOS.filter((c) => !c.f.length);
+  document.getElementById("b").innerHTML = `<div class="g">Con fecha abierta</div>` + con.map((c) => `<div class="dest"><div class="top"><div><b>${c.n}</b>${chip(c)}</div><span class="i">i</span></div>${c.p ? `<div class="pr">RD$${c.p}</div>` : ""}<div class="fechas">${c.f.map(([d, q]) => `<button class="${q ? "" : "lleno"}${fSel === c.n + d ? " sel" : ""}" data-k="${c.n + d}" ${q ? "" : "disabled"}>${d}<small>${q ? `Quedan ${q}` : "Lleno"}</small></button>`).join("")}</div>${c.nx ? '<div class="nx"><input type="checkbox"> Agregar Nitrox<small>Un día más de teoría, por cuadrar con tu instructor.</small></div>' : ""}</div>`).join("")
+    + `<div class="g">Otros cursos · todavía sin fecha</div><div class="lista">${sin.map((c) => `<div class="fila"><div class="m"><b>${c.n}</b>${chip(c)}<small>${c.g}${c.p ? ` · RD$${c.p}` : ""}</small></div><span class="av">Avísame ›</span></div>`).join("")}</div>`;
+  document.querySelectorAll("#b .fechas button:not([disabled])").forEach((x) => x.onclick = () => { fSel = x.dataset.k; pintarB(); });
+}
+pintarB();
+document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === t));
+  document.querySelectorAll(".vista").forEach((v) => v.classList.toggle("on", v.id === "v-" + t.dataset.v));
+}));
+</script>
+</body></html>

@@ -1,11 +1,10 @@
 "use client";
 
 import { PresupuestosCurso } from "./PresupuestoHoja";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { IconEdit, IconPlus } from "@/components/icons";
 import { PASOS, ESCUELAS, rd, nombrePaso } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
-import { createClient } from "@/lib/supabase/client";
 
 // Base de datos (Más › Base de datos, V55: "ponme en 'más' un botón de base
 // de datos, donde figuren base de datos de los cursos que damos, para poder
@@ -35,7 +34,7 @@ export function Cursos({ db, p, yo, ops, ir }) {
       </div>
       {seccion === "cursos" && (
       <>
-      <MensajeCatalogo puede={!!yo?.esTitular} />
+      {/* V103 ("quitemos esa sección de poner un mensaje para los cursos"): sin el mensaje de la lista. */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <div className="hint-text" style={{ margin: 0 }}>Los cursos que damos. {yo?.esTitular ? "Solo tú puedes borrar." : ""}</div>
         {p.cursos && !edit && (
@@ -184,6 +183,16 @@ function EditarCurso({ c, ops, yo, cerrar }) {
             <input inputMode="numeric" value={f.precio} onChange={(e) => set("precio", formatoPrecioInput(e.target.value))} placeholder="Sin precio" />
           </label>
         </div>
+        {/* V103 (maqueta V106; "fíjate el mini mensajito... así es que lo quiero", "no en paréntesis"):
+            la etiqueta corta junto al nombre ("Buceo básico"), la misma que ya salía en el app Gus Dive
+            (info.nivel). Ahora se cambia aquí y sale también en el link de registro. */}
+        <label>
+          Descripción corta
+          <input value={f.info?.nivel || ""} maxLength={40} onChange={(e) => set("info", { ...(f.info || {}), nivel: e.target.value })} placeholder="Ej. Curso básico para principiantes" />
+          <span className="hint-text" style={{ margin: 0, fontWeight: 400 }}>
+            Sale como etiqueta al lado del nombre, en el app Gus Dive y en el link de registro. Vacía, no sale nada.
+          </span>
+        </label>
         {/* V55: solo SNSI, así que no se escoge escuela. */}
         {ESCUELAS.length > 1 && (
           <>
@@ -271,67 +280,3 @@ function EditarCurso({ c, ops, yo, cerrar }) {
   );
 }
 
-// V88 (maqueta V89, aprobada 16-nov-2026): el mensaje de arriba de la lista de
-// cursos en el app de clientes ("Todos los cursos de Gus Dive"). Se puede
-// cambiar o quitar (vacío = sin mensaje). Solo el Titular lo guarda.
-function MensajeCatalogo({ puede }) {
-  const [texto, setTexto] = useState("");
-  const [cargado, setCargado] = useState(false);
-  const [msg, setMsg] = useState("");
-  useEffect(() => {
-    let vivo = true;
-    createClient()
-      .from("app_config")
-      .select("catalogo_mensaje")
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!vivo) return;
-        setTexto(data?.catalogo_mensaje ?? "Todos los cursos de Gus Dive");
-        setCargado(true);
-      });
-    return () => {
-      vivo = false;
-    };
-  }, []);
-  async function guardar(valor) {
-    setMsg("");
-    const { error } = await createClient().from("app_config").update({ catalogo_mensaje: valor }).eq("id", true);
-    if (error) return setMsg("No se pudo guardar. Solo el Titular lo puede cambiar.");
-    setTexto(valor);
-    setMsg(valor ? "Guardado." : "Mensaje quitado.");
-  }
-  if (!cargado) return null;
-  return (
-    <div className="card" style={{ marginBottom: 12 }}>
-      <div style={{ fontWeight: 700, marginBottom: 6 }}>Mensaje de la lista de cursos (app de clientes)</div>
-      {puede ? (
-        <>
-          <textarea
-            rows={2}
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            style={{ width: "100%", border: "1px solid #dfe6ea", borderRadius: 10, padding: 9, font: "inherit" }}
-          />
-          <div className="hint-text" style={{ marginTop: 4 }}>
-            Sale arriba de Cursos en la app de clientes. Si lo quitas, la lista sale sin mensaje.
-          </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-            <button className="btn btn-primary vj-btn" onClick={() => guardar(texto.trim())}>
-              Guardar
-            </button>
-            <button className="btn vj-btn" onClick={() => guardar("")}>
-              Quitar mensaje
-            </button>
-          </div>
-        </>
-      ) : (
-        <div className="hint-text">{texto || "Sin mensaje."}</div>
-      )}
-      {msg && (
-        <div className="hint-text" style={{ marginTop: 6 }}>
-          {msg}
-        </div>
-      )}
-    </div>
-  );
-}
