@@ -20,9 +20,9 @@ import InstalarApp, { VolverInicio } from "@/components/InstalarApp";
 //   pantalla con nombre, celular, correo, curso y cómo se enteró. Al
 //   inscribirse por el link de cursos con el mismo celular, igual sale solo
 //   de Interesados (V78 del link de cursos).
-export default function MeInteresa({ cursos, cursoInicial = null }) {
+export default function MeInteresa({ cursos, niveles = {}, cursoInicial = null }) {
   const [paso, setPaso] = useState("datos"); // datos | listo
-  const [f, setF] = useState({ nombre: "", cel: "", curso: cursoInicial || cursos[0] || "", fuente: "", correo: "", web: "" });
+  const [f, setF] = useState({ nombre: "", cel: "", curso: cursoInicial || cursos[0] || "", fuente: "", fuenteOtro: "", correo: "", web: "" });
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [nombreFin, setNombreFin] = useState("");
@@ -84,8 +84,11 @@ export default function MeInteresa({ cursos, cursoInicial = null }) {
             <input className="pb-input" type="email" value={f.correo} onChange={(e) => set("correo", e.target.value)} placeholder="tucorreo@ejemplo.com" autoComplete="email" />
             <label className="ce-pub-l">¿Qué curso te interesa?</label>
             <select className="pb-input" value={f.curso} onChange={(e) => set("curso", e.target.value)}>
+              {/* V105: con la descripción corta del Catálogo ("Open Water Diver · Curso básico"). */}
               {cursos.map((c) => (
-                <option key={c}>{c}</option>
+                <option key={c} value={c}>
+                  {niveles[c] ? `${c} · ${niveles[c]}` : c}
+                </option>
               ))}
               <option value="">No sé, quiero información</option>
             </select>
@@ -96,6 +99,13 @@ export default function MeInteresa({ cursos, cursoInicial = null }) {
                 <option key={x}>{x}</option>
               ))}
             </select>
+            {/* V105 (con foto: "cuando le den a Otro, abre una sección donde puedan escribir"). */}
+            {f.fuente === "Otro" && (
+              <>
+                <label className="ce-pub-l">Cuéntanos cómo nos conociste</label>
+                <input className="pb-input" value={f.fuenteOtro} maxLength={80} onChange={(e) => set("fuenteOtro", e.target.value)} placeholder="Escríbelo aquí" autoFocus />
+              </>
+            )}
             <input className="ce-pub-trampa" tabIndex={-1} autoComplete="off" value={f.web} onChange={(e) => set("web", e.target.value)} aria-hidden="true" />
             {error && <div className="pb-error">{error}</div>}
             <button className="pb-btn" disabled={enviando || !puedeEnviar} onClick={enviar}>

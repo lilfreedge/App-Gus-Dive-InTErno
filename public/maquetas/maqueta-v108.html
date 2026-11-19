@@ -1,0 +1,87 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V108 · Dónde va el Contacto en el app Gus Dive</title>
+<style>
+:root{--fondo:#f1f5f8;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#0a3d62;--amar:#f6ce46;--chip:#fdf1cf;--chipt:#5c4700}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#e9eef2;color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1000px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.reco{background:#e5f6ec;color:#2c9e5b;border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px}
+.vista{display:none;max-width:1000px;margin:0 auto;padding:0 16px 40px}.vista.on{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;flex:1 1 260px;max-width:420px}
+.nota b{display:block;margin-bottom:4px}
+.cel{width:360px;max-width:100%;height:700px;background:var(--fondo);border:1px solid var(--borde);border-radius:24px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.top{background:#fff;border-bottom:1px solid var(--borde);padding:12px 14px;display:flex;align-items:center;gap:8px}
+.top .gus{color:#c8102e;font-weight:900;font-size:18px;letter-spacing:-1px}.top .snsi{font-style:italic;font-size:12px;color:#333}.top .nm{font-weight:800;color:var(--navy);font-size:14px;flex:1}
+.info-btn{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;color:var(--navy);cursor:pointer;display:flex;align-items:center;gap:5px}
+.body{flex:1;overflow:auto;padding:14px}
+h2{margin:0;font-size:22px}.sub{color:var(--suave);font-size:13px;margin:2px 0 12px}
+.sec{font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.3px;margin:14px 2px 6px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px}
+.curso{display:flex;align-items:center;gap:10px}
+.fecha{background:var(--amar);border-radius:8px;width:44px;text-align:center;padding:4px 0;font-weight:900;font-size:16px;line-height:1.05}.fecha small{display:block;font-size:9px;font-weight:800}
+.ins{margin-left:auto;background:var(--chip);color:var(--chipt);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800}
+.fila{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid #eef3f6}.fila:first-child{border-top:0}
+.ic{width:32px;height:32px;border-radius:9px;background:#eef3f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:800;color:var(--navy)}
+.fila b{display:block;font-size:14px}.fila small{display:block;color:var(--suave);font-size:12px;line-height:1.4}
+.menu{background:#fff;border-top:1px solid var(--borde);display:flex;justify-content:space-around;padding:7px 0 9px;font-size:10.5px;color:var(--suave);font-weight:700}
+.menu span.on{color:var(--navy)}
+.info-linea{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px;cursor:pointer;margin-top:14px}
+.info-linea b{flex:1}.mini{display:flex;gap:4px}.mini i{width:24px;height:24px;border-radius:7px;background:#eef3f6;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:10px;font-weight:800;color:var(--navy)}
+.redondos{display:flex;justify-content:space-between;gap:6px}
+.redondos div{flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--suave);cursor:pointer}
+.redondos div i{display:flex;margin:0 auto 4px;width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid var(--borde);align-items:center;justify-content:center;font-style:normal;font-weight:900;color:var(--navy);font-size:13px}
+.hoy{margin-top:10px;font-size:12.5px;color:var(--suave);display:flex;justify-content:space-between}.hoy b{color:#2c9e5b}
+.hoy a{color:var(--navy);font-weight:800;cursor:pointer}
+.velo{position:absolute;inset:0;background:rgba(10,30,45,.35);display:none;align-items:flex-end}.velo.on{display:flex}
+.hoja{background:#fff;width:100%;border-radius:18px 18px 0 0;padding:14px 14px 18px;max-height:85%;overflow:auto}
+.hoja .asa{width:40px;height:4px;border-radius:4px;background:#cfd8de;margin:0 auto 10px}
+.hoja h3{margin:0 0 6px;font-size:17px}
+.cerrar{display:block;width:100%;margin-top:10px;border:1px solid var(--borde);background:#fff;border-radius:12px;padding:10px;font-weight:800;color:var(--navy);cursor:pointer}
+@media(max-width:640px){.cel{width:100%}}
+</style></head><body>
+<div class="maq"><b>Maqueta V108</b> · App Gus Dive › Inicio: dónde poner "Contacto" para que no estorbe. Toca los botones para abrir la información. Nada está programado.</div>
+<div class="tabs">
+  <button class="tab on" data-v="hoy">Hoy</button>
+  <button class="tab" data-v="a">A. Botón al final del Inicio</button>
+  <button class="tab" data-v="b">B. Botones redondos</button>
+  <button class="tab" data-v="c">C. "Nuestra info" arriba <span class="reco">recomendada</span></button>
+</div>
+<div id="vistas"></div>
+<template id="contacto">
+  <div class="fila"><span class="ic">WA</span><span><b>Escríbenos por WhatsApp</b><small>Te contestamos ahí mismo</small></span></div>
+  <div class="fila"><span class="ic">Ir</span><span><b>Cómo llegar</b><small>Av. Roberto Pastoriza 356, Plaza La Lira II</small></span></div>
+  <div class="fila"><span class="ic">Hr</span><span><b>Horario</b><small>Lunes: 9:00 a. m. a 7:00 p. m.<br>Martes a viernes: 1:00 a 7:00 p. m.<br>Sábado: 9:00 a. m. a 5:00 p. m.<br>Domingo: Cerrado</small></span></div>
+  <div class="fila"><span class="ic">IG</span><span><b>Instagram</b><small>@gusdivecenter</small></span></div>
+  <div class="fila"><span class="ic">Web</span><span><b>Página web</b><small>gusdivecenter.com</small></span></div>
+</template>
+<script>
+const contacto = document.getElementById("contacto").innerHTML;
+const arriba = (conBoton) => `<div class="top"><span class="gus">GUS</span><span class="snsi">SNSI</span><span class="nm">Gus Dive</span>${conBoton ? '<button class="info-btn abrir">i&nbsp; Nuestra info</button>' : ""}</div>`;
+const inicio = `<h2>Hola</h2><div class="sub">Cursos y buceos de Gus Dive</div>
+  <div class="sec">Próximos cursos</div><div class="card curso"><span class="fecha"><small>LUN</small>11<small>ENE</small></span><span><b>Open Water Diver</b><br><small style="color:#5c6b78">Quedan 6 cupos</small></span><span class="ins">Inscribirme</span></div>
+  <div class="sec">Próximos buceos</div><div class="card">Pronto publicamos los próximos buceos.</div>`;
+const menu = `<div class="menu"><span class="on">Inicio</span><span>Cursos</span><span>Buceos</span><span>Calendario</span><span>Mi cuenta</span></div>`;
+const hoja = `<div class="velo"><div class="hoja"><div class="asa"></div><h3>Nuestra info</h3>${contacto}<button class="cerrar">Cerrar</button></div></div>`;
+const V = {
+  hoy: { cel: `${arriba(false)}<div class="body">${inicio}<div class="sec">Contacto</div><div class="card">${contacto}</div><div class="sec">Alquiler de equipo</div></div>${menu}`,
+    nota: "<b>Hoy</b>La tarjeta de Contacto ocupa media pantalla en el Inicio y empuja hacia abajo el alquiler y lo demás." },
+  a: { cel: `${arriba(false)}<div class="body">${inicio}<div class="sec">Alquiler de equipo</div><div class="info-linea abrir"><b>Nuestra info</b><span class="mini"><i>WA</i><i>Ir</i><i>IG</i><i>Web</i></span> ›</div></div>${menu}${hoja}`,
+    nota: "<b>A. Botón al final del Inicio</b>El Inicio queda con cursos, buceos y alquiler. Al final, una sola línea \"Nuestra info\" con iconitos; al tocarla sube una hoja con WhatsApp, cómo llegar, horario, Instagram y página web." },
+  b: { cel: `${arriba(false)}<div class="body">${inicio}<div class="sec">Contacto</div><div class="card"><div class="redondos"><div class="abrir"><i>WA</i>WhatsApp</div><div class="abrir"><i>Ir</i>Cómo llegar</div><div class="abrir"><i>IG</i>Instagram</div><div class="abrir"><i>Web</i>Web</div></div><div class="hoy"><span>Hoy: <b>abierto hasta 7:00 p. m.</b></span><a class="abrir">Ver horario</a></div></div><div class="sec">Alquiler de equipo</div></div>${menu}${hoja}`,
+    nota: "<b>B. Botones redondos</b>Se queda en el Inicio pero chiquito: cuatro botones (WhatsApp, Cómo llegar, Instagram, Web) y una línea con el horario de hoy. \"Ver horario\" abre el de toda la semana." },
+  c: { cel: `${arriba(true)}<div class="body">${inicio}<div class="sec">Alquiler de equipo</div></div>${menu}${hoja}`,
+    nota: "<b>C. \"Nuestra info\" arriba (la que recomiendo)</b>Un botón \"Nuestra info\" arriba a la derecha, al lado del nombre. Sale en todas las pestañas (Inicio, Cursos, Buceos, Calendario, Mi cuenta), así el cliente encuentra el WhatsApp o la dirección desde donde esté. El Inicio queda limpio." },
+};
+document.getElementById("vistas").innerHTML = Object.entries(V).map(([k, x]) => `<div class="vista${k === "hoy" ? " on" : ""}" id="v-${k}"><div class="cel">${x.cel}</div><div class="nota">${x.nota}</div></div>`).join("");
+document.querySelectorAll(".vista").forEach((v) => {
+  const velo = v.querySelector(".velo");
+  v.querySelectorAll(".abrir").forEach((b) => b.addEventListener("click", () => velo && velo.classList.add("on")));
+  v.querySelectorAll(".cerrar, .velo").forEach((b) => b.addEventListener("click", (e) => { if (e.target === b) velo.classList.remove("on"); }));
+});
+document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === t));
+  document.querySelectorAll(".vista").forEach((v) => v.classList.toggle("on", v.id === "v-" + t.dataset.v));
+}));
+</script>
+</body></html>

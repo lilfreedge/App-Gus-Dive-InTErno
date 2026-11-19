@@ -4,7 +4,6 @@ import { filaAViaje } from "@/lib/viajes/datos";
 import { estadoViaje, hoyISO } from "@/lib/viajes/modelo";
 import { fechasProximas } from "@/lib/estudiantes/fechas-servidor";
 import { TIENDA } from "@/lib/viajes/servidor";
-import { TIPOS } from "@/lib/alquiler/modelo";
 import AppGus from "@/components/AppGus";
 import { metaClientes, APP_CLIENTES } from "@/lib/metadata-clientes";
 
@@ -57,8 +56,7 @@ export default async function AppGusPage() {
     salida: v.salida || "",
     quedan: estadoViaje(v) === "cerrado_insc" ? 0 : Math.max(0, (v.cupoMax || 0) - (ins || []).filter((x) => x.viaje_id === v.id).length),
   }));
-  // Si falta la tabla de precios (migration_83), no sale la sección.
-  const { data: pr } = await s.from("alq_precios_tipo").select("tipo, precio");
-  const alquiler = TIPOS.map((t) => ({ t: t.uno, precio: (pr || []).find((r) => r.tipo === t.p)?.precio })).filter((x) => x.precio != null && Number(x.precio) > 0).map((x) => ({ t: x.t, precio: Number(x.precio) }));
-  return <AppGus cursos={cursos} catalogo={catalogo} buceos={buceos} alquiler={alquiler} whatsapp={TIENDA.whatsapp} />;
+  // V105 ("110. C. Quita alquileres de equipo"): el Inicio ya no enseña los
+  // precios de alquiler, así que ya no se piden (la tabla no se tocó).
+  return <AppGus cursos={cursos} catalogo={catalogo} buceos={buceos} whatsapp={TIENDA.whatsapp} />;
 }

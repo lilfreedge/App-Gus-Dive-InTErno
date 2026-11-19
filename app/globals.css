@@ -4066,6 +4066,34 @@ html[data-theme="dark"] .ce-op-extra-sub { color: #7fd6c6; }
 .ce-int-link-grande { display: block; width: 100% !important; padding: 13px 16px !important; font-size: 15.5px !important; margin: 4px 0 6px !important; }
 .ag-contacto .ag-horario { align-items: flex-start; }
 .ag-contacto .ag-horario small { display: block; }
+
+/* V105 -- App Gus Dive: botón "Gus info" arriba a la derecha y su hoja
+   (maqueta V108, "110. C"); "Lo que sale en tu Inicio" en Mi cuenta
+   (maqueta V109, "111. A"). */
+.ag-info-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #dfe6ea; background: #fff; border-radius: 999px; padding: 6px 11px; font: inherit; font-size: 13px; font-weight: 800; color: #06324f; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+@media (max-width: 360px) {
+  .ag .pb-head { gap: 6px; padding-left: 12px; padding-right: 12px; }
+  .ag .pb-head > span { white-space: nowrap; }
+  .ag .pb-head .ce-logo-snsi { height: 14px; }
+  .ag-info-btn { padding: 5px 8px; font-size: 12px; gap: 4px; }
+}
+.ag-hoja-info { max-height: 88vh; overflow: auto; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+.ag-hoja-asa { display: block; width: 40px; height: 4px; border-radius: 4px; background: #cfd8de; margin: -6px auto 12px; }
+.ag-hoja-info .ag-hoja-t { display: block; font-size: 18px; color: #06324f; margin-bottom: 2px; }
+.ag-hoja-info .ag-contacto { padding: 0; }
+.ag-hoja-info .ag-contacto b { font-size: 15px; }
+.ag-hoja-cerrar { display: block; width: 100%; margin-top: 12px; border: 1px solid #dfe6ea; background: #fff; border-radius: 12px; padding: 12px; font: inherit; font-weight: 800; color: #06324f; cursor: pointer; }
+.ag-sw-lista { padding: 2px 12px; }
+.ag-sw { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 0; border: 0; border-top: 1px solid #eef3f6; background: none; font: inherit; color: #1a2733; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ag-sw:first-child { border-top: 0; }
+.ag-sw span { flex: 1; min-width: 0; }
+.ag-sw b { display: block; }
+.ag-sw small { display: block; color: #5c6b78; font-size: 13px; }
+.ag-tog { width: 44px; height: 26px; border-radius: 999px; background: #cfd8de; position: relative; flex-shrink: 0; transition: background 0.15s; }
+.ag-tog::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); transition: left 0.15s; }
+.ag-tog.on { background: #2c9e5b; }
+.ag-tog.on::after { left: 21px; }
+.ag-sw-nota { margin: 6px 4px 0; font-size: 13px; }
 /* V85: Control Estudiantes › Más › App Gus Dive. */
 .ce-appgus { text-align: center; }
 .ce-appgus-qr { width: 220px; max-width: 70vw; margin: 4px auto 6px; }

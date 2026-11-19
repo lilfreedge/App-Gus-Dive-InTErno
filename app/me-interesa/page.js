@@ -18,8 +18,11 @@ export default async function MeInteresaPage({ searchParams }) {
   // tienen en_link=false para que no salgan en el link del estudiante
   // (app/estudiante/page.js ya lo respeta); a este link ("Me interesa") se
   // le había quedado pendiente el mismo filtro.
-  const { data } = await s.from("est_cursos").select("nombre").eq("activo", true).neq("en_link", false).order("orden").order("nombre");
+  const { data } = await s.from("est_cursos").select("nombre, info").eq("activo", true).neq("en_link", false).order("orden").order("nombre");
   const cursos = (data || []).map((c) => c.nombre);
+  // V105 (con foto: "aún no se ve lo que te pedí de la descripción aquí"): la
+  // descripción corta de cada curso (Catálogo › Editar curso) junto al nombre.
+  const niveles = Object.fromEntries((data || []).map((c) => [c.nombre, String(c.info?.nivel || "").trim()]).filter(([, n]) => n));
   const pedido = String(searchParams?.curso || "");
-  return <MeInteresa cursos={cursos} cursoInicial={cursos.includes(pedido) ? pedido : null} />;
+  return <MeInteresa cursos={cursos} niveles={niveles} cursoInicial={cursos.includes(pedido) ? pedido : null} />;
 }

@@ -40,7 +40,9 @@ export async function POST(request) {
 
   // V74: la fuente es la que escogió la persona (¿Cómo te enteraste?); si no
   // escogió nada, se queda "Link".
-  const fuente = FUENTES.includes(body.fuente) ? body.fuente : "Link";
+  // V105: con "Otro", lo que escribió va junto ("Otro: un amigo").
+  const otro = String(body.fuenteOtro || "").replace(/\s+/g, " ").trim().slice(0, 80);
+  const fuente = FUENTES.includes(body.fuente) ? (body.fuente === "Otro" && otro ? `Otro: ${otro}` : body.fuente) : "Link";
   const fila = { nombre, celular: cel, curso, fuente, via: "link" };
   let { error } = await s.from("est_interesados").insert({ ...fila, correo });
   // Sin la migration_86 todavía (no existe la columna del correo): va en la nota.

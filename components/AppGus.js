@@ -5,9 +5,9 @@ import { textoCalzado } from "@/lib/tallas";
 import { useRouter } from "next/navigation";
 import { CampoCel, IconoWA } from "@/components/viajes/Piezas";
 import { soloDigitos, formatoCedula, celValido, rd, fechaObj, fechaCorta, hoyISO } from "@/lib/viajes/modelo";
-import { leerPersona, guardarPersona, olvidarPersona, enApp } from "@/lib/app-gus";
+import { leerPersona, guardarPersona, olvidarPersona, enApp, leerInicio, guardarInicio } from "@/lib/app-gus";
 import InstalarApp from "@/components/InstalarApp";
-import { IconHome, IconEstudiantes, IconDivingMask, IconCalendar, IconUser, IconMapPin, IconBell, IconArrowLeft, IconInstagram, IconGlobe, IconCheck } from "@/components/icons";
+import { IconHome, IconEstudiantes, IconDivingMask, IconCalendar, IconUser, IconMapPin, IconBell, IconArrowLeft, IconInstagram, IconGlobe, IconCheck, IconInfo } from "@/components/icons";
 import { horaBonita } from "@/lib/estudiantes/itinerario";
 
 // V81 -- "App Gus" (maqueta V82 aprobada: "1. app gus", "2. ok"; y "¿hay
@@ -28,6 +28,13 @@ import { horaBonita } from "@/lib/estudiantes/itinerario";
 // su precio, aunque no tengan fecha. Calendario: cursos (amarillo) y buceos
 // (azul). En Inicio: Contacto (a), precios de alquiler (b) y "Avísame de
 // cursos y buceos nuevos" (c, notificación en el celular).
+//
+// V105 ("110. C. Quita alquileres de equipo. Cambiar nuestra info por Gus
+// info"; "111. A, sí") -- el Contacto pasó a la hoja "Gus info" (botón
+// arriba a la derecha, en todas las pestañas) y el Inicio ya no enseña los
+// precios de alquiler. En Mi cuenta, "Lo que sale en tu Inicio": cada
+// persona apaga o prende Próximos cursos y Próximos buceos (se guarda en su
+// celular, lib/app-gus.js).
 //
 // V86 (maqueta V86: "¿cómo vamos a manejar esta parte aquí? porque quisiera
 // que el cliente tenga acceso a ver su foto y demás" → "1. sí pero... otro
@@ -558,7 +565,99 @@ function MiCurso({ e, falta, whatsapp, alVolver }) {
   );
 }
 
-export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], whatsapp = "", mensaje = "" }) {
+// V105 (maqueta V108, "110. C... cambiar nuestra info por Gus info") -- lo
+// que antes era "Contacto" en el Inicio ahora se abre con el botón "Gus info"
+// de arriba, desde cualquier pestaña.
+function GusInfo({ wa }) {
+  return (
+    <div className="pb-card ag-contacto">
+      {wa && (
+        <a href={wa} target="_blank" rel="noopener noreferrer">
+          <i>
+            <IconoWA on />
+          </i>
+          <span>
+            <b>Escríbenos por WhatsApp</b>
+            <small>Te contestamos ahí mismo</small>
+          </span>
+        </a>
+      )}
+      <a href={CONTACTO.mapa} target="_blank" rel="noopener noreferrer">
+        <i>
+          <IconMapPin size={18} />
+        </i>
+        <span>
+          <b>Cómo llegar</b>
+          <small>{CONTACTO.direccion}</small>
+        </span>
+      </a>
+      {CONTACTO.horario.length > 0 && (
+        <div className="ag-horario">
+          <i>
+            <IconCalendar size={18} />
+          </i>
+          <span>
+            <b>Horario</b>
+            {CONTACTO.horario.map(([d, h]) => (
+              <small key={d}>
+                {d}: {h}
+              </small>
+            ))}
+          </span>
+        </div>
+      )}
+      {CONTACTO.instagram && (
+        <a href={`https://www.instagram.com/${CONTACTO.instagram}/`} target="_blank" rel="noopener noreferrer">
+          <i>
+            <IconInstagram size={18} />
+          </i>
+          <span>
+            <b>Instagram</b>
+            <small>@{CONTACTO.instagram}</small>
+          </span>
+        </a>
+      )}
+      {CONTACTO.web && (
+        <a href={CONTACTO.web} target="_blank" rel="noopener noreferrer">
+          <i>
+            <IconGlobe size={18} />
+          </i>
+          <span>
+            <b>Página web</b>
+            <small>gusdivecenter.com</small>
+          </span>
+        </a>
+      )}
+    </div>
+  );
+}
+
+// V105 (maqueta V109, "111. A, sí") -- en Mi cuenta, con o sin entrar.
+function LoQueSaleEnInicio({ ver, cambiar }) {
+  const filas = [
+    ["cursos", "Próximos cursos", "Las fechas de los cursos que abrimos"],
+    ["buceos", "Próximos buceos", "Los buceos que publicamos"],
+  ];
+  return (
+    <>
+      <div className="ag-sec">Lo que sale en tu Inicio</div>
+      <div className="pb-card ag-sw-lista">
+        {filas.map(([k, t, d]) => (
+          <button key={k} className="ag-sw" role="switch" aria-checked={ver[k]} onClick={() => cambiar({ ...ver, [k]: !ver[k] })}>
+            <span>
+              <b>{t}</b>
+              <small>{d}</small>
+            </span>
+            <i className={`ag-tog${ver[k] ? " on" : ""}`} />
+          </button>
+        ))}
+      </div>
+      <div className="pb-h ag-sw-nota">Se guarda en este celular. Lo puedes volver a prender cuando quieras.</div>
+    </>
+  );
+}
+
+export default function AppGus({ cursos, catalogo = [], buceos, whatsapp = "", mensaje = "" }) {
   const [tab, setTabEstado] = useState("inicio");
   const [listo, setListo] = useState(false); // ya leyó lo guardado en el celular
   const [persona, setPersona] = useState(null);
@@ -583,7 +682,13 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
   const [codigo, setCodigo] = useState("");
   const [envio, setEnvio] = useState(null); // { id, correo }
   const [aviso, setAviso] = useState("");
-  const [verPrecios, setVerPrecios] = useState(false);
+  // V105: la hoja "Gus info" (maqueta V108) y lo que sale en el Inicio (V109).
+  const [verInfo, setVerInfo] = useState(false);
+  const [enInicio, setEnInicioEstado] = useState({ cursos: true, buceos: true });
+  const setEnInicio = (x) => {
+    setEnInicioEstado(x);
+    guardarInicio(x);
+  };
   // V86 (maqueta V86): la foto de la tarjeta de Mi cuenta y la ventana para
   // ver su foto, su cédula o su firma en grande.
   const [fotoMala, setFotoMala] = useState(false);
@@ -657,6 +762,7 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
   useEffect(() => {
     const h = (location.hash || "").slice(1);
     if (MENU.some(([k]) => k === h)) setTabEstado(h);
+    setEnInicioEstado(leerInicio());
     const p = leerPersona();
     if (p) {
       setPersona(p);
@@ -754,6 +860,12 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
         <img src="/logo-gus-icon.png" alt="Gus Dive" style={{ height: 24 }} />
         <img src="/logo-snsi.png" alt="SNSI" className="ce-logo-snsi" />
         <span>Gus Dive</span>
+        {/* V105 (maqueta V108, "110. C... cambiar nuestra info por Gus info"):
+            arriba a la derecha, en todas las pestañas. */}
+        <button className="ag-info-btn" onClick={() => setVerInfo(true)}>
+          <IconInfo size={16} />
+          Gus info
+        </button>
       </div>
       <div className="pb-body">
         {/* ---------- Inicio ---------- */}
@@ -765,25 +877,34 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
                 Cursos y buceos de Gus Dive
               </div>
             </div>
-            <div className="ag-sec">Próximos cursos</div>
-            {cursos.slice(0, 3).map((c) => (
-              <ItemCurso key={c.fechaId} c={c} />
-            ))}
-            {!cursos.length && <div className="pb-card pb-h">Pronto abrimos nuevos cursos.</div>}
-            {cursos.length > 3 && (
-              <button className="ag-link" onClick={() => setTab("calendario")}>
-                Ver todos en el calendario
-              </button>
+            {/* V105 (maqueta V109, "111. A, sí"): cada sección se apaga en Mi cuenta. */}
+            {enInicio.cursos && (
+              <>
+                <div className="ag-sec">Próximos cursos</div>
+                {cursos.slice(0, 3).map((c) => (
+                  <ItemCurso key={c.fechaId} c={c} />
+                ))}
+                {!cursos.length && <div className="pb-card pb-h">Pronto abrimos nuevos cursos.</div>}
+                {cursos.length > 3 && (
+                  <button className="ag-link" onClick={() => setTab("calendario")}>
+                    Ver todos en el calendario
+                  </button>
+                )}
+              </>
             )}
-            <div className="ag-sec">Próximos buceos</div>
-            {buceos.slice(0, 3).map((v) => (
-              <ItemBuceo key={v.slug} v={v} />
-            ))}
-            {!buceos.length && <div className="pb-card pb-h">Pronto publicamos los próximos buceos.</div>}
-            {buceos.length > 3 && (
-              <button className="ag-link" onClick={() => setTab("buceos")}>
-                Ver todos los buceos
-              </button>
+            {enInicio.buceos && (
+              <>
+                <div className="ag-sec">Próximos buceos</div>
+                {buceos.slice(0, 3).map((v) => (
+                  <ItemBuceo key={v.slug} v={v} />
+                ))}
+                {!buceos.length && <div className="pb-card pb-h">Pronto publicamos los próximos buceos.</div>}
+                {buceos.length > 3 && (
+                  <button className="ag-link" onClick={() => setTab("buceos")}>
+                    Ver todos los buceos
+                  </button>
+                )}
+              </>
             )}
 
             {(avisos.estado === "pedir" || avisos.estado === "bloqueados") && (
@@ -802,88 +923,6 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
                   )}
                 </div>
               </div>
-            )}
-
-            <div className="ag-sec">Contacto</div>
-            <div className="pb-card ag-contacto">
-              {wa && (
-                <a href={wa} target="_blank" rel="noopener noreferrer">
-                  <i>
-                    <IconoWA on />
-                  </i>
-                  <span>
-                    <b>Escríbenos por WhatsApp</b>
-                    <small>Te contestamos ahí mismo</small>
-                  </span>
-                </a>
-              )}
-              <a href={CONTACTO.mapa} target="_blank" rel="noopener noreferrer">
-                <i>
-                  <IconMapPin size={18} />
-                </i>
-                <span>
-                  <b>Cómo llegar</b>
-                  <small>{CONTACTO.direccion}</small>
-                </span>
-              </a>
-              {CONTACTO.horario.length > 0 && (
-                <div className="ag-horario">
-                  <i>
-                    <IconCalendar size={18} />
-                  </i>
-                  <span>
-                    <b>Horario</b>
-                    {CONTACTO.horario.map(([d, h]) => (
-                      <small key={d}>
-                        {d}: {h}
-                      </small>
-                    ))}
-                  </span>
-                </div>
-              )}
-              {CONTACTO.instagram && (
-                <a href={`https://www.instagram.com/${CONTACTO.instagram}/`} target="_blank" rel="noopener noreferrer">
-                  <i>
-                    <IconInstagram size={18} />
-                  </i>
-                  <span>
-                    <b>Instagram</b>
-                    <small>@{CONTACTO.instagram}</small>
-                  </span>
-                </a>
-              )}
-              {CONTACTO.web && (
-                <a href={CONTACTO.web} target="_blank" rel="noopener noreferrer">
-                  <i>
-                    <IconGlobe size={18} />
-                  </i>
-                  <span>
-                    <b>Página web</b>
-                    <small>gusdivecenter.com</small>
-                  </span>
-                </a>
-              )}
-            </div>
-
-            {alquiler.length > 0 && (
-              <>
-                <button className="ag-sec ag-sec-boton" onClick={() => setVerPrecios(!verPrecios)}>
-                  Alquiler de equipo <span>{verPrecios ? "▴" : "▾"}</span>
-                </button>
-                {verPrecios && (
-                  <div className="pb-card ag-precios">
-                    {alquiler.map((x) => (
-                      <div key={x.t} className="ag-dato">
-                        <span>{x.t}</span>
-                        <b>{rd(x.precio)}</b>
-                      </div>
-                    ))}
-                    <div className="pb-h" style={{ margin: "8px 0 0" }}>
-                      Precio por 3 días. El alquiler se hace en la tienda.
-                    </div>
-                  </div>
-                )}
-              </>
             )}
           </>
         )}
@@ -1113,6 +1152,7 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
               </>
             )}
             {error && <div className="pb-error">{error}</div>}
+            <LoQueSaleEnInicio ver={enInicio} cambiar={setEnInicio} />
             {avisos.estado === "activos" && (
               <div className="ag-avisos-on">
                 Avisos de cursos y buceos nuevos: activados ·{" "}
@@ -1225,6 +1265,7 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
                 </>
               )}
             </div>
+            <LoQueSaleEnInicio ver={enInicio} cambiar={setEnInicio} />
             {avisos.estado === "activos" && (
               <div className="ag-avisos-on">
                 Avisos de cursos y buceos nuevos: activados ·{" "}
@@ -1238,6 +1279,20 @@ export default function AppGus({ cursos, catalogo = [], buceos, alquiler = [], w
 
         <InstalarApp style={{ marginTop: 16 }} />
       </div>
+
+      {/* V105 (maqueta V108, "110. C"): la información de la tienda. */}
+      {verInfo && (
+        <div className="ag-velo" onClick={() => setVerInfo(false)}>
+          <div className="ag-hoja ag-hoja-info" role="dialog" aria-label="Gus info" onClick={(e) => e.stopPropagation()}>
+            <span className="ag-hoja-asa" />
+            <b className="ag-hoja-t">Gus info</b>
+            <GusInfo wa={wa} />
+            <button className="ag-hoja-cerrar" onClick={() => setVerInfo(false)}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* V86: su foto, su cédula o su firma en grande. */}
       {visor && (

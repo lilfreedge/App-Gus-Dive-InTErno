@@ -240,6 +240,8 @@ function FormInteresado({ f, setF, cursos, sinRecordar }) {
         <label>
           ¿Cómo se enteró?
           <select value={f.fuente} onChange={(e) => set("fuente", e.target.value)}>
+            {/* V105: lo que escribió en "Otro" por el link (o "Link") se queda como está. */}
+            {f.fuente && !FUENTES.includes(f.fuente) && <option value={f.fuente}>{f.fuente}</option>}
             {FUENTES.map((x) => (
               <option key={x}>{x}</option>
             ))}

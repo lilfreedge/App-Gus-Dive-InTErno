@@ -1,0 +1,93 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V109 · Quitar "Próximos cursos" del Inicio</title>
+<style>
+:root{--fondo:#f1f5f8;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#0a3d62;--amar:#f6ce46;--chip:#fdf1cf;--chipt:#5c4700;--verde:#2c9e5b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#e9eef2;color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1000px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.reco{background:#e5f6ec;color:var(--verde);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px}
+.vista{display:none;max-width:1000px;margin:0 auto;padding:0 16px 40px}.vista.on{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;flex:1 1 240px;max-width:340px}
+.nota b{display:block;margin-bottom:4px}
+.cel{width:330px;max-width:100%;height:640px;background:var(--fondo);border:1px solid var(--borde);border-radius:24px;overflow:hidden;display:flex;flex-direction:column}
+.cel-t{font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.3px;margin:0 0 6px 4px}
+.top{background:#fff;border-bottom:1px solid var(--borde);padding:12px 14px;display:flex;align-items:center;gap:8px}
+.top .gus{color:#c8102e;font-weight:900;font-size:18px;letter-spacing:-1px}.top .snsi{font-style:italic;font-size:12px}.top .nm{font-weight:800;color:var(--navy);font-size:14px}
+.body{flex:1;overflow:auto;padding:14px}
+h2{margin:0;font-size:22px}.sub{color:var(--suave);font-size:13px;margin:2px 0 6px}
+.sec{font-size:11px;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:.3px;margin:14px 2px 6px;display:flex;justify-content:space-between;align-items:center}
+.sec a{text-transform:none;letter-spacing:0;font-weight:700;color:var(--navy);cursor:pointer;font-size:12px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px}
+.curso{display:flex;align-items:center;gap:10px}
+.fecha{background:var(--amar);border-radius:8px;width:44px;text-align:center;padding:4px 0;font-weight:900;font-size:16px;line-height:1.05}.fecha small{display:block;font-size:9px;font-weight:800}
+.ins{margin-left:auto;background:var(--chip);color:var(--chipt);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800}
+.menu{background:#fff;border-top:1px solid var(--borde);display:flex;justify-content:space-around;padding:7px 0 9px;font-size:10.5px;color:var(--suave);font-weight:700}
+.menu span.on{color:var(--navy)}
+.carnet{background:var(--amar);border-radius:14px;padding:12px;display:flex;gap:10px;align-items:center;color:#2b2200}
+.carnet i{width:44px;height:44px;border-radius:50%;background:#fff8d6;display:inline-block}
+.seg{display:flex;gap:6px;margin:12px 0}.seg span{flex:1;text-align:center;border:1px solid var(--borde);border-radius:999px;padding:7px;font-size:12px;font-weight:800;background:#fff;color:var(--suave)}.seg span.on{background:var(--navy);color:#fff}
+.sw{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #eef3f6;cursor:pointer}.sw:first-of-type{border-top:0}
+.sw span{flex:1}.sw small{display:block;color:var(--suave);font-size:12px}
+.tog{width:42px;height:24px;border-radius:999px;background:#cfd8de;position:relative;flex-shrink:0;transition:.15s}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s}
+.tog.on{background:var(--verde)}.tog.on::after{left:21px}
+.oculto{display:none}
+.aviso{background:#eef6fb;border:1px solid #cfe3f0;color:#164a6b;border-radius:12px;padding:9px 11px;font-size:12.5px;margin-top:10px}
+.aviso a{font-weight:800;cursor:pointer;color:var(--navy)}
+@media(max-width:640px){.cel{width:100%}}
+</style></head><body>
+<div class="maq"><b>Maqueta V109</b> · App Gus Dive: que cada persona pueda quitar "Próximos cursos" (y si quiere, "Próximos buceos") de su Inicio. Toca los botones y mira cómo cambia el Inicio al lado. Nada está programado.</div>
+<div class="tabs">
+  <button class="tab on" data-v="a">A. Interruptores en Mi cuenta <span class="reco">recomendada</span></button>
+  <button class="tab" data-v="b">B. "Ocultar" en el mismo Inicio</button>
+</div>
+
+<div class="vista on" id="v-a">
+  <div><div class="cel-t">Mi cuenta</div><div class="cel"><div class="top"><span class="gus">GUS</span><span class="snsi">SNSI</span><span class="nm">Gus Dive</span></div><div class="body">
+    <div class="carnet"><i></i><b>Ana Martínez</b></div>
+    <div class="seg"><span class="on">Mis cursos</span><span>Mis buceos</span><span>Mi perfil</span></div>
+    <div class="sec">Lo que sale en tu Inicio</div>
+    <div class="card">
+      <div class="sw" data-k="cursos"><span><b>Próximos cursos</b><small>Las fechas de los cursos que abrimos</small></span><i class="tog on"></i></div>
+      <div class="sw" data-k="buceos"><span><b>Próximos buceos</b><small>Los buceos que publicamos</small></span><i class="tog on"></i></div>
+    </div>
+    <div style="color:var(--suave);font-size:12px;margin:6px 4px">Se guarda en este celular. Lo puedes volver a prender cuando quieras.</div>
+  </div><div class="menu"><span>Inicio</span><span>Cursos</span><span>Buceos</span><span>Calendario</span><span class="on">Mi cuenta</span></div></div></div>
+  <div><div class="cel-t">Inicio</div><div class="cel"><div class="top"><span class="gus">GUS</span><span class="snsi">SNSI</span><span class="nm">Gus Dive</span></div><div class="body inicio"></div><div class="menu"><span class="on">Inicio</span><span>Cursos</span><span>Buceos</span><span>Calendario</span><span>Mi cuenta</span></div></div></div>
+  <div class="nota"><b>A. Interruptores en Mi cuenta (la que recomiendo)</b>En Mi cuenta, una parte nueva "Lo que sale en tu Inicio" con dos interruptores: Próximos cursos y Próximos buceos. Si los apaga, ya no le salen en el Inicio. Los cursos y buceos siguen en sus pestañas de abajo. Se guarda en su celular, así que funciona aunque no haya entrado con su cédula (sale al final de Mi cuenta).</div>
+</div>
+
+<div class="vista" id="v-b">
+  <div><div class="cel-t">Inicio</div><div class="cel"><div class="top"><span class="gus">GUS</span><span class="snsi">SNSI</span><span class="nm">Gus Dive</span></div><div class="body inicio" data-ocultar="1"></div><div class="menu"><span class="on">Inicio</span><span>Cursos</span><span>Buceos</span><span>Calendario</span><span>Mi cuenta</span></div></div></div>
+  <div class="nota"><b>B. "Ocultar" en el mismo Inicio</b>Al lado de "Próximos cursos" sale un "Ocultar" chiquito. Al tocarlo desaparece, y queda una línea "Volver a mostrar los próximos cursos" (también en Mi cuenta). Es más rápido, pero la gente lo puede tocar sin querer.</div>
+</div>
+
+<script>
+const est = { cursos: true, buceos: true };
+function inicioHtml(conOcultar) {
+  let h = `<h2>Hola, Ana</h2><div class="sub">Cursos y buceos de Gus Dive</div>`;
+  if (est.cursos) h += `<div class="sec">Próximos cursos${conOcultar ? ' <a data-oc="cursos">Ocultar</a>' : ""}</div><div class="card curso"><span class="fecha"><small>LUN</small>11<small>ENE</small></span><span><b>Open Water Diver</b><br><small style="color:#5c6b78">Quedan 6 cupos</small></span><span class="ins">Inscribirme</span></div>`;
+  if (est.buceos) h += `<div class="sec">Próximos buceos${conOcultar ? ' <a data-oc="buceos">Ocultar</a>' : ""}</div><div class="card">Pronto publicamos los próximos buceos.</div>`;
+  const ocultos = ["cursos", "buceos"].filter((k) => !est[k]);
+  if (conOcultar && ocultos.length) h += `<div class="aviso">Ocultaste ${ocultos.map((k) => "los próximos " + k).join(" y ")}. <a data-ver="1">Volver a mostrar</a></div>`;
+  h += `<div class="sec">Alquiler de equipo</div><div class="card" style="color:#5c6b78">Precios por día…</div>`;
+  return h;
+}
+function pintar() {
+  document.querySelectorAll(".inicio").forEach((el) => {
+    el.innerHTML = inicioHtml(!!el.dataset.ocultar);
+    el.querySelectorAll("[data-oc]").forEach((a) => a.onclick = () => { est[a.dataset.oc] = false; pintar(); });
+    el.querySelectorAll("[data-ver]").forEach((a) => a.onclick = () => { est.cursos = est.buceos = true; pintar(); });
+  });
+  document.querySelectorAll(".sw").forEach((s) => s.querySelector(".tog").classList.toggle("on", est[s.dataset.k]));
+}
+document.querySelectorAll(".sw").forEach((s) => s.addEventListener("click", () => { est[s.dataset.k] = !est[s.dataset.k]; pintar(); }));
+document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === t));
+  document.querySelectorAll(".vista").forEach((v) => v.classList.toggle("on", v.id === "v-" + t.dataset.v));
+  est.cursos = est.buceos = true; pintar();
+}));
+pintar();
+</script>
+</body></html>

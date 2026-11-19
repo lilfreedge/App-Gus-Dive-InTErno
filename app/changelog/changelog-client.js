@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V105",
+    fecha: "18 de noviembre, 2026",
+    titulo: "App Gus Dive con \"Gus info\" arriba y un Inicio que cada quien arma; link de interesados con \"Otro\"",
+    descripcion:
+      "App Gus Dive: arriba a la derecha, en todas las pestañas, un botón \"Gus info\" que abre WhatsApp, cómo llegar, el horario, Instagram y la página web. Del Inicio se quitaron la sección de Contacto y la de alquiler de equipo. En Mi cuenta (con o sin entrar), \"Lo que sale en tu Inicio\": cada persona apaga o prende Próximos cursos y Próximos buceos; se guarda en su celular. Link de interesados (Registro de interesado): si en \"¿Cómo te enteraste de nosotros?\" escogen \"Otro\", sale un espacio para escribir cómo nos conocieron. En Interesados se ve así: \"Otro: lo que escribieron\". En \"¿Qué curso te interesa?\" cada curso sale con su descripción corta del Catálogo (por ejemplo \"Open Water Diver · Curso básico\"). No necesita SQL.",
+  },
+  {
     version: "V104",
     fecha: "18 de noviembre, 2026",
     titulo: "Link de registro: la lista de cursos más ordenada",

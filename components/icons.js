@@ -552,6 +552,17 @@ export function IconInstagram(props) {
   );
 }
 
+// V105 -- App Gus Dive: botón "Gus info" de arriba (maqueta V108, "110. C").
+export function IconInfo(props) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5" />
+      <circle cx="12" cy="7.8" r="0.6" fill="currentColor" />
+    </Base>
+  );
+}
+
 export function IconGlobe(props) {
   return (
     <Base {...props}>
