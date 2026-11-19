@@ -338,6 +338,20 @@ export default function EstudiantesApp({ p, yo, personas }) {
       }
     },
     // V88: se marca a mano cuando ya llegó el presupuesto de la fecha.
+    // V113: "Deshacer" de "Marcar como recibido" (sale un rato después de marcarlo).
+    async desmarcarPresupuesto(f, nombreCurso) {
+      try {
+        const r = await fetch("/api/estudiantes/presupuesto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "deshacer_recibido", fechaId: f.id }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || j.error) throw new Error(j.error || "No se pudo deshacer.");
+        local((d) => ({ ...d, fechas: (d.fechas || []).map((x) => (x.id === f.id ? { ...x, presupuestoRealizadoEn: null } : x)) }));
+        await log(null, `Deshizo "presupuesto recibido": ${nombreCurso || "curso"} · ${fechaCursoCorta(f.inicio)}`);
+        return true;
+      } catch (e) {
+        fallo(e);
+        return false;
+      }
+    },
     async marcarPresupuesto(f, nombreCurso) {
       try {
         const r = await fetch("/api/estudiantes/presupuesto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "realizado", fechaId: f.id }) });

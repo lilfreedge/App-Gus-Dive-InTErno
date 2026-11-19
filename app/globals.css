@@ -4361,6 +4361,7 @@ html[data-theme="dark"] .ce-ph-link { color: #9cc8e8; }
 .ce-res-debe.cero { color: var(--texto-suave) !important; }
 .ce-res-docs { margin-top: 8px; font-size: 12.5px; font-weight: 700; color: #a15c00; }
 .ce-res-docs.ok { color: var(--verde); }
+.ce-deshacer { font-size: 12.5px; font-weight: 700; color: var(--texto-suave); }
 .ce-ph-ult { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
 .ce-ph-ult-total { font-size: 20px; font-weight: 900; color: var(--texto); }
 .ce-ph-ult-meta { font-size: 12.5px; color: var(--texto-suave); margin-top: 2px; }

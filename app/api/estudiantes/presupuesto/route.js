@@ -32,6 +32,16 @@ export async function POST(request) {
   if (!fr) return NextResponse.json({ error: "Esa fecha ya no está." }, { status: 404 });
   const ahora = new Date().toISOString();
 
+  // V113 ("cuando se le dé a marcar como recibido, debería aparecer un botón
+  // chiquito que diga 'deshacer'… por si uno le da sin querer"): quita la marca
+  // de recibido, solo si todavía no se entregó al instructor.
+  if (body.accion === "deshacer_recibido") {
+    if (fr.presupuesto_entregado_en) return NextResponse.json({ error: "Ya se entregó al instructor; no se puede deshacer." }, { status: 400 });
+    const { error } = await s.from("est_fechas").update({ presupuesto_realizado_en: null }).eq("id", id);
+    if (error) return NextResponse.json({ error: "No se pudo deshacer." }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
   if (body.accion === "realizado") {
     const { error } = await s.from("est_fechas").update({ presupuesto_realizado_en: ahora }).eq("id", id);
     if (error) return NextResponse.json({ error: "No se pudo marcar. Revisa que ya se haya corrido migration_100.sql." }, { status: 500 });

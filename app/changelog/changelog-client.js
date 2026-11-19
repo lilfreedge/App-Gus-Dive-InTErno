@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V113",
+    fecha: "19 de noviembre, 2026",
+    titulo: "Deshacer el presupuesto recibido y página del curso más ordenada",
+    descripcion:
+      "Control Estudiantes › página del curso: después de \"Marcar como recibido\" sale un botón chiquito \"Deshacer\" durante 2 minutos, por si se marcó sin querer (no sale si ya se entregó al instructor). La tarjeta de cupos va primero y la de presupuesto al lado. \"Compartir link\" del curso y \"Compartir link de registro\" (en Cursos) ya no tienen \"Mandar por WhatsApp\" (quedan Copiar link y el código QR). La pestaña \"Datos\" ahora se llama \"Info de curso\". No necesita SQL.",
+  },
+  {
     version: "V112",
     fecha: "19 de noviembre, 2026",
     titulo: "Recibo en una sola página con firma y documentos pendientes del curso",

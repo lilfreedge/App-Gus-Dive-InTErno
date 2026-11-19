@@ -143,6 +143,20 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
   const [pedir, setPedir] = useState(false);
   const [qr, setQr] = useState(false);
   const f = (db.fechas || []).find((x) => x.id === fechaId);
+  // V113: "Deshacer" sale 2 minutos después de "Marcar como recibido".
+  const VENTANA_DESHACER = 2 * 60 * 1000;
+  // La hora del servidor y la del aparato pueden no cuadrar: si se marcó desde
+  // aquí, cuenta desde el toque.
+  const [marcadoAqui, setMarcadoAqui] = useState(0);
+  const recibidoEn = f?.presupuestoRealizadoEn ? Math.max(new Date(f.presupuestoRealizadoEn).getTime(), marcadoAqui) : 0;
+  const [ahora, setAhora] = useState(() => Date.now());
+  useEffect(() => {
+    if (!recibidoEn || Date.now() - recibidoEn > VENTANA_DESHACER) return;
+    setAhora(Date.now());
+    const t = setInterval(() => setAhora(Date.now()), 5000);
+    return () => clearInterval(t);
+  }, [recibidoEn, VENTANA_DESHACER]);
+  const puedeDeshacer = !!recibidoEn && !f?.presupuestoEntregadoEn && ahora - recibidoEn <= VENTANA_DESHACER;
   const atras = (
     <a className="back-link" onClick={() => ir("cursos")} style={{ cursor: "pointer" }}>
       ← Cursos
@@ -192,7 +206,8 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
   const tabs = [
     { k: "estudiantes", t: "Estudiantes", n: gente.length },
     { k: "interesados", t: "Interesados", n: espera.length + intsCurso.length },
-    { k: "datos", t: "Datos" },
+    // V113: "cambia datos por 'info de curso'".
+    { k: "datos", t: "Info de curso" },
   ];
   return (
     <>
@@ -217,6 +232,25 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
       {/* V111 (maqueta V112, "169. A"): Presupuesto y cupos una al lado de la otra
           (en el celular, una debajo de la otra). */}
       <div className="ce-curso-res">
+      {/* V111 ("169. A… quítale el 'quedan 5', el 'pagaron' e 'interesado'. Solo
+          dejemos los que deben"). */}
+      <div className="card pg-res ce-res-cupos">
+        <div className="pg-res-top">
+          <b>{f.cupo == null ? `${gente.length} estudiante${gente.length === 1 ? "" : "s"}` : `${gente.length} de ${f.cupo} cupos`}</b>
+          {p.montos && <span className={deben ? "ce-res-debe" : "ce-res-debe cero"}>{deben} {deben === 1 ? "debe" : "deben"}</span>}
+        </div>
+        {f.cupo != null && (
+          <div className="pg-barra">
+            <i style={{ width: `${Math.min(100, Math.round((gente.length / Math.max(1, f.cupo)) * 100))}%` }} />
+          </div>
+        )}
+        {/* V112 ("183. a"): documentos pendientes (foto o cédula). */}
+        {gente.length > 0 && (
+          <div className={`ce-res-docs${sinDocs.length ? "" : " ok"}`} title={sinDocs.map((e) => buzoDe(db, e).nombre).join(", ")}>
+            {sinDocs.length ? `${sinDocs.length} con documentos pendientes (foto o cédula)` : "Documentos completos"}
+          </div>
+        )}
+      </div>
       <div className="card ce-res-pres">
         <div className="pg-res-top">
           <b>Presupuesto</b>
@@ -237,7 +271,7 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
         )}
         {pedir && <PedirPresupuesto f={f} c={c} inscritos={gente.filter((e) => e.estado !== "espera").length} otro={pedir === "otro"} ops={ops} alCerrar={() => setPedir(false)} />}
         {f.presupuestoPedidoEn && !f.presupuestoRealizadoEn && (
-          <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => ops.marcarPresupuesto(f, c?.nombre)}>
+          <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={async () => { if ((await ops.marcarPresupuesto(f, c?.nombre)) !== false) setMarcadoAqui(Date.now()); }}>
             {/* V110 (pedido explícito): "realizado" pasa a "recibido". */}
             Marcar como recibido
           </button>
@@ -254,6 +288,14 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
             </button>
           )
         )}
+        {/* V113: "Deshacer" chiquito por si se marcó sin querer (2 minutos). */}
+        {puedeDeshacer && (
+          <div style={{ marginTop: 8 }}>
+            <button type="button" className="ce-ph-link ce-deshacer" onClick={() => ops.desmarcarPresupuesto(f, c?.nombre)}>
+              Deshacer
+            </button>
+          </div>
+        )}
         {/* V110 (pedido explícito): se quitó "Pedir otro presupuesto" (V91). */}
         {esOWD && !(f.presupuestoDetalle || []).length && (
           <div className="hint-text" style={{ marginTop: 8 }}>
@@ -263,31 +305,13 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
         {qr && <QrEntrega fechaId={f.id} curso={c?.nombre} fecha={`${fechaCursoCorta(f.inicio)}`} ops={ops} onCerrar={() => setQr(false)} />}
       </div>
 
-      {/* V111 ("169. A… quítale el 'quedan 5', el 'pagaron' e 'interesado'. Solo
-          dejemos los que deben"). */}
-      <div className="card pg-res ce-res-cupos">
-        <div className="pg-res-top">
-          <b>{f.cupo == null ? `${gente.length} estudiante${gente.length === 1 ? "" : "s"}` : `${gente.length} de ${f.cupo} cupos`}</b>
-          {p.montos && <span className={deben ? "ce-res-debe" : "ce-res-debe cero"}>{deben} {deben === 1 ? "debe" : "deben"}</span>}
-        </div>
-        {f.cupo != null && (
-          <div className="pg-barra">
-            <i style={{ width: `${Math.min(100, Math.round((gente.length / Math.max(1, f.cupo)) * 100))}%` }} />
-          </div>
-        )}
-        {/* V112 ("183. a"): documentos pendientes (foto o cédula). */}
-        {gente.length > 0 && (
-          <div className={`ce-res-docs${sinDocs.length ? "" : " ok"}`} title={sinDocs.map((e) => buzoDe(db, e).nombre).join(", ")}>
-            {sinDocs.length ? `${sinDocs.length} con documentos pendientes (foto o cédula)` : "Documentos completos"}
-          </div>
-        )}
-      </div>
       </div>
 
       <div className="pg-acciones">
         {/* V62 ("249"): Compartir link (copiar, WhatsApp o código QR). */}
         {/* V66 ("313. ok"): el link de este curso; el estudiante no escoge curso. */}
-        <CompartirLink ruta={`/estudiante?curso=${encodeURIComponent(f.id)}`} etiqueta="Compartir link" mensaje={`Hola, aquí te dejo el link para registrarte en ${c?.nombre || "el curso"}, que empieza el ${fechaLarga(f.inicio)}:`} tituloQr={`Regístrate: ${c?.nombre || "curso"}`} avisar={avisar} />
+        {/* V113 ("quita la opción de mandar por WhatsApp"): aquí solo Copiar link y el QR. */}
+        <CompartirLink ruta={`/estudiante?curso=${encodeURIComponent(f.id)}`} etiqueta="Compartir link" mensaje={`Hola, aquí te dejo el link para registrarte en ${c?.nombre || "el curso"}, que empieza el ${fechaLarga(f.inicio)}:`} tituloQr={`Regístrate: ${c?.nombre || "curso"}`} avisar={avisar} sinWhatsApp />
         {p.cursos && (
           <button className="btn secondary vj-btn" onClick={() => (form ? setForm(null) : abrirEditar())}>
             <IconEdit size={16} /> Editar
@@ -617,7 +641,8 @@ export function Lista({ db, p, yo, ops, ir, avisar }) {
           )}
           {/* V59: "quita el botón de nuevo estudiante de aquí y pon el link de registro en cursos". */}
           {/* V62 ("249"): Compartir link (copiar, WhatsApp o código QR). */}
-          <CompartirLink ruta="/estudiante" etiqueta="Compartir link de registro" mensaje="Hola, aquí te dejo el link para registrarte en el curso:" tituloQr="Regístrate en tu curso" avisar={avisar} />
+          {/* V113 ("207. sí"): sin "Mandar por WhatsApp", igual que en la página del curso. */}
+          <CompartirLink ruta="/estudiante" etiqueta="Compartir link de registro" mensaje="Hola, aquí te dejo el link para registrarte en el curso:" tituloQr="Regístrate en tu curso" avisar={avisar} sinWhatsApp />
         </div>
       </div>
       {db.sinFechas && <div className="hint-text">Falta correr el SQL de la V55 en Supabase para poder crear cursos con fecha.</div>}

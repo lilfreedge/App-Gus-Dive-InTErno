@@ -25,7 +25,8 @@ export function svgQr(texto, celda = 6) {
   return qr.createSvgTag({ cellSize: celda, margin: 2, scalable: true });
 }
 
-export default function CompartirLink({ ruta, etiqueta = "Compartir link", mensaje, tituloQr, avisar, className = "btn secondary vj-btn" }) {
+// V113: `sinWhatsApp` quita "Mandar por WhatsApp" del menú (página del curso).
+export default function CompartirLink({ ruta, etiqueta = "Compartir link", mensaje, tituloQr, avisar, className = "btn secondary vj-btn", sinWhatsApp = false }) {
   const [abierto, setAbierto] = useState(false);
   const [qr, setQr] = useState(false);
   const caja = useRef(null);
@@ -67,10 +68,12 @@ export default function CompartirLink({ ruta, etiqueta = "Compartir link", mensa
             <b>Copiar link</b>
             <span>Para pegarlo donde quieras.</span>
           </button>
-          <button type="button" onClick={whatsapp}>
-            <b>Mandar por WhatsApp</b>
-            <span>&quot;{mensaje || "Aquí te dejo el link:"}…&quot;</span>
-          </button>
+          {!sinWhatsApp && (
+            <button type="button" onClick={whatsapp}>
+              <b>Mandar por WhatsApp</b>
+              <span>&quot;{mensaje || "Aquí te dejo el link:"}…&quot;</span>
+            </button>
+          )}
           <button type="button" onClick={() => (setAbierto(false), setQr(true))}>
             <b>Ver código QR</b>
             <span>Para imprimir y ponerlo en la tienda.</span>
