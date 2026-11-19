@@ -1,0 +1,109 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V110 · Itinerario en el Catálogo</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--amar:#f6ce46;--claro:#fdf3cf;--cafe:#5c4700;--verde:#2c9e5b;--navy:#0a3d62}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1040px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:#2b2200;color:#fff;border-color:#2b2200}
+.reco{background:#e5f6ec;color:var(--verde);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px}
+.vista{display:none;max-width:1040px;margin:0 auto;padding:0 16px 40px}.vista.on{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:var(--cafe);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;margin-bottom:12px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:16px;flex:1 1 520px;max-width:620px}
+.card h4{margin:0 0 10px;font-size:16px}
+.sec{font-size:12px;font-weight:800;color:#8b97a3;text-transform:uppercase;letter-spacing:.4px;margin:14px 0 6px}
+.chks{display:flex;flex-wrap:wrap;gap:6px 14px;font-weight:600}.chks label{display:flex;gap:6px;align-items:center}
+.nuevo{background:#fffbea;border:1px dashed #e1c55a;border-radius:10px;padding:10px 12px;margin-top:8px}
+.fila{display:grid;grid-template-columns:1fr 170px 110px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed #eadfb5}
+.fila:last-child{border-bottom:0}
+.fila b{font-size:14px}
+select,input[type=time]{border:1px solid var(--borde);border-radius:8px;padding:7px 8px;font-size:13.5px;font-family:inherit;background:#fff;width:100%}
+input[type=time]:disabled{background:#f1f3f5;color:#aab}
+.hint{color:var(--suave);font-size:12.5px;line-height:1.45;margin-top:6px}
+.btns{display:flex;gap:8px;margin-top:14px}
+.btn{border:1px solid var(--borde);background:#fff;border-radius:10px;padding:9px 14px;font-weight:800;color:var(--navy);cursor:pointer;font-family:inherit}
+.btn.pri{background:#8a6d00;color:#fff;border-color:#8a6d00}
+.cel{width:340px;max-width:100%;background:#fff;border:1px solid var(--borde);border-radius:18px;overflow:hidden}
+.cel-top{background:#fff;border-bottom:1px solid var(--borde);border-top:4px solid var(--amar);padding:10px 14px;font-weight:800;color:#5c4700}
+.cel-body{padding:14px}
+.cel-body h3{margin:0;font-size:19px}
+.chip{display:inline-block;background:var(--claro);color:var(--cafe);border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800}
+.empieza{color:var(--suave);margin:6px 0}
+.precio{font-weight:800;color:#5c4700;margin:4px 0 8px}
+.semana-t{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#5c4700;opacity:.75;margin:4px 2px}
+.semana{background:var(--claro);border-radius:12px;padding:8px 12px;color:#5c4700}
+.semana div{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dashed rgba(0,0,0,.08)}
+.semana div:last-child{border-bottom:0}.semana span:first-child{font-weight:800;white-space:nowrap}.semana span:last-child{text-align:right}
+.ventana{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:16px;max-width:460px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.ventana h4{margin:0 0 6px}
+.ck{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #eef3f6}
+@media(max-width:640px){.fila{grid-template-columns:1fr 1fr}.fila b{grid-column:1/-1}.cel{width:100%}}
+</style></head><body>
+<div class="maq"><b>Maqueta V110</b> · Control Estudiantes › Catálogo de cursos › Editar curso: poder cambiar el día y la hora de cada actividad del itinerario (y dejar el examen por cuadrar si quieres). Cambia los días y las horas y mira a la derecha cómo sale en el link de registro. Nada está programado.</div>
+<div class="tabs">
+  <button class="tab on" data-v="1">1. Editar curso › Itinerario</button>
+  <button class="tab" data-v="2">2. Al guardar: los cursos ya abiertos <span class="reco">recomendada B</span></button>
+</div>
+
+<div class="vista on" id="v1">
+  <div class="card">
+    <h4>Editar: Open Water Diver</h4>
+    <div class="sec">Clases y mar</div>
+    <div class="chks" id="chks"></div>
+    <div class="sec">Itinerario</div>
+    <div class="nuevo">
+      <div id="filas"></div>
+      <div class="hint">Los días van desde el lunes en que empieza el curso. Los días que ya tienen otra actividad no se pueden escoger. Si quitas o pones un paso arriba, aparece o se quita aquí. La hora es opcional.</div>
+    </div>
+    <div class="btns"><button class="btn pri">Guardar</button><button class="btn">Cancelar</button></div>
+  </div>
+  <div>
+    <div class="cel"><div class="cel-top">GUS SNSI · Registro de estudiante</div><div class="cel-body">
+      <h3>Open Water Diver</h3><span class="chip">Buceo básico</span>
+      <div class="empieza">Empieza el lunes 11 de enero</div>
+      <div class="precio">RD$29,500</div>
+      <div class="semana-t">Itinerario</div>
+      <div class="semana" id="prev"></div>
+    </div></div>
+    <div class="hint" style="max-width:340px">Así sale en el link de registro, en Mi curso del app Gus Dive y en el calendario, para los cursos que se abran desde ahora.</div>
+  </div>
+</div>
+
+<div class="vista" id="v2">
+  <div style="flex:1 1 420px;max-width:520px">
+    <div class="nota"><b>¿Y los cursos que ya están abiertos?</b> Cada curso abierto guarda su propio itinerario cuando lo confirmas (por eso el del 11 de enero no cambió aunque cambiaste el Catálogo). Al guardar un cambio en el Catálogo:<br><br><b>A.</b> Solo vale para los cursos que se abran desde ahora. Los abiertos se cambian uno por uno en su página (tarjeta Itinerario › Cambiar).<br><b>B. (la que recomiendo)</b> Te pregunta si también lo pones en los cursos ya abiertos de ese curso, y escoges cuáles.</div>
+  </div>
+  <div class="ventana">
+    <h4>¿También en los cursos ya abiertos?</h4>
+    <div class="hint" style="margin:0 0 6px">Cambiaste: Examen → jueves 6:00 p. m.</div>
+    <label class="ck"><input type="checkbox" checked> Open Water Diver · lun 11 ene <span class="chip" style="margin-left:auto">2 inscritos</span></label>
+    <label class="ck"><input type="checkbox" checked> Open Water Diver · lun 8 feb <span class="chip" style="margin-left:auto">sin inscritos</span></label>
+    <div class="hint">A los inscritos les puedes avisar por WhatsApp después, desde la página del curso.</div>
+    <div class="btns"><button class="btn pri">Ponerlo en los marcados</button><button class="btn">Solo cursos nuevos</button></div>
+  </div>
+</div>
+
+<script>
+const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo","Lunes siguiente","Martes siguiente","Miércoles siguiente","Jueves siguiente","Viernes siguiente","Sábado siguiente","Domingo siguiente"];
+const CORTO=["lun 11 ene","mar 12 ene","mié 13 ene","jue 14 ene","vie 15 ene","sáb 16 ene","dom 17 ene","lun 18 ene","mar 19 ene","mié 20 ene","jue 21 ene","vie 22 ene","sáb 23 ene","dom 24 ene"];
+const PASOS=[
+  {k:"teoria1",t:"Teoría 1",on:true,dia:0,hora:"18:00"},{k:"teoria2",t:"Teoría 2",on:true,dia:1,hora:"18:00"},{k:"teoria3",t:"Teoría 3",on:true,dia:2,hora:"18:00"},
+  {k:"examen",t:"Examen",on:true,dia:3,hora:""},{k:"piscina",t:"Práctica piscina",on:true,dia:4,hora:""},{k:"caleta1",t:"Caleta 1",on:true,dia:5,hora:""},
+  {k:"caleta2",t:"Caleta 2",on:true,dia:6,hora:""},{k:"caletaNocturna",t:"Caleta Nocturno",on:false,dia:8,hora:""}];
+const hb=h=>{const m=/^(\d{1,2}):(\d{2})$/.exec(h||"");if(!m)return"";const x=+m[1];return `${x%12===0?12:x%12}:${m[2]} ${x>=12?"p. m.":"a. m."}`};
+function pintar(){
+  document.getElementById("chks").innerHTML=PASOS.map((p,i)=>`<label><input type="checkbox" data-c="${i}" ${p.on?"checked":""}> ${p.t}</label>`).join("");
+  const on=PASOS.filter(p=>p.on);
+  document.getElementById("filas").innerHTML=on.map(p=>{const i=PASOS.indexOf(p);const ocup=new Set(on.filter(o=>o!==p&&o.dia!=null).map(o=>o.dia));
+    const opts=DIAS.map((d,j)=>`<option value="${j}" ${p.dia===j?"selected":""} ${ocup.has(j)?"disabled":""}>${d}${ocup.has(j)?" (ocupado)":""}</option>`).join("")+(p.k==="examen"?`<option value="x" ${p.dia==null?"selected":""}>Por cuadrar con el instructor</option>`:"");
+    return `<div class="fila"><b>${p.t}</b><select data-d="${i}">${opts}</select><input type="time" data-h="${i}" value="${p.hora}" ${p.dia==null?"disabled":""}></div>`}).join("");
+  const lista=on.slice().sort((a,b)=>(a.dia??99)-(b.dia??99));
+  document.getElementById("prev").innerHTML=lista.map(p=>`<div><span>${p.dia==null?"Por cuadrar":CORTO[p.dia]}</span><span>${p.t}${p.dia==null?" · lo cuadras con el instructor":p.hora?" · "+hb(p.hora):""}</span></div>`).join("");
+  document.querySelectorAll("[data-c]").forEach(e=>e.onchange=()=>{PASOS[e.dataset.c].on=e.checked;pintar()});
+  document.querySelectorAll("[data-d]").forEach(e=>e.onchange=()=>{const p=PASOS[e.dataset.d];p.dia=e.value==="x"?null:+e.value;if(p.dia==null)p.hora="";pintar()});
+  document.querySelectorAll("[data-h]").forEach(e=>e.onchange=()=>{PASOS[e.dataset.h].hora=e.value;pintar()});
+}
+pintar();
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));document.querySelectorAll(".vista").forEach(v=>v.classList.toggle("on",v.id==="v"+t.dataset.v));}));
+</script>
+</body></html>

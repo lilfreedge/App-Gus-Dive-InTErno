@@ -95,7 +95,8 @@ function Fecha({ iso, tipo }) {
     </span>
   );
 }
-const cupos = (q) => (q == null ? "" : q === 0 ? "Lleno" : `Quedan ${q} ${q === 1 ? "cupo" : "cupos"}`);
+// V106 ("137. sí", que no salgan los cupos): solo "Lleno" cuando se llenó.
+const cupos = (q) => (q === 0 ? "Lleno" : "");
 const linkCurso = (c) => `/estudiante?curso=${encodeURIComponent(c.fechaId)}`;
 
 function ItemCurso({ c, titulo }) {
@@ -116,7 +117,7 @@ function ItemBuceo({ v }) {
       <Fecha iso={v.fecha} tipo="buc" />
       <span className="ag-tx">
         <b>{v.nombre}</b>
-        <small>{cupos(v.quedan) || v.salida}</small>
+        <small>{cupos(v.quedan) || v.salida || "Abierto"}</small>
       </span>
       <span className="ag-mini buc">Inscribirme</span>
     </a>

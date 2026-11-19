@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { filaAViaje, filaAIns } from "@/lib/viajes/datos";
 import { celOculto, primerNombre, estadoPago, celValido, celGuardar, linkGrupoValido } from "@/lib/viajes/modelo";
 import { docValido, buscarPorDoc } from "@/lib/estudiantes/servidor";
+import { textoSinCuenta } from "@/lib/app-gus";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -17,7 +18,7 @@ export async function POST(request) {
   const tipo = body.tipoDoc === "pasaporte" ? "pasaporte" : "cedula";
   if (!docValido(tipo, body.doc)) return NextResponse.json({ error: "Revisa tu cédula o pasaporte." }, { status: 400 });
   const b = await buscarPorDoc(s, tipo, body.doc);
-  if (!b || b.staff) return NextResponse.json({ error: "No te encontramos con ese documento. Si es tu primera vez, inscríbete en un curso o un buceo." }, { status: 404 });
+  if (!b || b.staff) return NextResponse.json({ error: textoSinCuenta() }, { status: 404 });
   if (!celValido(b.cel) || celGuardar(b.cel) !== celGuardar(body.cel)) return NextResponse.json({ error: "Ese celular no es el que tenemos con esa cédula. Escríbenos por WhatsApp." }, { status: 400 });
 
   // V85 (nota del 15-nov: "algo para yo poder ver todos los buzos que

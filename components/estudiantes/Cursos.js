@@ -5,6 +5,7 @@ import { useState } from "react";
 import { IconEdit, IconPlus } from "@/components/icons";
 import { PASOS, ESCUELAS, rd, nombrePaso } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
+import { DIAS_CATALOGO, HORA_TEORIA, limpiarPlantilla, semanaDePlantilla } from "@/lib/estudiantes/itinerario";
 
 // Base de datos (Más › Base de datos, V55: "ponme en 'más' un botón de base
 // de datos, donde figuren base de datos de los cursos que damos, para poder
@@ -152,6 +153,84 @@ function semanaDePasos(pasos, llevaExamen) {
   return DIA_PASO.map((k) => (k === null ? (llevaExamen ? "Examen" : "") : k && pasos.includes(k) ? nombrePaso(k) : ""));
 }
 
+// V106 (maqueta V110, "139. sí", "140. A") -- el itinerario del curso se
+// edita aquí: una fila por paso de clase/mar marcado (y el examen), con su día
+// desde el lunes (hasta el domingo de la semana siguiente) y la hora. El
+// examen también puede quedar "por cuadrar con el instructor". Se guarda en
+// info.itinerario (sin SQL) y vale para los cursos que todavía no tienen su
+// itinerario guardado; los que ya lo confirmaron se cambian en su página.
+const ORDEN_ITI = ["teoria1", "teoria2", "teoria3", "examen", "piscina", "caleta1", "caleta2", "caletaNocturna"];
+const DIA_DE_SIEMPRE = { teoria1: 0, teoria2: 1, teoria3: 2, examen: 3, piscina: 4, caleta1: 5, caleta2: 6, caletaNocturna: 8 };
+const NOMBRE_DIA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+const nombreDiaCat = (i) => `${NOMBRE_DIA[i % 7]}${i >= 7 ? " siguiente" : ""}`;
+const nombreIti = (k) => (k === "examen" ? "Examen" : nombrePaso(k));
+const esTeoriaK = (k) => /^teoria/.test(k);
+function itiInicial(c) {
+  const guardado = Object.fromEntries((limpiarPlantilla(c.info?.itinerario) || []).filter((x) => x.k).map((x) => [x.k, x]));
+  return Object.fromEntries(
+    ORDEN_ITI.map((k) => {
+      const g = guardado[k];
+      return [k, g ? { dia: g.cuadrar ? null : g.dia, hora: g.hora || "", cuadrar: g.cuadrar } : { dia: DIA_DE_SIEMPRE[k], hora: esTeoriaK(k) ? HORA_TEORIA : "", cuadrar: false }];
+    })
+  );
+}
+const filasIti = (pasos, llevaExamen) => ORDEN_ITI.filter((k) => (k === "examen" ? llevaExamen : pasos.includes(k)));
+function plantillaDe(iti, pasos, llevaExamen) {
+  return filasIti(pasos, llevaExamen).map((k) => {
+    const x = iti[k] || {};
+    const cuadrar = k === "examen" && !!x.cuadrar;
+    return { k, t: nombreIti(k), dia: cuadrar ? null : x.dia, hora: cuadrar ? "" : x.hora || "", cuadrar, pos: DIA_DE_SIEMPRE[k] };
+  });
+}
+function choquesIti(plantilla) {
+  const visto = {};
+  const malos = new Set();
+  plantilla.forEach((x) => {
+    if (x.cuadrar || x.dia == null) return;
+    if (visto[x.dia]) {
+      malos.add(x.k);
+      malos.add(visto[x.dia]);
+    } else visto[x.dia] = x.k;
+  });
+  return malos;
+}
+
+function ItinerarioCatalogo({ iti, setIti, pasos, llevaExamen }) {
+  const plantilla = plantillaDe(iti, pasos, llevaExamen);
+  const malos = choquesIti(plantilla);
+  if (!plantilla.length) return <div className="hint-text">Marca arriba las clases y las salidas al mar del curso para armar su itinerario.</div>;
+  const cambiar = (k, cambio) => setIti({ ...iti, [k]: { ...iti[k], ...cambio } });
+  return (
+    <div className="ce-iticat">
+      {plantilla.map((x) => {
+        const ocupado = new Set(plantilla.filter((y) => y.k !== x.k && !y.cuadrar && y.dia != null).map((y) => y.dia));
+        return (
+          <div key={x.k} className={`ce-iticat-fila${malos.has(x.k) ? " choca" : ""}`}>
+            <b>{x.t}</b>
+            <select
+              value={x.cuadrar ? "cuadrar" : String(x.dia)}
+              onChange={(e) => (e.target.value === "cuadrar" ? cambiar(x.k, { cuadrar: true }) : cambiar(x.k, { cuadrar: false, dia: Number(e.target.value) }))}
+            >
+              {Array.from({ length: DIAS_CATALOGO }, (_, i) => (
+                <option key={i} value={i} disabled={ocupado.has(i)}>
+                  {nombreDiaCat(i)}
+                  {ocupado.has(i) ? " (ocupado)" : ""}
+                </option>
+              ))}
+              {x.k === "examen" && <option value="cuadrar">Por cuadrar con el instructor</option>}
+            </select>
+            <input type="time" value={x.hora} disabled={x.cuadrar} onChange={(e) => cambiar(x.k, { hora: e.target.value })} aria-label={`Hora de ${x.t}`} />
+            {malos.has(x.k) && <small className="ce-iti-rojo">Cae el mismo día que otra actividad</small>}
+          </div>
+        );
+      })}
+      <div className="hint-text" style={{ margin: "6px 0 0" }}>
+        Los días van desde el lunes en que empieza el curso. La hora es opcional. Vale para los cursos que se abran desde ahora; los que ya están abiertos se cambian en su página (tarjeta Itinerario).
+      </div>
+    </div>
+  );
+}
+
 // V76 (pedido explícito: "quiero poner esta parte mas organizada") -- los
 // pasos se ven en dos grupos en vez de una sola lista.
 const GRUPO_CLASES = ["teoria1", "teoria2", "teoria3", "piscina", "caleta1", "caleta2", "caletaNocturna"];
@@ -160,13 +239,20 @@ const GRUPO_ENTREGA = ["record", "identificacion", "foto", "equipos", "gorra"];
 function EditarCurso({ c, ops, yo, cerrar }) {
   const [borrando, setBorrando] = useState(false);
   const [f, setF] = useState({ ...c, precio: c.precio == null ? "" : formatoPrecioInput(String(c.precio)) });
+  const [iti, setIti] = useState(() => itiInicial(c));
+  const plantilla = plantillaDe(iti, f.pasos, f.llevaExamen);
+  const chocan = choquesIti(plantilla).size > 0;
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const toggle = (lista, v) => (lista.includes(v) ? lista.filter((x) => x !== v) : [...lista, v]);
   async function guardar() {
-    if (!f.nombre.trim()) return;
+    if (!f.nombre.trim() || chocan) return;
     const { nuevo, ...resto } = f;
-    const semana = semanaDePasos(f.pasos, f.llevaExamen);
-    await ops.guardarCurso({ ...resto, nombre: f.nombre.trim(), precio: f.precio === "" ? null : Number(f.precio.replace(/,/g, "")), semana: semana.some((x) => x.trim()) ? semana : null }, !!nuevo);
+    // V106: el itinerario sale de la tabla de abajo (info.itinerario) y los
+    // textos por día se arman de ahí.
+    const { itinerario: _viejo, ...infoSin } = f.info || {};
+    const info = plantilla.length ? { ...infoSin, itinerario: plantilla } : infoSin;
+    const semana = semanaDePlantilla(plantilla);
+    await ops.guardarCurso({ ...resto, info, nombre: f.nombre.trim(), precio: f.precio === "" ? null : Number(f.precio.replace(/,/g, "")), semana }, !!nuevo);
     cerrar();
   }
   return (
@@ -239,14 +325,12 @@ function EditarCurso({ c, ops, yo, cerrar }) {
             </label>
           ))}
         </div>
-        {/* V55/V76: el itinerario (qué se hace cada día, le sale al
-            estudiante en el link al escoger la fecha) ya no se escribe a
-            mano -- sale solo de los pasos de arriba. */}
-        <div className="hint-text" style={{ margin: "4px 0 0" }}>
-          El itinerario le sale solo al estudiante según estos pasos: Lun/Mar/Mié Teoría 1/2/3, Jue Examen, Vie Práctica piscina, Sáb Caleta 1, Dom Caleta 2, y el martes de la semana siguiente Caleta Nocturno.
-        </div>
+        {/* V106 (maqueta V110): el itinerario se edita aquí. */}
+        <div className="ce-pasos-grupo-t">Itinerario</div>
+        <ItinerarioCatalogo iti={iti} setIti={setIti} pasos={f.pasos} llevaExamen={f.llevaExamen} />
+        {chocan && <div className="pb-error" style={{ margin: 0 }}>Dos actividades caen el mismo día. Cambia una para poder guardar.</div>}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn btn-primary vj-btn" onClick={guardar}>
+          <button className="btn btn-primary vj-btn" onClick={guardar} disabled={chocan}>
             Guardar
           </button>
           <button className="btn secondary vj-btn" onClick={cerrar}>

@@ -9,7 +9,7 @@ import { docValido, buscarPorDoc, celCoincide, logLink, edadHoy, tokenMenor, pue
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 import { cedulaValida, MSG_CEDULA_MALA } from "@/lib/viajes/modelo";
 import { origenDe } from "@/lib/direccion";
-import { limpiarItinerario, itinerarioDeCatalogo } from "@/lib/estudiantes/itinerario";
+import { limpiarItinerario, itinerarioDelCurso } from "@/lib/estudiantes/itinerario";
 import { esOwd, esNitrox, owdDeNitrox, nitroxDeOwd, posTeoriaNitrox, TEORIA_NITROX } from "@/lib/estudiantes/junto";
 
 // Un celular de 10 dígitos puede estar guardado con el "1" de EE.UU. delante
@@ -123,7 +123,7 @@ export async function POST(request) {
       const itin = limpiarItinerario(fechaPor[e.fechaId]?.itinerario);
       let dias = itin
         ? itin.map((x) => ({ fecha: x.fecha || "", texto: x.t, hora: x.hora || "", cuadrar: !!x.cuadrar }))
-        : itinerarioDeCatalogo(c?.semana, e.fechaInicio).map((x) => ({ fecha: x.fecha || "", texto: x.t, hora: x.hora || "", cuadrar: !!x.cuadrar }));
+        : itinerarioDelCurso(c, e.fechaInicio).map((x) => ({ fecha: x.fecha || "", texto: x.t, hora: x.hora || "", cuadrar: !!x.cuadrar }));
       // V101 (maqueta V105, "76. B"): el Nitrox con el Open Water. En el Open
       // Water sale "Teoría Nitrox" (por cuadrar) después del examen; en el
       // Nitrox, con qué Open Water va y su teoría por cuadrar.
@@ -410,5 +410,5 @@ export async function POST(request) {
   await logLink(s, fila.id, `Se registró por el link: ${buzo.nombre} (${curso.nombre}${cuando})${tutorTxt ? ` · menor de edad, lo registró ${tutorTxt}` : ""}`);
   // V54: aviso en la campanita ("62. si").
   await avisarEquipoEst(s, { permiso: "estudiantes", titulo: espera ? "Nuevo en lista de espera (link)" : "Nuevo estudiante por el link", texto: `${buzo.nombre}${tutorTxt ? ` (menor, lo registró ${tutorTxt})` : ""} · ${curso.nombre}${fecha ? ` · ${fechaLarga(fecha.inicio)}` : ""}`, url: `/control-estudiantes/estudiante/${fila.id}` });
-  return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio, fecha: fecha ? fecha.inicio : null, espera, llena: pidioLlena, semana: fecha ? curso.semana || null : null, itinerario: fecha ? limpiarItinerario(fecha.itinerario) : null, tambien: tambienNombre, tambienJunto, ...permisoMenor });
+  return NextResponse.json({ ok: true, primer: primerNombre(buzo.nombre), estudianteId: fila.id, curso: curso.nombre, precio: curso.precio, fecha: fecha ? fecha.inicio : null, espera, llena: pidioLlena, semana: fecha ? curso.semana || null : null, itinerario: fecha ? limpiarItinerario(fecha.itinerario) || itinerarioDelCurso(curso, fecha.inicio) : null, tambien: tambienNombre, tambienJunto, ...permisoMenor });
 }

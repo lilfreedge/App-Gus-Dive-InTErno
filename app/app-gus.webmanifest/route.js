@@ -16,6 +16,11 @@ const MANIFEST = {
   start_url: "/gus",
   scope: "/",
   display: "standalone",
+  // V106 ("138. sí"): que los links de cursos, interesados y buceos se abran
+  // dentro del app instalada cuando el celular lo permite (Android/Chrome).
+  // En iPhone no cambia nada: Apple siempre los abre en Safari.
+  handle_links: "preferred",
+  launch_handler: { client_mode: ["navigate-existing", "auto"] },
   background_color: "#ffffff",
   theme_color: "#06324f",
   icons: [

@@ -6,6 +6,7 @@ import { primerNombre, celValido, celGuardar, soloDigitos } from "@/lib/viajes/m
 import { docValido, buscarPorDoc } from "@/lib/estudiantes/servidor";
 import { mandarCodigo, correoOculto, correoOk } from "@/lib/correo-codigo";
 import { origenDe } from "@/lib/direccion";
+import { textoSinCuenta } from "@/lib/app-gus";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -31,14 +32,14 @@ async function buscar(s, body) {
     const { data } = await s.from("viajes_buzos").select("*").eq("celular", celGuardar(body.cel));
     // Los menores se guardan con el celular de quien los registró: no cuentan.
     const gente = (data || []).map(filaABuzo).filter((b) => !b.staff && !b.tutor);
-    if (!gente.length) return { error: "No encontramos ese celular. Prueba con tu cédula.", status: 404 };
+    if (!gente.length) return { error: textoSinCuenta(), status: 404 };
     if (gente.length > 1) return { error: "Ese celular lo tiene más de una persona. Entra con tu cédula.", status: 409 };
     return { b: gente[0] };
   }
   const tipo = body.tipoDoc === "pasaporte" ? "pasaporte" : "cedula";
   if (!docValido(tipo, body.doc)) return { error: "Revisa tu cédula o pasaporte." };
   const b = await buscarPorDoc(s, tipo, body.doc);
-  if (!b || b.staff) return { error: "No te encontramos con ese documento. Si es tu primera vez, inscríbete en un curso o un buceo.", status: 404 };
+  if (!b || b.staff) return { error: textoSinCuenta(), status: 404 };
   return { b };
 }
 

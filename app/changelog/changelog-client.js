@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V106",
+    fecha: "19 de noviembre, 2026",
+    titulo: "Itinerario editable en el Catálogo, link de registro más limpio y mensaje para quien todavía no puede tener cuenta",
+    descripcion:
+      "Catálogo de cursos › Editar curso: sección nueva \"Itinerario\", con una fila por cada clase o salida al mar que lleva el curso (y el examen). En cada una se escoge el día (desde el lunes en que empieza hasta el domingo de la semana siguiente) y la hora; el examen también puede quedar \"Por cuadrar con el instructor\". Los días que ya tienen otra actividad no se pueden escoger. Eso es lo que sale en el link de registro, en Mi curso del app Gus Dive y en el calendario para los cursos que se abran desde ahora; los que ya tienen su itinerario confirmado se cambian en su página (tarjeta Itinerario). Link de registro: en \"Tus datos\" el nombre va primero y el celular debajo. Al abrir el link de un curso ya no dice \"Tu curso\" ni cuántos cupos quedan (solo sale \"Lleno\" si se llenó); tampoco salen los cupos en las fechas de la lista de cursos. El itinerario lleva arriba la palabra \"Itinerario\". Itinerario: el examen ya no sale \"Por cuadrar\": va el jueves, como en los pasos del Catálogo. En la página de cada curso (tarjeta Itinerario › Cambiar) también se le puede escoger otro día al examen, o volver a dejarlo por cuadrar con el instructor; los cursos que ya tenían el itinerario confirmado se quedan como estaban hasta que se cambien ahí. App Gus Dive: tampoco salen los cupos en Próximos cursos ni en los buceos (solo \"Lleno\" si se llenó). En Android, si la persona tiene el app Gus Dive instalada, los links de cursos, interesados y buceos se pueden abrir directo dentro del app (en iPhone siguen abriendo en Safari). App Gus Dive › Mi cuenta: si alguien que todavía no ha participado en un curso o buceo trata de entrar (por ejemplo, un interesado), ya no le sale \"No te encontramos\". Ahora dice: \"Todavía no puedes tener cuenta porque aún no has participado en un curso o buceo de Gus.\" No necesita SQL.",
+  },
+  {
     version: "V105",
     fecha: "18 de noviembre, 2026",
     titulo: "App Gus Dive con \"Gus info\" arriba y un Inicio que cada quien arma; link de interesados con \"Otro\"",

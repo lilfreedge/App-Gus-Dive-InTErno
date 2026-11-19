@@ -248,19 +248,24 @@ function InfoCurso({ c, cerrar, escoger }) {
 // V55 -- La semana del curso (Open Water: "79"), para cuando escoge la fecha.
 // V100 (maqueta V102): si el curso tiene su itinerario confirmado, sale ese
 // (con la hora; el examen "lo cuadras con el instructor").
-function Semana({ inicio, semana, itinerario }) {
-  const lista = Array.isArray(itinerario) && itinerario.length ? itinerario : itinerarioDeCatalogo(semana, inicio);
+function Semana({ inicio, semana, itinerario, plantilla }) {
+  // V106 (maqueta V110): si el curso tiene su itinerario en el Catálogo, sale ese.
+  const lista = Array.isArray(itinerario) && itinerario.length ? itinerario : itinerarioDeCatalogo(semana, inicio, plantilla);
   const dias = lista.map((x) => ({ dia: x.cuadrar || !x.fecha ? "Por cuadrar" : fechaCortaItinerario(x.fecha), texto: `${x.t}${x.cuadrar ? " · lo cuadras con el instructor" : x.hora ? ` · ${horaBonita(x.hora)}` : ""}` }));
   if (!dias.length) return null;
+  // V106 ("agrega la palabra 'itinerario' encima"): con su título.
   return (
-    <div className="ce-pub-semana">
-      {dias.map((d) => (
-        <div key={d.dia}>
-          <span>{d.dia}</span>
-          <span>{d.texto}</span>
-        </div>
-      ))}
-    </div>
+    <>
+      <div className="ce-pub-semana-t">Itinerario</div>
+      <div className="ce-pub-semana">
+        {dias.map((d, i) => (
+          <div key={`${d.dia}-${i}`}>
+            <span>{d.dia}</span>
+            <span>{d.texto}</span>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -692,6 +697,9 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
             {!buzo && pre && <div className="ce-pub-aviso" style={{ marginTop: 4 }}>Ya tenemos algunos de tus datos. Revisa que estén bien y completa lo que falta.</div>}
             {!buzo && (
               <>
+                {/* V106 (foto de "Tus datos": "intercambia de lugar el nombre y número arriba"): primero el nombre. */}
+                <label className="ce-pub-l">Nombre completo</label>
+                <input className="pb-input" value={d.nombre} onChange={(e) => setD({ ...d, nombre: e.target.value })} placeholder="Nombre y apellido" />
                 <label className="ce-pub-l">Celular (WhatsApp)</label>
                 <CampoCel className="pb-input" value={cel} onChange={setCel} />
                 {interesado && !pre && (
@@ -700,8 +708,6 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
                     {interesado.cuando ? ` (${interesado.cuando})` : ""}. Si ese curso no es el que quieres ahora, lo cambias más abajo.
                   </div>
                 )}
-                <label className="ce-pub-l">Nombre completo</label>
-                <input className="pb-input" value={d.nombre} onChange={(e) => setD({ ...d, nombre: e.target.value })} placeholder="Nombre y apellido" />
               </>
             )}
             {falta.nac && (
@@ -828,7 +834,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
                                   onClick={() => (setCursoId(c.id), setFechaVista(fechaVista === f.id ? "" : f.id))}
                                 >
                                   {fechaCortaItinerario(f.inicio)}
-                                  <small>{llena ? "Lleno" : f.quedan != null ? `Quedan ${f.quedan}` : "Con cupo"}</small>
+                                  <small>{llena ? "Lleno" : "Disponible"}</small>
                                 </button>
                               );
                             })}
@@ -848,7 +854,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
                               <div className="pb-h" style={{ margin: "0 0 4px" }}>
                                 Empieza el {fechaLarga(fv.inicio)}
                               </div>
-                              <Semana inicio={fv.inicio} semana={c.semana} itinerario={fv.itinerario} />
+                              <Semana inicio={fv.inicio} semana={c.semana} itinerario={fv.itinerario} plantilla={c.info?.itinerario} />
                               {error && <div className="pb-error">{error}</div>}
                               <button className="pb-btn" disabled={cargando} onClick={() => registrar({ cursoId: c.id, fechaId: fv.id })}>
                                 {cargando ? "Registrando…" : "Escoger esta fecha"}
@@ -908,11 +914,11 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
                 <div key={f.id}>
                   <button className={`pb-op${abierta ? " sel" : ""}`} onClick={() => setFechaVista(abierta ? "" : f.id)}>
                     Empieza el {fechaLarga(f.inicio)}
-                    {f.quedan != null && <span className={`ce-pub-chip ${llena ? "lleno" : "ok"}`}>{llena ? "Lleno" : `Quedan ${f.quedan} ${f.quedan === 1 ? "cupo" : "cupos"}`}</span>}
+                    {llena && <span className="ce-pub-chip lleno">Lleno</span>}
                   </button>
                   {abierta && (
                     <div style={{ margin: "-2px 0 10px" }}>
-                      <Semana inicio={f.inicio} semana={cursoElegido.semana} itinerario={f.itinerario} />
+                      <Semana inicio={f.inicio} semana={cursoElegido.semana} itinerario={f.itinerario} plantilla={cursoElegido.info?.itinerario} />
                       {error && <div className="pb-error">{error}</div>}
                       {llena ? (
                         <div className="ce-pub-aviso" style={{ textAlign: "center" }}>Esta fecha ya se llenó.</div>
@@ -942,7 +948,8 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
 
         {paso === "curso" && conFechas && fijoCurso && (
           <div className="pb-card">
-            <div className="pb-h" style={{ margin: 0 }}>{menor ? `El curso de ${primerM}` : "Tu curso"}</div>
+            {/* V106 ("quita 'tu curso'"): para un menor sigue diciendo de quién es. */}
+            {menor && <div className="pb-h" style={{ margin: 0 }}>{`El curso de ${primerM}`}</div>}
             <div className="pb-t">
               {fijoCurso.nombre}
               {cortaDe(fijoCurso) && " "}
@@ -950,7 +957,8 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
             </div>
             <div className="pb-h" style={{ marginTop: 0 }}>
               Empieza el {fechaLarga(fijoFecha.inicio)}
-              {(fijoFecha.quedan != null || fijoLleno) && <> <span className={`ce-pub-chip ${fijoLleno ? "lleno" : "ok"}`}>{fijoLleno ? "Lleno" : `Quedan ${fijoFecha.quedan} ${fijoFecha.quedan === 1 ? "cupo" : "cupos"}`}</span></>}
+              {/* V106 ("quita 'quedan 6 cupos', que no salgan los cupos"): solo "Lleno". */}
+              {fijoLleno && <> <span className="ce-pub-chip lleno">Lleno</span></>}
             </div>
             {fijoLleno ? (
               <div className="pb-h">Esta fecha ya se llenó.</div>
@@ -958,7 +966,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
               <>
                 {fijoCurso.precio != null && <div className="ce-pub-precio">{rd(fijoCurso.precio)}</div>}
                 <div style={{ textAlign: "left" }}>
-                  <Semana inicio={fijoFecha.inicio} semana={fijoCurso.semana} itinerario={fijoFecha.itinerario} />
+                  <Semana inicio={fijoFecha.inicio} semana={fijoCurso.semana} itinerario={fijoFecha.itinerario} plantilla={fijoCurso.info?.itinerario} />
                 </div>
                 {fijoExtra && (
                   <label className="ce-op-extra ce-fijo-extra">

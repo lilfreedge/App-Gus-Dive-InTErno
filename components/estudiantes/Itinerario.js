@@ -2,7 +2,7 @@
 
 import { Fragment, useState } from "react";
 import { posTeoriaNitrox, TEORIA_NITROX } from "@/lib/estudiantes/junto";
-import { DIAS_PARA_ESCOGER, sumarDiasISO, fechaCortaItinerario, horaBonita, choques, itinerarioDe, itinerarioDeCatalogo, cambiosItinerario } from "@/lib/estudiantes/itinerario";
+import { DIAS_PARA_ESCOGER, sumarDiasISO, fechaCortaItinerario, horaBonita, choques, itinerarioDe, itinerarioDelCurso, cambiosItinerario, esExamen } from "@/lib/estudiantes/itinerario";
 import { linkWhatsApp } from "@/lib/estudiantes/modelo";
 
 // V100 (maqueta V102, "56. me gusta la C pero agrégale la casilla obligatoria
@@ -57,11 +57,10 @@ export function EditorItinerario({ inicio, items, onChange, nitrox = false }) {
               {x.cuadrar ? <small>Lo cuadra el estudiante con el instructor</small> : x.hora ? <small>{horaBonita(x.hora)}</small> : null}
               {malos.has(i) && <small className="ce-iti-rojo">Choca con otra actividad ese día</small>}
             </div>
-            {!x.cuadrar && (
-              <button type="button" className="btn secondary vj-mini" onClick={() => setAbierto(abierto === i ? null : i)}>
-                {abierto === i ? "Listo" : "Cambiar"}
-              </button>
-            )}
+            {/* V106: también el examen "por cuadrar" se puede poner en un día. */}
+            <button type="button" className="btn secondary vj-mini" onClick={() => setAbierto(abierto === i ? null : i)}>
+              {abierto === i ? "Listo" : "Cambiar"}
+            </button>
             {abierto === i && (
               <div className="ce-iti-picker">
                 <span>
@@ -76,16 +75,23 @@ export function EditorItinerario({ inicio, items, onChange, nitrox = false }) {
                         <small>{oc.t}</small>
                       </button>
                     ) : (
-                      <button key={iso} type="button" className={iso === x.fecha ? "sel" : ""} onClick={() => cambiar(i, { fecha: iso })}>
+                      <button key={iso} type="button" className={iso === x.fecha ? "sel" : ""} onClick={() => cambiar(i, { fecha: iso, cuadrar: false })}>
                         {fechaCortaItinerario(iso)}
                       </button>
                     );
                   })}
                 </div>
-                <label className="ce-iti-hora">
-                  Hora (opcional)
-                  <input type="time" value={x.hora || ""} onChange={(e) => cambiar(i, { hora: e.target.value })} />
-                </label>
+                {!x.cuadrar && (
+                  <label className="ce-iti-hora">
+                    Hora (opcional)
+                    <input type="time" value={x.hora || ""} onChange={(e) => cambiar(i, { hora: e.target.value })} />
+                  </label>
+                )}
+                {esExamen(x.t) && !x.cuadrar && (
+                  <button type="button" className="ce-iti-reset" onClick={() => cambiar(i, { cuadrar: true, fecha: null, hora: "" })}>
+                    Dejarlo por cuadrar con el instructor
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -122,7 +128,7 @@ export function ConfirmarItinerario({ f, c, ops, titulo, alTerminar, alSaltar, a
         <div className="hint-text">Este curso no tiene itinerario en el Catálogo (sale de los pasos del curso).</div>
       )}
       {items.length > 0 && (
-        <button type="button" className="ce-iti-reset" onClick={() => setItems(itinerarioDeCatalogo(c?.semana, f.inicio))}>
+        <button type="button" className="ce-iti-reset" onClick={() => setItems(itinerarioDelCurso(c, f.inicio))}>
           Volver al del Catálogo
         </button>
       )}

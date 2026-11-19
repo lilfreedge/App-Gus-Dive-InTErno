@@ -3137,6 +3137,15 @@ html[data-theme="dark"] .ce-app { --ce-claro: #3a3010; --ce-texto: #f3d77a; }
 @media (max-width: 520px) { .ce-form-fila { grid-template-columns: 1fr; } }
 .ce-pasos-grupo-t { font-size: 12px; font-weight: 700; color: #9aa7b1; text-transform: uppercase; letter-spacing: 0.03em; margin: 6px 0 -2px; }
 .ce-checks { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+/* V106 (maqueta V110): el itinerario del curso en el Catálogo. */
+.ce-iticat { background: #fffbea; border: 1px dashed #e1c55a; border-radius: 10px; padding: 6px 12px 10px; }
+.ce-iticat-fila { display: grid; grid-template-columns: 1fr 190px 120px; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px dashed #eadfb5; }
+.ce-iticat-fila:last-of-type { border-bottom: 0; }
+.ce-iticat-fila select, .ce-iticat-fila input { width: 100%; min-width: 0; }
+.ce-iticat-fila input:disabled { background: #f1f3f5; color: #9aa7b1; }
+.ce-iticat-fila small { grid-column: 1 / -1; }
+.ce-iticat-fila.choca b { color: #c0392b; }
+@media (max-width: 560px) { .ce-iticat-fila { grid-template-columns: 1fr 1fr; } .ce-iticat-fila b { grid-column: 1 / -1; } }
 .ce-checks label { flex-direction: row; align-items: center; gap: 6px; font-weight: 600; color: var(--texto); font-size: 13.5px; }
 .ce-checks input { width: auto; margin: 0; }
 .ce-curso { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
@@ -3215,6 +3224,7 @@ html[data-theme="dark"] .ce-app { --ce-claro: #3a3010; --ce-texto: #f3d77a; }
 .ce-pub-chip.ok { background: #e6f5ec; color: #1d6b3d; }
 .ce-pub-chip.lleno { background: #fdecea; color: #c0392b; }
 .ce-pub-chip.espera { background: var(--ce-claro); color: var(--ce-texto); }
+.ce-pub-semana-t { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ce-texto); opacity: 0.75; margin: 4px 2px 4px; text-align: left; }
 .ce-pub-semana { background: var(--ce-claro); border-radius: 12px; padding: 8px 12px; margin: 0 0 8px; font-size: 14px; color: var(--ce-texto); }
 .ce-pub-semana div { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px dashed rgba(0, 0, 0, 0.08); }
 .ce-pub-semana div:last-child { border-bottom: 0; }
