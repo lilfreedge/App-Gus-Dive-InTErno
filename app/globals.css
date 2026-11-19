@@ -2457,6 +2457,8 @@ a.vj-nombre:hover { text-decoration: underline; }
 .pb-acepto input { margin-top: 3px; }
 .pb-error { color: #c23b3b; font-weight: 700; font-size: 14px; margin-top: 6px; }
 .pb-ok { width: 64px; height: 64px; border-radius: 32px; background: #1f8f4e; color: #fff; font-size: 34px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+/* V111 (maqueta V112): "Ya tienes tu cupo" en el link de interesados. */
+.pb-ok.ce-ya-ok { background: #2f7fd0; }
 .ce-fin-espera { padding-top: 28px; padding-bottom: 22px; }
 .ce-fin-espera .pb-ok { width: 80px; height: 80px; border-radius: 40px; margin-bottom: 14px; }
 .ce-fin-espera .pb-t { font-size: 22px; }
@@ -3139,13 +3141,14 @@ html[data-theme="dark"] .ce-app { --ce-claro: #3a3010; --ce-texto: #f3d77a; }
 .ce-checks { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 /* V106 (maqueta V110): el itinerario del curso en el Catálogo. */
 .ce-iticat { background: #fffbea; border: 1px dashed #e1c55a; border-radius: 10px; padding: 6px 12px 10px; }
-.ce-iticat-fila { display: grid; grid-template-columns: 1fr 190px 120px; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px dashed #eadfb5; }
+.ce-iticat-fila { display: grid; grid-template-columns: 1fr 190px 140px; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px dashed #eadfb5; }
 .ce-iticat-fila:last-of-type { border-bottom: 0; }
 .ce-iticat-fila select, .ce-iticat-fila input { width: 100%; min-width: 0; }
+.ce-iticat-fila .campo-hora24 select { width: auto; }
 .ce-iticat-fila input:disabled { background: #f1f3f5; color: #9aa7b1; }
 .ce-iticat-fila small { grid-column: 1 / -1; }
-.ce-iticat-fila.choca b { color: #c0392b; }
-@media (max-width: 560px) { .ce-iticat-fila { grid-template-columns: 1fr 1fr; } .ce-iticat-fila b { grid-column: 1 / -1; } }
+.ce-iticat-fila.choca > b { color: #c0392b; }
+@media (max-width: 560px) { .ce-iticat-fila { grid-template-columns: 1fr 1fr; } .ce-iticat-fila > b { grid-column: 1 / -1; } }
 .ce-checks label { flex-direction: row; align-items: center; gap: 6px; font-weight: 600; color: var(--texto); font-size: 13.5px; }
 .ce-checks input { width: auto; margin: 0; }
 .ce-curso { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
@@ -4332,6 +4335,19 @@ html[data-theme="dark"] .ce-ph-link { color: #9cc8e8; }
 .ce-ph-pedido { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px solid var(--superficie-suave); font-size: 13.5px; }
 .ce-ph-pedido span:last-child { display: inline-flex; align-items: center; gap: 10px; }
 .ce-ph-ver { background: var(--superficie-suave); border-radius: 10px; padding: 8px; margin: 6px 0 8px; }
+/* V111 (maqueta V112, "169. A"): Presupuesto y cupos una al lado de la otra. */
+.ce-curso-res { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: start; margin-bottom: 12px; }
+.ce-curso-res > .card { margin: 0; }
+.ce-curso-res > .card:has(.ce-ph-pedir, .ce-ph-ver) { grid-column: 1 / -1; }
+.ce-res-pres .pg-res-top b, .ce-res-cupos .pg-res-top b { font-size: 17px; }
+.ce-res-cupos .pg-barra { margin: 10px 0 2px; }
+.ce-res-debe { color: var(--rojo) !important; }
+.ce-res-debe.cero { color: var(--texto-suave) !important; }
+.ce-ph-ult { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.ce-ph-ult-total { font-size: 20px; font-weight: 900; color: var(--texto); }
+.ce-ph-ult-meta { font-size: 12.5px; color: var(--texto-suave); margin-top: 2px; }
+.ce-res-pres .ce-ph-pedidos { margin-top: 4px; }
+@media (max-width: 640px) { .ce-curso-res { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 520px) {
   .ce-ph-fila { grid-template-columns: minmax(0, 1fr) 64px 44px 72px 26px; gap: 4px; }
   .ce-ph-fila input { padding: 6px 4px; font-size: 13px; }
@@ -4394,6 +4410,18 @@ html[data-theme="dark"] .ce-iti-nx, html[data-theme="dark"] .ce-chip.nx, html[da
 .ce-iti-lista > div:first-child { border-top: 0; }
 .ce-iti-lista span { font-weight: 700; }
 .ce-iti-lista small { color: var(--texto-suave); font-size: 12.5px; }
+/* V108: la tarjeta del itinerario se abre y se cierra (cerrada al entrar), con "Horario" sobre las horas. */
+.ce-iti-cabeza { width: 100%; border: 0; background: none; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; align-items: center !important; -webkit-tap-highlight-color: transparent; }
+.ce-iti-cabeza span { margin-left: auto; }
+.ce-iti-flecha { font-style: normal; font-size: 22px; line-height: 1; color: var(--texto-suave); transition: transform 0.15s; transform: rotate(90deg); }
+.ce-iti-flecha.abierta { transform: rotate(-90deg); }
+.ce-iti-lista > .ce-iti-cab { border-top: 0; padding: 0 0 2px; }
+.ce-iti-lista > .ce-iti-cab + div { border-top: 0; }
+.ce-iti-cab small { font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; font-size: 11px; }
+/* V108: campo de hora en 24 horas (dos listas). */
+.campo-hora24 { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.campo-hora24 select { width: auto; min-width: 58px; padding-right: 4px; }
+.campo-hora24 b { font-weight: 800; }
 @media (max-width: 520px) {
   .ce-iti-fila { grid-template-columns: minmax(0, 1fr) auto; }
   .ce-iti-f { grid-column: 1 / 2; }

@@ -14,7 +14,7 @@ import { IconGear, IconLogout, IconShuffle, IconHistory, IconUsers } from "@/com
 import { cargarTodo, estAFila, buzoAFila, cursoAFila, interesadoAFila, fechaAFila, nuevoId } from "@/lib/estudiantes/datos";
 import { fechaCursoCorta, rd } from "@/lib/estudiantes/modelo";
 import { limpiarItinerario, itinerarioDe, cambiosItinerario, moverItinerario } from "@/lib/estudiantes/itinerario";
-import { Inicio, Lista, Mas, Bitacora, Directorio, DetalleCurso, PorEtapa, AppGusDive, UsoAppGus } from "./Inicio";
+import { Inicio, Lista, Mas, Bitacora, Directorio, DetalleCurso, PorEtapa, AppGusDive, UsoAppGus, CorreosEstudiantes } from "./Inicio";
 import { Ficha } from "./Ficha";
 import { Nuevo } from "./Nuevo";
 import { Cursos } from "./Cursos";
@@ -344,7 +344,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
         const j = await r.json().catch(() => ({}));
         if (!r.ok || j.error) throw new Error(j.error || "No se pudo marcar.");
         local((d) => ({ ...d, fechas: (d.fechas || []).map((x) => (x.id === f.id ? { ...x, presupuestoRealizadoEn: j.en } : x)) }));
-        await log(null, `Presupuesto realizado: ${nombreCurso || "curso"} · ${fechaCursoCorta(f.inicio)}`);
+        await log(null, `Presupuesto recibido: ${nombreCurso || "curso"} · ${fechaCursoCorta(f.inicio)}`);
         return true;
       } catch (e) {
         fallo(e);
@@ -527,7 +527,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
     { r: "calendario", t: "Calendario" },
     { r: "mas", t: "Más" },
   ];
-  const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "estadisticas", "administracion", "basedatos", "notificaciones", "appgus", "usoapp"].includes(ruta) ? "mas" : ruta.startsWith("curso:") ? "cursos" : ruta.split(":")[0];
+  const activo = ruta === "estudiantes" || ruta.startsWith("estudiante:") || ruta.startsWith("nuevo") ? "estudiantes" : ["bitacora", "estadisticas", "administracion", "basedatos", "notificaciones", "appgus", "usoapp", "correos"].includes(ruta) ? "mas" : ruta.startsWith("curso:") ? "cursos" : ruta.split(":")[0];
   const q = { db, p, yo, ops, ir, avisar, personas };
 
   let cuerpo = null;
@@ -556,6 +556,7 @@ export default function EstudiantesApp({ p, yo, personas }) {
   else if (ruta === "basedatos") cuerpo = <Cursos {...q} />;
   else if (ruta === "appgus") cuerpo = <AppGusDive {...q} />;
   else if (ruta === "usoapp") cuerpo = yo.esTitular ? <UsoAppGus {...q} /> : <Inicio {...q} />;
+  else if (ruta === "correos") cuerpo = yo.esTitular ? <CorreosEstudiantes {...q} /> : <Inicio {...q} />;
   else if (ruta === "mas") cuerpo = <Mas {...q} />;
   else if (ruta === "bitacora") cuerpo = p.bitacora ? <Bitacora {...q} /> : <Inicio {...q} />;
   // V67 ("4"): Más › Estadísticas, con su permiso.

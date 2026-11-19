@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { primerNombre, celValido, celGuardar } from "@/lib/viajes/modelo";
 import { avisarEquipoEst } from "@/lib/estudiantes/avisar";
 import { FUENTES } from "@/lib/estudiantes/modelo";
+import { TIENDA } from "@/lib/viajes/servidor";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -14,6 +15,30 @@ export const runtime = "nodejs";
 // pida el contacto") -- antes (V60) pedía la cédula o el pasaporte y lo ligaba
 // con su perfil de buzo; ya no. Pide nombre, celular y correo (el correo es
 // obligatorio desde la V78: ahí le llega el link del curso).
+// Los estados de est_estudiantes que cuentan como "ya está en ese curso".
+const EN_CURSO = ["curso", "espera"];
+const TERMINADO = ["almacen", "certificacion", "avisado", "entregada"];
+
+// ¿Ese celular es de alguien que ya está inscrito en ese curso? Los menores
+// (con tutor) se guardan con el celular de quien los registró: no cuentan.
+// Devuelve { nombre, curso, inicio, terminado } o null.
+async function inscritoEnCurso(s, cel, curso) {
+  const cels = cel.length === 10 ? [cel, `1${cel}`] : [cel];
+  const { data: gente } = await s.from("viajes_buzos").select("id, nombre, tutor, es_staff").in("celular", cels);
+  const ids = (gente || []).filter((b) => !b.tutor && !b.es_staff).map((b) => b.id);
+  if (!ids.length) return null;
+  const { data: cursos } = await s.from("est_cursos").select("id").eq("nombre", curso);
+  const cursoIds = new Set((cursos || []).map((c) => c.id));
+  const { data: ests } = await s.from("est_estudiantes").select("buzo_id, curso_id, curso, estado, fecha_inicio, fecha_id").in("buzo_id", ids);
+  const mios = (ests || []).filter((e) => (cursoIds.has(e.curso_id) || e.curso === curso) && [...EN_CURSO, ...TERMINADO].includes(e.estado));
+  if (!mios.length) return null;
+  // Primero el que está en curso (el más próximo); si no, uno ya terminado.
+  const activo = mios.filter((e) => EN_CURSO.includes(e.estado)).sort((a, b) => String(a.fecha_inicio || "9").localeCompare(String(b.fecha_inicio || "9")))[0];
+  const e = activo || mios[0];
+  const b = (gente || []).find((x) => x.id === e.buzo_id);
+  return { nombre: b?.nombre || "", curso, inicio: activo ? e.fecha_inicio || null : null, terminado: !activo };
+}
+
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   // Trampa para robots: un campo escondido que una persona nunca llena.
@@ -28,6 +53,12 @@ export async function POST(request) {
   if (!correo) return NextResponse.json({ error: "Escribe tu correo." }, { status: 400 });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return NextResponse.json({ error: "Revisa tu correo." }, { status: 400 });
   const curso = String(body.curso || "").slice(0, 80) || null;
+
+  // V111 (maqueta V112, "161. A"): si ese celular ya es de alguien inscrito en
+  // ESE mismo curso (con fecha o ya terminado), no se anota otra vez como
+  // interesado: se le dice que ya tiene su cupo. Otro curso sí se anota.
+  const yaInscrito = curso ? await inscritoEnCurso(s, cel, curso) : null;
+  if (yaInscrito) return NextResponse.json({ ok: true, yaInscrito, nombre: primerNombre(yaInscrito.nombre || nombre), wa: TIENDA.whatsapp });
 
   // Si ya dejó sus datos hace poco (mismo celular, todavía abierto), no se repite.
   const abiertos = ["nuevo", "escribimos", "va"];

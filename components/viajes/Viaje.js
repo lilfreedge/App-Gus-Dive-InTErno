@@ -31,6 +31,7 @@ import {
   puntos,
   palabraViaje,
   linkGrupoValido,
+  hora24Texto,
 } from "@/lib/viajes/modelo";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { Chip, Modal, IconoWA, CampoCel, Atras, Buscar } from "./Piezas";
@@ -82,7 +83,7 @@ export function Viaje(props) {
       </div>
       <div className="hint-text" style={{ fontSize: 14, marginTop: 2 }}>
         {mayuscula(fechaLarga(v.fecha))}
-        {v.salida ? ` · ${v.salida}` : ""}
+        {v.salida ? ` · ${hora24Texto(v.salida)}` : ""}
       </div>
       <ResumenBuceo db={db} v={v} r={r} p={p} pasado={yaPaso || cerrado} />
       <div className="pg-acciones">
@@ -1045,7 +1046,7 @@ function InfoViaje({ db, ops, v, p, ev, cerrado, cambiarViaje, ir, yo, avisar })
         </div>
         <div className="vj-dato">
           <span>Salida</span>
-          <b>{v.salida}</b>
+          <b>{hora24Texto(v.salida)}</b>
         </div>
         {v.moneda === "USD" && (
           <div className="vj-dato">

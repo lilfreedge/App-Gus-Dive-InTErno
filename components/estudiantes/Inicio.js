@@ -15,8 +15,10 @@ import QrEntrega from "./QrEntrega";
 import { MarcarEnGrupo } from "./PasosGrupo";
 import { PedirPresupuesto, PedidosGuardados } from "./PresupuestoHoja";
 import { ConfirmarItinerario, TarjetaItinerario } from "./Itinerario";
-import { itinerarioDe } from "@/lib/estudiantes/itinerario";
 import { esOwd, esNitrox, owdDeNitrox, nitroxDeOwd } from "@/lib/estudiantes/junto";
+import { createClient } from "@/lib/supabase/client";
+import SeccionColapsable from "@/components/SeccionColapsable";
+import CorreosAlmacen from "@/app/admin/usuarios/correos-almacen-client";
 
 // Pantallas de Control Estudiantes: Inicio, la lista, Más y la Bitácora.
 
@@ -112,8 +114,7 @@ export function TarjetaCurso({ db, f, onClick, abierta }) {
           {f.cupo ? ` · cupo ${f.cupo}` : ""}
           {f.nota ? ` · ${f.nota}` : ""}
         </span>
-        {/* V100 (maqueta V102): si el itinerario no se ha confirmado. */}
-        {f.conItinerario && !f.itinerarioConfirmadoEn && f.inicio >= hoyISO() && itinerarioDe(f, c).length > 0 && <span className="ce-iti-chip">Itinerario sin confirmar</span>}
+        {/* V110: ya no sale "Itinerario sin confirmar" (se confirma al crear el curso). */}
       </span>
       <span className="ce-tcurso-k">
         <b>{k}</b>
@@ -161,7 +162,6 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
   const intsCurso = interesadosDeCurso(db, c?.nombre);
   const q = quedan(db, f);
   const hayCupo = q !== 0;
-  const pagaron = gente.filter((e) => pagoListo(e)).length;
   const deben = gente.filter((e) => debe(e) > 0).length;
   // V88 (maqueta V88, aprobada): gorras de OWD = las marcadas como entregadas en la ficha.
   const esOWD = /^open water diver$/i.test(String(c?.nombre || "").trim());
@@ -209,11 +209,14 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
       {/* V100 (maqueta V102, "56. C + casilla"): el itinerario de este curso. */}
       <TarjetaItinerario f={f} c={c} ops={ops} nitrox={llevaTeoriaNitrox(db, c)} gente={gente.map((e) => ({ id: e.id, nombre: buzoDe(db, e).nombre, cel: buzoDe(db, e).cel }))} />
 
-      <div className="card" style={{ marginBottom: 12 }}>
+      {/* V111 (maqueta V112, "169. A"): Presupuesto y cupos una al lado de la otra
+          (en el celular, una debajo de la otra). */}
+      <div className="ce-curso-res">
+      <div className="card ce-res-pres">
         <div className="pg-res-top">
           <b>Presupuesto</b>
           {f.presupuestoRealizadoEn ? (
-            <span>Realizado el {fechaCursoCorta(String(f.presupuestoRealizadoEn).slice(0, 10))}</span>
+            <span>Recibido el {fechaCursoCorta(String(f.presupuestoRealizadoEn).slice(0, 10))}</span>
           ) : f.presupuestoPedidoEn ? (
             <span>Pedido el {fechaCursoCorta(String(f.presupuestoPedidoEn).slice(0, 10))}</span>
           ) : (
@@ -221,7 +224,7 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
           )}
         </div>
         {/* V98 (maqueta V99, "30. sí"): lo que se pidió queda guardado aquí, con su detalle. */}
-        <PedidosGuardados f={f} />
+        <PedidosGuardados f={f} extra={esOWD ? `Gorras: ${gorrasListas} de ${gente.length}` : ""} />
         {!f.presupuestoPedidoEn && !pedir && (
           <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => setPedir("nuevo")}>
             Mandar correo de presupuesto
@@ -230,7 +233,8 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
         {pedir && <PedirPresupuesto f={f} c={c} inscritos={gente.filter((e) => e.estado !== "espera").length} otro={pedir === "otro"} ops={ops} alCerrar={() => setPedir(false)} />}
         {f.presupuestoPedidoEn && !f.presupuestoRealizadoEn && (
           <button className="btn btn-primary vj-btn" style={{ marginTop: 8 }} onClick={() => ops.marcarPresupuesto(f, c?.nombre)}>
-            Marcar como realizado
+            {/* V110 (pedido explícito): "realizado" pasa a "recibido". */}
+            Marcar como recibido
           </button>
         )}
         {/* V91 (maqueta v92, aprobada): el QR que confirma que el instructor recibió el presupuesto. */}
@@ -245,15 +249,8 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
             </button>
           )
         )}
-        {/* V91 (maqueta v92, aprobada): "Pedir otro presupuesto", en letra chica y con confirmación. */}
-        {f.presupuestoPedidoEn && !pedir && (
-          <div style={{ marginTop: 10 }}>
-            <button type="button" onClick={() => setPedir("otro")} style={{ background: "none", border: 0, padding: 0, color: "#5c6b78", textDecoration: "underline", cursor: "pointer", fontSize: 12.5 }}>
-              Pedir otro presupuesto
-            </button>
-          </div>
-        )}
-        {esOWD && (
+        {/* V110 (pedido explícito): se quitó "Pedir otro presupuesto" (V91). */}
+        {esOWD && !(f.presupuestoDetalle || []).length && (
           <div className="hint-text" style={{ marginTop: 8 }}>
             Gorras: {gorrasListas} de {gente.length} entregadas
           </div>
@@ -261,34 +258,19 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
         {qr && <QrEntrega fechaId={f.id} curso={c?.nombre} fecha={`${fechaCursoCorta(f.inicio)}`} ops={ops} onCerrar={() => setQr(false)} />}
       </div>
 
-      <div className="card pg-res">
+      {/* V111 ("169. A… quítale el 'quedan 5', el 'pagaron' e 'interesado'. Solo
+          dejemos los que deben"). */}
+      <div className="card pg-res ce-res-cupos">
         <div className="pg-res-top">
           <b>{f.cupo == null ? `${gente.length} estudiante${gente.length === 1 ? "" : "s"}` : `${gente.length} de ${f.cupo} cupos`}</b>
-          {f.cupo != null && <span className={q === 0 ? "pg-lleno" : ""}>{q === 0 ? "lleno" : `quedan ${q}`}</span>}
+          {p.montos && <span className={deben ? "ce-res-debe" : "ce-res-debe cero"}>{deben} {deben === 1 ? "debe" : "deben"}</span>}
         </div>
         {f.cupo != null && (
           <div className="pg-barra">
             <i style={{ width: `${Math.min(100, Math.round((gente.length / Math.max(1, f.cupo)) * 100))}%` }} />
           </div>
         )}
-        <div className="pg-res-nums">
-          {p.montos && (
-            <>
-              <div>
-                <b>{pagaron}</b>
-                <span>pagaron</span>
-              </div>
-              <div className={deben ? "pg-rojo" : ""}>
-                <b>{deben}</b>
-                <span>{deben === 1 ? "debe" : "deben"}</span>
-              </div>
-            </>
-          )}
-          <div>
-            <b>{espera.length + intsCurso.length}</b>
-            <span>{espera.length + intsCurso.length === 1 ? "interesado" : "interesados"}</span>
-          </div>
-        </div>
+      </div>
       </div>
 
       <div className="pg-acciones">
@@ -873,7 +855,8 @@ function FormCurso({ db, form, setForm, yo, ops, avisar, alCrear }) {
     return (
       <div className="ce-form ce-form-curso" style={{ marginTop: 10 }}>
         <span className="ce-iti-paso">Curso creado · paso 2 de 2</span>
-        <ConfirmarItinerario f={paso2} c={c} ops={ops} nitrox={llevaTeoriaNitrox(db, c)} alTerminar={terminarPaso2} alSaltar={terminarPaso2} />
+        {/* V111 ("177. sí"): sin "Lo confirmo después": el itinerario se confirma al crear el curso. */}
+        <ConfirmarItinerario f={paso2} c={c} ops={ops} nitrox={llevaTeoriaNitrox(db, c)} alTerminar={terminarPaso2} />
       </div>
     );
   }
@@ -1050,7 +1033,10 @@ export function Mas({ yo, p, ir }) {
     ...(p.estadisticas ? [{ r: "estadisticas", t: "Estadísticas", sub: "Estudiantes, cursos, cobros, interesados y certificaciones.", I: IconChart }] : []),
     ...(p.bitacora ? [{ r: "bitacora", t: "Bitácora", sub: "Todo lo que se ha hecho, con quién y cuándo.", I: IconHistory }] : []),
     // V89 (maqueta V90, aprobada): Correos automáticos también aquí (presupuesto de cursos).
-    ...(yo?.esTitular ? [{ r: "correos", href: "/correos-automaticos", t: "Correos automáticos", sub: "Quién recibe el presupuesto de cada curso y los avisos.", I: IconMail }] : []),
+    // V110 (pedido explícito: "cada app debe tener su sección de correos
+    // automáticos por separado"): ya no lleva a la de App Interno; es una
+    // pantalla de este app, solo con sus correos.
+    ...(yo?.esTitular ? [{ r: "correos", t: "Correos automáticos", sub: "Quién recibe la solicitud de presupuesto de cada curso.", I: IconMail }] : []),
     // V85 (nota del 15-nov: "solo yo tendré acceso a esto"): solo el Titular.
     // V97 ("QUIEN USA EL APP PONMELO DE ULTIMO"): al final de la lista.
     ...(yo?.esTitular ? [{ r: "usoapp", t: "Quién usa el app Gus Dive", sub: "Los buzos que han entrado al app, y cuándo fue la última vez.", I: IconUsers }] : []),
@@ -1137,9 +1123,46 @@ const cuandoUso = (iso) => {
   const d = new Date(iso);
   const hoy = hoyISO();
   const dia = new Date(d.getTime() - 4 * 3600000).toISOString().slice(0, 10);
-  const hora = d.toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit", timeZone: "America/Santo_Domingo" });
+  const hora = d.toLocaleTimeString("es-DO", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "America/Santo_Domingo" });
   return dia === hoy ? `hoy ${hora}` : `${fechaCursoCorta(dia)} ${hora}`;
 };
+// V110: Más › Correos automáticos de Control Estudiantes (solo el Titular).
+// Hoy el único correo de este app con destinatarios es el del presupuesto
+// (app_config.presupuesto_correos, el mismo que antes estaba en App Interno).
+export function CorreosEstudiantes({ ir }) {
+  const [correos, setCorreos] = useState(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    createClient()
+      .from("app_config")
+      .select("presupuesto_correos")
+      .maybeSingle()
+      .then(({ data, error: e }) => {
+        if (e) setError("No se pudieron cargar los correos. Revisa que ya se haya corrido migration_100.sql.");
+        else setCorreos(data?.presupuesto_correos || []);
+      });
+  }, []);
+  return (
+    <>
+      <a className="back-link" onClick={() => ir("mas")} style={{ cursor: "pointer" }}>
+        ← Más
+      </a>
+      <h1 className="page-title">Correos automáticos</h1>
+      {error && <div className="card hint-text" style={{ color: "var(--rojo)" }}>{error}</div>}
+      {!error && correos === null && <div className="hint-text">Cargando…</div>}
+      {correos !== null && (
+        <SeccionColapsable titulo="Presupuesto de cursos" abiertoInicial>
+          <CorreosAlmacen
+            correosIniciales={correos}
+            campo="presupuesto_correos"
+            nota="Cada vez que se manda la solicitud de presupuesto de un curso, a estos correos les llega (con el total, el detalle, los inscritos y las gorras de OWD). Se pueden poner varios."
+          />
+        </SeccionColapsable>
+      )}
+    </>
+  );
+}
+
 export function UsoAppGus({ ir }) {
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState("");
@@ -1234,7 +1257,7 @@ export function Bitacora({ db, ir }) {
               </div>
             )}
             <small>
-              {x.quien} · {new Date(x.cuando).toLocaleString("es-DO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+              {x.quien} · {new Date(x.cuando).toLocaleString("es-DO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })}
             </small>
           </div>
         ))}

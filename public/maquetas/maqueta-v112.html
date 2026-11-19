@@ -1,0 +1,204 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V112 · Interesados repetidos y tarjetas compactas</title>
+<style>
+:root{--fondo:#f1f5f8;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--amar:#f3c44f;--claro:#fdf3cf;--cafe:#7a5a12;--cafe2:#5c4700;--verde:#1f9150;--rojo:#d23a3a;--navy:#0a3d62;--wa:#1f8a4c}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px 4px;max-width:1080px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:#2b2200;color:#fff;border-color:#2b2200}
+.grupo{max-width:1080px;margin:8px auto 0;padding:0 16px;font-size:11.5px;font-weight:800;color:#8b97a3;text-transform:uppercase;letter-spacing:.05em}
+.reco{background:#e5f6ec;color:var(--verde);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px}
+.vista{display:none;max-width:1080px;margin:0 auto;padding:10px 16px 40px}.vista.on{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:var(--cafe2);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;flex:1 1 280px;max-width:400px}
+.nota>b{display:block;margin-bottom:4px}.nota ul{margin:6px 0 0;padding-left:18px}
+.pant{flex:1 1 560px;max-width:720px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.h1{font-size:22px;font-weight:800;color:var(--navy);margin:2px 0 10px}
+.chip{display:inline-block;background:#fff;border:1px solid var(--borde);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12.5px;color:var(--suave)}
+.chip i{font-style:normal;background:#eef3f6;border-radius:999px;padding:0 6px;margin-left:6px;font-size:11.5px}
+.int{display:flex;flex-direction:column;gap:8px}
+.int-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.int-top b{font-size:15px}
+.tag{background:var(--claro);color:var(--cafe2);border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800}
+.tag.ya{background:#e5f0fb;color:#1d5c9a}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.b{border:1px solid var(--cafe);background:#fdf0cf;color:#3d2f00;border-radius:10px;padding:8px 14px;font-weight:800;font-size:13.5px}
+.b.wa{background:var(--wa);border-color:var(--wa);color:#fff}
+.b.pri{background:var(--cafe);color:#fff}
+.b.sec{background:#fff;border-color:var(--borde);color:var(--navy)}
+.tachado{opacity:.38;position:relative}
+.tachado::after{content:"No sale";position:absolute;right:10px;bottom:10px;background:var(--rojo);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px}
+.cel{width:340px;max-width:100%;background:#fff;border:1px solid var(--borde);border-radius:22px;overflow:hidden}
+.top{border-top:4px solid var(--amar);border-bottom:1px solid var(--borde);padding:10px 14px;font-weight:800;color:var(--cafe2)}
+.top .gus{color:#c8102e;font-weight:900;font-size:18px;letter-spacing:-1px;margin-right:6px}
+.cbody{padding:16px;text-align:center}
+.ok{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:28px;color:#fff;background:var(--verde)}
+.ok.azul{background:#2f7fd0}
+.cbody h3{margin:0 0 6px;font-size:19px}
+.h{color:var(--suave);line-height:1.45;margin:4px 0 10px}
+.cbody .b{display:block;width:100%;margin-top:8px;text-align:center;padding:11px}
+/* tarjetas del curso */
+.res-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.res-top b{font-size:19px}.res-top span{font-size:13px;font-weight:700;color:var(--verde)}
+.barra{height:8px;background:#eef3f6;border-radius:999px;overflow:hidden;margin:8px 0 12px}.barra i{display:block;height:100%;width:17%;background:var(--cafe)}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;border-top:1px solid #eef3f6;padding-top:10px;text-align:center}
+.nums b{display:block;font-size:19px}.nums span{font-size:12px;color:var(--suave)}.rojo b{color:var(--rojo)}
+.mini{font-size:12px;color:var(--suave)}
+.lnk{color:var(--navy);font-weight:700;text-decoration:underline;font-size:13px}
+.lado{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lado .card{margin:0}
+.franja{display:grid;grid-template-columns:1.25fr 1fr;gap:0;padding:0;overflow:hidden}
+.franja>div{padding:12px 14px}
+.franja>div+div{border-left:1px solid #eef3f6}
+.fila{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.cupo{display:flex;align-items:baseline;gap:6px}.cupo b{font-size:18px}
+.st{display:flex;gap:14px}.st div{text-align:center}.st b{display:block;font-size:16px}.st span{font-size:11.5px;color:var(--suave)}
+.tit{font-size:12px;font-weight:800;color:#8b97a3;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.monto{font-size:18px;font-weight:800}
+.verde{color:var(--verde);font-weight:700;font-size:12.5px}
+.ancho{display:flex;gap:6px;margin:0 0 8px}
+.ancho button{border:1px solid var(--borde);background:#fff;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;color:var(--suave);cursor:pointer}
+.ancho button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.marco{transition:max-width .2s}
+.marco.tel{max-width:375px}
+.marco.tel .lado{grid-template-columns:1fr}
+.marco.tel .franja{grid-template-columns:1fr}.marco.tel .franja>div+div{border-left:0;border-top:1px solid #eef3f6}
+</style></head><body>
+<div class="maq"><b>Maqueta V112</b> · Control Estudiantes. 1) Qué hacer cuando alguien que ya está inscrito en un curso se anota otra vez como interesado en ese mismo curso (fotos 1 y 2). 2) Las tarjetas de Presupuesto y cupos más compactas (foto 11). Nada está programado.</div>
+
+<div class="grupo">1. Interesado que ya es estudiante</div>
+<div class="tabs">
+  <button class="tab on" data-v="1">Hoy</button>
+  <button class="tab" data-v="2">A. No dejarlo anotarse otra vez <span class="reco">recomendada</span></button>
+  <button class="tab" data-v="3">B. Dejarlo, pero marcarlo</button>
+</div>
+<div class="grupo">2. Presupuesto y cupos</div>
+<div class="tabs">
+  <button class="tab" data-v="4">Hoy</button>
+  <button class="tab" data-v="5">A. Una al lado de la otra <span class="reco">recomendada</span></button>
+  <button class="tab" data-v="6">B. Una sola tarjeta en franja</button>
+</div>
+
+<!-- 1. HOY -->
+<div class="vista on" id="v1">
+  <div class="pant">
+    <div class="h1">Interesados</div>
+    <span class="chip">Open Water Diver<i>2</i></span>
+    <div style="height:10px"></div>
+    <div class="card int"><div class="int-top"><b>Lissa Toral</b><span class="tag">Open Water Diver</span></div><div class="btns"><span class="b">Inscribir</span><span class="b wa">WhatsApp</span></div></div>
+    <div class="card int"><div class="int-top"><b>FT</b><span class="tag">Open Water Diver</span></div><div class="btns"><span class="b">Inscribir</span><span class="b wa">WhatsApp</span></div></div>
+  </div>
+  <div class="nota"><b>Lo que pasa hoy</b>Lissa se anotó como interesada, la inscribieron en Open Water Diver del lun 11 ene (ahí salió de Interesados) y después volvió a llenar el link de interesados para el mismo curso. El link solo revisa que no haya otro interesado abierto con su celular; no revisa si ya es estudiante de ese curso. Por eso sale otra vez aquí y en el curso dice "2 interesados".</div>
+</div>
+
+<!-- 1. A -->
+<div class="vista" id="v2">
+  <div class="cel"><div class="top"><span class="gus">GUS</span>Registro de interesado</div><div class="cbody">
+    <div class="ok azul">&#10003;</div>
+    <h3>Ya tienes tu cupo, Lissamelia</h3>
+    <div class="h">Ya estás inscrita en <b>Open Water Diver</b>, que empieza el lunes 11 de enero. No hace falta que te anotes otra vez.</div>
+    <span class="b pri">Ver mi curso en el app</span>
+    <span class="b wa">Escribir por WhatsApp</span>
+    <span class="b sec">Volver al inicio</span>
+  </div></div>
+  <div class="pant" style="max-width:420px">
+    <div class="h1" style="font-size:18px">En la tienda: Interesados</div>
+    <span class="chip">Open Water Diver<i>1</i></span>
+    <div style="height:10px"></div>
+    <div class="card int tachado"><div class="int-top"><b>Lissa Toral</b><span class="tag">Open Water Diver</span></div><div class="btns"><span class="b">Inscribir</span><span class="b wa">WhatsApp</span></div></div>
+    <div class="card int"><div class="int-top"><b>FT</b><span class="tag">Open Water Diver</span></div><div class="btns"><span class="b">Inscribir</span><span class="b wa">WhatsApp</span></div></div>
+  </div>
+  <div class="nota"><b>A. No dejarlo anotarse otra vez en el mismo curso</b>
+    <ul>
+      <li>Si el celular es de alguien que ya está inscrito en ese curso (con fecha, o ya lo terminó), no se guarda como interesado y le sale este mensaje. Si ya lo terminó, dice "Ya hiciste Open Water Diver con nosotros".</li>
+      <li>Si escoge <b>otro</b> curso (por ejemplo Advanced), sí queda anotado normal.</li>
+      <li>Lo mismo con "Avísame" del link de registro.</li>
+      <li>Los que ya están repetidos (como Lissa Toral hoy) dejan de salir en Interesados y en el contador del curso. No se borra nada: quedan como "inscrito".</li>
+      <li>Se reconoce por el celular (el nombre puede venir distinto: "Lissa" / "Lissamelia").</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 1. B -->
+<div class="vista" id="v3">
+  <div class="pant">
+    <div class="h1">Interesados</div>
+    <span class="chip">Open Water Diver<i>2</i></span>
+    <div style="height:10px"></div>
+    <div class="card int"><div class="int-top"><b>Lissa Toral</b><span class="tag ya">Ya es estudiante de este curso</span></div><div class="btns"><span class="b sec">Ver su ficha</span><span class="b sec">Quitar de interesados</span></div></div>
+    <div class="card int"><div class="int-top"><b>FT</b><span class="tag">Open Water Diver</span></div><div class="btns"><span class="b">Inscribir</span><span class="b wa">WhatsApp</span></div></div>
+  </div>
+  <div class="nota"><b>B. Dejarlo anotarse, pero marcarlo</b>A la persona le sale el mensaje normal ("Te contactaremos…"). En la tienda sale con la etiqueta azul "Ya es estudiante de este curso", sin Inscribir, con "Ver su ficha" y "Quitar de interesados". Tú decides qué hacer. Desventaja: sigue saliendo en la lista y alguien tiene que quitarlo a mano.</div>
+</div>
+
+<!-- 2. HOY -->
+<div class="vista" id="v4">
+  <div class="pant">
+    <div class="card">
+      <div class="res-top"><b>Presupuesto</b><span>Pedido el jue 19 nov</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:13.5px"><span>Pedido el jue 19 nov · Pipe · 1 estudiante</span><span><b>RD$11,100</b> <span class="lnk">Ver detalle</span></span></div>
+      <div style="height:8px"></div><span class="b pri">Marcar como recibido</span>
+      <div class="mini" style="margin-top:8px">Gorras: 0 de 1 entregadas</div>
+    </div>
+    <div class="card">
+      <div class="res-top"><b>1 de 6 cupos</b><span>quedan 5</span></div>
+      <div class="barra"><i></i></div>
+      <div class="nums"><div><b>0</b><span>pagaron</span></div><div class="rojo"><b>1</b><span>debe</span></div><div><b>1</b><span>interesado</span></div></div>
+    </div>
+  </div>
+  <div class="nota"><b>Hoy</b>Dos tarjetas una debajo de la otra, cada una ocupa todo el ancho y deja mucho blanco. (Ya sin "Pedir otro presupuesto" y con "Marcar como recibido", que pediste en la foto 9.)</div>
+</div>
+
+<!-- 2. A -->
+<div class="vista" id="v5">
+  <div class="pant">
+    <div class="ancho"><button class="on" data-m="5" data-a="pc">Computadora</button><button data-m="5" data-a="tel">Celular</button></div>
+    <div class="marco" id="m5">
+      <div class="lado">
+        <div class="card">
+          <div class="res-top"><b style="font-size:16px">Presupuesto</b><span class="verde">Pedido el jue 19 nov</span></div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin:6px 0 2px"><span class="monto">RD$11,100</span><span class="lnk">Ver detalle</span></div>
+          <div class="mini">Pipe · 1 estudiante · Gorras: 0 de 1</div>
+          <div style="height:8px"></div><span class="b pri" style="display:inline-block;padding:6px 12px;font-size:13px">Marcar como recibido</span>
+        </div>
+        <div class="card">
+          <div class="res-top"><b style="font-size:16px">1 de 6 cupos</b><span>quedan 5</span></div>
+          <div class="barra" style="margin:6px 0 10px"><i></i></div>
+          <div class="nums" style="padding-top:8px"><div><b style="font-size:16px">0</b><span>pagaron</span></div><div class="rojo"><b style="font-size:16px">1</b><span>debe</span></div><div><b style="font-size:16px">1</b><span>interesado</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="nota"><b>A. Una al lado de la otra</b>Las dos tarjetas en una fila, más bajitas: el total del presupuesto grande con "Ver detalle", y abajo quién, cuántos estudiantes y las gorras en una línea. En el celular se ponen una debajo de la otra (toca "Celular" para verlo).</div>
+</div>
+
+<!-- 2. B -->
+<div class="vista" id="v6">
+  <div class="pant">
+    <div class="ancho"><button class="on" data-m="6" data-a="pc">Computadora</button><button data-m="6" data-a="tel">Celular</button></div>
+    <div class="marco" id="m6">
+      <div class="card franja">
+        <div>
+          <div class="tit">Cupos</div>
+          <div class="fila">
+            <span class="cupo"><b>1 de 6</b><span class="verde">quedan 5</span></span>
+            <div class="st"><div><b>0</b><span>pagaron</span></div><div class="rojo"><b style="color:var(--rojo)">1</b><span>debe</span></div><div><b>1</b><span>interesado</span></div></div>
+          </div>
+          <div class="barra" style="margin:8px 0 0"><i></i></div>
+        </div>
+        <div>
+          <div class="tit">Presupuesto <span class="verde" style="text-transform:none;letter-spacing:0;margin-left:4px">Pedido el jue 19 nov</span></div>
+          <div class="fila"><span class="monto">RD$11,100</span><span class="lnk">Ver detalle</span><span class="b pri" style="padding:5px 10px;font-size:12.5px">Marcar como recibido</span></div>
+          <div class="mini" style="margin-top:4px">Pipe · 1 estudiante · Gorras: 0 de 1</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="nota"><b>B. Una sola tarjeta en franja</b>Cupos y presupuesto juntos en una sola tarjeta, partida en dos. Ocupa menos alto todavía, pero se ve más cargada. En el celular las dos partes quedan una debajo de la otra.</div>
+</div>
+
+<script>
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));document.querySelectorAll(".vista").forEach(v=>v.classList.toggle("on",v.id==="v"+t.dataset.v));}));
+document.querySelectorAll(".ancho button").forEach(b=>b.addEventListener("click",()=>{const m=document.getElementById("m"+b.dataset.m);m.classList.toggle("tel",b.dataset.a==="tel");b.parentElement.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));}));
+</script>
+</body></html>

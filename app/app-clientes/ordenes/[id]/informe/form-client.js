@@ -294,7 +294,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
   const componentesTexto = componentesRecibidosTexto(orden.regulador_componentes);
 
   const horaBorrador = (iso) =>
-    new Intl.DateTimeFormat("es-DO", { timeZone: "America/Santo_Domingo", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+    new Intl.DateTimeFormat("es-DO", { timeZone: "America/Santo_Domingo", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso));
 
   return (
     <div className="card">
@@ -423,7 +423,7 @@ export default function InformeMantenimientoForm({ orden, serie, tecnicoSugerido
                       </b>
                       {hecho ? (
                         <small>
-                          Listo{hecho.por ? ` · ${hecho.por}` : ""} · {new Date(hecho.en).toLocaleString("es-DO", { timeZone: "America/Santo_Domingo", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+                          Listo{hecho.por ? ` · ${hecho.por}` : ""} · {new Date(hecho.en).toLocaleString("es-DO", { timeZone: "America/Santo_Domingo", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })}
                         </small>
                       ) : (
                         p.sub && <small className={p.ojo ? "ojo" : ""}>{p.sub}</small>

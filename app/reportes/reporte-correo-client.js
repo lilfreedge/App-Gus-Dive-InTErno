@@ -37,7 +37,7 @@ function idAleatorio() {
 // un objeto {destinatarios, detalles} dentro del array reporte_configs.
 // `indice` es la posición dentro de ese array (para "Enviar solo esto
 // ahora", que le pasa al backend cuál de los envíos guardados mandar).
-function EnvioCard({ envio, numero, indice, onChange, onRemove, disabled, guardando }) {
+function EnvioCard({ envio, numero, indice, onChange, onRemove, disabled, guardando, opciones = DETALLES_OPCIONES, textoFijo = "" }) {
   const [nuevoEmail, setNuevoEmail] = useState("");
   const [errorEmail, setErrorEmail] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -173,9 +173,10 @@ function EnvioCard({ envio, numero, indice, onChange, onRemove, disabled, guarda
       </div>
       {errorEmail && <div style={{ marginTop: -6, marginBottom: 10, fontSize: 13, color: "var(--rojo)" }}>{errorEmail}</div>}
 
-      <p className="hint-text" style={{ marginBottom: 8 }}>Qué incluir</p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 16px", marginBottom: 14 }}>
-        {DETALLES_OPCIONES.map((op) => (
+      <p className="hint-text" style={{ marginBottom: 8 }}>{textoFijo ? "Qué le llega" : "Qué incluir"}</p>
+      {textoFijo && <div style={{ fontSize: 12.5, marginBottom: 14 }}>{textoFijo}</div>}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 16px", marginBottom: textoFijo ? 0 : 14 }}>
+        {opciones.map((op) => (
           <label key={op.clave} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5 }}>
             <input
               type="checkbox"
@@ -235,17 +236,32 @@ function EnvioCard({ envio, numero, indice, onChange, onRemove, disabled, guarda
 // 1 de la maqueta: en los dos lugares, para que quien tenga el permiso
 // "Correos semanales" la siga manejando desde Reportes). Allá no hace falta
 // el aviso de "solo visible para…".
-export default function ReporteCorreoConfig({ enviosIniciales, esTitular, enAdministracion = false }) {
+// V111 ("176. sí": cada app con sus correos automáticos por separado): `app`
+// "alquiler" enseña y maneja solo los envíos de Alquiler (los que tienen
+// app: "alquiler" en reporte_configs; siempre llevan solo el reporte semanal
+// de alquileres). Sin `app` (App Interno) enseña los demás, ya sin la casilla
+// de Alquileres. Al guardar se escribe la lista completa (los de la otra app
+// se quedan como estaban).
+const DETALLES_ALQUILER = { salidas: false, llenados: false, inspecciones: false, mantenimientos: false, alquileres: true };
+const OPCIONES_INTERNO = DETALLES_OPCIONES.filter((op) => op.clave !== "alquileres");
+
+export default function ReporteCorreoConfig({ enviosIniciales, esTitular, enAdministracion = false, app = "interno" }) {
   const router = useRouter();
   const supabase = createClient();
+  const esAlq = app === "alquiler";
+  const deEsta = (e) => (esAlq ? e.app === "alquiler" : e.app !== "alquiler");
 
-  const [envios, setEnvios] = useState(
+  const [todos, setTodos] = useState(
     (enviosIniciales || []).map((e) => ({
       id: idAleatorio(),
       destinatarios: e.destinatarios || [],
       detalles: { ...DETALLES_DEFAULT, ...(e.detalles || {}) },
+      ...(e.app === "alquiler" ? { app: "alquiler" } : {}),
+      orig: e, // los de la otra app se vuelven a guardar tal como estaban
     }))
   );
+  const envios = todos.filter(deEsta);
+  const setEnvios = setTodos;
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState(null);
   const [enviando, setEnviando] = useState(false);
@@ -258,7 +274,7 @@ export default function ReporteCorreoConfig({ enviosIniciales, esTitular, enAdmi
     const { error } = await supabase
       .from("app_config")
       .update({
-        reporte_configs: enviosNuevos.map((e) => ({ destinatarios: e.destinatarios, detalles: e.detalles })),
+        reporte_configs: enviosNuevos.map((e) => (!deEsta(e) && e.orig ? e.orig : { destinatarios: e.destinatarios, detalles: e.detalles, ...(e.app ? { app: e.app } : {}) })),
       })
       .eq("id", true);
 
@@ -273,19 +289,22 @@ export default function ReporteCorreoConfig({ enviosIniciales, esTitular, enAdmi
   }
 
   function agregarEnvio() {
-    const enviosNuevos = [...envios, { id: idAleatorio(), destinatarios: [], detalles: { ...DETALLES_DEFAULT } }];
+    const nuevo = esAlq
+      ? { id: idAleatorio(), destinatarios: [], detalles: { ...DETALLES_ALQUILER }, app: "alquiler" }
+      : { id: idAleatorio(), destinatarios: [], detalles: { ...DETALLES_DEFAULT, alquileres: false } };
+    const enviosNuevos = [...todos, nuevo];
     setEnvios(enviosNuevos);
     guardar(enviosNuevos);
   }
 
   function quitarEnvio(id) {
-    const enviosNuevos = envios.filter((e) => e.id !== id);
+    const enviosNuevos = todos.filter((e) => e.id !== id);
     setEnvios(enviosNuevos);
     guardar(enviosNuevos);
   }
 
   function actualizarEnvio(id, patch) {
-    const enviosNuevos = envios.map((e) => (e.id === id ? { ...e, ...patch } : e));
+    const enviosNuevos = todos.map((e) => (e.id === id ? { ...e, ...patch } : e));
     setEnvios(enviosNuevos);
     guardar(enviosNuevos);
   }
@@ -295,7 +314,7 @@ export default function ReporteCorreoConfig({ enviosIniciales, esTitular, enAdmi
     setMensajeEnvio(null);
 
     try {
-      const res = await fetch("/api/reportes/enviar-ahora", { method: "POST" });
+      const res = await fetch(`/api/reportes/enviar-ahora?app=${esAlq ? "alquiler" : "interno"}`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || data.error) {
@@ -335,15 +354,20 @@ export default function ReporteCorreoConfig({ enviosIniciales, esTitular, enAdmi
         <div style={{ color: "var(--azul)", display: "flex" }}>
           <IconMail size={15} />
         </div>
-        <div style={{ fontWeight: 700, fontSize: 14.5, color: "var(--azul-texto)" }}>Reportes automáticos</div>
+        <div style={{ fontWeight: 700, fontSize: 14.5, color: "var(--azul-texto)" }}>{esAlq ? "Reporte semanal de Alquiler" : "Reportes automáticos"}</div>
       </div>
       <p style={{ fontSize: 11.5, color: "var(--texto-suave)", marginTop: 0, marginBottom: 14 }}>
-        Cada envío tiene su propio destinatario y sus propias secciones — así una persona puede recibir solo Salidas y otra solo Llenados, por ejemplo.
+        {esAlq
+          ? "Cada lunes les llega a estos correos el reporte de la semana: alquileres, devoluciones, lo que sigue afuera y lo atrasado."
+          : "Cada envío tiene su propio destinatario y sus propias secciones — así una persona puede recibir solo Salidas y otra solo Llenados, por ejemplo."}
         {!enAdministracion && " Es la misma configuración que en Administración › Correos automáticos: lo que cambies aquí cambia allá."}
       </p>
 
       {envios.length === 0 && (
-        <p style={{ fontSize: 13, color: "var(--texto-suave)" }}>Todavía no hay ningún envío configurado.</p>
+        <p style={{ fontSize: 13, color: "var(--texto-suave)" }}>
+          Todavía no hay ningún envío configurado.
+          {esAlq && " Mientras no agregues uno aquí, el reporte de alquileres sigue saliendo dentro del reporte de App Interno."}
+        </p>
       )}
 
       {envios.map((envio, i) => (
@@ -351,7 +375,9 @@ export default function ReporteCorreoConfig({ enviosIniciales, esTitular, enAdmi
           key={envio.id}
           envio={envio}
           numero={i + 1}
-          indice={i}
+          indice={todos.indexOf(envio)}
+          opciones={esAlq ? [] : OPCIONES_INTERNO}
+          textoFijo={esAlq ? "Alquileres y retornos de la semana." : ""}
           disabled={loading}
           guardando={loading}
           onChange={(patch) => actualizarEnvio(envio.id, patch)}

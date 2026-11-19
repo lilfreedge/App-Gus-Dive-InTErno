@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import ReporteCorreoConfig from "@/app/reportes/reporte-correo-client";
 import { Buscar, CampoCel } from "@/components/viajes/Piezas";
 import { IconPlus, IconHistory, IconEdit, IconReport, IconChart, IconCatalog, IconMail } from "@/components/icons";
 import { soloDigitos, formatoCedula, formatoCel } from "@/lib/viajes/modelo";
@@ -291,7 +293,7 @@ export function Detalle({ db, p, ops, ir, avisar, id }) {
         </button>
       )}
       <div className="hint-text" style={{ marginTop: 14 }}>
-        Lo hizo {a.creadoPor || "—"} · {a.creadoEn ? new Date(a.creadoEn).toLocaleString("es-DO") : ""}
+        Lo hizo {a.creadoPor || "—"} · {a.creadoEn ? new Date(a.creadoEn).toLocaleString("es-DO", { hourCycle: "h23" }) : ""}
       </div>
 
       {/* V61 (nota del 2-nov): "permíteme poder borrar alquileres y editar". */}
@@ -1203,7 +1205,7 @@ export function Equipos({ db, p, ops }) {
 }
 
 // ----------------------------------------------------------------- Más y Bitácora
-export function Mas({ ir }) {
+export function Mas({ ir, yo }) {
   // V58 (nota 2-nov): precios por tipo, estadísticas y reporte.
   const opciones = [
     { r: "precios", t: "Precios", sub: "El precio de alquiler de cada tipo de equipo y los cargos por problemas (tanque vacío, manómetro ahogado…).", I: IconCatalog },
@@ -1213,7 +1215,9 @@ export function Mas({ ir }) {
     { r: "semana", t: "Reporte semanal", sub: "Lo de la semana: alquileres, devoluciones, lo que sigue afuera y lo atrasado.", I: IconReport },
     { r: "bitacora", t: "Bitácora", sub: "Todo lo que se hace en Alquiler: quién y cuándo.", I: IconHistory },
     // V89 (maqueta V90, aprobada): Correos automáticos también en Alquiler.
-    { r: "correos", href: "/correos-automaticos", t: "Correos automáticos", sub: "Los reportes que llegan solos por correo.", I: IconMail },
+    // V111 ("176. sí"): pantalla propia de Alquiler, solo con su reporte semanal
+    // (ya no lleva a la de App Interno). Solo el Titular, como antes.
+    ...(yo?.esTitular ? [{ r: "correos", t: "Correos automáticos", sub: "A quién le llega el reporte semanal de Alquiler cada lunes.", I: IconMail }] : []),
   ];
   return (
     <>
@@ -1231,6 +1235,34 @@ export function Mas({ ir }) {
           </div>
         </button>
       ))}
+    </>
+  );
+}
+
+// V111 ("176. sí"): Más › Correos automáticos de Alquiler. Lee la lista de
+// envíos (app_config.reporte_configs) y enseña solo los de Alquiler.
+export function CorreosAlquiler({ ir }) {
+  const [envios, setEnvios] = useState(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    createClient()
+      .from("app_config")
+      .select("reporte_configs")
+      .maybeSingle()
+      .then(({ data, error: e }) => {
+        if (e) setError("No se pudieron cargar los correos.");
+        else setEnvios(Array.isArray(data?.reporte_configs) ? data.reporte_configs : []);
+      });
+  }, []);
+  return (
+    <>
+      <a className="back-link" onClick={() => ir("mas")} style={{ cursor: "pointer" }}>
+        ← Más
+      </a>
+      <h1 className="page-title">Correos automáticos</h1>
+      {error && <div className="card hint-text" style={{ color: "var(--rojo)" }}>{error}</div>}
+      {!error && envios === null && <div className="hint-text">Cargando…</div>}
+      {envios !== null && <ReporteCorreoConfig enviosIniciales={envios} esTitular enAdministracion app="alquiler" />}
     </>
   );
 }
@@ -1722,7 +1754,7 @@ export function Bitacora({ db, ir }) {
               </span>
             )}
             <span className="hint-text" style={{ display: "block", margin: 0 }}>
-              {x.quien} · {new Date(x.cuando).toLocaleString("es-DO")}
+              {x.quien} · {new Date(x.cuando).toLocaleString("es-DO", { hourCycle: "h23" })}
             </span>
           </div>
         ))}

@@ -41,7 +41,7 @@ export async function POST(request) {
   // V91 (maqueta v92, aprobada): el QR que el instructor escanea para confirmar
   // que recibió el presupuesto. Vence a los 15 minutos (lib/entrega-qr.js).
   if (body.accion === "qr") {
-    if (!fr.presupuesto_realizado_en) return NextResponse.json({ error: "Primero marca el presupuesto como listo." }, { status: 400 });
+    if (!fr.presupuesto_realizado_en) return NextResponse.json({ error: "Primero marca el presupuesto como recibido." }, { status: 400 });
     const { data: cursoQr } = await s.from("est_cursos").select("nombre, info").eq("id", fr.curso_id).maybeSingle();
     if (cursoQr?.info?.qr_instructor === false) return NextResponse.json({ error: "Este curso no pide QR al instructor (se apaga en Editar curso)." }, { status: 400 });
     const { token, expiraEn } = crearTokenEntrega(id);
@@ -59,7 +59,7 @@ export async function POST(request) {
     s.from("est_estudiantes").select("buzo_id, estado, fecha_id").eq("curso_id", fr.curso_id).neq("estado", "cancelado"),
   ]);
   const destinos = cfg?.presupuesto_correos || [];
-  if (!destinos.length) return NextResponse.json({ error: "Falta el correo del presupuesto: ponlo en Administración › Correos automáticos." }, { status: 400 });
+  if (!destinos.length) return NextResponse.json({ error: "Falta el correo del presupuesto: ponlo en Control Estudiantes › Más › Correos automáticos." }, { status: 400 });
 
   const inscritosF = (ests || []).filter((e) => e.fecha_id === id && e.estado !== "espera");
   const esperaF = (ests || []).filter((e) => e.estado === "espera");

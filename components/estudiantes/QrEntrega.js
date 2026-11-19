@@ -30,7 +30,7 @@ export default function QrEntrega({ fechaId, curso, fecha, ops, onCerrar }) {
   const vencido = !!datos && restante <= 0;
   const mm = String(Math.max(0, Math.floor(restante / 60000))).padStart(2, "0");
   const ss = String(Math.max(0, Math.floor((restante % 60000) / 1000))).padStart(2, "0");
-  const hora = expira ? new Date(expira).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" }) : "";
+  const hora = expira ? new Date(expira).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) : "";
 
   return (
     <div role="dialog" aria-label="QR para el instructor" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, zIndex: 50 }}>

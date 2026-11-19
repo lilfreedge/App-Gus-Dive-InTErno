@@ -1,6 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { filaAViaje } from "@/lib/viajes/datos";
-import { recordatoriosConFecha, sumarDias } from "@/lib/viajes/modelo";
+import { recordatoriosConFecha, sumarDias, hora24Texto } from "@/lib/viajes/modelo";
 import { tokenCalendario } from "@/lib/viajes/servidor";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +38,7 @@ export async function GET(request) {
       `DTSTART;VALUE=DATE:${fechaIcs(v.fecha)}`,
       `DTEND;VALUE=DATE:${fechaIcs(fin)}`,
       `SUMMARY:${esc(`🤿 ${v.nombre}`)}`,
-      `DESCRIPTION:${esc(`Salida: ${v.salida}`)}`,
+      `DESCRIPTION:${esc(`Salida: ${hora24Texto(v.salida)}`)}`,
       "END:VEVENT"
     );
   }

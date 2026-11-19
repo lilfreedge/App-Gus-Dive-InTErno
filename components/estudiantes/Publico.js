@@ -203,10 +203,12 @@ function gruposCursos(cursos) {
 const cortaDe = (c) => String(c?.info?.nivel || "").trim();
 // V101 (maqueta V105, "76. B"): el Nitrox con el Open Water es un día más de teoría.
 const TEXTO_NITROX_JUNTO = "Un día más de teoría, por cuadrar con tu instructor.";
-// Open Water → Nitrox; BLS → OXY.
+// Open Water → Nitrox; BLS → OXY (Oxygen Provider, otro curso: no es el Nitrox).
+// V107 ("oxy no es nitrox, es oxygen provider"): sirve con el curso llamado
+// "OXY", "Oxygen Provider" u "Oxygen Provider (OXY)" en el Catálogo.
 const PAREJAS = [
   [/^open water diver$/i, /^nitrox$/i],
-  [/^bls$/i, /^oxy$/i],
+  [/^bls$/i, /^(oxy|oxygen provider( \(oxy\))?)$/i],
 ];
 function extraDe(cursos, c) {
   const par = PAREJAS.find(([a]) => a.test(String(c.nombre || "").trim()));
@@ -391,6 +393,7 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
   // Interesados con sus datos (si falta algo, va al link de interesados con el
   // curso ya escogido).
   const [avisado, setAvisado] = useState("");
+  const [yaEn, setYaEn] = useState(null);
   const avisarme = (curso) =>
     correr(async () => {
       const nombreCurso = curso.nombre;
@@ -408,6 +411,8 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
         window.location.href = link;
         return;
       }
+      // V111 (maqueta V112, "161. A"): si ya está inscrito en ese curso, no se anota otra vez.
+      setYaEn(r.yaInscrito ? r.yaInscrito : null);
       setAvisado(nombreCurso);
       setCursoSel(curso.id);
       ir("espera");
@@ -1018,12 +1023,25 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
                   <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
                 </svg>
               </div>
-              <div className="pb-t">{avisado === cursoElegido.nombre ? "Te avisamos" : cursoElegido.fechas.length ? "Las fechas están llenas" : "Todavía no hay fecha"}</div>
+              <div className="pb-t">{avisado === cursoElegido.nombre ? (yaEn ? (yaEn.terminado ? "Ya hiciste este curso" : "Ya tienes tu cupo") : "Te avisamos") : cursoElegido.fechas.length ? "Las fechas están llenas" : "Todavía no hay fecha"}</div>
               <div className="pb-h">
                 para <b>{cursoElegido.nombre}</b>
               </div>
             </div>
-            {avisado === cursoElegido.nombre ? (
+            {avisado === cursoElegido.nombre && yaEn ? (
+              <div className="ce-pub-aviso" style={{ textAlign: "center" }}>
+                {yaEn.terminado ? (
+                  <>
+                    Ya hiciste <b>{cursoElegido.nombre}</b> con nosotros.
+                  </>
+                ) : (
+                  <>
+                    <b>Ya tienes tu cupo.</b> Ya estás inscrito en {cursoElegido.nombre}
+                    {yaEn.inicio ? `, que empieza el ${fechaLarga(yaEn.inicio)}` : ""}. No hace falta que te anotes otra vez.
+                  </>
+                )}
+              </div>
+            ) : avisado === cursoElegido.nombre ? (
               <div className="ce-pub-aviso" style={{ textAlign: "center" }}>
                 <b>¡Listo!</b> Te avisamos por correo y WhatsApp cuando abramos una fecha de {cursoElegido.nombre}.
               </div>
@@ -1112,18 +1130,14 @@ export default function EstudiantePublico({ cursos, tienda, conFechas = false, f
                     ? `Ya tenemos tus datos para ${res.curso}, que empieza el ${fechaLarga(res.fecha)}. Te escribiremos por WhatsApp para coordinar.`
                     : `Ya tenemos tus datos para ${res.curso}. Te escribiremos por WhatsApp para coordinar.`}
             </div>
-            {res.tambien && (
+            {res.tambien && res.tambienJunto && (
               <div className="pb-h" style={{ marginTop: 4 }}>
                 {/* V101 (maqueta V105): el Nitrox con el Open Water ya va en esa misma semana. */}
-                {res.tambienJunto ? (
-                  <>
-                    También quedaste en <b>{res.tambien}</b>: la teoría de {res.tambien} la cuadras con tu instructor.
-                  </>
-                ) : (
-                  <>
-                    También quedaste anotado en <b>{res.tambien}</b>: te escribimos para la fecha.
-                  </>
-                )}
+                {/* V107 (maqueta V111, "A"): el otro curso (p. ej. Oxygen Provider con BLS)
+                    ya no se menciona aquí; sigue quedando anotado. */}
+                <>
+                  También quedaste en <b>{res.tambien}</b>: la teoría de {res.tambien} la cuadras con tu instructor.
+                </>
               </div>
             )}
             {res.fecha && res.semana && (

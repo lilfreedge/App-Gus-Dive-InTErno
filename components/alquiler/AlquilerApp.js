@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { IconGear, IconLogout, IconShuffle, IconHistory } from "@/components/icons";
 import { cargarTodo, alquilerAFila, itemAFila, buzoAFila, filaABuzo, nuevoId } from "@/lib/alquiler/datos";
 import { moraDe, rd, hoyISO } from "@/lib/alquiler/modelo";
-import { Inicio, Lista, Detalle, Nuevo, Retornos, RetornosLista, Equipos, Mas, Bitacora, Precios, Estadisticas, Reporte, ReporteSemana, Clientes, FichaCliente } from "./Pantallas";
+import { Inicio, Lista, Detalle, Nuevo, Retornos, RetornosLista, Equipos, Mas, Bitacora, Precios, Estadisticas, Reporte, ReporteSemana, Clientes, FichaCliente, CorreosAlquiler } from "./Pantallas";
 
 // App Alquiler (migration_82.sql). Mismo esquema que Control Estudiantes:
 // un solo componente para todas las pantallas (/alquiler/...), los datos se
@@ -454,8 +454,9 @@ export default function AlquilerApp({ p, yo }) {
   else if (k === "estadisticas") cuerpo = <Estadisticas {...q} />;
   else if (k === "reporte") cuerpo = <Reporte {...q} />;
   else if (k === "semana") cuerpo = <ReporteSemana {...q} />;
+  else if (k === "correos") cuerpo = yo.esTitular ? <CorreosAlquiler {...q} /> : <Inicio {...q} />;
   else cuerpo = <Inicio {...q} />;
-  const activo = ["ver", "nuevo"].includes(k) ? "alquiler" : k === "cliente" ? "clientes" : ["bitacora", "precios", "estadisticas", "reporte", "semana"].includes(k) ? "mas" : k;
+  const activo = ["ver", "nuevo"].includes(k) ? "alquiler" : k === "cliente" ? "clientes" : ["bitacora", "precios", "estadisticas", "reporte", "semana", "correos"].includes(k) ? "mas" : k;
 
   return (
     <div className="alq-app">

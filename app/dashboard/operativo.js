@@ -42,7 +42,7 @@ function etiquetaDia(ymd) {
 }
 
 function horaRD(iso) {
-  return new Date(iso).toLocaleTimeString("es-DO", { timeZone: ZONA, hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("es-DO", { timeZone: ZONA, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 }
 
 export default async function InicioOperativo({ profile }) {

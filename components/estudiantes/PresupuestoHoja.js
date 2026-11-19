@@ -248,8 +248,8 @@ export function PedirPresupuesto({ f, c, inscritos, otro, ops, alCerrar }) {
   return (
     <div className="ce-gp-panel ce-ph-pedir">
       <div className="hint-text" style={{ margin: 0 }}>
+        {/* V110 (pedido explícito): sin "· el predeterminado". */}
         Presupuesto para <b>{inscritos} estudiante{inscritos === 1 ? "" : "s"}</b>
-        {pre?.exacto ? " · el predeterminado" : ""}
       </div>
       {pre && !pre.exacto && (
         <div className="ce-ph-aviso">
@@ -263,13 +263,13 @@ export function PedirPresupuesto({ f, c, inscritos, otro, ops, alCerrar }) {
       )}
       {conMontos && <div className="ce-ph-grande">{rd(totalHoja(hoja))}</div>}
       <button type="button" className="ce-ph-link" onClick={() => setAbierto(!abierto)}>
-        {abierto ? "Esconder el detalle" : "Ver el detalle o cambiar algo (solo para esta vez)"}
+        {abierto ? "Esconder el detalle" : "Ver el detalle"}
       </button>
       {abierto && <HojaEditor hoja={hoja || copiaHoja(HOJA_VACIA)} onChange={setHoja} />}
       {otro && <div className="hint-text">Se manda otra vez el correo a Dinorah. Se vuelven a marcar como pendientes "realizado" y "entregado".</div>}
       <div className="ce-gp-pie">
         <button type="button" className="btn ce-gp-boton" disabled={mandando} onClick={() => mandar(false)}>
-          {mandando ? "Mandando…" : "Mandar a Dinorah"}
+          {mandando ? "Enviando…" : "Enviar solicitud"}
         </button>
         <button type="button" className="btn secondary" onClick={alCerrar}>
           Cancelar
@@ -285,19 +285,34 @@ export function PedirPresupuesto({ f, c, inscritos, otro, ops, alCerrar }) {
 }
 
 // Lo que se pidió, guardado en la fecha ("por si acaso queremos verificar el detalle").
-export function PedidosGuardados({ f }) {
+// V111 (maqueta V112, "169. A"): el último pedido, compacto: el total grande con
+// "Ver detalle" y debajo quién, cuántos estudiantes y `extra` (las gorras). Los
+// de antes (de cuando existía "Pedir otro presupuesto") siguen como líneas chicas.
+export function PedidosGuardados({ f, extra = "" }) {
   const lista = f.presupuestoDetalle || [];
   const [ver, setVer] = useState(null);
   if (!lista.length) return null;
+  const ult = lista[lista.length - 1];
+  const iu = lista.length - 1;
   return (
     <div className="ce-ph-pedidos">
-      {[...lista].reverse().map((x, i) => {
-        const idx = lista.length - 1 - i;
+      <div className="ce-ph-ult">
+        <span className="ce-ph-ult-total">{rd(ult.total)}</span>
+        <button type="button" className="ce-ph-link" onClick={() => setVer(ver === iu ? null : iu)}>
+          {ver === iu ? "Esconder" : "Ver detalle"}
+        </button>
+      </div>
+      <div className="ce-ph-ult-meta">
+        {[ult.por, `${ult.estudiantes} estudiante${ult.estudiantes === 1 ? "" : "s"}`, extra].filter(Boolean).join(" · ")}
+      </div>
+      {ver === iu && <HojaVer hoja={ult.hoja} />}
+      {[...lista].slice(0, -1).reverse().map((x, i) => {
+        const idx = lista.length - 2 - i;
         return (
           <div key={idx}>
             <div className="ce-ph-pedido">
               <span>
-                {i === 0 ? "Pedido" : "Antes"} el {fechaCursoCorta(String(x.en).slice(0, 10))}
+                Antes el {fechaCursoCorta(String(x.en).slice(0, 10))}
                 {x.por ? ` · ${x.por}` : ""} · {x.estudiantes} estudiante{x.estudiantes === 1 ? "" : "s"}
               </span>
               <span>

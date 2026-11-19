@@ -16,6 +16,7 @@ import {
   recordatoriosConFecha,
   hoyISO,
   nuevoIdLocal,
+  hora24Texto,
 } from "@/lib/viajes/modelo";
 import { Chip, Modal } from "./Piezas";
 import { IconBell, IconLink, IconCheck, IconBuzos, IconCatalog, IconReport, IconHistory } from "@/components/icons";
@@ -72,7 +73,7 @@ export function TarjetaViaje({ db, v, p, ir }) {
         <div className="vj-tarjeta-info">
           <div className="vj-viaje-t">{v.nombre}</div>
           <div className="hint-text" style={{ marginTop: 2 }}>
-            {DIAS[d.getDay()]} · {v.salida}
+            {DIAS[d.getDay()]} · {hora24Texto(v.salida)}
             {dp > 0 ? ` · en ${dp} días` : dp === 0 ? " · hoy" : ""}
           </div>
           {!["abierto", "realizado"].includes(ev) && (

@@ -51,14 +51,21 @@ export async function POST(request) {
   // tarjeta de envío -- mismo endpoint, pero limitado a un solo envío por
   // su índice dentro de la lista guardada (mismo orden que se ve en
   // pantalla, ver reporte-correo-client.js).
+  // V111: `indice` es la posición en la lista guardada (reporte_configs), y
+  // `app` ("interno" | "alquiler") deja mandar solo los envíos de esa app.
   const { searchParams } = new URL(request.url);
   const indiceParam = searchParams.get("indice");
+  const appParam = searchParams.get("app");
   if (indiceParam !== null) {
     const indice = Number(indiceParam);
-    if (!Number.isInteger(indice) || indice < 0 || indice >= envios.length) {
+    const uno = Number.isInteger(indice) ? envios.find((e) => e.indice === indice) : null;
+    if (!uno) {
       return NextResponse.json({ error: "Ese envío ya no existe -- recarga la página." }, { status: 400 });
     }
-    envios = [envios[indice]];
+    envios = [uno];
+  } else if (appParam === "alquiler" || appParam === "interno") {
+    envios = envios.filter((e) => e.app === appParam);
+    if (envios.length === 0) return NextResponse.json({ error: "Todavía no hay a quién mandarle el reporte: agrega un correo arriba." }, { status: 400 });
   }
 
   const hasta = new Date();

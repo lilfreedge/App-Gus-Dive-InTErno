@@ -5,6 +5,7 @@ import { useState } from "react";
 import { IconEdit, IconPlus } from "@/components/icons";
 import { PASOS, ESCUELAS, rd, nombrePaso } from "@/lib/estudiantes/modelo";
 import { nuevoId } from "@/lib/estudiantes/datos";
+import CampoHora24 from "@/components/CampoHora24";
 import { DIAS_CATALOGO, HORA_TEORIA, limpiarPlantilla, semanaDePlantilla } from "@/lib/estudiantes/itinerario";
 
 // Base de datos (Más › Base de datos, V55: "ponme en 'más' un botón de base
@@ -219,7 +220,7 @@ function ItinerarioCatalogo({ iti, setIti, pasos, llevaExamen }) {
               ))}
               {x.k === "examen" && <option value="cuadrar">Por cuadrar con el instructor</option>}
             </select>
-            <input type="time" value={x.hora} disabled={x.cuadrar} onChange={(e) => cambiar(x.k, { hora: e.target.value })} aria-label={`Hora de ${x.t}`} />
+            <CampoHora24 value={x.hora} disabled={x.cuadrar} onChange={(v) => cambiar(x.k, { hora: v })} etiqueta={`Hora de ${x.t}`} />
             {malos.has(x.k) && <small className="ce-iti-rojo">Cae el mismo día que otra actividad</small>}
           </div>
         );

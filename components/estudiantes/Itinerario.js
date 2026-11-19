@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import { posTeoriaNitrox, TEORIA_NITROX } from "@/lib/estudiantes/junto";
 import { DIAS_PARA_ESCOGER, sumarDiasISO, fechaCortaItinerario, horaBonita, choques, itinerarioDe, itinerarioDelCurso, cambiosItinerario, esExamen } from "@/lib/estudiantes/itinerario";
 import { linkWhatsApp } from "@/lib/estudiantes/modelo";
+import CampoHora24 from "@/components/CampoHora24";
 
 // V100 (maqueta V102, "56. me gusta la C pero agrégale la casilla obligatoria
 // que tiene la B"): el itinerario de un curso (una fecha abierta). Al crear el
@@ -19,7 +20,7 @@ import { linkWhatsApp } from "@/lib/estudiantes/modelo";
 function FilaTeoriaNitrox({ lista }) {
   return lista ? (
     <div className="ce-iti-nx-l">
-      <span>Por cuadrar</span>
+      <span />
       <b>
         {TEORIA_NITROX} <em className="ce-iti-nx">Solo los que agregaron Nitrox</em>
       </b>
@@ -27,7 +28,7 @@ function FilaTeoriaNitrox({ lista }) {
     </div>
   ) : (
     <div className="ce-iti-fila nx">
-      <div className="ce-iti-f">Por cuadrar</div>
+      <div className="ce-iti-f" />
       <div className="ce-iti-a">
         <b>
           {TEORIA_NITROX} <em className="ce-iti-nx">Solo los que agregaron Nitrox</em>
@@ -51,7 +52,7 @@ export function EditorItinerario({ inicio, items, onChange, nitrox = false }) {
         return (
           <Fragment key={`${x.t}-${i}`}>
           <div className={`ce-iti-fila${malos.has(i) ? " choca" : ""}`}>
-            <div className="ce-iti-f">{x.cuadrar ? "Por cuadrar" : fechaCortaItinerario(x.fecha) || "Sin fecha"}</div>
+            <div className="ce-iti-f">{x.cuadrar ? "" : fechaCortaItinerario(x.fecha) || "Sin fecha"}</div>
             <div className="ce-iti-a">
               <b>{x.t}</b>
               {x.cuadrar ? <small>Lo cuadra el estudiante con el instructor</small> : x.hora ? <small>{horaBonita(x.hora)}</small> : null}
@@ -84,7 +85,7 @@ export function EditorItinerario({ inicio, items, onChange, nitrox = false }) {
                 {!x.cuadrar && (
                   <label className="ce-iti-hora">
                     Hora (opcional)
-                    <input type="time" value={x.hora || ""} onChange={(e) => cambiar(i, { hora: e.target.value })} />
+                    <CampoHora24 value={x.hora || ""} onChange={(v) => cambiar(i, { hora: v })} />
                   </label>
                 )}
                 {esExamen(x.t) && !x.cuadrar && (
@@ -163,22 +164,28 @@ export function ConfirmarItinerario({ f, c, ops, titulo, alTerminar, alSaltar, a
 export function TarjetaItinerario({ f, c, ops, gente = [], nitrox = false }) {
   const [editando, setEditando] = useState(false);
   const [aviso, setAviso] = useState(null); // los cambios, para avisar
+  // V108 ("que el itinerario esté cerrado y que cuando uno lo abra sea tipo dropdown"): cerrada al entrar.
+  const [abierta, setAbierta] = useState(false);
   if (f.conItinerario === false) return null;
   const items = itinerarioDe(f, c);
   if (!items.length) return null;
   const confirmado = !!f.itinerarioConfirmadoEn;
+  // V110 (pedido explícito: "se supone que se confirma al momento de crear el
+  // curso, no debe salir esto así aquí como para confirmar"): en la página del
+  // curso ya no sale "Sin confirmar" ni "Confirmar itinerario"; solo "Cambiar".
   return (
-    <div className={`card ce-iti-tarjeta${confirmado ? "" : " sin"}`} style={{ marginBottom: 12 }}>
-      <div className="pg-res-top">
+    <div className="card ce-iti-tarjeta" style={{ marginBottom: 12 }}>
+      <button type="button" className="pg-res-top ce-iti-cabeza" aria-expanded={abierta || editando} onClick={() => !editando && setAbierta(!abierta)}>
         <b>Itinerario</b>
-        <span className={confirmado ? "" : "ce-iti-sin"}>{confirmado ? `Confirmado el ${fechaCortaItinerario(String(f.itinerarioConfirmadoEn).slice(0, 10))}` : "Sin confirmar"}</span>
-      </div>
-      {editando ? (
+        <span>{confirmado ? `Confirmado el ${fechaCortaItinerario(String(f.itinerarioConfirmadoEn).slice(0, 10))}` : ""}</span>
+        <i className={`ce-iti-flecha${abierta || editando ? " abierta" : ""}`} aria-hidden="true">›</i>
+      </button>
+      {!abierta && !editando ? null : editando ? (
         <ConfirmarItinerario
           f={f}
           c={c}
           ops={ops}
-          titulo={confirmado ? "Cambiar el itinerario" : "Confirma el itinerario"}
+          titulo="Cambiar el itinerario"
           nitrox={nitrox}
           alTerminar={(cambios) => {
             setEditando(false);
@@ -189,10 +196,16 @@ export function TarjetaItinerario({ f, c, ops, gente = [], nitrox = false }) {
       ) : (
         <>
           <div className="ce-iti-lista">
+            {/* V108 ("pon 'horario' encima de las horas"). */}
+            <div className="ce-iti-cab">
+              <span />
+              <span />
+              <small>Horario</small>
+            </div>
             {items.map((x, i) => (
               <Fragment key={`${x.t}-${i}`}>
                 <div>
-                  <span>{x.cuadrar ? "Por cuadrar" : fechaCortaItinerario(x.fecha)}</span>
+                  <span>{x.cuadrar ? "" : fechaCortaItinerario(x.fecha)}</span>
                   <b>{x.t}</b>
                   <small>{x.cuadrar ? "con el instructor" : horaBonita(x.hora)}</small>
                 </div>
@@ -224,8 +237,8 @@ export function TarjetaItinerario({ f, c, ops, gente = [], nitrox = false }) {
               </button>
             </div>
           )}
-          <button className={`btn ${confirmado ? "secondary" : "btn-primary"} vj-btn`} style={{ marginTop: 10 }} onClick={() => setEditando(true)}>
-            {confirmado ? "Cambiar" : "Confirmar itinerario"}
+          <button className="btn secondary vj-btn" style={{ marginTop: 10 }} onClick={() => setEditando(true)}>
+            Cambiar
           </button>
         </>
       )}

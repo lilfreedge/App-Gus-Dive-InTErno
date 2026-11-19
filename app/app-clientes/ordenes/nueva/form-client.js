@@ -19,6 +19,11 @@ import {
   detalleEquipoActualizadoDesdeOrden,
 } from "@/lib/regulador-detalle";
 import { noOrdenYaRegistrado, MENSAJE_NO_ORDEN_DUPLICADO } from "@/lib/ordenes";
+import {
+  esServicioMantenimiento,
+  CODIGO_MANTENIMIENTO_REGULADOR,
+  NOMBRE_MANTENIMIENTO_REGULADOR,
+} from "@/lib/ordenes-estado";
 import { IconLock, IconCheck } from "@/components/icons";
 
 // Registrar orden (App Equipos Clientes, rediseñado 23-sep-2026 tras
@@ -75,6 +80,7 @@ export default function NuevaOrdenForm({
   noOrdenSugerido = "",
   puedeAsignar = false,
   tecnicos = [],
+  piezaMantenimiento = null,
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -192,6 +198,15 @@ export default function NuevaOrdenForm({
   // "quita la seccion de autorizacion del cliente, para todo. solo dejalo
   // para regulador") -- antes se mostraba siempre.
   const esRegulador = tipoEquipoActual === "Reguladores";
+  // V109: regulador + servicio Mantenimiento -> Códigos a cobrar arranca
+  // con "REG-5126 · MANTENIMIENTO REGULADOR" (el nombre sale de Códigos a
+  // cobrar si está ahí). Solo el servicio escogido de la lista, no "Otro".
+  const codigoMantenimiento =
+    esRegulador && servicio && servicio !== "Otro" && esServicioMantenimiento(servicio)
+      ? `${piezaMantenimiento?.codigo || CODIGO_MANTENIMIENTO_REGULADOR} · ${
+          piezaMantenimiento?.nombre || NOMBRE_MANTENIMIENTO_REGULADOR
+        }`
+      : null;
 
   // V100 ("52. ambos"): lo que trajo el regulador la vez pasada (la orden
   // anterior de ese equipo que tenga algo marcado), para avisar antes de
@@ -462,6 +477,17 @@ export default function NuevaOrdenForm({
         foto_url: fotoUrl,
         fecha,
         estado: "Pendiente por trabajar",
+        // V109: el código del mantenimiento del regulador ya puesto. Queda
+        // quién registró la orden (el técnico no lo puede quitar, igual que
+        // los códigos que puso otro; la tienda sí, en Actualizar estado).
+        ...(codigoMantenimiento
+          ? {
+              repuestos_usados_detalle: [
+                { nombre: codigoMantenimiento, origen: "servicio", agregadoPor: perfil?.full_name || "La tienda" },
+              ],
+              repuestos_usados: codigoMantenimiento,
+            }
+          : {}),
       })
       .select("id")
       .single();
@@ -591,6 +617,11 @@ export default function NuevaOrdenForm({
           ))}
           <option value="Otro">Otro</option>
         </select>
+        {codigoMantenimiento && (
+          <div className="hint-text">
+            En Códigos a cobrar se pone solo: <b>{codigoMantenimiento}</b>
+          </div>
+        )}
         {servicio === "Otro" && (
           <>
             <label htmlFor="servicio_otro">

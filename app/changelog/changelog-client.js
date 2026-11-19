@@ -12,6 +12,41 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V111",
+    fecha: "19 de noviembre, 2026",
+    titulo: "Interesados sin repetidos, tarjetas del curso más compactas y Correos automáticos de Alquiler",
+    descripcion:
+      "Link de interesados: si el celular es de alguien que ya está inscrito en ese mismo curso, ya no se anota otra vez; le sale \"Ya tienes tu cupo\" (o \"Ya hiciste este curso\" si ya lo terminó) con botones para ver su curso en el app, escribir por WhatsApp o volver al inicio. Si escoge otro curso, se anota normal. Lo mismo con \"Avísame\" del link de registro. En Control Estudiantes, los interesados que ya son estudiantes de ese curso dejan de salir en Interesados y en los contadores (no se borra nada). Página del curso: Presupuesto y cupos van una al lado de la otra (en el celular, una debajo de la otra); el presupuesto pedido sale con el total grande, \"Ver detalle\" y debajo quién, cuántos estudiantes y las gorras; la de cupos solo dice cuántos van, la barra y cuántos deben. Crear curso: el itinerario hay que confirmarlo al crearlo (ya no está \"Lo confirmo después\"). Alquiler › Más › Correos automáticos ahora es una pantalla de Alquiler con solo su reporte semanal; en App Interno ya no sale la casilla de Alquileres. Mientras Alquiler no tenga a quién mandárselo, el reporte de alquileres sigue saliendo como antes en el de App Interno. No necesita SQL.",
+  },
+  {
+    version: "V110",
+    fecha: "19 de noviembre, 2026",
+    titulo: "Presupuesto más claro y Correos automáticos propios de Control Estudiantes",
+    descripcion:
+      "Control Estudiantes › página del curso: al pedir el presupuesto dice solo \"Presupuesto para N estudiantes\" (sin \"el predeterminado\") y el enlace dice \"Ver el detalle\". Después de pedirlo, el botón dice \"Marcar como recibido\" (y arriba \"Recibido el …\"); ya no está \"Pedir otro presupuesto\". Correo del presupuesto: empieza con \"Hola,\" y al final del detalle sale el presupuesto total sumado. Itinerario: en la página del curso ya no sale \"Sin confirmar\" ni el botón \"Confirmar itinerario\" (se confirma al crear el curso); queda \"Cambiar\". En la lista de cursos ya no sale \"Itinerario sin confirmar\". Más › Correos automáticos ahora es una pantalla de Control Estudiantes, con solo sus correos (Presupuesto de cursos); ya no lleva a la de App Interno, y la de App Interno ya no trae el presupuesto de cursos. No necesita SQL.",
+  },
+  {
+    version: "V109",
+    fecha: "19 de noviembre, 2026",
+    titulo: "Código del mantenimiento puesto solo en las órdenes de reguladores",
+    descripcion:
+      "App Equipos de clientes › Registrar orden: si el equipo es un regulador y el servicio a realizar es Mantenimiento, la orden ya sale con \"REG-5126 · MANTENIMIENTO REGULADOR\" en Códigos a cobrar (debajo del servicio se avisa que se pone solo). Solo pasa con los reguladores y solo al registrar. El código queda como puesto por quien registró la orden: el técnico no lo puede quitar; la tienda sí, en Actualizar estado. No necesita SQL.",
+  },
+  {
+    version: "V108",
+    fecha: "19 de noviembre, 2026",
+    titulo: "Horas en 24 horas, itinerario plegable y \"Enviar solicitud\"",
+    descripcion:
+      "Todas las horas de los apps salen en formato de 24 horas (18:00 en vez de 6:00 p. m.): itinerarios, link de registro, app Gus Dive, calendarios, bitácoras, Actividad reciente, avisos y la salida de los buceos (lo que se escribió \"6:30 AM\" sale \"06:30\"). Para poner una hora en el itinerario (Catálogo y página del curso) ahora se escoge la hora (00 a 23) y los minutos en dos listas. Control Estudiantes › página del curso: la tarjeta Itinerario sale cerrada y se abre al tocarla; arriba de las horas dice \"Horario\" y lo que va por cuadrar ya no dice \"Por cuadrar\" (queda vacío, con \"con el instructor\" a la derecha). Presupuesto: el botón \"Mandar a Dinorah\" ahora dice \"Enviar solicitud\". No necesita SQL.",
+  },
+  {
+    version: "V107",
+    fecha: "19 de noviembre, 2026",
+    titulo: "Pantallas finales más cortas (interesados y registro)",
+    descripcion:
+      "Link de interesados: al terminar ya no dice \"Quedaste anotado para (el curso)\"; solo \"¡Listo!\" y \"Te contactaremos cuando tengamos un curso disponible.\", en todos los cursos. Link de registro: si alguien marca \"Agregar\" otro curso (por ejemplo Oxygen Provider con BLS), la pantalla final ya no dice \"También quedaste anotado en…\" (sigue quedando anotado). \"Agregar\" en BLS funciona igual si el curso en el Catálogo se llama OXY, Oxygen Provider u Oxygen Provider (OXY). No necesita SQL.",
+  },
+  {
     version: "V106",
     fecha: "19 de noviembre, 2026",
     titulo: "Itinerario editable en el Catálogo, link de registro más limpio y mensaje para quien todavía no puede tener cuenta",

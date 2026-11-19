@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { textoCalzado } from "@/lib/tallas";
 import { useRouter } from "next/navigation";
 import { CampoCel, IconoWA } from "@/components/viajes/Piezas";
-import { soloDigitos, formatoCedula, celValido, rd, fechaObj, fechaCorta, hoyISO } from "@/lib/viajes/modelo";
+import { soloDigitos, formatoCedula, celValido, rd, fechaObj, fechaCorta, hoyISO, hora24Texto } from "@/lib/viajes/modelo";
 import { leerPersona, guardarPersona, olvidarPersona, enApp, leerInicio, guardarInicio } from "@/lib/app-gus";
 import InstalarApp from "@/components/InstalarApp";
 import { IconHome, IconEstudiantes, IconDivingMask, IconCalendar, IconUser, IconMapPin, IconBell, IconArrowLeft, IconInstagram, IconGlobe, IconCheck, IconInfo } from "@/components/icons";
@@ -64,9 +64,10 @@ const CONTACTO = {
   mapa: "https://maps.app.goo.gl/98rwUPZJQW4ke6Lv7",
   direccion: "Av. Roberto Pastoriza 356, Plaza La Lira II",
   horario: [
-    ["Lunes", "9:00 a. m. a 7:00 p. m."],
-    ["Martes a viernes", "1:00 a 7:00 p. m."],
-    ["Sábado", "9:00 a. m. a 5:00 p. m."],
+    // V108: en 24 horas.
+    ["Lunes", "09:00 a 19:00"],
+    ["Martes a viernes", "13:00 a 19:00"],
+    ["Sábado", "09:00 a 17:00"],
     ["Domingo", "Cerrado"],
   ],
   // Pipe (15-nov): el Instagram y la página web.
@@ -117,7 +118,7 @@ function ItemBuceo({ v }) {
       <Fecha iso={v.fecha} tipo="buc" />
       <span className="ag-tx">
         <b>{v.nombre}</b>
-        <small>{cupos(v.quedan) || v.salida || "Abierto"}</small>
+        <small>{cupos(v.quedan) || hora24Texto(v.salida) || "Abierto"}</small>
       </span>
       <span className="ag-mini buc">Inscribirme</span>
     </a>

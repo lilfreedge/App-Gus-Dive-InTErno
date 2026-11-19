@@ -1,0 +1,84 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V111 · "También quedaste anotado en…"</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--amar:#f6ce46;--claro:#fdf3cf;--cafe:#5c4700;--verde:#1f9150}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1000px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:#2b2200;color:#fff;border-color:#2b2200}
+.vista{display:none;max-width:1000px;margin:0 auto;padding:0 16px 40px}.vista.on{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:var(--cafe);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;flex:1 1 260px;max-width:380px}
+.nota b{display:block;margin-bottom:4px}
+.cel{width:340px;max-width:100%;background:var(--fondo);border:1px solid var(--borde);border-radius:22px;overflow:hidden}
+.top{background:#fff;border-bottom:1px solid var(--borde);border-top:4px solid var(--amar);padding:10px 14px;font-weight:800;color:var(--cafe);display:flex;gap:8px;align-items:center}
+.top .gus{color:#c8102e;font-weight:900;font-size:18px;letter-spacing:-1px}
+.body{padding:14px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:16px;padding:16px;text-align:center}
+.ok{width:58px;height:58px;border-radius:50%;background:var(--verde);color:#fff;font-size:30px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+.card h3{margin:0 0 6px;font-size:19px}
+.h{color:var(--suave);line-height:1.45;margin:4px 0}
+.marca{background:#ffe08a;outline:2px dashed #e0a800;border-radius:6px;padding:2px 4px;color:#3d2f00}
+.semana-t{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--cafe);opacity:.75;margin:10px 2px 4px;text-align:left}
+.semana{background:var(--claro);border-radius:12px;padding:8px 12px;color:var(--cafe);text-align:left}
+.semana div{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed rgba(0,0,0,.08)}.semana div:last-child{border-bottom:0}.semana span:first-child{font-weight:800}
+.btn{display:block;margin-top:12px;background:#25d366;color:#fff;border-radius:12px;padding:12px;font-weight:800;text-decoration:none}
+.op{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:12px;text-align:left}
+.op b{font-size:16px}
+.extra{display:flex;gap:10px;align-items:flex-start;background:var(--claro);border-radius:12px;padding:10px;margin-top:10px;color:var(--cafe);font-weight:700}
+.extra i{width:20px;height:20px;border:2px solid #8a6d00;border-radius:5px;background:#8a6d00;color:#fff;font-style:normal;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.ins{display:block;margin-top:10px;background:#8a6d00;color:#fff;border-radius:12px;padding:12px;font-weight:800;text-align:center}
+</style></head><body>
+<div class="maq"><b>Maqueta V111</b> · Link de registro (/estudiante): dónde sale la frase "También quedaste anotado en…". Solo sale cuando alguien se inscribe en un curso y marca "Agregar" otro curso que no es el Nitrox del Open Water (hoy: BLS + OXY). Nada está programado.</div>
+<div class="tabs">
+  <button class="tab on" data-v="1">1. Cuándo sale</button>
+  <button class="tab" data-v="2">2. Hoy (la frase marcada)</button>
+  <button class="tab" data-v="3">A. Quitarla</button>
+  <button class="tab" data-v="4">B. Más corta</button>
+</div>
+
+<div class="vista on" id="v1">
+  <div class="cel"><div class="top"><span class="gus">GUS</span> Registro de estudiante</div><div class="body">
+    <div class="op"><b>BLS</b><div class="h">Empieza el lunes 18 de enero</div><div style="font-weight:800;color:var(--cafe)">RD$4,500</div>
+      <div class="extra"><i>&#10003;</i><span>Agregar OXY (+RD$3,000)</span></div>
+      <span class="ins">Inscribirme</span>
+    </div>
+  </div></div>
+  <div class="nota"><b>Paso 1: se inscribe en BLS y marca "Agregar OXY"</b>Al terminar el registro sale la pantalla final (pestaña 2). Con el Open Water + Nitrox no pasa: ahí ya dice que la teoría del Nitrox la cuadra con su instructor.</div>
+</div>
+
+<div class="vista" id="v2">
+  <div class="cel"><div class="top"><span class="gus">GUS</span> Registro de estudiante</div><div class="body"><div class="card">
+    <div class="ok">&#10003;</div><h3>¡Listo, Ana!</h3>
+    <div class="h">Ya tenemos tus datos para BLS, que empieza el lunes 18 de enero. Te escribiremos por WhatsApp para coordinar.</div>
+    <div class="h"><span class="marca">También quedaste anotado en <b>OXY</b>: te escribimos para la fecha.</span></div>
+    <div class="semana-t">Itinerario</div><div class="semana"><div><span>lun 18 ene</span><span>Teoría · 6:00 p. m.</span></div><div><span>mar 19 ene</span><span>Práctica</span></div></div>
+    <a class="btn">Escribir por WhatsApp</a>
+  </div></div></div>
+  <div class="nota"><b>Hoy</b>La frase marcada en amarillo es la de la pregunta 147. Le dice que también quedó en OXY y que la tienda le escribe para la fecha de ese curso.</div>
+</div>
+
+<div class="vista" id="v3">
+  <div class="cel"><div class="top"><span class="gus">GUS</span> Registro de estudiante</div><div class="body"><div class="card">
+    <div class="ok">&#10003;</div><h3>¡Listo, Ana!</h3>
+    <div class="h">Ya tenemos tus datos para BLS, que empieza el lunes 18 de enero. Te escribiremos por WhatsApp para coordinar.</div>
+    <div class="semana-t">Itinerario</div><div class="semana"><div><span>lun 18 ene</span><span>Teoría · 6:00 p. m.</span></div><div><span>mar 19 ene</span><span>Práctica</span></div></div>
+    <a class="btn">Escribir por WhatsApp</a>
+  </div></div></div>
+  <div class="nota"><b>A. Quitarla</b>Como en el link de interesados: no se menciona el OXY en la pantalla final. Sigue quedando anotado en OXY igual (en Control Estudiantes sale), solo que no se lo decimos aquí.</div>
+</div>
+
+<div class="vista" id="v4">
+  <div class="cel"><div class="top"><span class="gus">GUS</span> Registro de estudiante</div><div class="body"><div class="card">
+    <div class="ok">&#10003;</div><h3>¡Listo, Ana!</h3>
+    <div class="h">Ya tenemos tus datos para BLS, que empieza el lunes 18 de enero. Te escribiremos por WhatsApp para coordinar.</div>
+    <div class="h"><span class="marca">También te anotamos en <b>OXY</b>.</span></div>
+    <div class="semana-t">Itinerario</div><div class="semana"><div><span>lun 18 ene</span><span>Teoría · 6:00 p. m.</span></div><div><span>mar 19 ene</span><span>Práctica</span></div></div>
+    <a class="btn">Escribir por WhatsApp</a>
+  </div></div></div>
+  <div class="nota"><b>B. Más corta</b>Se queda, pero sin "te escribimos para la fecha": solo "También te anotamos en OXY."</div>
+</div>
+
+<script>
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));document.querySelectorAll(".vista").forEach(v=>v.classList.toggle("on",v.id==="v"+t.dataset.v));}));
+</script>
+</body></html>

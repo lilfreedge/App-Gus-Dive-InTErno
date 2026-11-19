@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { rd, us, soloDigitos, precioDop, PREGUNTAS, hoyISO, sumarDias, nuevoIdLocal, puntos, fechaLarga, palabraViaje } from "@/lib/viajes/modelo";
+import { rd, us, soloDigitos, precioDop, PREGUNTAS, hoyISO, sumarDias, nuevoIdLocal, puntos, fechaLarga, palabraViaje, hora24Texto } from "@/lib/viajes/modelo";
 import { IconCalendar, IconReceipt, IconCheck, IconPlus, IconRegulator, IconClipboard, IconLock, IconBell, IconChat, IconCamera, IconLink } from "@/components/icons";
 import { armarSlug } from "@/lib/viajes/datos";
 import { Atras } from "./Piezas";
@@ -69,7 +69,7 @@ function Encuentro({ f, setF }) {
       <div className="vj-form2">
         <div>
           <label>Hora de encuentro</label>
-          <input value={e.hora || ""} onChange={(ev) => setE("hora", ev.target.value)} placeholder="Ej. 7:40 AM" />
+          <input value={e.hora || ""} onChange={(ev) => setE("hora", ev.target.value)} placeholder="Ej. 07:40" />
         </div>
         <div>
           <label>Dónde</label>
@@ -120,7 +120,7 @@ function FormViaje({ f, setF, p, esViaje }) {
         {...sec}
         Icono={IconCalendar}
         titulo={esViaje ? "Fecha y datos" : "Datos del buceo"}
-        resumen={[esViaje && f.fecha ? fechaLarga(f.fecha) : null, f.salida || "Sin salida", `cupo ${f.cupoMin ? `${f.cupoMin} a ` : "hasta "}${f.cupoMax}`, f.operador].filter(Boolean).join(" · ")}
+        resumen={[esViaje && f.fecha ? fechaLarga(f.fecha) : null, hora24Texto(f.salida) || "Sin salida", `cupo ${f.cupoMin ? `${f.cupoMin} a ` : "hasta "}${f.cupoMax}`, f.operador].filter(Boolean).join(" · ")}
       >
         <div className="vj-form2">
           {!esViaje && (
@@ -137,7 +137,7 @@ function FormViaje({ f, setF, p, esViaje }) {
           )}
           <div>
             <label>Salida (hora y lugar)</label>
-            <input value={f.salida} onChange={(e) => set("salida", e.target.value)} placeholder="Ej. 6:30 AM desde la tienda" />
+            <input value={f.salida} onChange={(e) => set("salida", e.target.value)} placeholder="Ej. 06:30 desde la tienda" />
           </div>
           <div>
             <label>Operador</label>
@@ -160,7 +160,7 @@ function FormViaje({ f, setF, p, esViaje }) {
         titulo="¿Llegas directo? (punto de encuentro)"
         resumen={(() => {
           const e = f.encuentro || {};
-          const r = [e.hora, e.lugar, e.mapa ? "con ubicación" : "", e.foto ? "con foto" : ""].filter(Boolean).join(" · ");
+          const r = [hora24Texto(e.hora), e.lugar, e.mapa ? "con ubicación" : "", e.foto ? "con foto" : ""].filter(Boolean).join(" · ");
           return r || "No sale en el link";
         })()}
       >
@@ -552,7 +552,7 @@ export function Catalogo({ db, ops, ir }) {
               <div className="vj-fila-nombre">{c.nombre}</div>
               <div className="hint-text">{c.opciones.map((o) => `${o.nombre} ${o.noPaga ? "(no paga)" : c.moneda === "USD" ? us(o.usd) : rd(o.dop)}`).join(" · ")}</div>
               <div className="hint-text">
-                {c.salida || "Sin salida"} · cupo {c.cupoMin ? `${c.cupoMin} a ` : "hasta "}
+                {hora24Texto(c.salida) || "Sin salida"} · cupo {c.cupoMin ? `${c.cupoMin} a ` : "hasta "}
                 {c.cupoMax} · {c.equipo.modo === "no" ? "sin alquiler de equipo" : `equipo: ${c.equipo.proveedor || "sí"}`}
                 {c.reserva ? ` · reserva ${rd(c.reserva.monto)}` : ""}
               </div>

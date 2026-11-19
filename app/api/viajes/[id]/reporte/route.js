@@ -3,7 +3,7 @@ import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileYUser } from "@/lib/roles";
 import { filaAViaje, filaAIns, filaABuzo } from "@/lib/viajes/datos";
-import { permisosViajes, resumenViaje, numerosViaje, estadoViaje, estadoPago, pagoEnDop, fechaLarga, rd, ESTADOS_VIAJE, hoyISO, fechaCorta, palabraViaje } from "@/lib/viajes/modelo";
+import { permisosViajes, resumenViaje, numerosViaje, estadoViaje, estadoPago, pagoEnDop, fechaLarga, rd, ESTADOS_VIAJE, hoyISO, fechaCorta, palabraViaje, hora24Texto } from "@/lib/viajes/modelo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -67,7 +67,7 @@ export async function POST(request, { params }) {
     <div style="background:#4ebae8;color:#06324f;padding:16px 18px;border-radius:10px 10px 0 0">
       <div style="font-size:11px;font-weight:800;letter-spacing:.12em">REPORTE DEL ${palabraViaje(v).toUpperCase()}</div>
       <div style="font-size:20px;font-weight:800">${h(v.nombre)}</div>
-      <div style="font-size:13px">${h(fechaLarga(v.fecha))} · ${h(v.salida)}</div>
+      <div style="font-size:13px">${h(fechaLarga(v.fecha))} · ${h(hora24Texto(v.salida))}</div>
     </div>
     <div style="border:1px solid #dfe6ea;border-top:0;padding:14px 18px;border-radius:0 0 10px 10px">
       <div style="font-size:14px"><b>${r.buzos.length}</b> inscritos${pasado ? ` · <b>${r.asistieron}</b> asistieron · <b>${r.noVinieron}</b> no vinieron` : ""} · <b>${r.staff.length}</b> staff · ${h(ESTADOS_VIAJE[ev].t)}</div>

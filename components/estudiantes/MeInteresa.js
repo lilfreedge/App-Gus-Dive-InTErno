@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { CampoCel } from "@/components/viajes/Piezas";
 import { IconCheck } from "@/components/icons";
-import { celValido } from "@/lib/viajes/modelo";
+import { celValido, fechaLarga } from "@/lib/viajes/modelo";
+import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { FUENTES } from "@/lib/estudiantes/modelo";
 import { Privacidad } from "./Publico";
 import InstalarApp, { VolverInicio } from "@/components/InstalarApp";
@@ -21,7 +22,9 @@ import InstalarApp, { VolverInicio } from "@/components/InstalarApp";
 //   inscribirse por el link de cursos con el mismo celular, igual sale solo
 //   de Interesados (V78 del link de cursos).
 export default function MeInteresa({ cursos, niveles = {}, cursoInicial = null }) {
-  const [paso, setPaso] = useState("datos"); // datos | listo
+  const [paso, setPaso] = useState("datos"); // datos | listo | ya
+  // V111 (maqueta V112, "161. A"): ya está inscrito en ese curso -> { curso, inicio, terminado, wa }.
+  const [ya, setYa] = useState(null);
   const [f, setF] = useState({ nombre: "", cel: "", curso: cursoInicial || cursos[0] || "", fuente: "", fuenteOtro: "", correo: "", web: "" });
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -38,7 +41,10 @@ export default function MeInteresa({ cursos, niveles = {}, cursoInicial = null }
       if (!r.ok) throw new Error(j.error || "No se pudo enviar.");
       setNombreFin(j.nombre || f.nombre.trim().split(/\s+/)[0] || "");
       setCursoFin(f.curso);
-      setPaso("listo");
+      if (j.yaInscrito) {
+        setYa({ ...j.yaInscrito, wa: j.wa });
+        setPaso("ya");
+      } else setPaso("listo");
     } catch (e) {
       setError(e.message);
     }
@@ -65,12 +71,42 @@ export default function MeInteresa({ cursos, niveles = {}, cursoInicial = null }
             {/* V80 (notas del 13-nov, con foto: 'Cambiar texto a "Quedaste
                 anotado para Open Water Diver. Te contactaremos cuando
                 tengamos un curso disponible"'). */}
-            <div className="pb-h">
-              Quedaste anotado{cursoFin ? ` para ${cursoFin}` : ""}. Te contactaremos cuando tengamos un curso disponible.
-            </div>
+            {/* V107 (con foto: "quítale el quedaste anotado para Open Water Diver, quítalo en todos los cursos"). */}
+            <div className="pb-h">Te contactaremos cuando tengamos un curso disponible.</div>
           </div>
         )}
-        {paso === "listo" && <VolverInicio />}
+        {paso === "ya" && ya && (
+          <div className="pb-card" style={{ textAlign: "center" }}>
+            <div className="pb-ok ce-ya-ok">
+              <IconCheck size={34} />
+            </div>
+            <div className="pb-t">
+              {ya.terminado ? "Ya hiciste este curso" : "Ya tienes tu cupo"}
+              {nombreFin ? `, ${nombreFin}` : ""}
+            </div>
+            <div className="pb-h">
+              {ya.terminado ? (
+                <>
+                  Ya hiciste <b>{ya.curso}</b> con nosotros. Si quieres seguir, escoge otro curso.
+                </>
+              ) : (
+                <>
+                  Ya estás inscrito en <b>{ya.curso}</b>
+                  {ya.inicio ? `, que empieza el ${fechaLarga(ya.inicio)}` : ""}. No hace falta que te anotes otra vez.
+                </>
+              )}
+            </div>
+            <a className="pb-btn" href="/gus#cuenta" style={{ display: "block", textDecoration: "none", marginTop: 12 }}>
+              {ya.terminado ? "Ver mis cursos en el app" : "Ver mi curso en el app"}
+            </a>
+            {ya.wa && (
+              <a className="pb-btn ce-pub-wa" href={`https://wa.me/${numeroWhatsApp(ya.wa)}`} target="_blank" rel="noopener noreferrer" style={{ display: "block", textDecoration: "none", marginTop: 8 }}>
+                Escribir por WhatsApp
+              </a>
+            )}
+          </div>
+        )}
+        {(paso === "listo" || paso === "ya") && <VolverInicio />}
         {paso === "listo" && <InstalarApp style={{ marginTop: 12 }} />}
 
         {paso === "datos" && (

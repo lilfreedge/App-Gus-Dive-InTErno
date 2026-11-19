@@ -50,7 +50,7 @@ function Pills({ opciones, valor, onChange }) {
 }
 
 const horaCorta = (ts) =>
-  new Intl.DateTimeFormat("es-DO", { timeZone: "America/Santo_Domingo", hour: "numeric", minute: "2-digit" }).format(new Date(ts));
+  new Intl.DateTimeFormat("es-DO", { timeZone: "America/Santo_Domingo", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(ts));
 
 export default function AvisosFijosAdmin({ app, avisos = [], leidos = [], perfiles = [], yoNombre = "", hoy }) {
   const router = useRouter();

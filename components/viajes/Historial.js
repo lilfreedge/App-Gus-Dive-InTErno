@@ -17,6 +17,7 @@ import {
   equipoViaje,
   resumenTalla,
   palabraViaje,
+  hora24Texto,
 } from "@/lib/viajes/modelo";
 import { Chip, Atras } from "./Piezas";
 import { BitacoraLista } from "./Viaje";
@@ -143,7 +144,7 @@ export function Reporte({ db, p, id, ir, avisar, rol, yo, tipo = "general" }) {
             <div className="vj-rep-k">{soloAsistencia ? "REPORTE DE ASISTENCIA" : soloGanancia ? "REPORTE DE GANANCIA" : `REPORTE DEL ${palabraViaje(v).toUpperCase()}`}</div>
             <div className="vj-rep-t">{v.nombre}</div>
             <div className="vj-rep-s">
-              {fechaLarga(v.fecha)} · {v.salida}
+              {fechaLarga(v.fecha)} · {hora24Texto(v.salida)}
             </div>
           </div>
         </div>
@@ -375,7 +376,7 @@ export function ReporteEquipo({ db, id, ir, avisar }) {
               <div className="vj-rep-k">{g.prov === "Gus" ? "EQUIPO QUE PONE GUS" : `LISTADO DE BUZOS PARA ${g.prov.toUpperCase()}`}</div>
               <div className="vj-rep-t">{v.nombre}</div>
               <div className="vj-rep-s">
-                {fechaLarga(v.fecha)} · {v.salida}
+                {fechaLarga(v.fecha)} · {hora24Texto(v.salida)}
               </div>
             </div>
           </div>

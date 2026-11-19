@@ -5,6 +5,7 @@ import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import NuevaOrdenForm from "./form-client";
 import { tecnicosConCarga } from "@/lib/tecnicos";
+import { CODIGO_MANTENIMIENTO_REGULADOR } from "@/lib/ordenes-estado";
 
 // Registrar orden -- App Equipos Clientes (23-sep-2026, primera versión
 // real). Si viene ?cliente=<id> (desde la ficha de un cliente), llega
@@ -28,7 +29,7 @@ export default async function NuevaOrdenPage({ searchParams }) {
   const puedeAsignar = tieneAcceso(profile, "equipos_clientes_asignar");
   const tecnicos = puedeAsignar ? await tecnicosConCarga(supabase) : [];
 
-  const [{ data: clientes }, { data: equipos }, { data: servicios }, { data: ultimaOrden }] = await Promise.all([
+  const [{ data: clientes }, { data: equipos }, { data: servicios }, { data: ultimaOrden }, { data: piezaMant }] = await Promise.all([
     supabase.from("clientes_equipos").select("id, nombre, telefono").order("nombre"),
     supabase
       .from("equipos_del_cliente")
@@ -47,6 +48,15 @@ export default async function NuevaOrdenPage({ searchParams }) {
       .from("ordenes_equipos")
       .select("no_orden_fisico")
       .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    // V109: el código del mantenimiento del regulador (REG-5126) tal como
+    // está en Códigos a cobrar, para ponerlo solo al registrar.
+    supabase
+      .from("piezas_catalogo")
+      .select("codigo, nombre")
+      .eq("codigo", CODIGO_MANTENIMIENTO_REGULADOR)
+      .eq("activo", true)
       .limit(1)
       .maybeSingle(),
   ]);
@@ -92,6 +102,7 @@ export default async function NuevaOrdenPage({ searchParams }) {
           noOrdenSugerido={noOrdenSugerido}
           puedeAsignar={puedeAsignar}
           tecnicos={tecnicos}
+          piezaMantenimiento={piezaMant || null}
         />
       </div>
     </div>

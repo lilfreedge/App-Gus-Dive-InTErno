@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PREGUNTAS, fechaLarga, rd, soloDigitos, celValido, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos, palabraViaje, tallasPara, partesSalida, linkGoogleCalendar, TALLAS } from "@/lib/viajes/modelo";
+import { PREGUNTAS, fechaLarga, rd, soloDigitos, celValido, formatoCedula, nombreCorto, primerNombre, precioTexto, precioDop, puntos, palabraViaje, tallasPara, partesSalida, hora24Texto, linkGoogleCalendar, TALLAS } from "@/lib/viajes/modelo";
 import { subirArchivo } from "@/lib/estudiantes/subir";
 import { numeroWhatsApp } from "@/lib/whatsapp-tecnico";
 import { CampoCel } from "./Piezas";
@@ -263,7 +263,7 @@ function MiPerfil({ perfil, setPerfil, slug, tipoDoc, doc, cel, setCel, tienda, 
           <b>{b.nombre}</b>
           <span className="pb-h" style={{ margin: 0 }}>
             {fechaLarga(b.fecha)}
-            {b.salida ? ` · ${b.salida}` : ""}
+            {b.salida ? ` · ${hora24Texto(b.salida)}` : ""}
           </span>
           <div style={{ marginTop: 6 }}>
             {b.espera ? (
@@ -407,7 +407,7 @@ function CuadroSalida({ v, enFin, conCalendario }) {
           {sal.lugar && <div className="pb-salida-l">{sal.lugar}</div>}
         </>
       ) : (
-        v.salida && <div className="pb-salida-l">{v.salida}</div>
+        v.salida && <div className="pb-salida-l">{hora24Texto(v.salida)}</div>
       )}
       {/* V60 ("174"): "Agregar a mi calendario" solo al final, no arriba. */}
       {conCalendario && (
@@ -446,7 +446,7 @@ function LlegasDirecto({ e }) {
         <div className="pb-directo-x">
           Nos encontramos{e.hora ? (
             <>
-              {" "}a las <b>{e.hora}</b>
+              {" "}a las <b>{hora24Texto(e.hora)}</b>
             </>
           ) : null}
           {e.lugar ? ` ${e.lugar}` : ""}.
