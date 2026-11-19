@@ -38,7 +38,12 @@ export default function ReciboClient({ orden: o, filasSimple, filasCompleto }) {
           "necesito que el reporte tenga el mismo formato que tienen los
           reportes del app interno") -- mismo estilo que el PDF y el
           correo, para que las tres versiones se vean igual. */}
-      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+      {/* V112 (con el PDF impreso de la orden 02178: "necesito que salga en 1
+          sola página y abajo tenga una línea para que el cliente firme"; "no
+          cambies el formato del recuadro de arriba… la letra quizá está muy
+          pequeña… usa el espacio en blanco"): `recibo-hoja` hace que al
+          imprimir quede en una hoja carta, con la firma abajo. */}
+      <div className="card recibo-hoja" style={{ padding: 0, overflow: "hidden" }}>
         <div className="reporte-membrete">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-gus-icon.png" alt="Gus Dive" className="reporte-membrete-logo" />
@@ -88,6 +93,13 @@ export default function ReciboClient({ orden: o, filasSimple, filasCompleto }) {
             <p>
               <b>{DESCARGO.cierre}</b>
             </p>
+          </div>
+          {/* "quita la línea de poner fecha": solo la firma. */}
+          <div className="recibo-firmas">
+            <div>
+              <b>Firma del cliente</b>
+              {o.cliente_nombre_snapshot && <span>{o.cliente_nombre_snapshot}</span>}
+            </div>
           </div>
         </div>
       </div>

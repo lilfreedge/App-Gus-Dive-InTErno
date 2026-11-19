@@ -163,6 +163,11 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
   const q = quedan(db, f);
   const hayCupo = q !== 0;
   const deben = gente.filter((e) => debe(e) > 0).length;
+  // V112 ("183. a"): los que todavía no han subido su foto o su cédula.
+  const sinDocs = gente.filter((e) => {
+    const b = buzoDe(db, e);
+    return !b.foto || !b.docFoto;
+  });
   // V88 (maqueta V88, aprobada): gorras de OWD = las marcadas como entregadas en la ficha.
   const esOWD = /^open water diver$/i.test(String(c?.nombre || "").trim());
   const gorrasListas = gente.filter((e) => e.pasos?.gorra === "listo").length;
@@ -268,6 +273,12 @@ export function DetalleCurso({ db, p, yo, ops, ir, avisar, fechaId, avisarDeEntr
         {f.cupo != null && (
           <div className="pg-barra">
             <i style={{ width: `${Math.min(100, Math.round((gente.length / Math.max(1, f.cupo)) * 100))}%` }} />
+          </div>
+        )}
+        {/* V112 ("183. a"): documentos pendientes (foto o cédula). */}
+        {gente.length > 0 && (
+          <div className={`ce-res-docs${sinDocs.length ? "" : " ok"}`} title={sinDocs.map((e) => buzoDe(db, e).nombre).join(", ")}>
+            {sinDocs.length ? `${sinDocs.length} con documentos pendientes (foto o cédula)` : "Documentos completos"}
           </div>
         )}
       </div>

@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V112",
+    fecha: "19 de noviembre, 2026",
+    titulo: "Recibo en una sola página con firma y documentos pendientes del curso",
+    descripcion:
+      "App Equipos de clientes › Recibo de la orden: al imprimirlo (o guardarlo en PDF) sale en una sola hoja, con el mismo recuadro de siempre arriba (Campo / Valor), el descargo completo con la letra más grande que antes (se aprovecha el espacio en blanco de la hoja), y abajo la línea \"Firma del cliente\" con su nombre. El PDF que se manda por correo también sale en una hoja con la firma. Control Estudiantes › página del curso: la tarjeta de cupos dice cuántos estudiantes tienen documentos pendientes (foto o cédula), o \"Documentos completos\". No necesita SQL.",
+  },
+  {
     version: "V111",
     fecha: "19 de noviembre, 2026",
     titulo: "Interesados sin repetidos, tarjetas del curso más compactas y Correos automáticos de Alquiler",

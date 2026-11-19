@@ -3307,6 +3307,22 @@ html[data-theme="dark"] .ce-form-curso { background: #1c2a38; border-color: #3a4
 .recibo-descargo ol { margin: 6px 0; padding-left: 20px; }
 .recibo-descargo li { margin: 6px 0; }
 @media print { .recibo-descargo { font-size: 10.5px; } }
+/* V112 -- Recibo: línea de firma abajo y, al imprimir, todo en una sola hoja
+   carta (el recuadro de arriba se ve igual; se aprovecha el espacio en blanco). */
+.recibo-firmas { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); margin-top: 44px; }
+.recibo-firmas > div { border-top: 1.3px solid var(--texto); padding-top: 5px; font-size: 12px; color: var(--texto-suave); }
+.recibo-firmas b { display: block; color: var(--texto); font-size: 12.5px; }
+@media print {
+  .recibo-hoja { min-height: 10.9in; display: flex !important; flex-direction: column; }
+  .recibo-hoja .reporte-membrete { padding: 0.24in 0.4in !important; }
+  .recibo-hoja .reporte-cuerpo { flex: 1; display: flex; flex-direction: column; padding: 0.16in 0.4in 0.28in !important; }
+  .recibo-hoja .reporte-preview-tabla td { padding: 5px 8px; }
+  .recibo-hoja .recibo-descargo { font-size: 12px; line-height: 1.34; margin-top: 8px; padding-top: 6px; }
+  .recibo-hoja .recibo-descargo p { margin: 4px 0; }
+  .recibo-hoja .recibo-descargo ol { margin: 4px 0; }
+  .recibo-hoja .recibo-descargo li { margin: 2px 0; }
+  .recibo-hoja .recibo-firmas { margin-top: auto; padding-top: 16px; }
+}
 
 /* V57 -- App Equipos de clientes > Inicio: el nombre de la fecha una sola vez,
    al lado del título de cada sección, alineado con las fechas. */
@@ -4343,6 +4359,8 @@ html[data-theme="dark"] .ce-ph-link { color: #9cc8e8; }
 .ce-res-cupos .pg-barra { margin: 10px 0 2px; }
 .ce-res-debe { color: var(--rojo) !important; }
 .ce-res-debe.cero { color: var(--texto-suave) !important; }
+.ce-res-docs { margin-top: 8px; font-size: 12.5px; font-weight: 700; color: #a15c00; }
+.ce-res-docs.ok { color: var(--verde); }
 .ce-ph-ult { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
 .ce-ph-ult-total { font-size: 20px; font-weight: 900; color: var(--texto); }
 .ce-ph-ult-meta { font-size: 12.5px; color: var(--texto-suave); margin-top: 2px; }
