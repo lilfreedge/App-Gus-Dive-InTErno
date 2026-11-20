@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { ESTADO_POR_VERIFICAR } from "@/lib/ordenes-estado";
+import AvisoOtraOrden from "@/components/AvisoOtraOrden";
 
 const BADGE_ESTADO = {
   "En proceso": "badge-amarillo",
@@ -51,6 +52,9 @@ export default function ListaOrdenes({
   // lo pasa la sección de "Pendientes por entregar", y solo si quien
   // mira Inicio puede verificar (Titular/Administrador).
   mostrarSinVerificar = false,
+  // V115: cada orden puede traer `faltan` (ordenesQueFaltan) y entonces lleva
+  // debajo el aviso "No contactar todavía…". Solo lo arma la sección de
+  // "Órdenes pendientes por entregar" (page.js).
 }) {
   return (
     <div className="card">
@@ -81,11 +85,14 @@ export default function ListaOrdenes({
           const atrasada = avisoAtrasadaDias !== null && diasTranscurridos !== null && diasTranscurridos > avisoAtrasadaDias;
           const enHoldHaceDias =
             avisoHoldDias !== null && diasTranscurridos !== null && diasTranscurridos > avisoHoldDias ? diasTranscurridos : null;
-          return (
+          // V115: con aviso de otra orden del cliente, la fila es un div (el
+          // aviso lleva su propio link y no puede ir dentro del link de la fila).
+          const conAviso = Array.isArray(o.faltan) && o.faltan.length > 0;
+          const fila = (
             <Link
               key={o.id}
               href={`/app-clientes/ordenes/${o.id}`}
-              className="list-item"
+              className={conAviso ? undefined : "list-item"}
               style={{ display: "block", textDecoration: "none", color: "inherit" }}
             >
               {/* V82 (pedido explícito, con foto del celular: "se ve apretado,
@@ -157,6 +164,13 @@ export default function ListaOrdenes({
                 <div className="hint-text" style={{ marginTop: 4 }}>{o.motivo_espera}</div>
               )}
             </Link>
+          );
+          if (!conAviso) return fila;
+          return (
+            <div key={o.id} className="list-item orden-con-aviso">
+              {fila}
+              <AvisoOtraOrden faltan={o.faltan} />
+            </div>
           );
         })
       )}

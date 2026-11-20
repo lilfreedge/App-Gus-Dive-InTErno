@@ -11,7 +11,15 @@ import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate, formatFechaDDMMAAAA } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { esServicioHidrostatica, esServicioReparacion, estadoParaVer, ESTADO_POR_VERIFICAR } from "@/lib/ordenes-estado";
+import {
+  esServicioHidrostatica,
+  esServicioReparacion,
+  estadoParaVer,
+  ESTADO_POR_VERIFICAR,
+  estaListaParaEntregar,
+  ordenesQueFaltan,
+  CAMPOS_FALTAN,
+} from "@/lib/ordenes-estado";
 import { requiereVerificacion } from "@/lib/procesos-ordenes";
 import { holdActivo, diasEnHold, labelTipoHold } from "@/lib/holds";
 import HoldConsultas from "@/components/HoldConsultas";
@@ -22,6 +30,7 @@ import { cargarManuales } from "@/lib/manuales-server";
 import { manualesPara, tituloManual, linkManual } from "@/lib/manuales";
 import FotoLightbox from "@/components/FotoLightbox";
 import RecepcionRegulador from "@/components/RecepcionRegulador";
+import AvisoOtraOrden from "@/components/AvisoOtraOrden";
 import { IconRefresh } from "@/components/icons";
 import { hoyISO } from "@/lib/fechas";
 
@@ -115,6 +124,17 @@ export default async function FichaOrdenPage({ params }) {
     o.verificado_por || (o.estado === "Entregado" && !requiereVerificacion(ajustes, o.tipo_equipo) ? "n/a" : "—");
   // V114: "Pendiente por verificar para despachar" mientras falte "Verificado por".
   const estadoVisible = estadoParaVer(o, ajustes);
+  // V115 (maqueta V114, "218. Sí"): si esta orden ya está lista y al mismo
+  // cliente le falta otra que todavía no lo está, aviso arriba de la ficha.
+  let faltanDelCliente = [];
+  if (o.cliente_id && estaListaParaEntregar(o, ajustes)) {
+    const { data: abiertasCliente } = await supabase
+      .from("ordenes_equipos")
+      .select(CAMPOS_FALTAN)
+      .eq("cliente_id", o.cliente_id)
+      .neq("estado", "Entregado");
+    faltanDelCliente = ordenesQueFaltan(o, abiertasCliente, ajustes);
+  }
 
   const marcaModelo = [o.equipo_marca_snapshot, o.equipo_modelo_snapshot].filter(Boolean).join(" ");
   // "Status" desapareció (item 13, pedido explícito, 26-sep-2026: "quita
@@ -298,6 +318,7 @@ export default async function FichaOrdenPage({ params }) {
               </a>
             </div>
           ))}
+          <AvisoOtraOrden faltan={faltanDelCliente} grande />
         </div>
 
         <div className="card">

@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V115",
+    fecha: "20 de noviembre, 2026",
+    titulo: "Aviso cuando al cliente le falta otra orden por estar lista",
+    descripcion:
+      "App Equipos de clientes: si un cliente tiene una orden lista para entregar y otra que todavía no está lista (por trabajar, en proceso, en Hold, en prueba hidrostática, en reparación o pendiente por verificar), la orden lista sale en el Inicio, en \"Órdenes pendientes por entregar\", con un aviso debajo: \"No contactar todavía: a este cliente le falta la No. X (en qué está)\". Si le faltan varias, las nombra todas, y tocar el número abre esa orden. El mismo aviso sale arriba de la ficha de la orden lista. Cuando todas quedan listas, el aviso se quita solo. No necesita SQL.",
+  },
+  {
     version: "V114",
     fecha: "20 de noviembre, 2026",
     titulo: "El equipo ya no sale dos veces y \"Pendiente por verificar para despachar\" en toda la app",

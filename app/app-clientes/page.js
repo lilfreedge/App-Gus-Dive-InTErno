@@ -9,7 +9,7 @@ import { requiereVerificacion } from "@/lib/procesos-ordenes";
 import { nombreCorto } from "@/lib/tecnicos";
 import AvisosFijos from "@/components/AvisosFijos";
 import { avisosParaMi } from "@/lib/avisos-fijos-server";
-import { esServicioHidrostatica } from "@/lib/ordenes-estado";
+import { esServicioHidrostatica, ordenesQueFaltan, CAMPOS_FALTAN } from "@/lib/ordenes-estado";
 import ListaOrdenes from "./lista-ordenes";
 
 // Hub de App Equipos Clientes (23-sep-2026, primera versión real --
@@ -62,7 +62,7 @@ export default async function AppClientesPage() {
   // la persona lo prendió en "Personalizar mi menú".
   const muestraBotonRegistrarInicio = profile?.atajos_inicio_clientes?.registrar_orden === true;
   const CAMPOS =
-    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, que_se_hara, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, inspeccion_visual_realizada, fecha_listo_entrega, verificado_por, en_espera, motivo_espera, holds, tecnico_asignado_id";
+    "id, folio, no_orden_fisico, cliente_id, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, que_se_hara, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, inspeccion_visual_realizada, fecha_listo_entrega, verificado_por, en_espera, motivo_espera, holds, tecnico_asignado_id";
 
   const [{ data: ajustes }, { data: porTrabajarRaw }, { data: porEntregar }, { data: enEspera }, { data: enHidrostatica }, { data: enReparacion }] =
     await Promise.all([
@@ -194,7 +194,15 @@ export default async function AppClientesPage() {
   }));
   // V57: las que faltan por verificar van en su propio paso.
   const porVerificar = porEntregarConVerificacion.filter((o) => o.necesita_verificar);
-  const listasParaEntregar = porEntregarConVerificacion.filter((o) => !o.necesita_verificar);
+  const listasSinAviso = porEntregarConVerificacion.filter((o) => !o.necesita_verificar);
+  // V115 (maqueta V114, A): si al mismo cliente le falta otra orden que
+  // todavía no está lista, la orden lista lleva el aviso "No contactar
+  // todavía…" (ver ordenesQueFaltan en lib/ordenes-estado.js).
+  const idsClientes = [...new Set(listasSinAviso.map((o) => o.cliente_id).filter(Boolean))];
+  const { data: abiertasDeEsos } = idsClientes.length
+    ? await supabase.from("ordenes_equipos").select(CAMPOS_FALTAN).in("cliente_id", idsClientes).neq("estado", "Entregado")
+    : { data: [] };
+  const listasParaEntregar = listasSinAviso.map((o) => ({ ...o, faltan: ordenesQueFaltan(o, abiertasDeEsos, ajustes) }));
 
   // V51: avisos fijos de App Equipos de clientes.
   const avisosFijos = await avisosParaMi(supabase, { apps: ["clientes"], persona: profile });

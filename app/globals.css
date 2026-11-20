@@ -4483,3 +4483,44 @@ html[data-theme="dark"] .inf-paso small.ojo, html[data-theme="dark"] .inf-pi-mal
 .ce-iti-avisar-lista { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .ce-iti-avisar-lista a { text-decoration: none; }
 html[data-theme="dark"] .ce-iti-avisar { background: #12301f; border-color: #1f5a37; }
+
+/* V115 -- aviso "a este cliente le falta otra orden" (maqueta V114, A), en
+   la fila de "Órdenes pendientes por entregar" del Inicio y en la ficha de
+   la orden lista. Mismo ámbar que .aviso-box / .badge-amarillo. */
+.orden-con-aviso > a { display: block; text-decoration: none; color: inherit; }
+.aviso-otra-orden {
+  background: rgba(196, 130, 33, 0.1);
+  color: #b5691f;
+  border: 1px solid rgba(196, 130, 33, 0.35);
+  border-radius: 9px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin-top: 8px;
+}
+.aviso-otra-orden .aviso-otra-link { color: inherit; text-decoration: underline; }
+.aviso-otra-orden.grande {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 12px;
+  margin: 14px 0 0;
+}
+.aviso-otra-orden.grande b { display: block; font-weight: 800; margin-bottom: 2px; }
+.aviso-otra-orden.grande .aviso-otra-link { font-weight: 800; }
+.aviso-otra-ic {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #b5691f;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 13px;
+  flex-shrink: 0;
+}
