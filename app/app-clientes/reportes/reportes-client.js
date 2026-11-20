@@ -8,6 +8,7 @@ const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
   "En proceso": "badge-amarillo",
   "Pendiente por despachar": "badge-azul",
+  "Pendiente por verificar para despachar": "badge-rojo",
   Entregado: "badge-verde",
 };
 
@@ -53,7 +54,7 @@ export default function ReportesClient({ ordenes, puedeVerInforme = false }) {
                     {o.cliente_nombre_snapshot}
                     {marcaModelo ? ` — ${marcaModelo}` : ""}
                   </span>
-                  <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
+                  <span className={`badge ${BADGE_ESTADO[o.estado_ver || o.estado] || ""}`}>{o.estado_ver || o.estado}</span>
                 </div>
                 <div className="list-item-bottom">
                   <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>

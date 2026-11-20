@@ -1,0 +1,113 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maqueta V114 · Cliente con otra orden sin terminar</title>
+<style>
+:root{--fondo:#f4f7f9;--borde:#dfe6ea;--texto:#1a2733;--suave:#5c6b78;--navy:#0a3d62;--azul:#1d4f7a;--rojo:#c94141;--rojoClaro:#fbe9e9;--ambar:#9a5b00;--ambarClaro:#fff4dc;--ambarBorde:#f0d39a;--verde:#1f9150}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);font-size:14px}
+.maq{background:#1a2733;color:#fff;padding:12px 16px;font-size:13px;line-height:1.5}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;max-width:1100px;margin:0 auto}
+.tab{border:1px solid var(--borde);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--suave);cursor:pointer}
+.tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.reco{background:#e5f6ec;color:var(--verde);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px}
+.vista{display:none;max-width:1100px;margin:0 auto;padding:0 16px 40px}.vista.on{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.pant{flex:1 1 620px;max-width:760px}
+.nota{background:#fff8e1;border:1px solid #f1dd9a;color:#5c4700;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;flex:1 1 260px;max-width:330px}
+.nota>b{display:block;margin-bottom:4px}.nota ul{margin:6px 0 0;padding-left:18px}
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:14px 2px 8px}
+.sec h3{margin:0;color:var(--navy);font-size:17px}.sec span{color:var(--suave);font-size:12.5px;font-weight:700}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:6px 18px}
+.fila{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #eef3f6}
+.fila:last-child{border-bottom:0}
+.fila .n{flex:1;min-width:0}.fila .n small{color:var(--suave);font-weight:600;font-size:14px}.fila .n b{font-size:14.5px}
+.fila .f{font-weight:800;color:var(--navy);white-space:nowrap}
+.chipR{background:var(--rojoClaro);color:var(--rojo);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;white-space:nowrap}
+.chipA{background:var(--ambarClaro);color:var(--ambar);border:1px solid var(--ambarBorde);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;white-space:nowrap}
+.banda{display:flex;gap:8px;align-items:flex-start;background:var(--ambarClaro);border:1px solid var(--ambarBorde);color:var(--ambar);border-radius:10px;padding:7px 10px;font-size:12.5px;font-weight:700;margin-top:6px;line-height:1.4}
+.banda a{color:var(--ambar);text-decoration:underline}
+.marca{outline:2px dashed #e0a800;outline-offset:3px;border-radius:10px}
+.ficha{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:16px 18px}
+.btnp{display:inline-block;background:var(--navy);color:#fff;border-radius:10px;padding:10px 14px;font-weight:800;font-size:13.5px}
+.btns{display:inline-block;background:#fff;color:var(--navy);border:1px solid var(--borde);border-radius:10px;padding:9px 14px;font-weight:800;font-size:13px;margin-left:6px}
+.bandaG{display:flex;gap:10px;align-items:flex-start;background:var(--ambarClaro);border:1px solid var(--ambarBorde);color:#6b4100;border-radius:12px;padding:10px 12px;margin:12px 0;font-size:13.5px;line-height:1.45}
+.bandaG b{color:#5a3600}.bandaG a{color:#6b4100;font-weight:800}
+.ic{width:22px;height:22px;border-radius:50%;background:var(--ambar);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0}
+.lbl{color:var(--suave);font-weight:700;font-size:12.5px;margin-top:10px}.val{font-size:16px;font-weight:800;color:var(--navy)}
+</style></head><body>
+<div class="maq"><b>Maqueta V114</b> · App Equipos de clientes. Cuando un cliente tiene varias órdenes abiertas y una ya está lista para entregar pero otra todavía no, la lista avisa para que la tienda no lo contacte hasta que todo esté listo. Ejemplo con TECNOTEC: la No. 2205 está lista, la No. 2206 todavía no. Nada está programado.</div>
+<div class="tabs">
+  <button class="tab on" data-v="1">Hoy</button>
+  <button class="tab" data-v="2">A. Aviso debajo de la orden lista <span class="reco">recomendada</span></button>
+  <button class="tab" data-v="3">B. Solo una etiqueta al lado</button>
+  <button class="tab" data-v="4">En la ficha de la orden</button>
+</div>
+
+<div class="vista on" id="v1">
+  <div class="pant">
+    <div class="sec"><h3>Pendiente por verificar para despachar (2)</h3><span>Fecha listo para entrega</span></div>
+    <div class="card">
+      <div class="fila"><div class="n"><small>No. 2206</small> <b>TECNOTEC EIRL (GEOVANNI TORRES) — Regulador</b></div><span class="chipR">Pendiente por verificar para despachar</span><span class="f">19/11/2026</span></div>
+      <div class="fila"><div class="n"><small>No. 2207</small> <b>GABRIEL ELIAS REYES BELLO — Regulador</b></div><span class="chipR">Pendiente por verificar para despachar</span><span class="f">20/11/2026</span></div>
+    </div>
+    <div class="sec"><h3>Órdenes pendientes por entregar (3)</h3><span>Fecha listo para entrega</span></div>
+    <div class="card">
+      <div class="fila"><div class="n"><small>No. 02198</small> <b>Emil Simon — Regulador</b></div><span class="f">17/11/2026</span></div>
+      <div class="fila"><div class="n"><small>No. 02200</small> <b>Tomas Checo — Regulador</b></div><span class="f">03/11/2026</span></div>
+      <div class="fila"><div class="n"><small>No. 2205</small> <b>TECNOTEC EIRL (GEOVANNI TORRES) — Regulador</b></div><span class="f">17/11/2026</span></div>
+    </div>
+  </div>
+  <div class="nota"><b>Lo que pasa hoy</b>La No. 2205 de TECNOTEC sale como lista para entregar, pero nada dice que la No. 2206 del mismo cliente todavía no está lista. Alguien de la tienda podría llamarlo para que venga, y tendría que volver otro día por la otra.</div>
+</div>
+
+<div class="vista" id="v2">
+  <div class="pant">
+    <div class="sec"><h3>Pendiente por verificar para despachar (2)</h3><span>Fecha listo para entrega</span></div>
+    <div class="card">
+      <div class="fila"><div class="n"><small>No. 2206</small> <b>TECNOTEC EIRL (GEOVANNI TORRES) — Regulador</b></div><span class="chipR">Pendiente por verificar para despachar</span><span class="f">19/11/2026</span></div>
+      <div class="fila"><div class="n"><small>No. 2207</small> <b>GABRIEL ELIAS REYES BELLO — Regulador</b></div><span class="chipR">Pendiente por verificar para despachar</span><span class="f">20/11/2026</span></div>
+    </div>
+    <div class="sec"><h3>Órdenes pendientes por entregar (3)</h3><span>Fecha listo para entrega</span></div>
+    <div class="card">
+      <div class="fila"><div class="n"><small>No. 02198</small> <b>Emil Simon — Regulador</b></div><span class="f">17/11/2026</span></div>
+      <div class="fila"><div class="n"><small>No. 02200</small> <b>Tomas Checo — Regulador</b></div><span class="f">03/11/2026</span></div>
+      <div class="fila marca" style="flex-wrap:wrap"><div class="n"><small>No. 2205</small> <b>TECNOTEC EIRL (GEOVANNI TORRES) — Regulador</b></div><span class="f">17/11/2026</span>
+        <div class="banda" style="flex-basis:100%">No contactar todavía: a este cliente le falta la <a>No. 2206</a> (pendiente por verificar para despachar).</div>
+      </div>
+    </div>
+  </div>
+  <div class="nota"><b>A. Aviso debajo de la orden lista</b>
+    <ul>
+      <li>Sale en la orden que ya está lista cuando el mismo cliente tiene otra orden abierta que todavía no está lista para entregar (en taller, en Hold, pendiente por trabajar o pendiente por verificar).</li>
+      <li>Dice cuál falta y en qué está. Tocar "No. 2206" abre esa orden.</li>
+      <li>Si le faltan varias: "le faltan la No. 2206 y la No. 2209".</li>
+      <li>Cuando la 2206 también queda lista, el aviso se quita solo y las dos salen juntas en "pendientes por entregar".</li>
+    </ul>
+  </div>
+</div>
+
+<div class="vista" id="v3">
+  <div class="pant">
+    <div class="sec"><h3>Órdenes pendientes por entregar (3)</h3><span>Fecha listo para entrega</span></div>
+    <div class="card">
+      <div class="fila"><div class="n"><small>No. 02198</small> <b>Emil Simon — Regulador</b></div><span class="f">17/11/2026</span></div>
+      <div class="fila"><div class="n"><small>No. 02200</small> <b>Tomas Checo — Regulador</b></div><span class="f">03/11/2026</span></div>
+      <div class="fila marca"><div class="n"><small>No. 2205</small> <b>TECNOTEC EIRL (GEOVANNI TORRES) — Regulador</b></div><span class="chipA" title="Le falta la No. 2206 (pendiente por verificar para despachar)">Falta otra orden</span><span class="f">17/11/2026</span></div>
+    </div>
+  </div>
+  <div class="nota"><b>B. Solo una etiqueta al lado</b>Una etiqueta naranja "Falta otra orden" al lado de la fecha. Ocupa menos, pero no dice cuál falta: hay que abrir la orden para saberlo (en la computadora sale al pasar el ratón por encima).</div>
+</div>
+
+<div class="vista" id="v4">
+  <div class="pant">
+    <div><span class="btnp">Actualizar estado de orden</span><span class="btns">Ver recibo de la orden</span></div>
+    <div class="bandaG"><span class="ic">!</span><div><b>Este cliente tiene otra orden que todavía no está lista.</b><br>No. 2206 · Regulador · pendiente por verificar para despachar. Espera a que esté lista para avisarle que venga a buscar todo junto. <a>Ver la No. 2206 ›</a></div></div>
+    <div class="ficha">
+      <div class="lbl">No. de orden</div><div class="val">2205 — TECNOTEC EIRL (GEOVANNI TORRES)</div>
+      <div class="lbl">Equipo</div><div class="val">Regulador</div>
+      <div class="lbl">Estado</div><span class="chipR" style="background:#e5f6ec;color:var(--verde)">Pendiente por entregar</span>
+    </div>
+  </div>
+  <div class="nota"><b>También en la ficha de la orden lista</b>El mismo aviso arriba de la ficha de la No. 2205, para quien entre directo a la orden (por ejemplo, para notificar al cliente). Va con cualquiera de las dos opciones, A o B.</div>
+</div>
+
+<script>
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));document.querySelectorAll(".vista").forEach(v=>v.classList.toggle("on",v.id==="v"+t.dataset.v));}));
+</script>
+</body></html>

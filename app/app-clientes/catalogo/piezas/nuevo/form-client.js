@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { codigoRepetido, textoRepetido, esErrorRepetido } from "@/lib/codigos-catalogo";
 
 // v56: tipos_equipo opcional -- a qué tipo(s) de equipo pertenece el
 // código (pedido explícito: "que me permita poner a que tipo de equipo
@@ -34,6 +35,11 @@ export default function NuevaPiezaForm() {
     if (!nombre.trim()) return setError("Escribe la descripción del código.");
 
     setGuardando(true);
+    const repetido = await codigoRepetido(supabase, codigo);
+    if (repetido) {
+      setGuardando(false);
+      return setError(textoRepetido(repetido));
+    }
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -53,6 +59,7 @@ export default function NuevaPiezaForm() {
 
     if (err) {
       console.error("Error creando código:", err);
+      if (esErrorRepetido(err)) return setError("Ese código ya existe en el catálogo.");
       setError(err?.message ? `No se pudo guardar el código: ${err.message}` : "No se pudo guardar el código. Intenta de nuevo.");
       return;
     }

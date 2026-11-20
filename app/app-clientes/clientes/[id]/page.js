@@ -9,11 +9,13 @@ import { hoyISO } from "@/lib/fechas";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { IconEdit } from "@/components/icons";
 import BorrarCliente from "@/components/BorrarCliente";
+import { estadoParaVer, ESTADO_POR_VERIFICAR } from "@/lib/ordenes-estado";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
   "En proceso": "badge-amarillo",
   "Pendiente por despachar": "badge-azul",
+  [ESTADO_POR_VERIFICAR]: "badge-rojo",
   Entregado: "badge-verde",
 };
 
@@ -50,10 +52,10 @@ export default async function FichaClientePage({ params }) {
   // más reciente entre las órdenes de este equipo.
   const ultimaFechaPorEquipo = new Map();
 
-  const [{ data: ordenes }, { data: equipos }] = await Promise.all([
+  const [{ data: ordenes }, { data: equipos }, { data: ajustes }] = await Promise.all([
     supabase
       .from("ordenes_equipos")
-      .select("id, folio, no_orden_fisico, equipo_id, tipo_equipo, tipo_equipo_otro, fecha, estado, created_at")
+      .select("id, folio, no_orden_fisico, equipo_id, tipo_equipo, tipo_equipo_otro, fecha, estado, verificado_por, created_at")
       .eq("cliente_id", params.id)
       .order("created_at", { ascending: false }),
     supabase
@@ -61,6 +63,7 @@ export default async function FichaClientePage({ params }) {
       .select("id, tipo_equipo, tipo_equipo_otro, marca, modelo, serie, tamano, proximo_mantenimiento_recomendado")
       .eq("cliente_id", params.id)
       .order("created_at", { ascending: false }),
+    supabase.from("ajustes_app_clientes").select("*").eq("id", true).maybeSingle(),
   ]);
 
   const hoy = hoyISO();
@@ -206,7 +209,7 @@ export default async function FichaClientePage({ params }) {
                     <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
                     {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                   </span>
-                  <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
+                  <span className={`badge ${BADGE_ESTADO[estadoParaVer(o, ajustes)] || ""}`}>{estadoParaVer(o, ajustes)}</span>
                 </div>
                 <div className="list-item-bottom">
                   <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>

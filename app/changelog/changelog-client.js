@@ -12,6 +12,13 @@ import { useState } from "react";
 // reemplaza los <PlaceholderShot /> de abajo por <img src="/changelog/..." />.
 const ENTRADAS = [
   {
+    version: "V114",
+    fecha: "20 de noviembre, 2026",
+    titulo: "El equipo ya no sale dos veces y \"Pendiente por verificar para despachar\" en toda la app",
+    descripcion:
+      "App Equipos de clientes › ficha de la orden: el equipo salía dos veces (arriba, debajo del No. de orden, y otra vez debajo del Cliente). Se quitó el de abajo; el de arriba sigue con el enlace a la ficha del equipo y la marca/modelo. Además, una orden lista que todavía no tiene \"Verificado por\" (y a la que ese paso le aplica según Procesos órdenes) ahora dice \"Pendiente por verificar para despachar\" (en rojo) en vez de \"Pendiente por despachar\": en la ficha de la orden, Registro de Órdenes, la ficha del cliente, la ficha del equipo, Recibos e Informes, el Inicio del técnico y el historial del cliente al registrar una orden; en el Inicio, la etiqueta dice lo mismo. Cuando se pone \"Verificado por\", vuelve a \"Pendiente por despachar\". Las pestañas y los conteos no cambian. Base de datos › Códigos a cobrar tiene un buscador arriba de la lista: busca por código o por descripción, sin importar mayúsculas, tildes ni el guion del código (\"reg 5126\" encuentra REG-5126). Y al registrar o editar un código, si ya existe uno igual (sin importar mayúsculas, espacios ni guion), no deja guardar y dice cuál es: \"Ese código ya existe: REG-5126 · MANTENIMIENTO REGULADOR\". No necesita SQL.",
+  },
+  {
     version: "V113",
     fecha: "19 de noviembre, 2026",
     titulo: "Deshacer el presupuesto recibido y página del curso más ordenada",

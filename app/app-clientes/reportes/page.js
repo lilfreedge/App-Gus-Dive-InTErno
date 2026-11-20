@@ -4,6 +4,7 @@ import { requirePermisoClientes, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
 import ReportesClient from "./reportes-client";
+import { estadoParaVer } from "@/lib/ordenes-estado";
 
 // Reportes (23-sep-2026, pedido explícito: "una idea que tengo en mente
 // para futuro es que el app pueda emitir un reporte de su orden, donde
@@ -32,11 +33,16 @@ export default async function ReportesPage() {
   // link ni se muestra (la pantalla del informe también se protege sola).
   const puedeVerInforme = tieneAcceso(profile, "equipos_clientes_informe_mantenimiento");
 
-  const { data: ordenes } = await supabase
-    .from("ordenes_equipos")
-    .select("id, folio, no_orden_fisico, cliente_nombre_snapshot, equipo_marca_snapshot, equipo_modelo_snapshot, fecha, estado")
-    .eq("tipo_equipo", "Reguladores")
-    .order("fecha", { ascending: false });
+  const [{ data: filas }, { data: ajustes }] = await Promise.all([
+    supabase
+      .from("ordenes_equipos")
+      .select("id, folio, no_orden_fisico, cliente_nombre_snapshot, equipo_marca_snapshot, equipo_modelo_snapshot, tipo_equipo, fecha, estado, verificado_por")
+      .eq("tipo_equipo", "Reguladores")
+      .order("fecha", { ascending: false }),
+    supabase.from("ajustes_app_clientes").select("*").eq("id", true).maybeSingle(),
+  ]);
+  // V114: "Pendiente por verificar para despachar" mientras falte "Verificado por".
+  const ordenes = (filas || []).map((o) => ({ ...o, estado_ver: estadoParaVer(o, ajustes) }));
 
   return (
     <div>

@@ -6,11 +6,13 @@ import { formatFechaDDMMAAAA } from "@/lib/format";
 import { holdActivo, resumenHold, diasEnHold } from "@/lib/holds";
 import { nombreCorto } from "@/lib/tecnicos";
 import { IconRefresh } from "@/components/icons";
+import { estadoParaVer, ESTADO_POR_VERIFICAR } from "@/lib/ordenes-estado";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
   "En proceso": "badge-amarillo",
   "Pendiente por despachar": "badge-azul",
+  [ESTADO_POR_VERIFICAR]: "badge-rojo",
   "En Hold": "badge-rojo",
   Entregado: "badge-verde",
 };
@@ -31,13 +33,18 @@ export default async function InicioTecnico({ supabase, profile, userId }) {
   const puedeActualizar = tieneAcceso(profile, "equipos_clientes_actualizar_estado");
   const puedeInforme = tieneAcceso(profile, "equipos_clientes_informe_mantenimiento");
 
-  const { data } = await supabase
-    .from("ordenes_equipos_con_nombre")
-    .select(
-      "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, equipo_marca_snapshot, que_se_hara, fecha, estado, holds, tecnico_asignado_id, tecnico_nombre, asignada_en, asignada_por_nombre"
-    )
-    .neq("estado", "Entregado")
-    .order("fecha");
+  const [{ data: filas }, { data: ajustes }] = await Promise.all([
+    supabase
+      .from("ordenes_equipos_con_nombre")
+      .select(
+        "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, equipo_marca_snapshot, que_se_hara, fecha, estado, verificado_por, holds, tecnico_asignado_id, tecnico_nombre, asignada_en, asignada_por_nombre"
+      )
+      .neq("estado", "Entregado")
+      .order("fecha"),
+    supabase.from("ajustes_app_clientes").select("*").eq("id", true).maybeSingle(),
+  ]);
+  // V114: "Pendiente por verificar para despachar" mientras falte "Verificado por".
+  const data = (filas || []).map((o) => ({ ...o, estado_ver: estadoParaVer(o, ajustes) }));
 
   // V49: por número de orden, de menor a mayor (igual que el Inicio general).
   const numeroDe = (o) => Number(String(o.no_orden_fisico ?? o.folio ?? "").replace(/\D/g, "")) || 0;
@@ -63,7 +70,7 @@ export default async function InicioTecnico({ supabase, profile, userId }) {
               <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
               {o.cliente_nombre_snapshot}
             </span>
-            <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
+            <span className={`badge ${BADGE_ESTADO[o.estado_ver] || ""}`}>{o.estado_ver}</span>
           </div>
           <div className="list-item-meta">
             {equipo}
@@ -191,7 +198,7 @@ export default async function InicioTecnico({ supabase, profile, userId }) {
                       <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
                       {o.cliente_nombre_snapshot} — {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
                     </span>
-                    <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
+                    <span className={`badge ${BADGE_ESTADO[o.estado_ver] || ""}`}>{o.estado_ver}</span>
                   </div>
                   <div className="list-item-meta">
                     {o.tecnico_asignado_id

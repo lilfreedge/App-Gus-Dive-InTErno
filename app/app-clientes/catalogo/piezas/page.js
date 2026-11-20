@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePermisoClientes, tieneAcceso } from "@/lib/roles";
 import AppHeaderClientes from "@/components/AppHeaderClientes";
 import Breadcrumb from "@/components/Breadcrumb";
+import ListaCodigos from "./lista-codigos";
 
 // Catálogo de piezas/repuestos de App Clientes (23-sep-2026, pedido
 // explícito, dentro de "Base de datos"). Mismo patrón que el catálogo
@@ -58,44 +59,7 @@ export default async function CatalogoPiezasPage() {
           </div>
         )}
 
-        <div className="card">
-          {!piezas || piezas.length === 0 ? (
-            <div className="empty">Todavía no hay códigos en el catálogo.</div>
-          ) : (
-            piezas.map((p) => {
-              // Código antes que la descripción (28-sep-2026, feedback en
-              // vivo, item 1: "Poner que el codigo salga antes que el
-              // nombre") -- códigos viejos, guardados antes de que el campo
-              // fuera obligatorio, pueden no tener uno; ahí solo se ve la
-              // descripción.
-              const fila = (
-                <div>
-                  <div className="list-item-top">
-                    <span className="list-item-title">
-                      {p.codigo && <span style={{ color: "var(--texto-suave)", fontWeight: 400 }}>{p.codigo} · </span>}
-                      {p.nombre}
-                    </span>
-                    {!p.activo && <span className="badge">Inactivo</span>}
-                  </div>
-                </div>
-              );
-              return puedeEditar ? (
-                <Link
-                  key={p.id}
-                  href={`/app-clientes/catalogo/piezas/${p.id}/editar`}
-                  className="list-item"
-                  style={{ display: "block", textDecoration: "none", color: "inherit" }}
-                >
-                  {fila}
-                </Link>
-              ) : (
-                <div key={p.id} className="list-item">
-                  {fila}
-                </div>
-              );
-            })
-          )}
-        </div>
+        <ListaCodigos piezas={piezas || []} puedeEditar={puedeEditar} />
       </div>
     </div>
   );

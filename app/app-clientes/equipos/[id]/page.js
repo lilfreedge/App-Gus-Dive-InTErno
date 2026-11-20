@@ -7,11 +7,13 @@ import Breadcrumb from "@/components/Breadcrumb";
 import { formatFecha, formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
 import { detalleComponentesTexto } from "@/lib/regulador-detalle";
+import { estadoParaVer, ESTADO_POR_VERIFICAR } from "@/lib/ordenes-estado";
 
 const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
   "En proceso": "badge-amarillo",
   "Pendiente por despachar": "badge-azul",
+  [ESTADO_POR_VERIFICAR]: "badge-rojo",
   Entregado: "badge-verde",
 };
 
@@ -55,13 +57,14 @@ export default async function FichaEquipoPage({ params, searchParams }) {
 
   if (!equipo) notFound();
 
-  const [{ data: cliente }, { data: ordenes }] = await Promise.all([
+  const [{ data: cliente }, { data: ordenes }, { data: ajustes }] = await Promise.all([
     supabase.from("clientes_equipos").select("id, nombre").eq("id", equipo.cliente_id).maybeSingle(),
     supabase
       .from("ordenes_equipos")
-      .select("id, folio, no_orden_fisico, fecha, estado, que_se_hara, created_at")
+      .select("id, folio, no_orden_fisico, tipo_equipo, fecha, estado, verificado_por, que_se_hara, created_at")
       .eq("equipo_id", params.id)
       .order("created_at", { ascending: false }),
+    supabase.from("ajustes_app_clientes").select("*").eq("id", true).maybeSingle(),
   ]);
 
   const tipoLabel = tipoEquipoLabel(equipo.tipo_equipo, equipo.tipo_equipo_otro);
@@ -186,7 +189,7 @@ export default async function FichaEquipoPage({ params, searchParams }) {
                     <span className="folio-tag">No. {o.no_orden_fisico ?? o.folio}</span>
                     {o.que_se_hara}
                   </span>
-                  <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
+                  <span className={`badge ${BADGE_ESTADO[estadoParaVer(o, ajustes)] || ""}`}>{estadoParaVer(o, ajustes)}</span>
                 </div>
                 <div className="list-item-bottom">
                   <div className="list-item-meta">{formatFechaDDMMAAAADeDate(o.fecha)}</div>

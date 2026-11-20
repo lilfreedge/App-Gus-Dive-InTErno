@@ -29,7 +29,7 @@ export default async function NuevaOrdenPage({ searchParams }) {
   const puedeAsignar = tieneAcceso(profile, "equipos_clientes_asignar");
   const tecnicos = puedeAsignar ? await tecnicosConCarga(supabase) : [];
 
-  const [{ data: clientes }, { data: equipos }, { data: servicios }, { data: ultimaOrden }, { data: piezaMant }] = await Promise.all([
+  const [{ data: clientes }, { data: equipos }, { data: servicios }, { data: ultimaOrden }, { data: piezaMant }, { data: ajustesProcesos }] = await Promise.all([
     supabase.from("clientes_equipos").select("id, nombre, telefono").order("nombre"),
     supabase
       .from("equipos_del_cliente")
@@ -59,6 +59,9 @@ export default async function NuevaOrdenPage({ searchParams }) {
       .eq("activo", true)
       .limit(1)
       .maybeSingle(),
+    // V114: para enseñar "Pendiente por verificar para despachar" en el
+    // historial reciente del cliente (Procesos órdenes).
+    supabase.from("ajustes_app_clientes").select("*").eq("id", true).maybeSingle(),
   ]);
 
   // Ceros a la izquierda conservados en la sugerencia (1-oct-2026, pedido
@@ -103,6 +106,7 @@ export default async function NuevaOrdenPage({ searchParams }) {
           puedeAsignar={puedeAsignar}
           tecnicos={tecnicos}
           piezaMantenimiento={piezaMant || null}
+          ajustesProcesos={ajustesProcesos || null}
         />
       </div>
     </div>

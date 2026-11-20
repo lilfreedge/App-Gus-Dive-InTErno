@@ -6,6 +6,7 @@ import NavArrowsClientesServer from "@/components/NavArrowsClientesServer";
 import RegistroClient from "./registro-client";
 import { tecnicosConCarga } from "@/lib/tecnicos";
 import { ultimosAvisos } from "@/lib/avisos-tecnicos";
+import { estadoParaVer } from "@/lib/ordenes-estado";
 
 // "Registro" (23-sep-2026, feedback en vivo tras probar v24): dejó de ser
 // directo al formulario "Registrar orden" -- ahora es la cola de trabajo,
@@ -34,13 +35,13 @@ export default async function RegistroPage() {
   // En prueba hidrostática, Enviadas a reparación), por eso necesita estos
   // campos extra para poder filtrar igual que allá.
   const CAMPOS =
-    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, en_espera, tecnico_asignado_id, tecnico_nombre, asignada_en, equipo_marca_snapshot, equipo_modelo_snapshot, que_se_hara";
+    "id, folio, no_orden_fisico, cliente_nombre_snapshot, tipo_equipo, tipo_equipo_otro, fecha, estado, fecha_envio, fecha_envio_hidrostatica, fecha_retorno_tienda, en_espera, tecnico_asignado_id, tecnico_nombre, asignada_en, equipo_marca_snapshot, equipo_modelo_snapshot, que_se_hara, verificado_por";
 
   // V31: las cerradas se traen todas (de a 1000) para que el buscador por
   // cliente o No. de orden encuentre también las viejas; la pestaña
   // "Órdenes cerradas" sigue mostrando solo las últimas 100.
   // V34: de la vista (trae el nombre del técnico asignado).
-  const [{ data: ordenes }, cerradas, tecnicos] = await Promise.all([
+  const [{ data: abiertas }, cerradas, tecnicos, { data: ajustes }] = await Promise.all([
     supabase.from("ordenes_equipos_con_nombre").select(CAMPOS).neq("estado", "Entregado").order("fecha"),
     todasLasFilas(supabase, "ordenes_equipos_con_nombre", (q) =>
       q
@@ -50,7 +51,11 @@ export default async function RegistroPage() {
         .order("id")
     ),
     puedeAsignar ? tecnicosConCarga(supabase) : Promise.resolve([]),
+    supabase.from("ajustes_app_clientes").select("*").eq("id", true).maybeSingle(),
   ]);
+  // V114: "Pendiente por verificar para despachar" en vez de "Pendiente por
+  // despachar" mientras falte "Verificado por" (solo lo que se ve).
+  const ordenes = (abiertas || []).map((o) => ({ ...o, estado_ver: estadoParaVer(o, ajustes) }));
 
   // V37: si al técnico ya se le avisó por WhatsApp (avisos_tecnicos).
   const avisos = await ultimosAvisos(supabase, ordenes || []);

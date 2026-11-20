@@ -23,6 +23,7 @@ import {
   esServicioMantenimiento,
   CODIGO_MANTENIMIENTO_REGULADOR,
   NOMBRE_MANTENIMIENTO_REGULADOR,
+  estadoParaVer,
 } from "@/lib/ordenes-estado";
 import { IconLock, IconCheck } from "@/components/icons";
 
@@ -81,6 +82,7 @@ export default function NuevaOrdenForm({
   puedeAsignar = false,
   tecnicos = [],
   piezaMantenimiento = null,
+  ajustesProcesos = null,
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -146,7 +148,7 @@ export default function NuevaOrdenForm({
     let cancelado = false;
     supabase
       .from("ordenes_equipos")
-      .select("id, tipo_equipo, tipo_equipo_otro, fecha, estado")
+      .select("id, tipo_equipo, tipo_equipo_otro, fecha, estado, verificado_por")
       .eq("cliente_id", clienteId)
       .order("created_at", { ascending: false })
       .limit(5)
@@ -563,7 +565,7 @@ export default function NuevaOrdenForm({
             <div className="hint-text" style={{ marginBottom: 4 }}>Historial reciente de este cliente:</div>
             {historialCliente.map((o) => (
               <div key={o.id} className="hint-text" style={{ marginBottom: 2 }}>
-                · {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)} — {formatFechaDDMMAAAADeDate(o.fecha)} ({o.estado})
+                · {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)} — {formatFechaDDMMAAAADeDate(o.fecha)} ({estadoParaVer(o, ajustesProcesos)})
               </div>
             ))}
           </div>

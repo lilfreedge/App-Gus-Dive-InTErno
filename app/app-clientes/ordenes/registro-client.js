@@ -15,6 +15,7 @@ const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
   "En proceso": "badge-amarillo",
   "Pendiente por despachar": "badge-azul",
+  "Pendiente por verificar para despachar": "badge-rojo",
   "En Hold": "badge-rojo",
   Entregado: "badge-verde",
 };
@@ -286,7 +287,7 @@ export default function RegistroClient({
                     para que el nombre tenga espacio; en la computadora
                     sigue a la derecha (ver .reg-sello-* en globals.css). */}
                 <div className="reg-sello-movil">
-                  <span className={`badge ${BADGE_ESTADO[o.estado] || ""}`}>{o.estado}</span>
+                  <span className={`badge ${BADGE_ESTADO[o.estado_ver || o.estado] || ""}`}>{o.estado_ver || o.estado}</span>
                 </div>
                 <div className="list-item-bottom">
                   {/* Folio quitado de aquí (pedido explícito, 27-sep-2026:
@@ -378,8 +379,8 @@ export default function RegistroClient({
                     <IconRefresh size={17} />
                   </Link>
                 )}
-                <span className={`badge reg-sello-compu ${BADGE_ESTADO[o.estado] || ""}`} style={{ flexShrink: 0 }}>
-                  {o.estado}
+                <span className={`badge reg-sello-compu ${BADGE_ESTADO[o.estado_ver || o.estado] || ""}`} style={{ flexShrink: 0 }}>
+                  {o.estado_ver || o.estado}
                 </span>
               </span>
             </div>

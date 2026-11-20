@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatFechaDDMMAAAADeDate } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
+import { ESTADO_POR_VERIFICAR } from "@/lib/ordenes-estado";
 
 const BADGE_ESTADO = {
   "En proceso": "badge-amarillo",
@@ -99,7 +100,7 @@ export default function ListaOrdenes({
                 </span>
                 <span className="orden-fila-notas">
                   {mostrarSinVerificar && o.necesita_verificar ? (
-                    <span className="badge badge-rojo">Pendiente verificar para despachar</span>
+                    <span className="badge badge-rojo">{ESTADO_POR_VERIFICAR}</span>
                   ) : (
                     BADGE_ESTADO[o.estado] && <span className={`badge ${BADGE_ESTADO[o.estado]}`}>{o.estado}</span>
                   )}

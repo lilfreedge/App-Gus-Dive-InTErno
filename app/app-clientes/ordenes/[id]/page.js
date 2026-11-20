@@ -11,7 +11,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import RegistroActions from "@/components/RegistroActions";
 import { formatFecha, formatFechaDDMMAAAADeDate, formatFechaDDMMAAAA } from "@/lib/format";
 import { tipoEquipoLabel } from "@/lib/tipo-equipo";
-import { esServicioHidrostatica, esServicioReparacion } from "@/lib/ordenes-estado";
+import { esServicioHidrostatica, esServicioReparacion, estadoParaVer, ESTADO_POR_VERIFICAR } from "@/lib/ordenes-estado";
 import { requiereVerificacion } from "@/lib/procesos-ordenes";
 import { holdActivo, diasEnHold, labelTipoHold } from "@/lib/holds";
 import HoldConsultas from "@/components/HoldConsultas";
@@ -29,6 +29,7 @@ const BADGE_ESTADO = {
   "Pendiente por trabajar": "badge-rojo",
   "En proceso": "badge-amarillo",
   "Pendiente por despachar": "badge-azul",
+  [ESTADO_POR_VERIFICAR]: "badge-rojo",
   "En Hold": "badge-rojo",
   Entregado: "badge-verde",
 };
@@ -112,6 +113,8 @@ export default async function FichaOrdenPage({ params }) {
   // siempre, por si "Procesos órdenes" cambia de opinión antes de cerrar.
   const verificadoPorTexto =
     o.verificado_por || (o.estado === "Entregado" && !requiereVerificacion(ajustes, o.tipo_equipo) ? "n/a" : "—");
+  // V114: "Pendiente por verificar para despachar" mientras falte "Verificado por".
+  const estadoVisible = estadoParaVer(o, ajustes);
 
   const marcaModelo = [o.equipo_marca_snapshot, o.equipo_modelo_snapshot].filter(Boolean).join(" ");
   // "Status" desapareció (item 13, pedido explícito, 26-sep-2026: "quita
@@ -352,8 +355,8 @@ export default async function FichaOrdenPage({ params }) {
                   que Cliente ya se repite arriba) y Estado uno al lado del
                   otro. El Estado sale un poco más grande que antes (mismo
                   pedido: "lo que aparece en 'estado' hazlo quizas un poco
-                  mas grande"). El campo "Equipo" completo (con el link y la
-                  marca/modelo) se queda igual más abajo, no se quita. */}
+                  mas grande"). V114: el "Equipo" de más abajo se quitó (se
+                  repetía); este es el único, con el link y la marca/modelo. */}
               <div className="campos-grid">
                 <Campo etiqueta="Equipo" destacado>
                   {o.equipo_id ? (
@@ -374,10 +377,10 @@ export default async function FichaOrdenPage({ params }) {
                       mientras dure (ver lib/ordenes-estado.js), así que ya no
                       hace falta un segundo badge repitiendo lo mismo. */}
                   <span
-                    className={`badge ${BADGE_ESTADO[o.estado] || ""}`}
+                    className={`badge ${BADGE_ESTADO[estadoVisible] || ""}`}
                     style={{ marginLeft: 0, fontSize: 14, padding: "4px 13px", borderRadius: 14 }}
                   >
-                    {o.estado}
+                    {estadoVisible}
                   </span>
                 </Campo>
               </div>
@@ -499,19 +502,9 @@ export default async function FichaOrdenPage({ params }) {
               </Link>
               {o.cliente_telefono && ` · ${o.cliente_telefono}`}
             </Campo>
-            <Campo etiqueta="Equipo" full destacado>
-              {o.equipo_id ? (
-                <Link href={`/app-clientes/equipos/${o.equipo_id}`} className="breadcrumb-crumb">
-                  {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
-                  {marcaModelo && ` — ${marcaModelo}`}
-                </Link>
-              ) : (
-                <>
-                  {tipoEquipoLabel(o.tipo_equipo, o.tipo_equipo_otro)}
-                  {marcaModelo && ` — ${marcaModelo}`}
-                </>
-              )}
-            </Campo>
+            {/* V114 (con foto: "aquí se repite el equipo del cliente, aparece 2
+                veces"): se quitó este; queda el de arriba (V72/V73, debajo del
+                No. de orden, con el mismo link y la marca/modelo). */}
             <Campo etiqueta="Servicio a realizar" valor={o.que_se_hara} full />
             {/* V100 ("44. a"): lo que dijo el cliente y lo que trajo, al recibirlo. */}
             <RecepcionRegulador orden={o} Campo={Campo} full anterior={ordenAnterior} />

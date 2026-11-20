@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { codigoRepetido, textoRepetido, esErrorRepetido, claveCodigo } from "@/lib/codigos-catalogo";
 
 // v56: tipos_equipo opcional -- a qué tipo(s) de equipo pertenece el
 // código (pedido explícito: "que me permita poner a que tipo de equipo
@@ -38,6 +39,14 @@ export default function EditarPiezaForm({ pieza }) {
     if (!nombre.trim()) return setError("Escribe la descripción del código.");
 
     setGuardando(true);
+    // Solo si se cambió el código (si ya había dos parecidos de antes, igual
+    // se puede corregir la descripción o los tipos sin que lo bloquee).
+    const cambioCodigo = claveCodigo(codigo) !== claveCodigo(pieza.codigo);
+    const repetido = cambioCodigo ? await codigoRepetido(supabase, codigo, pieza.id) : null;
+    if (repetido) {
+      setGuardando(false);
+      return setError(textoRepetido(repetido));
+    }
     const { error: err } = await supabase
       .from("piezas_catalogo")
       .update({
@@ -49,7 +58,7 @@ export default function EditarPiezaForm({ pieza }) {
     setGuardando(false);
 
     if (err) {
-      setError("No se pudo guardar. Intenta de nuevo.");
+      setError(esErrorRepetido(err) ? "Ese código ya existe en el catálogo." : "No se pudo guardar. Intenta de nuevo.");
       return;
     }
 
